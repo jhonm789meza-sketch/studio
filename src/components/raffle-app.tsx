@@ -96,7 +96,6 @@ export default function RaffleApp({ initialRaffles }: { initialRaffles: Raffle[]
                 </CardHeader>
                 <CardContent className="p-6 flex-grow flex flex-col">
                   <h3 className="text-xl font-bold text-gray-800 mb-2">{raffle.name}</h3>
-                  <p className="text-gray-600 mb-4 text-sm flex-grow">{raffle.description}</p>
                   
                   <div className="mb-4">
                       <div className="flex justify-between text-sm text-gray-600 mb-1">
