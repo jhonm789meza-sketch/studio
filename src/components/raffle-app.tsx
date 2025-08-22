@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import type { Raffle, TicketPurchase } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { PlusCircle, Ticket, Gift, Calendar, Menu, X } from 'lucide-react';
+import { PlusCircle } from 'lucide-react';
 import Image from 'next/image';
 import { CreateRaffleDialog } from './create-raffle-dialog';
 import { RaffleDetailsDialog } from './raffle-details-dialog';
@@ -105,7 +105,7 @@ export default function RaffleApp({ initialRaffles }: { initialRaffles: Raffle[]
                       <Progress value={percentage} className="h-2" />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div className="grid grid-cols-2 gap-4 mt-auto mb-4">
                       <div className="text-center bg-blue-50 p-2 rounded-lg">
                           <div className="text-2xl font-bold text-blue-600">${raffle.ticketPrice}</div>
                           <div className="text-xs text-gray-500">Por boleto</div>

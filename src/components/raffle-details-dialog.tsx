@@ -10,6 +10,7 @@ import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { format, formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { ShoppingCart } from 'lucide-react';
 
 interface RaffleDetailsDialogProps {
   raffle: Raffle;
@@ -42,15 +43,15 @@ export function RaffleDetailsDialog({ raffle, isOpen, onClose, onPurchase }: Raf
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-3xl">
         <DialogHeader>
-          <DialogTitle className="text-2xl">{raffle.name}</DialogTitle>
-          <DialogDescription>{raffle.description}</DialogDescription>
+          <DialogTitle className="text-3xl font-bold text-gray-800">{raffle.name}</DialogTitle>
+          <DialogDescription className="text-gray-600">{raffle.description}</DialogDescription>
         </DialogHeader>
-        <div className="grid md:grid-cols-2 gap-6">
-          <div className="flex flex-col">
-            <div className="relative aspect-video w-full rounded-lg overflow-hidden mb-4 shadow-lg">
+        <div className="grid md:grid-cols-2 gap-8 py-4">
+          <div className="flex flex-col space-y-4">
+            <div className="relative aspect-video w-full rounded-lg overflow-hidden shadow-lg">
               <Image src={raffle.prizeImageUrl} alt={`Premio para ${raffle.name}`} layout="fill" objectFit="cover" data-ai-hint="premio regalo" />
             </div>
-             <div className="text-sm space-y-2">
+             <div className="text-sm space-y-2 bg-slate-50 p-4 rounded-lg">
                 <p><strong>Sorteo en:</strong> {formatDistanceToNow(new Date(raffle.drawingDate), { addSuffix: true, locale: es })}</p>
                 <p><strong>Fecha:</strong> {format(new Date(raffle.drawingDate), 'PPP p', { locale: es })}</p>
                 <p><strong>Precio del Boleto:</strong> ${raffle.ticketPrice.toFixed(2)}</p>
@@ -58,9 +59,9 @@ export function RaffleDetailsDialog({ raffle, isOpen, onClose, onPurchase }: Raf
              </div>
           </div>
           <div className="flex flex-col">
-            <h3 className="font-semibold mb-2">Selecciona Tus Boletos</h3>
-            <ScrollArea className="h-64 border rounded-md p-2">
-              <div className="grid grid-cols-5 sm:grid-cols-7 md:grid-cols-6 lg:grid-cols-8 gap-2">
+            <h3 className="font-semibold mb-3 text-lg">Selecciona Tus Números</h3>
+            <ScrollArea className="h-80 border rounded-md p-4 bg-slate-50">
+              <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-8 gap-2">
                 {Array.from({ length: raffle.totalTickets }, (_, i) => i + 1).map(ticketNumber => {
                   const isSold = raffle.soldTickets.includes(ticketNumber);
                   const isSelected = selectedTickets.includes(ticketNumber);
@@ -72,9 +73,9 @@ export function RaffleDetailsDialog({ raffle, isOpen, onClose, onPurchase }: Raf
                       className={cn(
                         "h-10 w-10 rounded-full flex items-center justify-center font-bold border-2 transition-all duration-200 ease-in-out",
                         isSold
-                          ? "bg-muted text-muted-foreground cursor-not-allowed line-through"
-                          : "bg-background border-primary hover:bg-primary/10",
-                        isSelected && "bg-primary text-primary-foreground scale-110 shadow-lg"
+                          ? "bg-gray-300 text-gray-500 cursor-not-allowed line-through"
+                          : "bg-white border-blue-500 hover:bg-blue-100",
+                        isSelected && "bg-blue-500 text-white scale-110 shadow-lg border-blue-700"
                       )}
                     >
                       {ticketNumber}
@@ -83,28 +84,23 @@ export function RaffleDetailsDialog({ raffle, isOpen, onClose, onPurchase }: Raf
                 })}
               </div>
             </ScrollArea>
-            <div className="mt-4">
-              <p className="font-semibold">Seleccionados:</p>
-              {selectedTickets.length > 0 ? (
-                <div className="flex flex-wrap gap-1 mt-1">
-                  {selectedTickets.sort((a,b)=> a-b).map(t => <Badge key={t} variant="secondary">{t}</Badge>)}
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">No hay boletos seleccionados.</p>
-              )}
-            </div>
+           
           </div>
         </div>
-        <DialogFooter className="mt-4">
+        <DialogFooter className="mt-4 bg-gray-50 p-4 rounded-b-lg -m-6 mt-0">
           <div className="w-full flex justify-between items-center">
-            <p className="font-bold text-lg">Total: ${totalCost.toFixed(2)}</p>
+             <div className="text-left">
+                <p className="font-semibold text-gray-600">Total:</p>
+                <p className="font-bold text-2xl text-blue-600">${totalCost.toFixed(2)}</p>
+             </div>
             <div>
-              <Button variant="outline" onClick={onClose}>Cancelar</Button>
               <Button 
                 onClick={handlePurchaseClick} 
                 disabled={selectedTickets.length === 0} 
-                className="ml-2 bg-accent hover:bg-accent/90">
-                Comprar {selectedTickets.length} Boleto(s)
+                size="lg"
+                className="bg-gradient-to-r from-green-500 to-teal-500 text-white font-bold hover:from-green-600 hover:to-teal-600">
+                <ShoppingCart className="mr-2 h-5 w-5"/>
+                Comprar {selectedTickets.length > 0 ? `${selectedTickets.length} Boleto(s)`: ''}
               </Button>
             </div>
           </div>
