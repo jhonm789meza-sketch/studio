@@ -12,6 +12,7 @@ import { MyTickets } from './my-tickets';
 import { addTicketPurchase, getMyTickets } from '@/lib/storage';
 import { Confetti } from './confetti';
 import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 export default function RaffleApp({ initialRaffles }: { initialRaffles: Raffle[] }) {
   const [raffles, setRaffles] = useState<Raffle[]>(initialRaffles);
@@ -60,14 +61,14 @@ export default function RaffleApp({ initialRaffles }: { initialRaffles: Raffle[]
           </div>
           <Button onClick={() => setCreateDialogOpen(true)}>
             <PlusCircle className="mr-2 h-4 w-4" />
-            Create Raffle
+            Crear Rifa
           </Button>
         </div>
       </header>
 
       <main className="container mx-auto p-4 md:p-8">
         <section id="available-raffles" className="mb-12">
-          <h2 className="text-3xl font-bold mb-6">Available Raffles</h2>
+          <h2 className="text-3xl font-bold mb-6">Rifas Disponibles</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {raffles.map(raffle => (
               <Card key={raffle.id} className="flex flex-col transform hover:scale-105 transition-transform duration-300 ease-in-out shadow-lg hover:shadow-xl">
@@ -77,23 +78,23 @@ export default function RaffleApp({ initialRaffles }: { initialRaffles: Raffle[]
                 </CardHeader>
                 <CardContent className="flex-grow">
                   <div className="relative aspect-video mb-4 rounded-md overflow-hidden">
-                    <Image src={raffle.prizeImageUrl} alt={`Prize for ${raffle.name}`} fill style={{ objectFit: 'cover' }} data-ai-hint="prize gift" />
+                    <Image src={raffle.prizeImageUrl} alt={`Premio para ${raffle.name}`} fill style={{ objectFit: 'cover' }} data-ai-hint="premio regalo" />
                   </div>
                   <div className="flex justify-between items-center text-sm text-muted-foreground">
                      <div className="flex items-center gap-2">
                        <Gift className="h-4 w-4 text-primary" />
-                       <span>${raffle.ticketPrice.toFixed(2)} / ticket</span>
+                       <span>${raffle.ticketPrice.toFixed(2)} / boleto</span>
                      </div>
                      <div className="flex items-center gap-2">
                        <Calendar className="h-4 w-4 text-primary" />
-                       <span>{format(new Date(raffle.drawingDate), 'MMM dd, yyyy')}</span>
+                       <span>{format(new Date(raffle.drawingDate), "d 'de' MMMM, yyyy", { locale: es })}</span>
                      </div>
                   </div>
                 </CardContent>
                 <CardFooter>
                   <Button className="w-full" onClick={() => setSelectedRaffle(raffle)}>
                     <Ticket className="mr-2 h-4 w-4" />
-                    View Tickets
+                    Ver Boletos
                   </Button>
                 </CardFooter>
               </Card>

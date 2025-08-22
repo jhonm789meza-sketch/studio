@@ -1,8 +1,8 @@
 [
   {
     "id": "1",
-    "name": "Summer Vacation Getaway",
-    "description": "Win an all-inclusive trip for two to a tropical paradise! Enjoy sun, sand, and sea in this once-in-a-lifetime vacation.",
+    "name": "Escapada de Verano",
+    "description": "¡Gana un viaje todo incluido para dos a un paraíso tropical! Disfruta del sol, la arena y el mar en estas vacaciones únicas.",
     "ticketPrice": 10,
     "totalTickets": 100,
     "drawingDate": "2024-09-01T18:00:00Z",
@@ -11,8 +11,8 @@
   },
   {
     "id": "2",
-    "name": "Tech Gadget Bundle",
-    "description": "Get your hands on the latest tech! This bundle includes a new smartphone, a smartwatch, and wireless earbuds.",
+    "name": "Paquete de Gadgets Tecnológicos",
+    "description": "¡Consigue lo último en tecnología! Este paquete incluye un nuevo smartphone, un smartwatch y auriculares inalámbricos.",
     "ticketPrice": 5,
     "totalTickets": 200,
     "drawingDate": "2024-08-15T20:00:00Z",
@@ -21,8 +21,8 @@
   },
   {
     "id": "3",
-    "name": "Gourmet Dining Experience",
-    "description": "A dinner for four at a Michelin-starred restaurant. Indulge in an exquisite tasting menu prepared by a world-renowned chef.",
+    "name": "Experiencia Gastronómica Gourmet",
+    "description": "Una cena para cuatro en un restaurante con estrella Michelin. Deléitate con un exquisito menú de degustación preparado por un chef de renombre mundial.",
     "ticketPrice": 20,
     "totalTickets": 50,
     "drawingDate": "2024-08-20T19:00:00Z",

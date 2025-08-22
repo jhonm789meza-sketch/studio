@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { format, formatDistanceToNow } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 interface RaffleDetailsDialogProps {
   raffle: Raffle;
@@ -47,17 +48,17 @@ export function RaffleDetailsDialog({ raffle, isOpen, onClose, onPurchase }: Raf
         <div className="grid md:grid-cols-2 gap-6">
           <div className="flex flex-col">
             <div className="relative aspect-video w-full rounded-lg overflow-hidden mb-4 shadow-lg">
-              <Image src={raffle.prizeImageUrl} alt={`Prize for ${raffle.name}`} layout="fill" objectFit="cover" data-ai-hint="prize gift" />
+              <Image src={raffle.prizeImageUrl} alt={`Premio para ${raffle.name}`} layout="fill" objectFit="cover" data-ai-hint="premio regalo" />
             </div>
              <div className="text-sm space-y-2">
-                <p><strong>Drawing in:</strong> {formatDistanceToNow(new Date(raffle.drawingDate), { addSuffix: true })}</p>
-                <p><strong>Date:</strong> {format(new Date(raffle.drawingDate), 'PPP p')}</p>
-                <p><strong>Ticket Price:</strong> ${raffle.ticketPrice.toFixed(2)}</p>
-                <p><strong>Tickets Remaining:</strong> {raffle.totalTickets - raffle.soldTickets.length}</p>
+                <p><strong>Sorteo en:</strong> {formatDistanceToNow(new Date(raffle.drawingDate), { addSuffix: true, locale: es })}</p>
+                <p><strong>Fecha:</strong> {format(new Date(raffle.drawingDate), 'PPP p', { locale: es })}</p>
+                <p><strong>Precio del Boleto:</strong> ${raffle.ticketPrice.toFixed(2)}</p>
+                <p><strong>Boletos Restantes:</strong> {raffle.totalTickets - raffle.soldTickets.length}</p>
              </div>
           </div>
           <div className="flex flex-col">
-            <h3 className="font-semibold mb-2">Select Your Tickets</h3>
+            <h3 className="font-semibold mb-2">Selecciona Tus Boletos</h3>
             <ScrollArea className="h-64 border rounded-md p-2">
               <div className="grid grid-cols-5 sm:grid-cols-7 md:grid-cols-6 lg:grid-cols-8 gap-2">
                 {Array.from({ length: raffle.totalTickets }, (_, i) => i + 1).map(ticketNumber => {
@@ -83,13 +84,13 @@ export function RaffleDetailsDialog({ raffle, isOpen, onClose, onPurchase }: Raf
               </div>
             </ScrollArea>
             <div className="mt-4">
-              <p className="font-semibold">Selected:</p>
+              <p className="font-semibold">Seleccionados:</p>
               {selectedTickets.length > 0 ? (
                 <div className="flex flex-wrap gap-1 mt-1">
-                  {selectedTickets.map(t => <Badge key={t} variant="secondary">{t}</Badge>)}
+                  {selectedTickets.sort((a,b)=> a-b).map(t => <Badge key={t} variant="secondary">{t}</Badge>)}
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground">No tickets selected.</p>
+                <p className="text-sm text-muted-foreground">No hay boletos seleccionados.</p>
               )}
             </div>
           </div>
@@ -98,12 +99,12 @@ export function RaffleDetailsDialog({ raffle, isOpen, onClose, onPurchase }: Raf
           <div className="w-full flex justify-between items-center">
             <p className="font-bold text-lg">Total: ${totalCost.toFixed(2)}</p>
             <div>
-              <Button variant="outline" onClick={onClose}>Cancel</Button>
+              <Button variant="outline" onClick={onClose}>Cancelar</Button>
               <Button 
                 onClick={handlePurchaseClick} 
                 disabled={selectedTickets.length === 0} 
                 className="ml-2 bg-accent hover:bg-accent/90">
-                Buy {selectedTickets.length} Ticket(s)
+                Comprar {selectedTickets.length} Boleto(s)
               </Button>
             </div>
           </div>

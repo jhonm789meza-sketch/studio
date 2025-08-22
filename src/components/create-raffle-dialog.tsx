@@ -15,12 +15,12 @@ import { Wand2, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const formSchema = z.object({
-  name: z.string().min(3, 'Name must be at least 3 characters long.'),
-  description: z.string().min(10, 'Description must be at least 10 characters long.'),
-  ticketPrice: z.coerce.number().positive('Ticket price must be positive.'),
-  totalTickets: z.coerce.number().int().min(10, 'There must be at least 10 tickets.'),
-  drawingDate: z.string().refine(val => !isNaN(Date.parse(val)), 'Invalid date.'),
-  prizeImageUrl: z.string().url('Must be a valid URL.'),
+  name: z.string().min(3, 'El nombre debe tener al menos 3 caracteres.'),
+  description: z.string().min(10, 'La descripción debe tener al menos 10 caracteres.'),
+  ticketPrice: z.coerce.number().positive('El precio del boleto debe ser positivo.'),
+  totalTickets: z.coerce.number().int().min(10, 'Debe haber al menos 10 boletos.'),
+  drawingDate: z.string().refine(val => !isNaN(Date.parse(val)), 'Fecha inválida.'),
+  prizeImageUrl: z.string().url('Debe ser una URL válida.'),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -50,7 +50,7 @@ export function CreateRaffleDialog({ isOpen, onClose, onCreate }: CreateRaffleDi
   const handleGenerateDescription = () => {
     const raffleName = form.getValues('name');
     if (!raffleName) {
-      form.setError('name', { type: 'manual', message: 'Please enter a raffle name first.' });
+      form.setError('name', { type: 'manual', message: 'Por favor, introduce primero un nombre para la rifa.' });
       return;
     }
 
@@ -58,7 +58,7 @@ export function CreateRaffleDialog({ isOpen, onClose, onCreate }: CreateRaffleDi
       const result = await generateRaffleDescription(raffleName);
       if ('description' in result) {
         form.setValue('description', result.description, { shouldValidate: true });
-        toast({ title: "Success", description: "Description generated successfully." });
+        toast({ title: "Éxito", description: "Descripción generada correctamente." });
       } else {
         toast({ variant: 'destructive', title: "Error", description: result.error });
       }
@@ -77,8 +77,8 @@ export function CreateRaffleDialog({ isOpen, onClose, onCreate }: CreateRaffleDi
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Create New Raffle</DialogTitle>
-          <DialogDescription>Fill in the details for your new raffle.</DialogDescription>
+          <DialogTitle>Crear Nueva Rifa</DialogTitle>
+          <DialogDescription>Completa los detalles de tu nueva rifa.</DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -87,9 +87,9 @@ export function CreateRaffleDialog({ isOpen, onClose, onCreate }: CreateRaffleDi
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Raffle Name</FormLabel>
+                  <FormLabel>Nombre de la Rifa</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., Ultimate Gaming PC" {...field} />
+                    <Input placeholder="ej., PC Gamer Definitivo" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -100,10 +100,10 @@ export function CreateRaffleDialog({ isOpen, onClose, onCreate }: CreateRaffleDi
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description</FormLabel>
+                  <FormLabel>Descripción</FormLabel>
                    <div className="relative">
                      <FormControl>
-                       <Textarea placeholder="A detailed description of the prize..." {...field} rows={4}/>
+                       <Textarea placeholder="Una descripción detallada del premio..." {...field} rows={4}/>
                      </FormControl>
                      <Button
                        type="button"
@@ -112,7 +112,7 @@ export function CreateRaffleDialog({ isOpen, onClose, onCreate }: CreateRaffleDi
                        className="absolute bottom-2 right-2"
                        onClick={handleGenerateDescription}
                        disabled={isPending}
-                       aria-label="Generate description with AI"
+                       aria-label="Generar descripción con IA"
                      >
                        {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
                      </Button>
@@ -127,7 +127,7 @@ export function CreateRaffleDialog({ isOpen, onClose, onCreate }: CreateRaffleDi
                 name="ticketPrice"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Ticket Price ($)</FormLabel>
+                    <FormLabel>Precio del Boleto ($)</FormLabel>
                     <FormControl>
                       <Input type="number" {...field} />
                     </FormControl>
@@ -140,7 +140,7 @@ export function CreateRaffleDialog({ isOpen, onClose, onCreate }: CreateRaffleDi
                 name="totalTickets"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Total Tickets</FormLabel>
+                    <FormLabel>Total de Boletos</FormLabel>
                     <FormControl>
                       <Input type="number" {...field} />
                     </FormControl>
@@ -154,7 +154,7 @@ export function CreateRaffleDialog({ isOpen, onClose, onCreate }: CreateRaffleDi
               name="drawingDate"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Drawing Date</FormLabel>
+                  <FormLabel>Fecha del Sorteo</FormLabel>
                   <FormControl>
                     <Input type="datetime-local" {...field} />
                   </FormControl>
@@ -167,7 +167,7 @@ export function CreateRaffleDialog({ isOpen, onClose, onCreate }: CreateRaffleDi
               name="prizeImageUrl"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Prize Image URL</FormLabel>
+                  <FormLabel>URL de la Imagen del Premio</FormLabel>
                   <FormControl>
                     <Input placeholder="https://example.com/image.png" {...field} />
                   </FormControl>
@@ -176,8 +176,8 @@ export function CreateRaffleDialog({ isOpen, onClose, onCreate }: CreateRaffleDi
               )}
             />
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-              <Button type="submit">Create Raffle</Button>
+              <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
+              <Button type="submit">Crear Rifa</Button>
             </DialogFooter>
           </form>
         </Form>

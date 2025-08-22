@@ -16,7 +16,7 @@ export function MyTickets({ myTickets, raffles }: MyTicketsProps) {
 
   return (
     <section id="my-tickets">
-      <h2 className="text-3xl font-bold mb-6">My Tickets</h2>
+      <h2 className="text-3xl font-bold mb-6">Mis Boletos</h2>
       <Card>
         <CardContent className="p-6">
           <Accordion type="single" collapsible className="w-full">
@@ -28,7 +28,7 @@ export function MyTickets({ myTickets, raffles }: MyTicketsProps) {
                 <AccordionItem value={raffle.id} key={raffle.id}>
                   <AccordionTrigger className="font-semibold text-lg">{raffle.name}</AccordionTrigger>
                   <AccordionContent>
-                    <p className="text-muted-foreground mb-4">You have {purchase.tickets.length} ticket(s) in this raffle.</p>
+                    <p className="text-muted-foreground mb-4">Tienes {purchase.tickets.length} boleto(s) en esta rifa.</p>
                     <div className="flex flex-wrap gap-2">
                       {purchase.tickets.sort((a,b) => a-b).map(ticketNumber => (
                         <div key={ticketNumber} className="bg-primary text-primary-foreground rounded-full w-10 h-10 flex items-center justify-center font-bold text-sm">
