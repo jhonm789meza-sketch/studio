@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import type { Raffle, TicketPurchase } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { PlusCircle, Ticket, Gift, Calendar } from 'lucide-react';
+import { PlusCircle, Ticket, Gift, Calendar, Menu, X } from 'lucide-react';
 import Image from 'next/image';
 import { CreateRaffleDialog } from './create-raffle-dialog';
 import { RaffleDetailsDialog } from './raffle-details-dialog';
@@ -13,6 +13,7 @@ import { addTicketPurchase, getMyTickets } from '@/lib/storage';
 import { Confetti } from './confetti';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { Progress } from '@/components/ui/progress';
 
 export default function RaffleApp({ initialRaffles }: { initialRaffles: Raffle[] }) {
   const [raffles, setRaffles] = useState<Raffle[]>(initialRaffles);
@@ -51,54 +52,78 @@ export default function RaffleApp({ initialRaffles }: { initialRaffles: Raffle[]
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen">
       {showConfetti && <Confetti />}
-      <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Ticket className="h-8 w-8 text-primary" />
-            <h1 className="text-2xl font-bold">RifaExpress</h1>
-          </div>
-          <Button onClick={() => setCreateDialogOpen(true)}>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Crear Rifa
-          </Button>
+      <header className="bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-xl">
+        <div className="container mx-auto px-4 py-6">
+            <div className="flex justify-between items-center">
+                <div className="flex items-center space-x-4">
+                    <div className="bg-white p-3 rounded-full">
+                        <i className="fas fa-ticket-alt text-3xl text-blue-600"></i>
+                    </div>
+                    <div>
+                        <h1 className="text-3xl font-bold">RifaExpress</h1>
+                        <p className="text-blue-100">Sistema profesional de rifas online</p>
+                    </div>
+                </div>
+                
+                <Button onClick={() => setCreateDialogOpen(true)} className="hidden md:flex bg-white/10 hover:bg-white/20">
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Crear Rifa
+                </Button>
+                <Button onClick={() => setCreateDialogOpen(true)} className="md:hidden bg-white/20 p-3 rounded-lg" size="icon">
+                    <PlusCircle className="h-5 w-5" />
+                </Button>
+            </div>
         </div>
       </header>
 
-      <main className="container mx-auto p-4 md:p-8">
+      <main className="container mx-auto px-4 py-8 max-w-7xl">
         <section id="available-raffles" className="mb-12">
-          <h2 className="text-3xl font-bold mb-6">Rifas Disponibles</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {raffles.map(raffle => (
-              <Card key={raffle.id} className="flex flex-col transform hover:scale-105 transition-transform duration-300 ease-in-out shadow-lg hover:shadow-xl">
-                <CardHeader>
-                  <CardTitle>{raffle.name}</CardTitle>
-                  <CardDescription className="line-clamp-2">{raffle.description}</CardDescription>
-                </CardHeader>
-                <CardContent className="flex-grow">
-                  <div className="relative aspect-video mb-4 rounded-md overflow-hidden">
+            <div className="text-center mb-12">
+                <h2 className="text-4xl font-bold text-gray-800 mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">🎯 Rifas Activas</h2>
+                <p className="text-gray-600 text-lg max-w-2xl mx-auto">Participa en nuestras emocionantes rifas y ten la oportunidad de ganar premios espectaculares. ¡Elige tus números favoritos!</p>
+            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {raffles.map(raffle => {
+              const percentage = (raffle.soldTickets.length / raffle.totalTickets) * 100;
+              return (
+              <Card key={raffle.id} className="flex flex-col rounded-2xl shadow-xl overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+                <CardHeader className="p-0">
+                  <div className="relative aspect-video w-full">
                     <Image src={raffle.prizeImageUrl} alt={`Premio para ${raffle.name}`} fill style={{ objectFit: 'cover' }} data-ai-hint="premio regalo" />
                   </div>
-                  <div className="flex justify-between items-center text-sm text-muted-foreground">
-                     <div className="flex items-center gap-2">
-                       <Gift className="h-4 w-4 text-primary" />
-                       <span>${raffle.ticketPrice.toFixed(2)} / boleto</span>
-                     </div>
-                     <div className="flex items-center gap-2">
-                       <Calendar className="h-4 w-4 text-primary" />
-                       <span>{format(new Date(raffle.drawingDate), "d 'de' MMMM, yyyy", { locale: es })}</span>
-                     </div>
+                </CardHeader>
+                <CardContent className="p-6 flex-grow flex flex-col">
+                  <h3 className="text-xl font-bold text-gray-800 mb-2">{raffle.name}</h3>
+                  <p className="text-gray-600 mb-4 text-sm flex-grow">{raffle.description}</p>
+                  
+                  <div className="mb-4">
+                      <div className="flex justify-between text-sm text-gray-600 mb-1">
+                          <span>Boletos vendidos</span>
+                          <span>{raffle.soldTickets.length}/{raffle.totalTickets}</span>
+                      </div>
+                      <Progress value={percentage} className="h-2" />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                      <div className="text-center bg-blue-50 p-2 rounded-lg">
+                          <div className="text-2xl font-bold text-blue-600">${raffle.ticketPrice}</div>
+                          <div className="text-xs text-gray-500">Por boleto</div>
+                      </div>
+                      <div className="text-center bg-purple-50 p-2 rounded-lg">
+                          <div className="text-lg font-bold text-purple-600">{format(new Date(raffle.drawingDate), "d MMM", { locale: es })}</div>
+                          <div className="text-xs text-gray-500">Sorteo</div>
+                      </div>
                   </div>
                 </CardContent>
-                <CardFooter>
-                  <Button className="w-full" onClick={() => setSelectedRaffle(raffle)}>
-                    <Ticket className="mr-2 h-4 w-4" />
-                    Ver Boletos
+                <CardFooter className="p-6 pt-0">
+                  <Button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 transition-all" onClick={() => setSelectedRaffle(raffle)}>
+                    Ver Detalles y Participar
                   </Button>
                 </CardFooter>
               </Card>
-            ))}
+            )})}
           </div>
         </section>
 

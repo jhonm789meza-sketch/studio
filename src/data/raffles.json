@@ -1,32 +1,32 @@
 [
   {
     "id": "1",
-    "name": "Escapada de Verano",
-    "description": "¡Gana un viaje todo incluido para dos a un paraíso tropical! Disfruta del sol, la arena y el mar en estas vacaciones únicas.",
+    "name": "Gran Sorteo Navideño",
+    "description": "¡Premio especial de $5000 para celebrar la navidad! Participa y gana este increíble premio.",
     "ticketPrice": 10,
     "totalTickets": 100,
-    "drawingDate": "2024-09-01T18:00:00Z",
-    "prizeImageUrl": "https://placehold.co/600x400.png",
-    "soldTickets": [5, 12, 23, 45, 56, 78, 89, 91, 33, 67]
+    "drawingDate": "2024-12-25T20:00:00Z",
+    "prizeImageUrl": "https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/156d9d27-4554-40c1-a5df-a97fabb03948.png",
+    "soldTickets": [15, 23, 45, 67, 89]
   },
   {
     "id": "2",
-    "name": "Paquete de Gadgets Tecnológicos",
-    "description": "¡Consigue lo último en tecnología! Este paquete incluye un nuevo smartphone, un smartwatch y auriculares inalámbricos.",
+    "name": "Rifa de Tecnología",
+    "description": "Gana el último smartphone del mercado. ¡No pierdas esta oportunidad!",
     "ticketPrice": 5,
-    "totalTickets": 200,
-    "drawingDate": "2024-08-15T20:00:00Z",
-    "prizeImageUrl": "https://placehold.co/600x400.png",
-    "soldTickets": [1, 15, 25, 35, 50, 65, 75, 85, 95, 105, 115, 125, 135, 145, 155, 165, 175, 185, 195]
+    "totalTickets": 50,
+    "drawingDate": "2024-11-15T18:30:00Z",
+    "prizeImageUrl": "https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/7a878190-a68c-4261-9baf-7a399748d2a2.png",
+    "soldTickets": [3, 7, 12, 25, 33, 48]
   },
   {
     "id": "3",
     "name": "Experiencia Gastronómica Gourmet",
-    "description": "Una cena para cuatro en un restaurante con estrella Michelin. Deléitate con un exquisito menú de degustación preparado por un chef de renombre mundial.",
+    "description": "Una cena para cuatro en un restaurante con estrella Michelin. Deléitate con un exquisito menú de degustación.",
     "ticketPrice": 20,
     "totalTickets": 50,
-    "drawingDate": "2024-08-20T19:00:00Z",
-    "prizeImageUrl": "https://placehold.co/600x400.png",
+    "drawingDate": "2024-10-20T19:00:00Z",
+    "prizeImageUrl": "https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/f5df7168-bcec-459b-a246-35aec9b41943.png",
     "soldTickets": [2, 8, 18, 28, 38, 48]
   }
 ]
