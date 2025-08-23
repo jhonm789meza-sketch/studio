@@ -239,11 +239,11 @@ const App = () => {
 --- Tiquete de Compra ---
 Premio: ${ticketInfo.prize}
 Valor: ${ticketInfo.value}
+${ticketInfo.nequiAccountNumber ? `Cuenta Nequi: ${ticketInfo.nequiAccountNumber}`: ''}
 -------------------------
 Nombre: ${ticketInfo.name}
 Celular: ${ticketInfo.phoneNumber}
 Número de Rifa: ${ticketInfo.raffleNumber}
-${ticketInfo.nequiAccountNumber ? `Cuenta Nequi: ${ticketInfo.nequiAccountNumber}`: ''}
 -------------------------
         `.trim();
 
@@ -591,6 +591,12 @@ ${ticketInfo.nequiAccountNumber ? `Cuenta Nequi: ${ticketInfo.nequiAccountNumber
                                 <span className="font-semibold">Valor:</span>
                                 <span>{ticketInfo.value}</span>
                             </div>
+                            {ticketInfo.nequiAccountNumber && (
+                                <div className="flex justify-between border-b pb-2">
+                                    <span className="font-semibold">Cuenta Nequi:</span>
+                                    <span className="font-mono">{ticketInfo.nequiAccountNumber}</span>
+                                </div>
+                            )}
                             <div className="flex justify-between border-b pb-2">
                                 <span className="font-semibold">Nombre:</span>
                                 <span>{ticketInfo.name}</span>
@@ -603,12 +609,6 @@ ${ticketInfo.nequiAccountNumber ? `Cuenta Nequi: ${ticketInfo.nequiAccountNumber
                                 <span className="font-semibold">Número de Rifa:</span>
                                 <span className="text-purple-600 font-bold">{ticketInfo.raffleNumber}</span>
                             </div>
-                             {ticketInfo.nequiAccountNumber && (
-                                <div className="flex justify-between border-b pb-2">
-                                    <span className="font-semibold">Cuenta Nequi:</span>
-                                    <span className="font-mono">{ticketInfo.nequiAccountNumber}</span>
-                                </div>
-                            )}
                         </div>
                         <div className="flex justify-end space-x-3">
                              <button
