@@ -617,5 +617,3 @@ Número de Rifa: ${ticketInfo.raffleNumber}
 };
 
 export default App;
-
-    
