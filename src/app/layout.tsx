@@ -6,7 +6,7 @@ import { Inter } from 'next/font/google';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'App Rifa',
+  title: 'Tablero de Rifa',
   description: 'Aplicación de Rifas con Firebase',
 };
 
@@ -23,3 +23,5 @@ export default function RootLayout({
     </html>
   );
 }
+
+    
