@@ -27,7 +27,6 @@ const mockDb = {
     onSnapshot: (ref, callback) => {
         if (ref.path?.includes('raffles')) {
             const rafflesData = [
-                { id: 'raffle1', name: 'Sorteo de Verano', price: 5, totalTickets: 50, tickets: Array.from({length: 50}, (_, i) => ({number: i+1, isSold: Math.random() > 0.7, ownerId: Math.random() > 0.7 ? `user${i}`: null, ownerName: `User ${i}`})), status: 'open', winner: null },
                 { id: 'raffle2', name: 'Rifa Tecnológica', price: 10, totalTickets: 100, tickets: Array.from({length: 100}, (_, i) => ({number: i+1, isSold: Math.random() > 0.5, ownerId: Math.random() > 0.5 ? `user${i}`: null, ownerName: `User ${i}`})), status: 'open', winner: null },
                 { id: 'raffle3', name: 'Premio Final', price: 20, totalTickets: 25, tickets: Array.from({length: 25}, (_, i) => ({number: i+1, isSold: true, ownerId: `user${i}`, ownerName: `User ${i}`})), status: 'closed', winner: {number: 17, ownerName: 'Ganador X'} },
             ];
@@ -43,7 +42,7 @@ const mockDb = {
     addDoc: () => Promise.resolve(),
     getDoc: (ref) => {
        if (ref.path?.includes('raffles')) {
-            const raffleData = { name: 'Sorteo de Verano', price: 5, totalTickets: 50, tickets: Array.from({length: 50}, (_, i) => ({number: i+1, isSold: Math.random() > 0.7, ownerId: `user${i}`, ownerName: `User ${i}`})), status: 'open', winner: null };
+            const raffleData = { name: 'Rifa Tecnológica', price: 10, totalTickets: 100, tickets: Array.from({length: 100}, (_, i) => ({number: i+1, isSold: Math.random() > 0.5, ownerId: `user${i}`, ownerName: `User ${i}`})), status: 'open', winner: null };
             return Promise.resolve({ exists: () => true, data: () => raffleData });
         }
         return Promise.resolve({exists: () => false});
