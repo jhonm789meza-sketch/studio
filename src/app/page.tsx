@@ -310,6 +310,63 @@ Número de Rifa: ${ticketInfo.raffleNumber}
                     )}
 
                     <div className={`tab-content ${activeTab === 'board' ? 'active' : ''}`}>
+                         <div className="mb-6">
+                             <h2 className="text-2xl font-bold text-gray-800 mb-4">Configuración del Premio</h2>
+                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                                <div>
+                                    <label htmlFor="prize-input" className="block text-sm font-medium text-gray-700 mb-1">
+                                        Premio:
+                                    </label>
+                                    <input
+                                        id="prize-input"
+                                        type="text"
+                                        value={prize}
+                                        onChange={(e) => setPrize(e.target.value)}
+                                        placeholder="Ej: Carro, Moto, Dinero"
+                                        disabled={isDetailsConfirmed}
+                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                    />
+                                </div>
+                                <div>
+                                    <label htmlFor="value-input" className="block text-sm font-medium text-gray-700 mb-1">
+                                        Valor:
+                                    </label>
+                                    <input
+                                        id="value-input"
+                                        type="text"
+                                        value={formatValue(value)}
+                                        onChange={handleValueChange}
+                                        placeholder="Ej: 5,000,000.00"
+                                        disabled={isDetailsConfirmed}
+                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                    />
+                                </div>
+                                <div>
+                                    <label htmlFor="nequi-account-input" className="block text-sm font-medium text-gray-700 mb-1">
+                                        Número de Cuenta Nequi (Opcional):
+                                    </label>
+                                    <input
+                                        id="nequi-account-input"
+                                        type="tel"
+                                        value={nequiAccountNumber}
+                                        onChange={(e) => setNequiAccountNumber(e.target.value.replace(/\D/g, ''))}
+                                        placeholder="Ej: 3001234567"
+                                        disabled={isDetailsConfirmed}
+                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                    />
+                                </div>
+                                {!isDetailsConfirmed && (
+                                    <div className="md:col-span-2">
+                                        <button
+                                            onClick={handleConfirmDetails}
+                                            className="px-4 py-2 bg-purple-500 text-white font-medium rounded-lg hover:bg-purple-600 transition-colors"
+                                        >
+                                            Confirmar Detalles del Premio
+                                        </button>
+                                    </div>
+                                )}
+                             </div>
+                         </div>
                         <div className="mb-6">
                             <h2 className="text-2xl font-bold text-gray-800 mb-4">Sorteo</h2>
                             <div className="bg-gray-50 p-4 rounded-lg mb-4">
@@ -378,60 +435,6 @@ Número de Rifa: ${ticketInfo.raffleNumber}
                         <h2 className="text-2xl font-bold text-gray-800 mb-4">Registrar Participante</h2>
                         <fieldset disabled={isWinnerConfirmed} className="disabled:opacity-50">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                                <div>
-                                    <label htmlFor="prize-input" className="block text-sm font-medium text-gray-700 mb-1">
-                                        Premio:
-                                    </label>
-                                    <input
-                                        id="prize-input"
-                                        type="text"
-                                        value={prize}
-                                        onChange={(e) => setPrize(e.target.value)}
-                                        placeholder="Ej: Carro, Moto, Dinero"
-                                        disabled={isDetailsConfirmed}
-                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                                    />
-                                </div>
-                                <div>
-                                    <label htmlFor="value-input" className="block text-sm font-medium text-gray-700 mb-1">
-                                        Valor:
-                                    </label>
-                                    <input
-                                        id="value-input"
-                                        type="text"
-                                        value={formatValue(value)}
-                                        onChange={handleValueChange}
-                                        placeholder="Ej: 5,000,000.00"
-                                        disabled={isDetailsConfirmed}
-                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                                    />
-                                </div>
-                                <div>
-                                    <label htmlFor="nequi-account-input" className="block text-sm font-medium text-gray-700 mb-1">
-                                        Número de Cuenta Nequi (Opcional):
-                                    </label>
-                                    <input
-                                        id="nequi-account-input"
-                                        type="tel"
-                                        value={nequiAccountNumber}
-                                        onChange={(e) => setNequiAccountNumber(e.target.value.replace(/\D/g, ''))}
-                                        placeholder="Ej: 3001234567"
-                                        disabled={isDetailsConfirmed}
-                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                                    />
-                                </div>
-                                {!isDetailsConfirmed && (
-                                    <div className="md:col-span-2">
-                                        <button
-                                            onClick={handleConfirmDetails}
-                                            className="px-4 py-2 bg-purple-500 text-white font-medium rounded-lg hover:bg-purple-600 transition-colors"
-                                        >
-                                            Confirmar Detalles del Premio
-                                        </button>
-                                    </div>
-                                )}
-
-
                                 {isDetailsConfirmed && (
                                     <>
                                         <div>
@@ -633,3 +636,5 @@ Número de Rifa: ${ticketInfo.raffleNumber}
 };
 
 export default App;
+
+    
