@@ -420,16 +420,16 @@ Número de Rifa: ${ticketInfo.raffleNumber}
                                         className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                                     />
                                 </div>
-                                <div className="md:col-span-2">
-                                     {!isDetailsConfirmed && (
+                                {!isDetailsConfirmed && (
+                                    <div className="md:col-span-2">
                                         <button
                                             onClick={handleConfirmDetails}
                                             className="px-4 py-2 bg-purple-500 text-white font-medium rounded-lg hover:bg-purple-600 transition-colors"
                                         >
                                             Confirmar Detalles del Premio
                                         </button>
-                                    )}
-                                </div>
+                                    </div>
+                                )}
 
 
                                 {isDetailsConfirmed && (
@@ -633,5 +633,3 @@ Número de Rifa: ${ticketInfo.raffleNumber}
 };
 
 export default App;
-
-    
