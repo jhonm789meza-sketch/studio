@@ -17,7 +17,7 @@ const App = () => {
     const [name, setName] = useState('');
     const [phoneNumber, setPhoneNumber] = useState('');
     const [raffleNumber, setRaffleNumber] = useState('');
-    const [paidWithNequi, setPaidWithNequi] = useState(false);
+    const [nequiAccountNumber, setNequiAccountNumber] = useState('');
     const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
     const [ticketInfo, setTicketInfo] = useState(null);
     const [participants, setParticipants] = useState([]);
@@ -162,7 +162,7 @@ const App = () => {
                 setName('');
                 setPhoneNumber('');
                 setRaffleNumber('');
-                setPaidWithNequi(false);
+                setNequiAccountNumber('');
                 setIsWinnerConfirmed(false);
                 setIsDetailsConfirmed(false);
                 setParticipants([]);
@@ -199,7 +199,7 @@ const App = () => {
             name,
             phoneNumber,
             raffleNumber: formattedRaffleNumber,
-            paidWithNequi,
+            nequiAccountNumber,
             timestamp: new Date()
         };
         
@@ -212,7 +212,7 @@ const App = () => {
             name,
             phoneNumber,
             raffleNumber: formattedRaffleNumber,
-            paidWithNequi
+            nequiAccountNumber
         });
         
         setIsTicketModalOpen(true);
@@ -220,7 +220,7 @@ const App = () => {
         setName('');
         setPhoneNumber('');
         setRaffleNumber('');
-        setPaidWithNequi(false);
+        setNequiAccountNumber('');
         prevRaffleNumber.current = null;
 
         showNotification('Tiquete generado correctamente', 'success');
@@ -243,7 +243,7 @@ Valor: ${ticketInfo.value}
 Nombre: ${ticketInfo.name}
 Celular: ${ticketInfo.phoneNumber}
 Número de Rifa: ${ticketInfo.raffleNumber}
-Pago con Nequi: ${ticketInfo.paidWithNequi ? 'Sí' : 'No'}
+${ticketInfo.nequiAccountNumber ? `Cuenta Nequi: ${ticketInfo.nequiAccountNumber}`: ''}
 -------------------------
         `.trim();
 
@@ -470,6 +470,19 @@ Pago con Nequi: ${ticketInfo.paidWithNequi ? 'Sí' : 'No'}
                                         <p className="text-red-500 text-sm mt-1">Este número ya está asignado</p>
                                     )}
                                 </div>
+                                <div>
+                                    <label htmlFor="nequi-account-input" className="block text-sm font-medium text-gray-700 mb-1">
+                                        Número de Cuenta Nequi (Opcional):
+                                    </label>
+                                    <input
+                                        id="nequi-account-input"
+                                        type="tel"
+                                        value={nequiAccountNumber}
+                                        onChange={(e) => setNequiAccountNumber(e.target.value.replace(/\D/g, ''))}
+                                        placeholder="Ej: 3001234567"
+                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                    />
+                                </div>
                                 <div className="flex items-end">
                                     <button
                                         onClick={handleTicketConfirmation}
@@ -479,18 +492,6 @@ Pago con Nequi: ${ticketInfo.paidWithNequi ? 'Sí' : 'No'}
                                         Generar Tiquete
                                     </button>
                                 </div>
-                                 <div className="flex items-center pt-4">
-                                     <input
-                                         id="nequi-checkbox"
-                                         type="checkbox"
-                                         checked={paidWithNequi}
-                                         onChange={(e) => setPaidWithNequi(e.target.checked)}
-                                         className="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
-                                     />
-                                     <label htmlFor="nequi-checkbox" className="ml-2 block text-sm font-medium text-gray-700">
-                                         Consignación Nequi
-                                     </label>
-                                 </div>
                             </div>
                         </fieldset>
 
@@ -602,6 +603,12 @@ Pago con Nequi: ${ticketInfo.paidWithNequi ? 'Sí' : 'No'}
                                 <span className="font-semibold">Número de Rifa:</span>
                                 <span className="text-purple-600 font-bold">{ticketInfo.raffleNumber}</span>
                             </div>
+                             {ticketInfo.nequiAccountNumber && (
+                                <div className="flex justify-between border-b pb-2">
+                                    <span className="font-semibold">Cuenta Nequi:</span>
+                                    <span className="font-mono">{ticketInfo.nequiAccountNumber}</span>
+                                </div>
+                            )}
                         </div>
                         <div className="flex justify-end space-x-3">
                              <button
