@@ -17,6 +17,7 @@ const App = () => {
     const [name, setName] = useState('');
     const [phoneNumber, setPhoneNumber] = useState('');
     const [raffleNumber, setRaffleNumber] = useState('');
+    const [paidWithNequi, setPaidWithNequi] = useState(false);
     const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
     const [ticketInfo, setTicketInfo] = useState(null);
     const [participants, setParticipants] = useState([]);
@@ -161,6 +162,7 @@ const App = () => {
                 setName('');
                 setPhoneNumber('');
                 setRaffleNumber('');
+                setPaidWithNequi(false);
                 setIsWinnerConfirmed(false);
                 setIsDetailsConfirmed(false);
                 setParticipants([]);
@@ -197,6 +199,7 @@ const App = () => {
             name,
             phoneNumber,
             raffleNumber: formattedRaffleNumber,
+            paidWithNequi,
             timestamp: new Date()
         };
         
@@ -208,7 +211,8 @@ const App = () => {
             value: formatValue(value),
             name,
             phoneNumber,
-            raffleNumber: formattedRaffleNumber
+            raffleNumber: formattedRaffleNumber,
+            paidWithNequi
         });
         
         setIsTicketModalOpen(true);
@@ -216,6 +220,7 @@ const App = () => {
         setName('');
         setPhoneNumber('');
         setRaffleNumber('');
+        setPaidWithNequi(false);
         prevRaffleNumber.current = null;
 
         showNotification('Tiquete generado correctamente', 'success');
@@ -238,6 +243,7 @@ Valor: ${ticketInfo.value}
 Nombre: ${ticketInfo.name}
 Celular: ${ticketInfo.phoneNumber}
 Número de Rifa: ${ticketInfo.raffleNumber}
+Pago con Nequi: ${ticketInfo.paidWithNequi ? 'Sí' : 'No'}
 -------------------------
         `.trim();
 
@@ -473,6 +479,18 @@ Número de Rifa: ${ticketInfo.raffleNumber}
                                         Generar Tiquete
                                     </button>
                                 </div>
+                                 <div className="flex items-center pt-4">
+                                     <input
+                                         id="nequi-checkbox"
+                                         type="checkbox"
+                                         checked={paidWithNequi}
+                                         onChange={(e) => setPaidWithNequi(e.target.checked)}
+                                         className="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                                     />
+                                     <label htmlFor="nequi-checkbox" className="ml-2 block text-sm font-medium text-gray-700">
+                                         Consignación Nequi
+                                     </label>
+                                 </div>
                             </div>
                         </fieldset>
 
