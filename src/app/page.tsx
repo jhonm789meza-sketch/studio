@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect, useRef } from 'react';
 
@@ -408,7 +407,7 @@ Número de Rifa: ${ticketInfo.raffleNumber}
                                             ${isWinnerConfirmed ? 'cursor-not-allowed bg-gray-300 text-gray-500' : 'cursor-pointer'}
                                             ${drawnNumbers.has(number)
                                                 ? 'bg-purple-600 text-white shadow-lg transform scale-105 cursor-not-allowed'
-                                                : isWinnerConfirmed ? '' : 'bg-gray-200 text-gray-800 hover:bg-gray-300 hover:shadow-md'
+                                                : isWinnerConfirmed ? '' : 'bg-green-200 text-green-800 hover:bg-green-300 hover:shadow-md'
                                             }
                                         `}
                                     >
@@ -618,3 +617,5 @@ Número de Rifa: ${ticketInfo.raffleNumber}
 };
 
 export default App;
+
+    
