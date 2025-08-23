@@ -221,6 +221,12 @@ const App = () => {
         showNotification('Tiquete generado correctamente', 'success');
     };
 
+    const handlePayment = () => {
+        // Lógica de pago simulada
+        showNotification('Pago realizado con éxito!', 'success');
+        setIsTicketModalOpen(false); // Cierra el modal después de pagar
+    };
+
     const handleDownloadTicket = () => {
         if (!ticketInfo) return;
         
@@ -580,6 +586,12 @@ Número de Rifa: ${ticketInfo.raffleNumber}
                             </div>
                         </div>
                         <div className="flex justify-end space-x-3">
+                             <button
+                                onClick={handlePayment}
+                                className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+                            >
+                                Pagar
+                            </button>
                             <button
                                 onClick={handleDownloadTicket}
                                 className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors"
