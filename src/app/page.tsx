@@ -27,8 +27,8 @@ const mockDb = {
     onSnapshot: (ref, callback) => {
         if (ref.path?.includes('raffles')) {
             const rafflesData = [
-                { id: 'raffle2', name: 'Rifa Tecnológica', price: 10, totalTickets: 100, tickets: Array.from({length: 100}, (_, i) => ({number: i+1, isSold: Math.random() > 0.5, ownerId: Math.random() > 0.5 ? `user${i}`: null, ownerName: `User ${i}`})), status: 'open', winner: null },
-                { id: 'raffle3', name: 'Premio Final', price: 20, totalTickets: 25, tickets: Array.from({length: 25}, (_, i) => ({number: i+1, isSold: true, ownerId: `user${i}`, ownerName: `User ${i}`})), status: 'closed', winner: {number: 17, ownerName: 'Ganador X'} },
+                { id: 'raffle2', name: 'Rifa Tecnológica', prize: 'Un Smart TV de 55 pulgadas', price: 10, totalTickets: 100, tickets: Array.from({length: 100}, (_, i) => ({number: i+1, isSold: Math.random() > 0.5, ownerId: Math.random() > 0.5 ? `user${i}`: null, ownerName: `User ${i}`})), status: 'open', winner: null },
+                { id: 'raffle3', name: 'Premio Final', prize: 'Una consola de videojuegos de última generación', price: 20, totalTickets: 25, tickets: Array.from({length: 25}, (_, i) => ({number: i+1, isSold: true, ownerId: `user${i}`, ownerName: `User ${i}`})), status: 'closed', winner: {number: 17, ownerName: 'Ganador X'} },
             ];
             const snapshot = { docs: rafflesData.map(d => ({ id: d.id, data: () => d })) };
             callback(snapshot);
@@ -42,7 +42,7 @@ const mockDb = {
     addDoc: () => Promise.resolve(),
     getDoc: (ref) => {
        if (ref.path?.includes('raffles')) {
-            const raffleData = { name: 'Rifa Tecnológica', price: 10, totalTickets: 100, tickets: Array.from({length: 100}, (_, i) => ({number: i+1, isSold: Math.random() > 0.5, ownerId: `user${i}`, ownerName: `User ${i}`})), status: 'open', winner: null };
+            const raffleData = { name: 'Rifa Tecnológica', prize: 'Un Smart TV de 55 pulgadas', price: 10, totalTickets: 100, tickets: Array.from({length: 100}, (_, i) => ({number: i+1, isSold: Math.random() > 0.5, ownerId: `user${i}`, ownerName: `User ${i}`})), status: 'open', winner: null };
             return Promise.resolve({ exists: () => true, data: () => raffleData });
         }
         return Promise.resolve({exists: () => false});
@@ -269,6 +269,7 @@ function MainApp() {
     const [isCreatingRaffle, setIsCreatingRaffle] = useState(false);
     const [isShowingMyTickets, setIsShowingMyTickets] = useState(false);
     const [newRaffleName, setNewRaffleName] = useState('');
+    const [newRafflePrize, setNewRafflePrize] = useState('');
     const [newRafflePrice, setNewRafflePrice] = useState(10);
     const [newRaffleTotalTickets, setNewRaffleTotalTickets] = useState(100);
     const [currentRaffleId, setCurrentRaffleId] = useState(null);
@@ -315,6 +316,7 @@ function MainApp() {
         try {
             showMessage('Rifa creada exitosamente (simulado).');
             setNewRaffleName('');
+            setNewRafflePrize('');
             setNewRafflePrice(10);
             setNewRaffleTotalTickets(100);
             setIsCreatingRaffle(false);
@@ -448,6 +450,8 @@ function MainApp() {
                             handleCreateRaffle={handleCreateRaffle}
                             newRaffleName={newRaffleName}
                             setNewRaffleName={setNewRaffleName}
+                            newRafflePrize={newRafflePrize}
+                            setNewRafflePrize={setNewRafflePrize}
                             newRafflePrice={newRafflePrice}
                             setNewRafflePrice={setNewRafflePrice}
                             newRaffleTotalTickets={newRaffleTotalTickets}
@@ -462,7 +466,7 @@ function MainApp() {
 }
 
 // Component to display the list of raffles
-function RaffleList({ raffles, handleViewRaffleDetails, isCreatingRaffle, handleCreateRaffle, newRaffleName, setNewRaffleName, newRafflePrice, setNewRafflePrice, newRaffleTotalTickets, setNewRaffleTotalTickets, setIsCreatingRaffle }) {
+function RaffleList({ raffles, handleViewRaffleDetails, isCreatingRaffle, handleCreateRaffle, newRaffleName, setNewRaffleName, newRafflePrize, setNewRafflePrize, newRafflePrice, setNewRafflePrice, newRaffleTotalTickets, setNewRaffleTotalTickets, setIsCreatingRaffle }) {
     const { userId } = useContext(AppContext);
     const [isAdmin, setIsAdmin] = useState(false);
     const { db } = useContext(AppContext);
@@ -509,9 +513,17 @@ function RaffleList({ raffles, handleViewRaffleDetails, isCreatingRaffle, handle
                     <form onSubmit={handleCreateRaffle} className="space-y-4">
                         <input
                             type="text"
-                            placeholder="Nombre del Premio"
+                            placeholder="Título de la Rifa"
                             value={newRaffleName}
                             onChange={(e) => setNewRaffleName(e.target.value)}
+                            className="w-full p-4 rounded-xl border border-gray-700 bg-gray-900 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 shadow-inner"
+                            required
+                        />
+                         <input
+                            type="text"
+                            placeholder="Premio (ej. Smart TV, consola, etc.)"
+                            value={newRafflePrize}
+                            onChange={(e) => setNewRafflePrize(e.target.value)}
                             className="w-full p-4 rounded-xl border border-gray-700 bg-gray-900 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 shadow-inner"
                             required
                         />
@@ -548,6 +560,7 @@ function RaffleList({ raffles, handleViewRaffleDetails, isCreatingRaffle, handle
                     raffles.map(raffle => (
                         <div key={raffle.id} className="bg-gray-800 p-6 rounded-3xl shadow-[0_10px_30px_rgba(0,0,0,0.5)] flex flex-col justify-between transform transition-transform duration-300 hover:scale-[1.02]">
                             <h3 className="text-2xl font-semibold text-white mb-2 bg-clip-text text-transparent bg-gradient-to-r from-pink-400 to-yellow-400">{raffle.name}</h3>
+                            <p className="text-md font-medium text-gray-300 mb-2"><Gift className="inline-block h-4 w-4 mr-2" />{raffle.prize}</p>
                             <p className="text-md font-medium text-gray-400">Precio por boleto: <span className="text-pink-400 font-bold">${raffle.price}</span></p>
                             <p className="text-sm font-medium text-gray-500">Boletos vendidos: <span className="font-semibold text-gray-300">{raffle.tickets.filter(t => t.isSold).length}</span> de {raffle.totalTickets}</p>
                             <div className="w-full bg-gray-700 rounded-full h-2 mt-2">
@@ -620,7 +633,8 @@ function RaffleDetails({ raffleDetails, handleBuyTicket, handleSelectWinner, set
             </div>
 
             <div className="bg-gray-800 p-6 rounded-3xl shadow-[0_10px_30px_rgba(0,0,0,0.5)] space-y-4">
-                <p className="text-lg font-semibold text-white flex items-center space-x-2"><Gift /> <span>Precio por boleto: <span className="text-purple-400">${raffleDetails.price}</span></span></p>
+                <p className="text-lg font-semibold text-white flex items-center space-x-2"><Gift /> <span>Premio: <span className="text-purple-400">{raffleDetails.prize}</span></span></p>
+                <p className="text-lg font-semibold text-white flex items-center space-x-2"><Ticket /> <span>Precio por boleto: <span className="text-purple-400">${raffleDetails.price}</span></span></p>
                 <p className="text-sm text-gray-400">Total de boletos: {raffleDetails.totalTickets}</p>
                 <p className="text-sm text-gray-400">Boletos vendidos: <span className="font-bold text-white">{soldTicketsCount}</span></p>
                 <div className="w-full bg-gray-700 rounded-full h-3">
