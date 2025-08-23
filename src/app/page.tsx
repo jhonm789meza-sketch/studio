@@ -491,7 +491,12 @@ Número de Rifa: ${ticketInfo.raffleNumber}
 
                     <div className={`tab-content ${activeTab === 'participants' ? 'active' : ''}`}>
                         <h2 className="text-2xl font-bold text-gray-800 mb-4">Participantes Registrados</h2>
-                        {participants.length > 0 ? (
+                        {!isDetailsConfirmed ? (
+                            <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-6" role="alert">
+                                <p className="font-bold">Aviso</p>
+                                <p>Debes confirmar los detalles del premio en la pestaña "Tablero" para poder ver los participantes.</p>
+                            </div>
+                        ) : participants.length > 0 ? (
                             <div className="overflow-x-auto">
                                 <table className="min-w-full divide-y divide-gray-200">
                                     <thead className="bg-gray-50">
