@@ -45,27 +45,22 @@ const App = () => {
         setConfirmationAction(() => action);
         setShowConfirmation(true);
     };
-
+    
     const formatValue = (rawValue) => {
         if (!rawValue) return '';
-        const numericValue = rawValue.replace(/[^\d.]/g, '');
-        if (!numericValue) return '';
+        const numericValue = rawValue.toString().replace(/[^\d]/g, '');
+        if (numericValue === '') return '';
         
         const number = parseFloat(numericValue);
         if (isNaN(number)) return '';
         
-        return currencySymbol + number.toLocaleString('es-ES', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+        return currencySymbol + ' ' + number.toLocaleString('es-CO');
     };
 
     const handleValueChange = (e) => {
         const inputValue = e.target.value;
-        const cleanedValue = inputValue.replace(/[^\d.]/g, '');
-        const parts = cleanedValue.split('.');
-        if (parts.length > 2) {
-            setValue(parts[0] + '.' + parts.slice(1).join(''));
-        } else {
-            setValue(cleanedValue);
-        }
+        const numericValue = inputValue.replace(/[^\d]/g, '');
+        setValue(numericValue);
     };
 
     const handleRaffleNumberChange = (e) => {
@@ -295,7 +290,7 @@ Número de Rifa: ${ticketInfo.raffleNumber}
                                         type="text"
                                         value={formatValue(value)}
                                         onChange={handleValueChange}
-                                        placeholder="Ej: 5,000,000.00"
+                                        placeholder="Ej: 5.000.000"
                                         disabled={isDetailsConfirmed}
                                         className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                                     />
@@ -358,7 +353,7 @@ Número de Rifa: ${ticketInfo.raffleNumber}
                                             ${isWinnerConfirmed ? 'cursor-not-allowed bg-gray-300 text-gray-500' : 'cursor-pointer'}
                                             ${isDetailsConfirmed && drawnNumbers.has(number)
                                                 ? 'bg-red-600 text-white shadow-lg transform scale-105 cursor-not-allowed'
-                                                : isWinnerConfirmed ? '' : 'bg-green-200 text-green-800 hover:bg-green-300 hover:shadow-md'
+                                                : 'bg-green-200 text-green-800 hover:bg-green-300 hover:shadow-md'
                                             }
                                         `}
                                     >
