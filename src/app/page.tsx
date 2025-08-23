@@ -32,15 +32,6 @@ const App = () => {
             setDb({}); 
             setUserId('demo-user-id');
             setLoading(false);
-            
-            setParticipants([
-                { id: 1, name: 'Juan Pérez', phoneNumber: '3001234567', raffleNumber: '05' },
-                { id: 2, name: 'María García', phoneNumber: '3109876543', raffleNumber: '12' },
-                { id: 3, name: 'Carlos Rodríguez', phoneNumber: '3204567890', raffleNumber: '23' }
-            ]);
-            
-            const exampleDrawn = new Set([5, 12, 23]);
-            setDrawnNumbers(exampleDrawn);
         }, 1000);
     }, []);
 
