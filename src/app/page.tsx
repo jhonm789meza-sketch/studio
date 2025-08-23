@@ -433,77 +433,71 @@ Número de Rifa: ${ticketInfo.raffleNumber}
 
                     <div className={`tab-content ${activeTab === 'register' ? 'active' : ''}`}>
                         <h2 className="text-2xl font-bold text-gray-800 mb-4">Registrar Participante</h2>
-                        <fieldset disabled={isWinnerConfirmed} className="disabled:opacity-50">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                                {isDetailsConfirmed && (
-                                    <>
-                                        <div>
-                                            <label htmlFor="name-input" className="block text-sm font-medium text-gray-700 mb-1">
-                                                Nombre completo:
-                                            </label>
-                                            <input
-                                                id="name-input"
-                                                type="text"
-                                                value={name}
-                                                onChange={(e) => setName(e.target.value)}
-                                                placeholder="Ej: Juan Pérez"
-                                                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label htmlFor="phone-input" className="block text-sm font-medium text-gray-700 mb-1">
-                                                Celular:
-                                            </label>
-                                            <input
-                                                id="phone-input"
-                                                type="tel"
-                                                value={phoneNumber}
-                                                onChange={(e) => setPhoneNumber(e.target.value)}
-                                                placeholder="Ej: 3001234567"
-                                                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label htmlFor="raffle-number-input" className="block text-sm font-medium text-gray-700 mb-1">
-                                                Número de rifa (1-99):
-                                            </label>
-                                            <input
-                                                id="raffle-number-input"
-                                                type="text"
-                                                value={raffleNumber}
-                                                onChange={handleRaffleNumberChange}
-                                                placeholder="Ej: 5"
-                                                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                            />
-                                            {raffleNumber && drawnNumbers.has(parseInt(raffleNumber)) && (
-                                                <p className="text-red-500 text-sm mt-1">Este número ya está asignado</p>
-                                            )}
-                                        </div>
-                                        <div className="flex items-end">
-                                            <button
-                                                onClick={handleTicketConfirmation}
-                                                disabled={!name || !phoneNumber || !raffleNumber || drawnNumbers.has(parseInt(raffleNumber)) || isWinnerConfirmed}
-                                                className="px-4 py-2 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-                                            >
-                                                Generar Tiquete
-                                            </button>
-                                        </div>
-                                    </>
+                        <fieldset disabled={isWinnerConfirmed || !isDetailsConfirmed} className="disabled:opacity-50 space-y-4">
+                            <div>
+                                <label htmlFor="name-input" className="block text-sm font-medium text-gray-700 mb-1">
+                                    Nombre completo:
+                                </label>
+                                <input
+                                    id="name-input"
+                                    type="text"
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
+                                    placeholder="Ej: Juan Pérez"
+                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                />
+                            </div>
+                            <div>
+                                <label htmlFor="phone-input" className="block text-sm font-medium text-gray-700 mb-1">
+                                    Celular:
+                                </label>
+                                <input
+                                    id="phone-input"
+                                    type="tel"
+                                    value={phoneNumber}
+                                    onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ''))}
+                                    placeholder="Ej: 3001234567"
+                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                />
+                            </div>
+                            <div>
+                                <label htmlFor="raffle-number-input" className="block text-sm font-medium text-gray-700 mb-1">
+                                    Número de rifa (1-99):
+                                </label>
+                                <input
+                                    id="raffle-number-input"
+                                    type="text"
+                                    value={raffleNumber}
+                                    onChange={handleRaffleNumberChange}
+                                    placeholder="Ej: 5"
+                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                />
+                                {raffleNumber && drawnNumbers.has(parseInt(raffleNumber)) && (
+                                    <p className="text-red-500 text-sm mt-1">Este número ya está asignado</p>
                                 )}
+                            </div>
+                            <div>
+                                <button
+                                    onClick={handleTicketConfirmation}
+                                    disabled={!name || !phoneNumber || !raffleNumber || drawnNumbers.has(parseInt(raffleNumber)) || isWinnerConfirmed}
+                                    className="px-4 py-2 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                                >
+                                    Generar Tiquete
+                                </button>
                             </div>
                         </fieldset>
 
-                        {isWinnerConfirmed && (
-                            <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4" role="alert">
-                                <p className="font-bold">Juego terminado</p>
-                                <p>El registro de nuevos participantes está deshabilitado porque ya se ha confirmado un ganador. Reinicia el tablero para comenzar una nueva rifa.</p>
+                        {!isDetailsConfirmed && (
+                             <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-6" role="alert">
+                                <p className="font-bold">Aviso</p>
+                                <p>Debes confirmar los detalles del premio en la pestaña "Tablero" para poder registrar participantes.</p>
                             </div>
                         )}
-                        
-                        {isDetailsConfirmed && (
-                            <div className="bg-purple-50 p-4 rounded-lg border border-purple-200 mt-4">
-                                <h3 className="font-semibold text-purple-800">Premio en juego:</h3>
-                                <p className="text-lg">{prize} - {formatValue(value)}</p>
+
+                        {isWinnerConfirmed && (
+                            <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-6" role="alert">
+                                <p className="font-bold">Juego terminado</p>
+                                <p>El registro de nuevos participantes está deshabilitado porque ya se ha confirmado un ganador. Reinicia el tablero para comenzar una nueva rifa.</p>
                             </div>
                         )}
                     </div>
