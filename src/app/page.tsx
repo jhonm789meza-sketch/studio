@@ -406,7 +406,7 @@ Número de Rifa: ${ticketInfo.raffleNumber}
                                             number-cell text-center py-2 rounded-lg transition-all 
                                             ${isWinnerConfirmed ? 'cursor-not-allowed bg-gray-300 text-gray-500' : 'cursor-pointer'}
                                             ${drawnNumbers.has(number)
-                                                ? 'bg-purple-600 text-white shadow-lg transform scale-105 cursor-not-allowed'
+                                                ? 'bg-red-600 text-white shadow-lg transform scale-105 cursor-not-allowed'
                                                 : isWinnerConfirmed ? '' : 'bg-green-200 text-green-800 hover:bg-green-300 hover:shadow-md'
                                             }
                                         `}
