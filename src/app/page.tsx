@@ -369,18 +369,6 @@ Número de Rifa: ${ticketInfo.raffleNumber}
                          </div>
                         <div className="mb-6">
                             <h2 className="text-2xl font-bold text-gray-800 mb-4">Sorteo</h2>
-                            <div className="bg-gray-50 p-4 rounded-lg mb-4">
-                                <p className="text-lg font-semibold text-gray-700">Último número sorteado:</p>
-                                <div className="mt-2 text-5xl font-bold text-purple-600">
-                                    {lastDrawnNumber !== null ? (typeof lastDrawnNumber === 'number' ? String(lastDrawnNumber).padStart(2, '0') : lastDrawnNumber) : '--'}
-                                </div>
-                                {isWinnerConfirmed && (
-                                    <p className="text-green-600 font-bold mt-2 text-lg">
-                                        ¡Ganador confirmado! El juego ha terminado.
-                                    </p>
-                                )}
-                            </div>
-                            
                             <div className="flex flex-wrap gap-3">
                                 {isDetailsConfirmed && (
                                     <button
@@ -630,5 +618,3 @@ Número de Rifa: ${ticketInfo.raffleNumber}
 };
 
 export default App;
-
-    
