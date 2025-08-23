@@ -88,37 +88,6 @@ const App = () => {
         }
     };
 
-    const drawRandomNumber = () => {
-        if (!db || isWinnerConfirmed) return;
-        
-        const allNumbers = Array.from({ length: 99 }, (_, i) => i + 1);
-        const takenNumbers = new Set(participants.map(p => parseInt(p.raffleNumber, 10)));
-        const availableNumbers = allNumbers.filter(num => !takenNumbers.has(num));
-        
-        if (availableNumbers.length > 0) {
-            const randomIndex = Math.floor(Math.random() * availableNumbers.length);
-            const newDrawnNumber = availableNumbers[randomIndex];
-            
-            const newParticipant = {
-                id: Date.now(),
-                raffleNumber: newDrawnNumber.toString(),
-                name: 'Sorteo',
-                phoneNumber: 'N/A',
-                timestamp: new Date()
-            };
-            
-            setParticipants([...participants, newParticipant]);
-            setDrawnNumbers(new Set([...drawnNumbers, newDrawnNumber]));
-            setLastDrawnNumber(newDrawnNumber);
-            setIsWinnerConfirmed(false);
-            
-            showNotification(`Número ${newDrawnNumber} sorteado!`, 'success');
-        } else {
-            setLastDrawnNumber('¡Todos los números han sido sorteados!');
-            showNotification('Todos los números han sido sorteados', 'info');
-        }
-    };
-
     const toggleNumber = (number) => {
         if (isWinnerConfirmed) {
             showNotification('El juego ha terminado. Reinicia el tablero para comenzar de nuevo.', 'info');
