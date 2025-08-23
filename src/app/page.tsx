@@ -311,56 +311,6 @@ Número de Rifa: ${ticketInfo.raffleNumber}
 
                     <div className={`tab-content ${activeTab === 'board' ? 'active' : ''}`}>
                         <div className="mb-6">
-                            <h2 className="text-2xl font-bold text-gray-800 mb-4">Configuración del Premio</h2>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                                <div>
-                                    <label htmlFor="prize-input" className="block text-sm font-medium text-gray-700 mb-1">
-                                        Premio:
-                                    </label>
-                                    <input
-                                        id="prize-input"
-                                        type="text"
-                                        value={prize}
-                                        onChange={(e) => setPrize(e.target.value)}
-                                        placeholder="Ej: Carro, Moto, Dinero"
-                                        disabled={isDetailsConfirmed}
-                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                                    />
-                                </div>
-                                <div>
-                                    <label htmlFor="value-input" className="block text-sm font-medium text-gray-700 mb-1">
-                                        Valor:
-                                    </label>
-                                    <input
-                                        id="value-input"
-                                        type="text"
-                                        value={formatValue(value)}
-                                        onChange={handleValueChange}
-                                        placeholder="Ej: 5,000,000.00"
-                                        disabled={isDetailsConfirmed}
-                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                                    />
-                                </div>
-                            </div>
-                            
-                            {prize && value && !isDetailsConfirmed && (
-                                <button
-                                    onClick={handleConfirmDetails}
-                                    className="px-4 py-2 bg-purple-500 text-white font-medium rounded-lg hover:bg-purple-600 transition-colors"
-                                >
-                                    Confirmar Detalles del Premio
-                                </button>
-                            )}
-                            
-                            {isDetailsConfirmed && (
-                                <div className="mt-4 p-4 bg-green-50 rounded-lg border border-green-200">
-                                    <h3 className="font-semibold text-green-800">Premio confirmado:</h3>
-                                    <p className="text-lg">{prize} - {formatValue(value)}</p>
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="mb-6">
                             <h2 className="text-2xl font-bold text-gray-800 mb-4">Sorteo</h2>
                             <div className="bg-gray-50 p-4 rounded-lg mb-4">
                                 <p className="text-lg font-semibold text-gray-700">Último número sorteado:</p>
@@ -429,46 +379,32 @@ Número de Rifa: ${ticketInfo.raffleNumber}
                         <fieldset disabled={isWinnerConfirmed} className="disabled:opacity-50">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                                 <div>
-                                    <label htmlFor="name-input" className="block text-sm font-medium text-gray-700 mb-1">
-                                        Nombre completo:
+                                    <label htmlFor="prize-input" className="block text-sm font-medium text-gray-700 mb-1">
+                                        Premio:
                                     </label>
                                     <input
-                                        id="name-input"
+                                        id="prize-input"
                                         type="text"
-                                        value={name}
-                                        onChange={(e) => setName(e.target.value)}
-                                        placeholder="Ej: Juan Pérez"
-                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                        value={prize}
+                                        onChange={(e) => setPrize(e.target.value)}
+                                        placeholder="Ej: Carro, Moto, Dinero"
+                                        disabled={isDetailsConfirmed}
+                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                                     />
                                 </div>
                                 <div>
-                                    <label htmlFor="phone-input" className="block text-sm font-medium text-gray-700 mb-1">
-                                        Celular:
+                                    <label htmlFor="value-input" className="block text-sm font-medium text-gray-700 mb-1">
+                                        Valor:
                                     </label>
                                     <input
-                                        id="phone-input"
-                                        type="tel"
-                                        value={phoneNumber}
-                                        onChange={(e) => setPhoneNumber(e.target.value)}
-                                        placeholder="Ej: 3001234567"
-                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                    />
-                                </div>
-                                <div>
-                                    <label htmlFor="raffle-number-input" className="block text-sm font-medium text-gray-700 mb-1">
-                                        Número de rifa (1-99):
-                                    </label>
-                                    <input
-                                        id="raffle-number-input"
+                                        id="value-input"
                                         type="text"
-                                        value={raffleNumber}
-                                        onChange={handleRaffleNumberChange}
-                                        placeholder="Ej: 5"
-                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                        value={formatValue(value)}
+                                        onChange={handleValueChange}
+                                        placeholder="Ej: 5,000,000.00"
+                                        disabled={isDetailsConfirmed}
+                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                                     />
-                                    {raffleNumber && drawnNumbers.has(parseInt(raffleNumber)) && (
-                                        <p className="text-red-500 text-sm mt-1">Este número ya está asignado</p>
-                                    )}
                                 </div>
                                 <div>
                                     <label htmlFor="nequi-account-input" className="block text-sm font-medium text-gray-700 mb-1">
@@ -480,18 +416,77 @@ Número de Rifa: ${ticketInfo.raffleNumber}
                                         value={nequiAccountNumber}
                                         onChange={(e) => setNequiAccountNumber(e.target.value.replace(/\D/g, ''))}
                                         placeholder="Ej: 3001234567"
-                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                        disabled={isDetailsConfirmed}
+                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                                     />
                                 </div>
-                                <div className="flex items-end">
-                                    <button
-                                        onClick={handleTicketConfirmation}
-                                        disabled={!name || !phoneNumber || !raffleNumber || drawnNumbers.has(parseInt(raffleNumber)) || isWinnerConfirmed}
-                                        className="px-4 py-2 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-                                    >
-                                        Generar Tiquete
-                                    </button>
+                                <div className="md:col-span-2">
+                                     {!isDetailsConfirmed && (
+                                        <button
+                                            onClick={handleConfirmDetails}
+                                            className="px-4 py-2 bg-purple-500 text-white font-medium rounded-lg hover:bg-purple-600 transition-colors"
+                                        >
+                                            Confirmar Detalles del Premio
+                                        </button>
+                                    )}
                                 </div>
+
+
+                                {isDetailsConfirmed && (
+                                    <>
+                                        <div>
+                                            <label htmlFor="name-input" className="block text-sm font-medium text-gray-700 mb-1">
+                                                Nombre completo:
+                                            </label>
+                                            <input
+                                                id="name-input"
+                                                type="text"
+                                                value={name}
+                                                onChange={(e) => setName(e.target.value)}
+                                                placeholder="Ej: Juan Pérez"
+                                                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label htmlFor="phone-input" className="block text-sm font-medium text-gray-700 mb-1">
+                                                Celular:
+                                            </label>
+                                            <input
+                                                id="phone-input"
+                                                type="tel"
+                                                value={phoneNumber}
+                                                onChange={(e) => setPhoneNumber(e.target.value)}
+                                                placeholder="Ej: 3001234567"
+                                                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label htmlFor="raffle-number-input" className="block text-sm font-medium text-gray-700 mb-1">
+                                                Número de rifa (1-99):
+                                            </label>
+                                            <input
+                                                id="raffle-number-input"
+                                                type="text"
+                                                value={raffleNumber}
+                                                onChange={handleRaffleNumberChange}
+                                                placeholder="Ej: 5"
+                                                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                            />
+                                            {raffleNumber && drawnNumbers.has(parseInt(raffleNumber)) && (
+                                                <p className="text-red-500 text-sm mt-1">Este número ya está asignado</p>
+                                            )}
+                                        </div>
+                                        <div className="flex items-end">
+                                            <button
+                                                onClick={handleTicketConfirmation}
+                                                disabled={!name || !phoneNumber || !raffleNumber || drawnNumbers.has(parseInt(raffleNumber)) || isWinnerConfirmed}
+                                                className="px-4 py-2 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                                            >
+                                                Generar Tiquete
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
                             </div>
                         </fieldset>
 
