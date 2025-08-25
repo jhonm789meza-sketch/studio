@@ -174,7 +174,7 @@ const App = () => {
         setName('');
         setPhoneNumber('');
         setRaffleNumber('');
-        setNequiAccountNumber('');
+        
         prevRaffleNumber.current = null;
 
         showNotification('Tiquete generado correctamente', 'success');
