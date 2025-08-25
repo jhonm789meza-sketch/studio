@@ -1,5 +1,8 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
+
 
 const App = () => {
     const [db, setDb] = useState(null);
@@ -25,6 +28,7 @@ const App = () => {
     const [confirmationAction, setConfirmationAction] = useState(null);
     const [notification, setNotification] = useState({ show: false, message: '', type: '' });
     const prevRaffleNumber = useRef(null);
+    const ticketModalRef = useRef(null);
 
     // Simulación de Firebase
     useEffect(() => {
@@ -189,34 +193,19 @@ const App = () => {
     };
 
     const handleDownloadTicket = () => {
-        if (!ticketInfo) return;
-        
-        const ticketText = `
---- Tiquete de Compra ---
-Fecha: ${ticketInfo.date} ${ticketInfo.time}
-Premio: ${ticketInfo.prize}
-Valor: ${ticketInfo.value}
-${ticketInfo.nequiAccountNumber ? `Cuenta Nequi: ${ticketInfo.nequiAccountNumber}`: ''}
--------------------------
-Nombre: ${ticketInfo.name}
-Celular: ${ticketInfo.phoneNumber}
-Número de Rifa: ${ticketInfo.raffleNumber}
--------------------------
-        `.trim();
+        if (!ticketModalRef.current) return;
 
-        const blob = new Blob([ticketText], { type: 'text/plain' });
-        const url = URL.createObjectURL(blob);
-        
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `tiquete_${ticketInfo.raffleNumber}.txt`;
-        document.body.appendChild(a);
-        a.click();
-        
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        
-        showNotification('Tiquete descargado', 'success');
+        html2canvas(ticketModalRef.current, { scale: 2 }).then((canvas) => {
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF({
+                orientation: 'portrait',
+                unit: 'px',
+                format: [canvas.width, canvas.height]
+            });
+            pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+            pdf.save(`tiquete_${ticketInfo.raffleNumber}.pdf`);
+            showNotification('Tiquete descargado', 'success');
+        });
     };
 
     const allNumbers = Array.from({ length: 99 }, (_, i) => i + 1);
@@ -522,64 +511,66 @@ Número de Rifa: ${ticketInfo.raffleNumber}
 
             {isTicketModalOpen && ticketInfo && (
                 <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
-                    <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full font-sans">
-                        <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-4 rounded-t-2xl text-center">
-                             <h2 className="text-2xl font-bold text-white">Tiquete de Rifa</h2>
-                        </div>
-                        <div className="p-6">
-                            <div className="text-center mb-6">
-                                <p className="text-gray-500">Número de Rifa</p>
-                                <p className="text-6xl font-extrabold text-purple-600">{ticketInfo.raffleNumber}</p>
+                    <div ref={ticketModalRef}>
+                        <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full font-sans">
+                            <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-4 rounded-t-2xl text-center">
+                                 <h2 className="text-2xl font-bold text-white">Tiquete de Rifa</h2>
                             </div>
-                            
-                            <div className="space-y-3 text-sm">
-                                <div className="flex justify-between">
-                                    <span className="font-semibold text-gray-600">Fecha:</span>
-                                    <span className="text-gray-800">{ticketInfo.date}</span>
+                            <div className="p-6">
+                                <div className="text-center mb-6">
+                                    <p className="text-gray-500">Número de Rifa</p>
+                                    <p className="text-6xl font-extrabold text-purple-600">{ticketInfo.raffleNumber}</p>
                                 </div>
-                                <div className="flex justify-between">
-                                    <span className="font-semibold text-gray-600">Hora:</span>
-                                    <span className="text-gray-800">{ticketInfo.time}</span>
-                                </div>
-                                 <div className="flex justify-between">
-                                    <span className="font-semibold text-gray-600">Premio:</span>
-                                    <span className="text-gray-800 font-medium">{ticketInfo.prize}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="font-semibold text-gray-600">Valor:</span>
-                                    <span className="text-gray-800 font-medium">{ticketInfo.value}</span>
-                                </div>
-                                {ticketInfo.nequiAccountNumber && (
+                                
+                                <div className="space-y-3 text-sm">
                                     <div className="flex justify-between">
-                                        <span className="font-semibold text-gray-600">Cuenta Nequi:</span>
-                                        <span className="font-mono text-gray-800">{ticketInfo.nequiAccountNumber}</span>
+                                        <span className="font-semibold text-gray-600">Fecha:</span>
+                                        <span className="text-gray-800">{ticketInfo.date}</span>
                                     </div>
-                                )}
-                                <hr className="my-3"/>
-                                <div className="flex justify-between">
-                                    <span className="font-semibold text-gray-600">Nombre:</span>
-                                    <span className="text-gray-800">{ticketInfo.name}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="font-semibold text-gray-600">Celular:</span>
-                                    <span className="text-gray-800">{ticketInfo.phoneNumber}</span>
+                                    <div className="flex justify-between">
+                                        <span className="font-semibold text-gray-600">Hora:</span>
+                                        <span className="text-gray-800">{ticketInfo.time}</span>
+                                    </div>
+                                     <div className="flex justify-between">
+                                        <span className="font-semibold text-gray-600">Premio:</span>
+                                        <span className="text-gray-800 font-medium">{ticketInfo.prize}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="font-semibold text-gray-600">Valor:</span>
+                                        <span className="text-gray-800 font-medium">{ticketInfo.value}</span>
+                                    </div>
+                                    {ticketInfo.nequiAccountNumber && (
+                                        <div className="flex justify-between">
+                                            <span className="font-semibold text-gray-600">Cuenta Nequi:</span>
+                                            <span className="font-mono text-gray-800">{ticketInfo.nequiAccountNumber}</span>
+                                        </div>
+                                    )}
+                                    <hr className="my-3"/>
+                                    <div className="flex justify-between">
+                                        <span className="font-semibold text-gray-600">Nombre:</span>
+                                        <span className="text-gray-800">{ticketInfo.name}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="font-semibold text-gray-600">Celular:</span>
+                                        <span className="text-gray-800">{ticketInfo.phoneNumber}</span>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <div className="p-6 bg-gray-50 rounded-b-2xl flex justify-end space-x-3">
-                             <button
-                                onClick={handleDownloadTicket}
-                                className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors font-semibold"
-                            >
-                                Descargar
-                            </button>
-                            <button
-                                onClick={() => setIsTicketModalOpen(false)}
-                                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-semibold"
-                            >
-                                Cerrar
-                            </button>
+                            <div className="p-6 bg-gray-50 rounded-b-2xl flex justify-end space-x-3">
+                                 <button
+                                    onClick={handleDownloadTicket}
+                                    className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors font-semibold"
+                                >
+                                    Descargar
+                                </button>
+                                <button
+                                    onClick={() => setIsTicketModalOpen(false)}
+                                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-semibold"
+                                >
+                                    Cerrar
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
