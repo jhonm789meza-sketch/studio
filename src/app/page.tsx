@@ -511,66 +511,65 @@ const App = () => {
 
             {isTicketModalOpen && ticketInfo && (
                 <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
-                    <div ref={ticketModalRef}>
-                        <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full font-sans">
-                            <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-4 rounded-t-2xl text-center">
-                                 <h2 className="text-2xl font-bold text-white">Tiquete de Rifa</h2>
+                    <div ref={ticketModalRef} className="bg-white rounded-xl shadow-2xl w-full max-w-md font-sans">
+                         <div className="relative h-48 bg-gradient-to-r from-purple-600 to-blue-600 flex items-center justify-center rounded-t-xl">
+                            <h2 className="text-3xl font-bold text-white tracking-wider">TIQUETE DE RIFA</h2>
+                            <div className="absolute -bottom-6 w-full flex justify-between">
+                                <div className="w-12 h-12 bg-white rounded-full"></div>
+                                <div className="w-full border-t-4 border-dashed border-white mt-6"></div>
+                                <div className="w-12 h-12 bg-white rounded-full"></div>
                             </div>
-                            <div className="p-6">
-                                <div className="text-center mb-6">
-                                    <p className="text-gray-500">Número de Rifa</p>
-                                    <p className="text-6xl font-extrabold text-purple-600">{ticketInfo.raffleNumber}</p>
-                                </div>
-                                
-                                <div className="space-y-3 text-sm">
-                                    <div className="flex justify-between">
-                                        <span className="font-semibold text-gray-600">Fecha:</span>
-                                        <span className="text-gray-800">{ticketInfo.date}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span className="font-semibold text-gray-600">Hora:</span>
-                                        <span className="text-gray-800">{ticketInfo.time}</span>
-                                    </div>
-                                     <div className="flex justify-between">
-                                        <span className="font-semibold text-gray-600">Premio:</span>
-                                        <span className="text-gray-800 font-medium">{ticketInfo.prize}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span className="font-semibold text-gray-600">Valor:</span>
-                                        <span className="text-gray-800 font-medium">{ticketInfo.value}</span>
-                                    </div>
-                                    {ticketInfo.nequiAccountNumber && (
-                                        <div className="flex justify-between">
-                                            <span className="font-semibold text-gray-600">Cuenta Nequi:</span>
-                                            <span className="font-mono text-gray-800">{ticketInfo.nequiAccountNumber}</span>
-                                        </div>
-                                    )}
-                                    <hr className="my-3"/>
-                                    <div className="flex justify-between">
-                                        <span className="font-semibold text-gray-600">Nombre:</span>
-                                        <span className="text-gray-800">{ticketInfo.name}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span className="font-semibold text-gray-600">Celular:</span>
-                                        <span className="text-gray-800">{ticketInfo.phoneNumber}</span>
-                                    </div>
-                                </div>
+                        </div>
+
+                        <div className="p-8">
+                            <div className="text-center mb-6">
+                                <p className="text-gray-500">Número de Rifa</p>
+                                <p className="text-7xl font-extrabold text-purple-600 tracking-tighter">{ticketInfo.raffleNumber}</p>
                             </div>
 
-                            <div className="p-6 bg-gray-50 rounded-b-2xl flex justify-end space-x-3">
-                                 <button
-                                    onClick={handleDownloadTicket}
-                                    className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors font-semibold"
-                                >
-                                    Descargar
-                                </button>
-                                <button
-                                    onClick={() => setIsTicketModalOpen(false)}
-                                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-semibold"
-                                >
-                                    Cerrar
-                                </button>
+                            <div className="space-y-4 text-base">
+                                <div className="flex justify-between border-b pb-2">
+                                    <span className="font-semibold text-gray-600">Premio:</span>
+                                    <span className="text-gray-800 font-medium">{ticketInfo.prize}</span>
+                                </div>
+                                <div className="flex justify-between border-b pb-2">
+                                    <span className="font-semibold text-gray-600">Valor:</span>
+                                    <span className="text-gray-800 font-medium">{ticketInfo.value}</span>
+                                </div>
+                                <div className="flex justify-between border-b pb-2">
+                                    <span className="font-semibold text-gray-600">Nombre:</span>
+                                    <span className="text-gray-800">{ticketInfo.name}</span>
+                                </div>
+                                <div className="flex justify-between border-b pb-2">
+                                    <span className="font-semibold text-gray-600">Celular:</span>
+                                    <span className="text-gray-800">{ticketInfo.phoneNumber}</span>
+                                </div>
+                                {ticketInfo.nequiAccountNumber && (
+                                    <div className="flex justify-between border-b pb-2">
+                                        <span className="font-semibold text-gray-600">Cuenta Nequi:</span>
+                                        <span className="font-mono text-gray-800">{ticketInfo.nequiAccountNumber}</span>
+                                    </div>
+                                )}
+                                <div className="flex justify-between pt-2">
+                                    <span className="font-semibold text-gray-600">Fecha de compra:</span>
+                                    <span className="text-gray-800">{ticketInfo.date} - {ticketInfo.time}</span>
+                                </div>
                             </div>
+                        </div>
+
+                         <div className="p-6 bg-gray-100 rounded-b-xl flex justify-end space-x-3">
+                             <button
+                                onClick={handleDownloadTicket}
+                                className="px-6 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors font-semibold shadow-md"
+                            >
+                                Descargar PDF
+                            </button>
+                            <button
+                                onClick={() => setIsTicketModalOpen(false)}
+                                className="px-6 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition-colors font-semibold"
+                            >
+                                Cerrar
+                            </button>
                         </div>
                     </div>
                 </div>
