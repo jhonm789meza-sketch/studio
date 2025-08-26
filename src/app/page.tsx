@@ -22,7 +22,6 @@ const App = () => {
     const [nequiAccountNumber, setNequiAccountNumber] = useState('');
     const [gameDate, setGameDate] = useState('');
     const [lottery, setLottery] = useState('');
-    const [otherLottery, setOtherLottery] = useState('');
     const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
     const [ticketInfo, setTicketInfo] = useState(null);
     const [participants, setParticipants] = useState([]);
@@ -116,10 +115,6 @@ const App = () => {
             showNotification('Por favor selecciona la lotería', 'warning');
             return;
         }
-        if (lottery === 'Otro' && !otherLottery.trim()) {
-            showNotification('Por favor especifica la otra lotería', 'warning');
-            return;
-        }
         setIsDetailsConfirmed(true);
         showNotification('Detalles del premio confirmados', 'success');
     };
@@ -138,7 +133,6 @@ const App = () => {
                 setNequiAccountNumber('');
                 setGameDate('');
                 setLottery('');
-                setOtherLottery('');
                 setIsWinnerConfirmed(false);
                 setIsDetailsConfirmed(false);
                 setParticipants([]);
@@ -191,7 +185,7 @@ const App = () => {
             date: currentDate.toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' }),
             time: currentDate.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }),
             gameDate,
-            lottery: lottery === 'Otro' ? otherLottery : lottery,
+            lottery: lottery,
         });
         
         setIsTicketModalOpen(true);
@@ -339,22 +333,6 @@ const App = () => {
                                         <option value="Otro">Otro</option>
                                     </select>
                                 </div>
-                                {lottery === 'Otro' && (
-                                     <div>
-                                        <label htmlFor="other-lottery-input" className="block text-sm font-medium text-gray-700 mb-1">
-                                             Especificar Lotería:
-                                        </label>
-                                        <input
-                                            id="other-lottery-input"
-                                            type="text"
-                                            value={otherLottery}
-                                            onChange={(e) => setOtherLottery(e.target.value)}
-                                            placeholder="Nombre de la lotería"
-                                            disabled={isDetailsConfirmed}
-                                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                                        />
-                                    </div>
-                                )}
                                 <div className="flex items-end gap-2">
                                     <div className="flex-grow">
                                         <label htmlFor="nequi-account-input" className="block text-sm font-medium text-gray-700 mb-1">
