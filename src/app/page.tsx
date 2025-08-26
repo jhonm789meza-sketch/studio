@@ -20,6 +20,7 @@ const App = () => {
     const [phoneNumber, setPhoneNumber] = useState('');
     const [raffleNumber, setRaffleNumber] = useState('');
     const [nequiAccountNumber, setNequiAccountNumber] = useState('');
+    const [gameDate, setGameDate] = useState('');
     const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
     const [ticketInfo, setTicketInfo] = useState(null);
     const [participants, setParticipants] = useState([]);
@@ -105,6 +106,10 @@ const App = () => {
             showNotification('Por favor ingresa el valor', 'warning');
             return;
         }
+        if (!gameDate) {
+            showNotification('Por favor ingresa la fecha del juego', 'warning');
+            return;
+        }
         setIsDetailsConfirmed(true);
         showNotification('Detalles del premio confirmados', 'success');
     };
@@ -121,6 +126,7 @@ const App = () => {
                 setPhoneNumber('');
                 setRaffleNumber('');
                 setNequiAccountNumber('');
+                setGameDate('');
                 setIsWinnerConfirmed(false);
                 setIsDetailsConfirmed(false);
                 setParticipants([]);
@@ -171,7 +177,8 @@ const App = () => {
             phoneNumber,
             raffleNumber: formattedRaffleNumber,
             date: currentDate.toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' }),
-            time: currentDate.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
+            time: currentDate.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }),
+            gameDate
         });
         
         setIsTicketModalOpen(true);
@@ -281,6 +288,19 @@ const App = () => {
                                         value={formatValue(value)}
                                         onChange={handleValueChange}
                                         placeholder="Ej: 5.000.000"
+                                        disabled={isDetailsConfirmed}
+                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                    />
+                                </div>
+                                <div>
+                                    <label htmlFor="game-date-input" className="block text-sm font-medium text-gray-700 mb-1">
+                                        Fecha de juego:
+                                    </label>
+                                    <input
+                                        id="game-date-input"
+                                        type="date"
+                                        value={gameDate}
+                                        onChange={(e) => setGameDate(e.target.value)}
                                         disabled={isDetailsConfirmed}
                                         className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                                     />
@@ -537,6 +557,10 @@ const App = () => {
                                 <div className="flex justify-between">
                                     <span className="text-gray-600">VALOR BOLETA:</span>
                                     <span className="font-semibold">{ticketInfo.value}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-gray-600">FECHA SORTEO:</span>
+                                    <span className="font-semibold">{new Date(ticketInfo.gameDate + 'T00:00:00-05:00').toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
                                 </div>
                                 <div className="text-center pt-4">
                                     <p className="text-gray-600 uppercase">Número Asignado</p>
