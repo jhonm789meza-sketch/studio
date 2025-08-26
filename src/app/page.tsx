@@ -550,46 +550,6 @@ const App = () => {
                         </div>
                         
                         <div className="p-6 bg-gray-50 rounded-b-lg flex flex-col items-center">
-                            <div className="w-full h-12 bg-white flex items-center justify-center">
-                                {/* Simulación de código de barras */}
-                                <div className="flex items-end h-full">
-                                    <div className="w-0.5 h-full bg-black"></div>
-                                    <div className="w-px h-3/4 bg-black ml-px"></div>
-                                    <div className="w-0.5 h-full bg-black ml-px"></div>
-                                    <div className="w-px h-1/2 bg-black ml-px"></div>
-                                    <div className="w-0.5 h-3/4 bg-black ml-px"></div>
-                                    <div className="w-px h-full bg-black ml-px"></div>
-                                    <div className="w-0.5 h-1/2 bg-black ml-0.5"></div>
-                                    <div className="w-px h-3/4 bg-black ml-px"></div>
-                                    <div className="w-0.5 h-full bg-black ml-px"></div>
-                                    <div className="w-px h-1/2 bg-black ml-px"></div>
-                                    <div className="w-0.5 h-3/4 bg-black ml-px"></div>
-                                    <div className="w-px h-full bg-black ml-px"></div>
-                                    <div className="w-0.5 h-1/2 bg-black ml-0.5"></div>
-                                    <div className="w-px h-full bg-black ml-px"></div>
-                                    <div className="w-0.5 h-3/4 bg-black ml-px"></div>
-                                    <div className="w-px h-1/2 bg-black ml-px"></div>
-                                    <div className="w-0.5 h-full bg-black ml-px"></div>
-                                    <div className="w-px h-3/4 bg-black ml-px"></div>
-                                    <div className="w-0.5 h-1/2 bg-black ml-0.5"></div>
-                                    <div className="w-px h-full bg-black ml-px"></div>
-                                    <div className="w-0.5 h-3/4 bg-black ml-px"></div>
-                                    <div className="w-px h-1/2 bg-black ml-px"></div>
-                                    <div className="w-0.5 h-full bg-black ml-px"></div>
-                                    <div className="w-px h-3/4 bg-black ml-px"></div>
-                                    <div className="w-0.5 h-full bg-black ml-px"></div>
-                                    <div className="w-px h-1/2 bg-black ml-px"></div>
-                                    <div className="w-0.5 h-3/4 bg-black ml-px"></div>
-                                    <div className="w-px h-full bg-black ml-px"></div>
-                                    <div className="w-0.5 h-1/2 bg-black ml-0.5"></div>
-                                    <div className="w-px h-3/4 bg-black ml-px"></div>
-                                    <div className="w-0.5 h-full bg-black ml-px"></div>
-                                    <div className="w-px h-1/2 bg-black ml-px"></div>
-                                    <div className="w-0.5 h-3/4 bg-black ml-px"></div>
-                                    <div className="w-px h-full bg-black ml-px"></div>
-                                    <div className="w-0.5 h-1/2 bg-black ml-0.5"></div>
-                                </div>
-                            </div>
                              <div className="mt-6 flex justify-end space-x-3 w-full">
                                 <button
                                     onClick={handleDownloadTicket}
