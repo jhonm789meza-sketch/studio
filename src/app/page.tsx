@@ -22,6 +22,7 @@ const App = () => {
     const [nequiAccountNumber, setNequiAccountNumber] = useState('');
     const [gameDate, setGameDate] = useState('');
     const [lottery, setLottery] = useState('');
+    const [customLottery, setCustomLottery] = useState('');
     const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
     const [ticketInfo, setTicketInfo] = useState(null);
     const [participants, setParticipants] = useState([]);
@@ -89,7 +90,7 @@ const App = () => {
             showNotification('Este número ya está asignado', 'warning');
             return;
         }
-        setRaffleNumber(String(number));
+        setRaffleNumber(String(number).padStart(2, '0'));
         setActiveTab('register');
     };
 
@@ -115,6 +116,10 @@ const App = () => {
             showNotification('Por favor selecciona la lotería', 'warning');
             return;
         }
+        if (lottery === 'Otro' && !customLottery.trim()) {
+            showNotification('Por favor especifica la lotería', 'warning');
+            return;
+        }
         setIsDetailsConfirmed(true);
         showNotification('Detalles del premio confirmados', 'success');
     };
@@ -133,6 +138,7 @@ const App = () => {
                 setNequiAccountNumber('');
                 setGameDate('');
                 setLottery('');
+                setCustomLottery('');
                 setIsWinnerConfirmed(false);
                 setIsDetailsConfirmed(false);
                 setParticipants([]);
@@ -185,7 +191,7 @@ const App = () => {
             date: currentDate.toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' }),
             time: currentDate.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }),
             gameDate,
-            lottery: lottery,
+            lottery: lottery === 'Otro' ? customLottery : lottery,
         });
         
         setIsTicketModalOpen(true);
@@ -333,6 +339,22 @@ const App = () => {
                                         <option value="Otro">Otro</option>
                                     </select>
                                 </div>
+                                 {lottery === 'Otro' && (
+                                     <div>
+                                         <label htmlFor="custom-lottery-input" className="block text-sm font-medium text-gray-700 mb-1">
+                                             Especificar Lotería:
+                                         </label>
+                                         <input
+                                             id="custom-lottery-input"
+                                             type="text"
+                                             value={customLottery}
+                                             onChange={(e) => setCustomLottery(e.target.value)}
+                                             placeholder="Nombre de la lotería"
+                                             disabled={isDetailsConfirmed}
+                                             className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                         />
+                                     </div>
+                                 )}
                                 <div className="flex items-end gap-2">
                                     <div className="flex-grow">
                                         <label htmlFor="nequi-account-input" className="block text-sm font-medium text-gray-700 mb-1">
@@ -449,7 +471,7 @@ const App = () => {
                                     type="text"
                                     value={raffleNumber}
                                     onChange={handleRaffleNumberChange}
-                                    placeholder="Ej: 5"
+                                    placeholder="Ej: 05"
                                     className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
                                 />
                                 {raffleNumber && drawnNumbers.has(parseInt(raffleNumber)) && (
@@ -629,3 +651,5 @@ const App = () => {
 };
 
 export default App;
+
+    
