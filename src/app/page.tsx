@@ -424,7 +424,12 @@ const App = () => {
                         </div>
 
                         <div>
-                            <h2 className="text-2xl font-bold text-gray-800 mb-4">Tablero de Números</h2>
+                            <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+                                Tablero de Números
+                                <span className="ml-2 text-base font-normal text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                                    Ref: {raffleRef}
+                                </span>
+                            </h2>
                             <div className="grid grid-cols-10 gap-2">
                                 {allNumbers.map((number) => (
                                     <div
