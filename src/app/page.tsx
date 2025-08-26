@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { RaffleManager } from '@/lib/RaffleManager';
 
 
 const App = () => {
@@ -32,6 +33,14 @@ const App = () => {
     const [notification, setNotification] = useState({ show: false, message: '', type: '' });
     const prevRaffleNumber = useRef(null);
     const ticketModalRef = useRef(null);
+    const [raffleManager, setRaffleManager] = useState(null);
+    const [raffleRef, setRaffleRef] = useState('');
+
+    useEffect(() => {
+        const manager = new RaffleManager();
+        setRaffleManager(manager);
+        setRaffleRef(manager.getRef());
+    }, []);
 
     // Simulación de Firebase
     useEffect(() => {
@@ -143,6 +152,10 @@ const App = () => {
                 setIsDetailsConfirmed(false);
                 setParticipants([]);
                 prevRaffleNumber.current = null;
+                if (raffleManager) {
+                    raffleManager.generateNewRef();
+                    setRaffleRef(raffleManager.getRef());
+                }
                 showNotification('Tablero reiniciado correctamente', 'success');
             }
         );
@@ -237,7 +250,7 @@ const App = () => {
             <div className="max-w-6xl mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden">
                 <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-6 text-center">
                     <h1 className="text-4xl font-bold mb-2">Tablero de Rifa</h1>
-                    <p className="text-lg opacity-90">Gestiona tu rifa de forma fácil y divertida</p>
+                    <p className="text-lg opacity-90">Referencia del Juego: {raffleRef}</p>
                 </div>
 
                 <div className="flex border-b border-gray-200">
@@ -651,5 +664,3 @@ const App = () => {
 };
 
 export default App;
-
-    
