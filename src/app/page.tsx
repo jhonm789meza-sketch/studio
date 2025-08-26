@@ -21,6 +21,7 @@ const App = () => {
     const [raffleNumber, setRaffleNumber] = useState('');
     const [nequiAccountNumber, setNequiAccountNumber] = useState('');
     const [gameDate, setGameDate] = useState('');
+    const [lottery, setLottery] = useState('');
     const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
     const [ticketInfo, setTicketInfo] = useState(null);
     const [participants, setParticipants] = useState([]);
@@ -110,6 +111,10 @@ const App = () => {
             showNotification('Por favor ingresa la fecha del juego', 'warning');
             return;
         }
+        if (!lottery) {
+            showNotification('Por favor selecciona la lotería', 'warning');
+            return;
+        }
         setIsDetailsConfirmed(true);
         showNotification('Detalles del premio confirmados', 'success');
     };
@@ -127,6 +132,7 @@ const App = () => {
                 setRaffleNumber('');
                 setNequiAccountNumber('');
                 setGameDate('');
+                setLottery('');
                 setIsWinnerConfirmed(false);
                 setIsDetailsConfirmed(false);
                 setParticipants([]);
@@ -178,7 +184,8 @@ const App = () => {
             raffleNumber: formattedRaffleNumber,
             date: currentDate.toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' }),
             time: currentDate.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }),
-            gameDate
+            gameDate,
+            lottery,
         });
         
         setIsTicketModalOpen(true);
@@ -304,6 +311,27 @@ const App = () => {
                                         disabled={isDetailsConfirmed}
                                         className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                                     />
+                                </div>
+                                <div>
+                                    <label htmlFor="lottery-input" className="block text-sm font-medium text-gray-700 mb-1">
+                                        Lotería:
+                                    </label>
+                                    <select
+                                        id="lottery-input"
+                                        value={lottery}
+                                        onChange={(e) => setLottery(e.target.value)}
+                                        disabled={isDetailsConfirmed}
+                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                    >
+                                        <option value="">Selecciona una lotería</option>
+                                        <option value="Lotería de Bogotá">Lotería de Bogotá</option>
+                                        <option value="Lotería de Medellín">Lotería de Medellín</option>
+                                        <option value="Lotería de Cundinamarca">Lotería de Cundinamarca</option>
+                                        <option value="Lotería del Valle">Lotería del Valle</option>
+                                        <option value="Lotería del Tolima">Lotería del Tolima</option>
+                                        <option value="Lotería de la Cruz Roja">Lotería de la Cruz Roja</option>
+                                        <option value="Otro">Otro</option>
+                                    </select>
                                 </div>
                                 <div className="flex items-end gap-2">
                                     <div className="flex-grow">
@@ -561,6 +589,10 @@ const App = () => {
                                 <div className="flex justify-between">
                                     <span className="text-gray-600">FECHA SORTEO:</span>
                                     <span className="font-semibold">{new Date(ticketInfo.gameDate + 'T00:00:00-05:00').toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-gray-600">JUEGA CON:</span>
+                                    <span className="font-semibold">{ticketInfo.lottery}</span>
                                 </div>
                                 <div className="text-center pt-4">
                                     <p className="text-gray-600 uppercase">Número Asignado</p>
