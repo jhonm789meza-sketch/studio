@@ -69,7 +69,7 @@ const App = () => {
 
     const handleRaffleNumberChange = (e) => {
         const inputValue = e.target.value.replace(/\D/g, '');
-        if (inputValue === '' || (inputValue >= 1 && inputValue <= 99)) {
+        if (inputValue === '' || (inputValue >= 0 && inputValue <= 99)) {
             setRaffleNumber(inputValue);
             
             if (inputValue && drawnNumbers.has(parseInt(inputValue))) {
@@ -157,7 +157,6 @@ const App = () => {
             name,
             phoneNumber,
             raffleNumber: formattedRaffleNumber,
-            nequiAccountNumber,
             timestamp: new Date()
         };
         
@@ -171,7 +170,6 @@ const App = () => {
             name,
             phoneNumber,
             raffleNumber: formattedRaffleNumber,
-            nequiAccountNumber,
             date: currentDate.toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' }),
             time: currentDate.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
         });
@@ -208,7 +206,7 @@ const App = () => {
         });
     };
 
-    const allNumbers = Array.from({ length: 99 }, (_, i) => i + 1);
+    const allNumbers = Array.from({ length: 100 }, (_, i) => i);
 
     if (loading) {
         return <div className="flex justify-center items-center h-screen text-xl font-semibold">Cargando...</div>;
@@ -396,7 +394,7 @@ const App = () => {
                             </div>
                             <div>
                                 <label htmlFor="raffle-number-input" className="block text-sm font-medium text-gray-700 mb-1">
-                                    Número de rifa (1-99):
+                                    Número de rifa (00-99):
                                 </label>
                                 <input
                                     id="raffle-number-input"
