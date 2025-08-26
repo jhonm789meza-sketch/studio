@@ -529,13 +529,7 @@ const App = () => {
                                 <span className="text-gray-600">CELULAR:</span>
                                 <span className="font-semibold">{ticketInfo.phoneNumber}</span>
                             </div>
-                            {ticketInfo.nequiAccountNumber && (
-                                <div className="flex justify-between">
-                                    <span className="text-gray-600">CUENTA NEQUI:</span>
-                                    <span className="font-semibold">{ticketInfo.nequiAccountNumber}</span>
-                                </div>
-                            )}
-
+                            
                             <div className="border-t border-b border-dashed border-gray-400 my-4 py-4 space-y-2">
                                 <p className="text-center font-bold text-base">DETALLES DE LA RIFA</p>
                                 <div className="flex justify-between">
