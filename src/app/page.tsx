@@ -3,9 +3,11 @@ import { useState, useEffect, useRef } from 'react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { RaffleManager } from '@/lib/RaffleManager';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuCheckboxItem } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Menu } from 'lucide-react';
+
+type RaffleMode = 'two-digit' | 'three-digit';
 
 const App = () => {
     const [db, setDb] = useState(null);
@@ -37,6 +39,10 @@ const App = () => {
     const ticketModalRef = useRef(null);
     const [raffleManager, setRaffleManager] = useState(null);
     const [raffleRef, setRaffleRef] = useState('');
+    const [raffleMode, setRaffleMode] = useState<RaffleMode>('two-digit');
+
+    const totalNumbers = raffleMode === 'two-digit' ? 100 : 1000;
+    const numberLength = raffleMode === 'two-digit' ? 2 : 3;
 
     useEffect(() => {
         const manager = new RaffleManager();
@@ -83,7 +89,7 @@ const App = () => {
 
     const handleRaffleNumberChange = (e) => {
         const inputValue = e.target.value.replace(/\D/g, '');
-        if (inputValue === '' || (inputValue >= 0 && inputValue <= 99)) {
+        if (inputValue === '' || (parseInt(inputValue, 10) >= 0 && parseInt(inputValue, 10) < totalNumbers)) {
             setRaffleNumber(inputValue);
             
             if (inputValue && drawnNumbers.has(parseInt(inputValue))) {
@@ -101,7 +107,7 @@ const App = () => {
             showNotification('Este número ya está asignado', 'warning');
             return;
         }
-        setRaffleNumber(String(number).padStart(2, '0'));
+        setRaffleNumber(String(number).padStart(numberLength, '0'));
         setActiveTab('register');
     };
 
@@ -183,7 +189,7 @@ const App = () => {
             return;
         }
 
-        const formattedRaffleNumber = String(num).padStart(2, '0');
+        const formattedRaffleNumber = String(num).padStart(numberLength, '0');
 
         const newParticipant = {
             id: Date.now(),
@@ -240,8 +246,43 @@ const App = () => {
             showNotification('Tiquete descargado', 'success');
         });
     };
+    
+    const changeRaffleMode = (mode: RaffleMode) => {
+        if (mode === raffleMode) return;
+        
+        showConfirmationDialog(
+            `¿Cambiar a rifa de ${mode === 'two-digit' ? '2' : '3'} cifras? Se reiniciará el tablero actual.`,
+            () => {
+                setRaffleMode(mode);
+                resetBoardState();
+                showNotification(`Tablero cambiado a modo de ${mode === 'two-digit' ? '2' : '3'} cifras.`, 'success');
+            }
+        );
+    };
+    
+    const resetBoardState = () => {
+        setDrawnNumbers(new Set());
+        setLastDrawnNumber(null);
+        setPrize('');
+        setValue('');
+        setName('');
+        setPhoneNumber('');
+        setRaffleNumber('');
+        setNequiAccountNumber('');
+        setGameDate('');
+        setLottery('');
+        setCustomLottery('');
+        setIsWinnerConfirmed(false);
+        setIsDetailsConfirmed(false);
+        setParticipants([]);
+        prevRaffleNumber.current = null;
+        if (raffleManager) {
+            raffleManager.generateNewRef();
+            setRaffleRef(raffleManager.getRef());
+        }
+    };
 
-    const allNumbers = Array.from({ length: 100 }, (_, i) => i);
+    const allNumbers = Array.from({ length: totalNumbers }, (_, i) => i);
 
     if (loading) {
         return <div className="flex justify-center items-center h-screen text-xl font-semibold">Cargando...</div>;
@@ -260,6 +301,19 @@ const App = () => {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent>
                                 <DropdownMenuItem>Entrar como administrador</DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuCheckboxItem
+                                    checked={raffleMode === 'two-digit'}
+                                    onSelect={() => changeRaffleMode('two-digit')}
+                                >
+                                    Rifa de 2 Cifras
+                                </DropdownMenuCheckboxItem>
+                                <DropdownMenuCheckboxItem
+                                    checked={raffleMode === 'three-digit'}
+                                    onSelect={() => changeRaffleMode('three-digit')}
+                                >
+                                    Rifa de 3 Cifras
+                                </DropdownMenuCheckboxItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
                     </div>
@@ -442,18 +496,18 @@ const App = () => {
 
                         <div>
                             <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center">
-                                Tablero de Números
+                                Tablero de Números ({raffleMode === 'two-digit' ? '00-99' : '000-999'})
                                 <span className="ml-2 text-base font-normal text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
                                     Ref: {raffleRef}
                                 </span>
                             </h2>
-                            <div className="grid grid-cols-10 gap-2">
+                            <div className={`grid gap-2 ${raffleMode === 'two-digit' ? 'grid-cols-10' : 'grid-cols-10 md:grid-cols-20 lg:grid-cols-25'}`}>
                                 {allNumbers.map((number) => (
                                     <div
                                         key={number}
                                         onClick={() => toggleNumber(number)}
                                         className={`
-                                            number-cell text-center py-2 rounded-lg transition-all 
+                                            number-cell text-center py-2 rounded-lg transition-all text-sm
                                             ${isWinnerConfirmed ? 'cursor-not-allowed bg-gray-300 text-gray-500' : 'cursor-pointer'}
                                             ${isDetailsConfirmed && drawnNumbers.has(number)
                                                 ? 'bg-red-600 text-white shadow-lg transform scale-105 cursor-not-allowed'
@@ -461,7 +515,7 @@ const App = () => {
                                             }
                                         `}
                                     >
-                                        {String(number).padStart(2, '0')}
+                                        {String(number).padStart(numberLength, '0')}
                                     </div>
                                 ))}
                             </div>
@@ -499,15 +553,16 @@ const App = () => {
                             </div>
                             <div>
                                 <label htmlFor="raffle-number-input" className="block text-sm font-medium text-gray-700 mb-1">
-                                    Número de rifa (00-99):
+                                    Número de rifa ({raffleMode === 'two-digit' ? '00-99' : '000-999'}):
                                 </label>
                                 <input
                                     id="raffle-number-input"
                                     type="text"
                                     value={raffleNumber}
                                     onChange={handleRaffleNumberChange}
-                                    placeholder="Ej: 05"
+                                    placeholder={`Ej: ${raffleMode === 'two-digit' ? '05' : '042'}`}
                                     className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                    maxLength={numberLength}
                                 />
                                 {raffleNumber && drawnNumbers.has(parseInt(raffleNumber)) && (
                                     <p className="text-red-500 text-sm mt-1">Este número ya está asignado</p>
