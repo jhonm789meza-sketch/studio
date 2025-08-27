@@ -41,7 +41,7 @@ const App = () => {
     const [raffleRef, setRaffleRef] = useState('');
     const [raffleMode, setRaffleMode] = useState<RaffleMode>('two-digit');
 
-    const totalNumbers = raffleMode === 'two-digit' ? 100 : 1000;
+    const totalNumbers = raffleMode === 'two-digit' ? 100 : 900;
     const numberLength = raffleMode === 'two-digit' ? 2 : 3;
 
     useEffect(() => {
@@ -89,9 +89,19 @@ const App = () => {
 
     const handleRaffleNumberChange = (e) => {
         const inputValue = e.target.value.replace(/\D/g, '');
-        if (inputValue === '' || (parseInt(inputValue, 10) >= 0 && parseInt(inputValue, 10) < totalNumbers)) {
+        const num = parseInt(inputValue, 10);
+        
+        let isValid = false;
+        if (inputValue === '') {
+            isValid = true;
+        } else if (raffleMode === 'two-digit') {
+            isValid = num >= 0 && num <= 99;
+        } else {
+            isValid = num >= 100 && num <= 999;
+        }
+        
+        if (isValid) {
             setRaffleNumber(inputValue);
-            
             if (inputValue && drawnNumbers.has(parseInt(inputValue))) {
                 showNotification('Este número ya ha sido asignado', 'warning');
             }
@@ -282,7 +292,9 @@ const App = () => {
         }
     };
 
-    const allNumbers = Array.from({ length: totalNumbers }, (_, i) => i);
+    const allNumbers = raffleMode === 'two-digit'
+        ? Array.from({ length: 100 }, (_, i) => i)
+        : Array.from({ length: 900 }, (_, i) => i + 100);
 
     if (loading) {
         return <div className="flex justify-center items-center h-screen text-xl font-semibold">Cargando...</div>;
@@ -496,7 +508,7 @@ const App = () => {
 
                         <div>
                             <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center">
-                                Tablero de Números ({raffleMode === 'two-digit' ? '00-99' : '000-999'})
+                                Tablero de Números ({raffleMode === 'two-digit' ? '00-99' : '100-999'})
                                 <span className="ml-2 text-base font-normal text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
                                     Ref: {raffleRef}
                                 </span>
@@ -553,14 +565,14 @@ const App = () => {
                             </div>
                             <div>
                                 <label htmlFor="raffle-number-input" className="block text-sm font-medium text-gray-700 mb-1">
-                                    Número de rifa ({raffleMode === 'two-digit' ? '00-99' : '000-999'}):
+                                    Número de rifa ({raffleMode === 'two-digit' ? '00-99' : '100-999'}):
                                 </label>
                                 <input
                                     id="raffle-number-input"
                                     type="text"
                                     value={raffleNumber}
                                     onChange={handleRaffleNumberChange}
-                                    placeholder={`Ej: ${raffleMode === 'two-digit' ? '05' : '042'}`}
+                                    placeholder={`Ej: ${raffleMode === 'two-digit' ? '05' : '142'}`}
                                     className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
                                     maxLength={numberLength}
                                 />
@@ -741,3 +753,5 @@ const App = () => {
 };
 
 export default App;
+
+    
