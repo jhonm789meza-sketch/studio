@@ -5,7 +5,7 @@ import html2canvas from 'html2canvas';
 import { RaffleManager } from '@/lib/RaffleManager';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuCheckboxItem } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu } from 'lucide-react';
+import { Menu, Search } from 'lucide-react';
 
 type RaffleMode = 'two-digit' | 'three-digit';
 
@@ -40,6 +40,7 @@ const App = () => {
     const [raffleManager, setRaffleManager] = useState(null);
     const [raffleRef, setRaffleRef] = useState('');
     const [raffleMode, setRaffleMode] = useState<RaffleMode>('two-digit');
+    const [searchTerm, setSearchTerm] = useState('');
 
     const totalNumbers = raffleMode === 'two-digit' ? 100 : 900;
     const numberLength = raffleMode === 'two-digit' ? 2 : 3;
@@ -292,9 +293,10 @@ const App = () => {
         }
     };
 
-    const allNumbers = raffleMode === 'two-digit'
+    const allNumbers = (raffleMode === 'two-digit'
         ? Array.from({ length: 100 }, (_, i) => i)
-        : Array.from({ length: 900 }, (_, i) => i + 100);
+        : Array.from({ length: 900 }, (_, i) => i + 100)
+    ).filter(number => String(number).padStart(numberLength, '0').includes(searchTerm));
 
     if (loading) {
         return <div className="flex justify-center items-center h-screen text-xl font-semibold">Cargando...</div>;
@@ -507,12 +509,24 @@ const App = () => {
                         </div>
 
                         <div>
-                            <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center">
-                                Tablero de Números ({raffleMode === 'two-digit' ? '00-99' : '100-999'})
-                                <span className="ml-2 text-base font-normal text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
-                                    Ref: {raffleRef}
-                                </span>
-                            </h2>
+                            <div className="flex justify-between items-center mb-4">
+                                <h2 className="text-2xl font-bold text-gray-800 flex items-center">
+                                    Tablero de Números ({raffleMode === 'two-digit' ? '00-99' : '100-999'})
+                                    <span className="ml-2 text-base font-normal text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                                        Ref: {raffleRef}
+                                    </span>
+                                </h2>
+                                <div className="relative">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                                    <input
+                                        type="text"
+                                        placeholder="Buscar número..."
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        className="pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                    />
+                                </div>
+                            </div>
                             <div className={`grid gap-2 ${raffleMode === 'two-digit' ? 'grid-cols-10' : 'grid-cols-10 md:grid-cols-20 lg:grid-cols-25'}`}>
                                 {allNumbers.map((number) => (
                                     <div
@@ -753,5 +767,3 @@ const App = () => {
 };
 
 export default App;
-
-    
