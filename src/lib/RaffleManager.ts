@@ -3,7 +3,7 @@ class RaffleManager {
     private static RAFFLE_COUNTER_KEY = 'raffleCounter';
 
     constructor() {
-        this.ref = this.generateRef(true);
+        this.ref = '';
     }
 
     private getNextRefNumber(): number {
@@ -16,24 +16,13 @@ class RaffleManager {
         return nextCounter;
     }
 
-    private getCurrentRefNumber(): number {
-         if (typeof window === 'undefined') {
-            return 1;
-        }
-        return parseInt(localStorage.getItem(RaffleManager.RAFFLE_COUNTER_KEY) || '1', 10);
-    }
-
-    private generateRef(isInitial: boolean = false): string {
-        const num = isInitial ? this.getCurrentRefNumber() : this.getNextRefNumber();
-        return String(num);
+    public startNewRaffle(): string {
+        this.ref = String(this.getNextRefNumber());
+        return this.ref;
     }
 
     public getRef(): string {
         return this.ref;
-    }
-
-    public generateNewRef(): void {
-        this.ref = this.generateRef();
     }
 }
 

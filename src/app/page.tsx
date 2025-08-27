@@ -37,7 +37,7 @@ const App = () => {
     const [notification, setNotification] = useState({ show: false, message: '', type: '' });
     const prevRaffleNumber = useRef(null);
     const ticketModalRef = useRef(null);
-    const [raffleManager, setRaffleManager] = useState(null);
+    const [raffleManager, setRaffleManager] = useState<RaffleManager | null>(null);
     const [raffleRef, setRaffleRef] = useState('');
     const [raffleMode, setRaffleMode] = useState<RaffleMode>('two-digit');
     const [searchTerm, setSearchTerm] = useState('');
@@ -48,7 +48,6 @@ const App = () => {
     useEffect(() => {
         const manager = new RaffleManager();
         setRaffleManager(manager);
-        setRaffleRef(manager.getRef());
     }, []);
 
     // Simulación de Firebase
@@ -148,6 +147,12 @@ const App = () => {
             showNotification('Por favor especifica la lotería', 'warning');
             return;
         }
+        
+        if (raffleManager) {
+            const newRef = raffleManager.startNewRaffle();
+            setRaffleRef(newRef);
+        }
+
         setIsDetailsConfirmed(true);
         showNotification('Detalles del premio confirmados', 'success');
     };
@@ -170,11 +175,8 @@ const App = () => {
                 setIsWinnerConfirmed(false);
                 setIsDetailsConfirmed(false);
                 setParticipants([]);
+                setRaffleRef('');
                 prevRaffleNumber.current = null;
-                if (raffleManager) {
-                    raffleManager.generateNewRef();
-                    setRaffleRef(raffleManager.getRef());
-                }
                 showNotification('Tablero reiniciado correctamente', 'success');
             }
         );
@@ -286,11 +288,8 @@ const App = () => {
         setIsWinnerConfirmed(false);
         setIsDetailsConfirmed(false);
         setParticipants([]);
+        setRaffleRef('');
         prevRaffleNumber.current = null;
-        if (raffleManager) {
-            raffleManager.generateNewRef();
-            setRaffleRef(raffleManager.getRef());
-        }
     };
 
     const allNumbers = (raffleMode === 'two-digit'
@@ -333,7 +332,9 @@ const App = () => {
                     </div>
                     <div className="text-center">
                         <h1 className="text-4xl font-bold">Tablero de Rifa</h1>
-                        <p className="text-lg opacity-90">Referencia del Juego: {raffleRef}</p>
+                        {isDetailsConfirmed && raffleRef && (
+                           <p className="text-lg opacity-90">Referencia del Juego: {raffleRef}</p>
+                        )}
                     </div>
                     <div className="w-8"></div>
                 </div>
@@ -512,9 +513,11 @@ const App = () => {
                             <div className="flex justify-between items-center mb-4">
                                 <h2 className="text-2xl font-bold text-gray-800 flex items-center">
                                     Tablero de Números ({raffleMode === 'two-digit' ? '00-99' : '100-999'})
-                                    <span className="ml-2 text-base font-normal text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
-                                        Ref: {raffleRef}
-                                    </span>
+                                    {isDetailsConfirmed && raffleRef && (
+                                      <span className="ml-2 text-base font-normal text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                                          Ref: {raffleRef}
+                                      </span>
+                                    )}
                                 </h2>
                                 <div className="relative">
                                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
