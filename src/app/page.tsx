@@ -3,7 +3,9 @@ import { useState, useEffect, useRef } from 'react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { RaffleManager } from '@/lib/RaffleManager';
-
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
+import { Menu } from 'lucide-react';
 
 const App = () => {
     const [db, setDb] = useState(null);
@@ -248,9 +250,24 @@ const App = () => {
     return (
         <div className="min-h-screen bg-gradient-to-br from-purple-100 to-blue-100 p-4 font-sans">
             <div className="max-w-6xl mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden">
-                <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-6 text-center">
-                    <h1 className="text-4xl font-bold mb-2">Tablero de Rifa</h1>
-                    <p className="text-lg opacity-90">Referencia del Juego: {raffleRef}</p>
+                <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-6 flex justify-between items-center">
+                    <div>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="text-white hover:bg-white/20">
+                                    <Menu className="h-6 w-6" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                                <DropdownMenuItem>Entrar como administrador</DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
+                    <div className="text-center">
+                        <h1 className="text-4xl font-bold">Tablero de Rifa</h1>
+                        <p className="text-lg opacity-90">Referencia del Juego: {raffleRef}</p>
+                    </div>
+                    <div className="w-8"></div>
                 </div>
 
                 <div className="flex border-b border-gray-200">
