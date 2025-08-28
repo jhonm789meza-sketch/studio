@@ -265,10 +265,9 @@ const App = () => {
         if (mode === raffleMode) return;
         
         showConfirmationDialog(
-            `¿Cambiar a rifa de ${mode === 'two-digit' ? '2' : '3'} cifras? Se reiniciará el tablero actual.`,
+            `¿Estás seguro que quieres cambiar a la rifa de ${mode === 'two-digit' ? '2' : '3'} cifras?`,
             () => {
                 setRaffleMode(mode);
-                resetBoardState();
                 showNotification(`Tablero cambiado a modo de ${mode === 'two-digit' ? '2' : '3'} cifras.`, 'success');
             }
         );
