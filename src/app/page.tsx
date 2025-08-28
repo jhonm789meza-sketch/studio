@@ -281,7 +281,6 @@ const App = () => {
         : Array.from({ length: 900 }, (_, i) => i + 100);
 
     const filteredParticipants = participants.filter(participant =>
-        participant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         participant.raffleNumber.includes(searchTerm)
     );
 
@@ -608,7 +607,7 @@ const App = () => {
                                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                                  <input
                                      type="text"
-                                     placeholder="Buscar por nombre o número..."
+                                     placeholder="Buscar por referencia..."
                                      value={searchTerm}
                                      onChange={(e) => setSearchTerm(e.target.value)}
                                      className="pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
@@ -655,7 +654,7 @@ const App = () => {
                                 </table>
                             </div>
                         ) : (
-                            <p className="text-gray-500">No hay participantes registrados para el término de búsqueda actual.</p>
+                            <p className="text-gray-500">No se encontraron participantes con esa referencia.</p>
                         )}
                     </div>
                 </div>
