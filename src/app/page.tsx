@@ -9,49 +9,78 @@ import { Menu, Search } from 'lucide-react';
 
 type RaffleMode = 'two-digit' | 'three-digit';
 
+const initialRaffleState = {
+    drawnNumbers: new Set(),
+    lastDrawnNumber: null,
+    prize: '',
+    value: '',
+    isWinnerConfirmed: false,
+    isDetailsConfirmed: false,
+    name: '',
+    phoneNumber: '',
+    raffleNumber: '',
+    nequiAccountNumber: '',
+    gameDate: '',
+    lottery: '',
+    customLottery: '',
+    participants: [],
+    raffleManager: new RaffleManager(),
+    raffleRef: '',
+};
+
 const App = () => {
     const [db, setDb] = useState(null);
     const [userId, setUserId] = useState(null);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('board');
-    const [drawnNumbers, setDrawnNumbers] = useState(new Set());
-    const [lastDrawnNumber, setLastDrawnNumber] = useState(null);
-    const [prize, setPrize] = useState('');
-    const [value, setValue] = useState('');
-    const [currencySymbol, setCurrencySymbol] = useState('$');
-    const [isWinnerConfirmed, setIsWinnerConfirmed] = useState(false);
-    const [isDetailsConfirmed, setIsDetailsConfirmed] = useState(false);
-    const [name, setName] = useState('');
-    const [phoneNumber, setPhoneNumber] = useState('');
-    const [raffleNumber, setRaffleNumber] = useState('');
-    const [nequiAccountNumber, setNequiAccountNumber] = useState('');
-    const [gameDate, setGameDate] = useState('');
-    const [lottery, setLottery] = useState('');
-    const [customLottery, setCustomLottery] = useState('');
+    const [currencySymbol] = useState('$');
+
     const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
     const [ticketInfo, setTicketInfo] = useState(null);
-    const [participants, setParticipants] = useState([]);
     const [showConfirmation, setShowConfirmation] = useState(false);
     const [confirmationMessage, setConfirmationMessage] = useState('');
     const [confirmationAction, setConfirmationAction] = useState(null);
     const [notification, setNotification] = useState({ show: false, message: '', type: '' });
-    const prevRaffleNumber = useRef(null);
+    
     const ticketModalRef = useRef(null);
-    const [raffleManager, setRaffleManager] = useState<RaffleManager | null>(null);
-    const [raffleRef, setRaffleRef] = useState('');
+
     const [raffleMode, setRaffleMode] = useState<RaffleMode>('two-digit');
     const [searchTerm, setSearchTerm] = useState('');
+
+    const [twoDigitState, setTwoDigitState] = useState(initialRaffleState);
+    const [threeDigitState, setThreeDigitState] = useState(initialRaffleState);
+
+    const state = raffleMode === 'two-digit' ? twoDigitState : threeDigitState;
+    const setState = raffleMode === 'two-digit' ? setTwoDigitState : setThreeDigitState;
+
+    const {
+        drawnNumbers, lastDrawnNumber, prize, value, isWinnerConfirmed, isDetailsConfirmed,
+        name, phoneNumber, raffleNumber, nequiAccountNumber, gameDate, lottery, customLottery,
+        participants, raffleManager, raffleRef
+    } = state;
+
+    const setDrawnNumbers = (newDrawnNumbers) => setState(s => ({ ...s, drawnNumbers: newDrawnNumbers }));
+    const setLastDrawnNumber = (newLastDrawnNumber) => setState(s => ({ ...s, lastDrawnNumber: newLastDrawnNumber }));
+    const setPrize = (newPrize) => setState(s => ({ ...s, prize: newPrize }));
+    const setValue = (newValue) => setState(s => ({ ...s, value: newValue }));
+    const setIsWinnerConfirmed = (newIsWinnerConfirmed) => setState(s => ({ ...s, isWinnerConfirmed: newIsWinnerConfirmed }));
+    const setIsDetailsConfirmed = (newIsDetailsConfirmed) => setState(s => ({ ...s, isDetailsConfirmed: newIsDetailsConfirmed }));
+    const setName = (newName) => setState(s => ({ ...s, name: newName }));
+    const setPhoneNumber = (newPhoneNumber) => setState(s => ({ ...s, phoneNumber: newPhoneNumber }));
+    const setRaffleNumber = (newRaffleNumber) => setState(s => ({ ...s, raffleNumber: newRaffleNumber }));
+    const setNequiAccountNumber = (newNequiAccountNumber) => setState(s => ({ ...s, nequiAccountNumber: newNequiAccountNumber }));
+    const setGameDate = (newGameDate) => setState(s => ({ ...s, gameDate: newGameDate }));
+    const setLottery = (newLottery) => setState(s => ({ ...s, lottery: newLottery }));
+    const setCustomLottery = (newCustomLottery) => setState(s => ({ ...s, customLottery: newCustomLottery }));
+    const setParticipants = (newParticipants) => setState(s => ({ ...s, participants: newParticipants }));
+    const setRaffleRef = (newRaffleRef) => setState(s => ({ ...s, raffleRef: newRaffleRef }));
+    
 
     const totalNumbers = raffleMode === 'two-digit' ? 100 : 900;
     const numberLength = raffleMode === 'two-digit' ? 2 : 3;
 
     useEffect(() => {
-        const manager = new RaffleManager();
-        setRaffleManager(manager);
-    }, []);
-
-    // Simulación de Firebase
-    useEffect(() => {
+        // Simulación de Firebase
         setTimeout(() => {
             setDb({}); 
             setUserId('demo-user-id');
@@ -148,10 +177,8 @@ const App = () => {
             return;
         }
         
-        if (raffleManager) {
-            const newRef = raffleManager.startNewRaffle();
-            setRaffleRef(newRef);
-        }
+        const newRef = raffleManager.startNewRaffle();
+        setRaffleRef(newRef);
 
         setIsDetailsConfirmed(true);
         showNotification('Detalles del premio confirmados', 'success');
@@ -159,25 +186,9 @@ const App = () => {
 
     const resetBoard = () => {
         showConfirmationDialog(
-            '¿Estás seguro de que deseas reiniciar el tablero? Se perderán todos los datos.',
+            '¿Estás seguro de que deseas reiniciar el tablero? Se perderán todos los datos de esta modalidad.',
             () => {
-                setDrawnNumbers(new Set());
-                setLastDrawnNumber(null);
-                setPrize('');
-                setValue('');
-                setName('');
-                setPhoneNumber('');
-                setRaffleNumber('');
-                setNequiAccountNumber('');
-                setGameDate('');
-                setLottery('');
-                setCustomLottery('');
-                setIsWinnerConfirmed(false);
-                setIsDetailsConfirmed(false);
-                setParticipants([]);
-                if (raffleManager) raffleManager.resetRef();
-                setRaffleRef('');
-                prevRaffleNumber.current = null;
+                setState(initialRaffleState);
                 showNotification('Tablero reiniciado correctamente', 'success');
             }
         );
@@ -234,8 +245,6 @@ const App = () => {
         setName('');
         setPhoneNumber('');
         setRaffleNumber('');
-        
-        prevRaffleNumber.current = null;
 
         showNotification('Tiquete generado correctamente', 'success');
     };
@@ -263,34 +272,8 @@ const App = () => {
     
     const changeRaffleMode = (mode: RaffleMode) => {
         if (mode === raffleMode) return;
-        
-        showConfirmationDialog(
-            `¿Estás seguro que quieres cambiar a la rifa de ${mode === 'two-digit' ? '2' : '3'} cifras?`,
-            () => {
-                setRaffleMode(mode);
-                showNotification(`Tablero cambiado a modo de ${mode === 'two-digit' ? '2' : '3'} cifras.`, 'success');
-            }
-        );
-    };
-    
-    const resetBoardState = () => {
-        setDrawnNumbers(new Set());
-        setLastDrawnNumber(null);
-        setPrize('');
-        setValue('');
-        setName('');
-        setPhoneNumber('');
-        setRaffleNumber('');
-        setNequiAccountNumber('');
-        setGameDate('');
-        setLottery('');
-        setCustomLottery('');
-        setIsWinnerConfirmed(false);
-        setIsDetailsConfirmed(false);
-        setParticipants([]);
-        if (raffleManager) raffleManager.resetRef();
-        setRaffleRef('');
-        prevRaffleNumber.current = null;
+        setRaffleMode(mode);
+        showNotification(`Cambiado a modo de ${mode === 'two-digit' ? '2' : '3'} cifras.`, 'success');
     };
 
     const allNumbers = raffleMode === 'two-digit'
@@ -778,3 +761,5 @@ const App = () => {
 };
 
 export default App;
+
+    
