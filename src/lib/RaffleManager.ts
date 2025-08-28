@@ -24,6 +24,10 @@ class RaffleManager {
     public getRef(): string {
         return this.ref;
     }
+
+    public resetRef(): void {
+        this.ref = '';
+    }
 }
 
 export { RaffleManager };

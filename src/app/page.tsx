@@ -175,6 +175,7 @@ const App = () => {
                 setIsWinnerConfirmed(false);
                 setIsDetailsConfirmed(false);
                 setParticipants([]);
+                if (raffleManager) raffleManager.resetRef();
                 setRaffleRef('');
                 prevRaffleNumber.current = null;
                 showNotification('Tablero reiniciado correctamente', 'success');
@@ -288,14 +289,19 @@ const App = () => {
         setIsWinnerConfirmed(false);
         setIsDetailsConfirmed(false);
         setParticipants([]);
+        if (raffleManager) raffleManager.resetRef();
         setRaffleRef('');
         prevRaffleNumber.current = null;
     };
 
-    const allNumbers = (raffleMode === 'two-digit'
+    const allNumbers = raffleMode === 'two-digit'
         ? Array.from({ length: 100 }, (_, i) => i)
-        : Array.from({ length: 900 }, (_, i) => i + 100)
-    ).filter(number => String(number).padStart(numberLength, '0').includes(searchTerm));
+        : Array.from({ length: 900 }, (_, i) => i + 100);
+
+    const filteredParticipants = participants.filter(participant =>
+        participant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        participant.raffleNumber.includes(searchTerm)
+    );
 
     if (loading) {
         return <div className="flex justify-center items-center h-screen text-xl font-semibold">Cargando...</div>;
@@ -519,16 +525,6 @@ const App = () => {
                                       </span>
                                     )}
                                 </h2>
-                                <div className="relative">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                                    <input
-                                        type="text"
-                                        placeholder="Buscar número..."
-                                        value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                        className="pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                    />
-                                </div>
                             </div>
                             <div className={`grid gap-2 ${raffleMode === 'two-digit' ? 'grid-cols-10' : 'grid-cols-10 md:grid-cols-20 lg:grid-cols-25'}`}>
                                 {allNumbers.map((number) => (
@@ -624,13 +620,26 @@ const App = () => {
                     </div>
 
                     <div className={`tab-content ${activeTab === 'participants' ? 'active' : ''}`}>
-                        <h2 className="text-2xl font-bold text-gray-800 mb-4">Participantes Registrados</h2>
+                        <div className="flex justify-between items-center mb-4">
+                             <h2 className="text-2xl font-bold text-gray-800">Participantes Registrados</h2>
+                             <div className="relative">
+                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                                 <input
+                                     type="text"
+                                     placeholder="Buscar por nombre o número..."
+                                     value={searchTerm}
+                                     onChange={(e) => setSearchTerm(e.target.value)}
+                                     className="pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                 />
+                             </div>
+                        </div>
+
                         {!isDetailsConfirmed ? (
                             <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-6" role="alert">
                                 <p className="font-bold">Aviso</p>
                                 <p>Debes confirmar los detalles del premio en la pestaña "Tablero" para poder ver los participantes.</p>
                             </div>
-                        ) : participants.length > 0 ? (
+                        ) : filteredParticipants.length > 0 ? (
                             <div className="overflow-x-auto">
                                 <table className="min-w-full divide-y divide-gray-200">
                                     <thead className="bg-gray-50">
@@ -647,7 +656,7 @@ const App = () => {
                                         </tr>
                                     </thead>
                                     <tbody className="bg-white divide-y divide-gray-200">
-                                        {participants.map((p) => (
+                                        {filteredParticipants.map((p) => (
                                             <tr key={p.id}>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                                     {p.name}
@@ -664,7 +673,7 @@ const App = () => {
                                 </table>
                             </div>
                         ) : (
-                            <p className="text-gray-500">No hay participantes registrados aún.</p>
+                            <p className="text-gray-500">No hay participantes registrados para el término de búsqueda actual.</p>
                         )}
                     </div>
                 </div>
