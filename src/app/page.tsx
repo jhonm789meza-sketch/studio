@@ -281,8 +281,10 @@ const App = () => {
         : Array.from({ length: 900 }, (_, i) => i + 100);
 
     const filteredParticipants = participants.filter(participant =>
-        participant.raffleNumber.includes(searchTerm) || participant.name.toLowerCase().includes(searchTerm.toLowerCase())
+        (participant.raffleNumber && participant.raffleNumber.includes(searchTerm)) ||
+        (participant.name && participant.name.toLowerCase().includes(searchTerm.toLowerCase()))
     );
+
 
     const twoDigitRafflesInPlay = twoDigitState.isDetailsConfirmed ? 1 : 0;
     const threeDigitRafflesInPlay = threeDigitState.isDetailsConfirmed ? 1 : 0;
@@ -341,7 +343,7 @@ const App = () => {
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                         <input
                             type="text"
-                            placeholder="Buscar..."
+                            placeholder="Buscar participante..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 text-black"
@@ -773,5 +775,3 @@ const App = () => {
 };
 
 export default App;
-
-    
