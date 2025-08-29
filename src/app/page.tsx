@@ -125,20 +125,16 @@ const App = () => {
         const inputValue = e.target.value.replace(/\D/g, '');
         const num = parseInt(inputValue, 10);
         
-        let isValid = false;
-        if (inputValue === '') {
-            isValid = true;
-        } else if (raffleMode === 'two-digit') {
-            isValid = num >= 0 && num <= 99;
-        } else {
-            isValid = num >= 100 && num <= 999;
+        if (inputValue === '' || !isNaN(num)) {
+             if (raffleMode === 'two-digit' && inputValue.length <= 2) {
+                 setRaffleNumber(inputValue);
+             } else if (raffleMode === 'three-digit' && inputValue.length <= 3) {
+                 setRaffleNumber(inputValue);
+             }
         }
-        
-        if (isValid) {
-            setRaffleNumber(inputValue);
-            if (inputValue && drawnNumbers.has(parseInt(inputValue))) {
-                showNotification('Este número ya ha sido asignado', 'warning');
-            }
+
+        if (inputValue && drawnNumbers.has(parseInt(inputValue))) {
+             showNotification('Este número ya ha sido asignado', 'warning');
         }
     };
 
@@ -214,6 +210,12 @@ const App = () => {
         }
         
         const num = parseInt(raffleNumber, 10);
+
+        if (raffleMode === 'three-digit' && (num < 100 || num > 999)) {
+            showNotification('El número para esta modalidad debe estar entre 100 y 999', 'warning');
+            return;
+        }
+
         if (drawnNumbers.has(num)) {
             showNotification('Este número ya está asignado', 'warning');
             return;
@@ -817,5 +819,3 @@ const App = () => {
 };
 
 export default App;
-
-    
