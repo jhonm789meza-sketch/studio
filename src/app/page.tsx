@@ -6,6 +6,9 @@ import { RaffleManager } from '@/lib/RaffleManager';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuCheckboxItem } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Menu } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 type RaffleMode = 'two-digit' | 'three-digit';
 
@@ -48,6 +51,9 @@ const App = () => {
 
     const [twoDigitState, setTwoDigitState] = useState(initialRaffleState);
     const [threeDigitState, setThreeDigitState] = useState(initialRaffleState);
+
+    const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
+    const [adminRefSearch, setAdminRefSearch] = useState('');
 
     const state = raffleMode === 'two-digit' ? twoDigitState : threeDigitState;
     const setState = raffleMode === 'two-digit' ? setTwoDigitState : threeDigitState;
@@ -270,6 +276,31 @@ const App = () => {
         showNotification(`Cambiado a modo de ${mode === 'two-digit' ? '2' : '3'} cifras.`, 'success');
     };
 
+    const handleAdminSearch = () => {
+        if (!adminRefSearch.trim()) {
+            showNotification('Por favor, ingresa una referencia.', 'warning');
+            return;
+        }
+        
+        let found = false;
+        if (twoDigitState.raffleRef && twoDigitState.raffleRef.toLowerCase() === adminRefSearch.toLowerCase()) {
+            setRaffleMode('two-digit');
+            found = true;
+        } else if (threeDigitState.raffleRef && threeDigitState.raffleRef.toLowerCase() === adminRefSearch.toLowerCase()) {
+            setRaffleMode('three-digit');
+            found = true;
+        }
+
+        if (found) {
+            showNotification(`Cargando rifa con referencia: ${adminRefSearch}`, 'success');
+            setIsAdminLoginOpen(false);
+            setAdminRefSearch('');
+        } else {
+            showNotification('No se encontró ninguna rifa en juego con esa referencia.', 'error');
+        }
+    };
+
+
     const allNumbers = raffleMode === 'two-digit'
         ? Array.from({ length: 100 }, (_, i) => i)
         : Array.from({ length: 900 }, (_, i) => i + 100);
@@ -296,7 +327,9 @@ const App = () => {
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent>
-                                <DropdownMenuItem>Entrar como administrador</DropdownMenuItem>
+                                <DropdownMenuItem onSelect={() => setIsAdminLoginOpen(true)}>
+                                    Entrar como administrador
+                                </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuCheckboxItem
                                     checked={raffleMode === 'two-digit'}
@@ -749,6 +782,36 @@ const App = () => {
                     </div>
                 </div>
             )}
+
+            <Dialog open={isAdminLoginOpen} onOpenChange={setIsAdminLoginOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Acceso de Administrador</DialogTitle>
+                        <DialogDescription>
+                            Ingresa la referencia del juego para cargarlo.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="admin-ref-search" className="text-right">
+                                Referencia
+                            </Label>
+                            <Input
+                                id="admin-ref-search"
+                                value={adminRefSearch}
+                                onChange={(e) => setAdminRefSearch(e.target.value)}
+                                className="col-span-3"
+                                placeholder="Ej: JM1"
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button type="button" variant="outline" onClick={() => setIsAdminLoginOpen(false)}>Cancelar</Button>
+                        <Button type="submit" onClick={handleAdminSearch}>Buscar Juego</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
         </div>
     );
 };
