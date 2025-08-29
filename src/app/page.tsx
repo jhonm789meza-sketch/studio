@@ -249,11 +249,6 @@ const App = () => {
         showNotification('Tiquete generado correctamente', 'success');
     };
 
-    const handlePayment = () => {
-        // Lógica de pago simulada
-        showNotification('Pago realizado con éxito!', 'success');
-    };
-
     const handleDownloadTicket = () => {
         if (!ticketModalRef.current) return;
 
@@ -293,6 +288,8 @@ const App = () => {
     if (loading) {
         return <div className="flex justify-center items-center h-screen text-xl font-semibold">Cargando...</div>;
     }
+
+    const nequiPaymentUrl = `nequi://app/transfer?phone=${nequiAccountNumber}&amount=${value}&message=${encodeURIComponent(`Pago premio: ${prize}`)}`;
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-purple-100 to-blue-100 p-4 font-sans">
@@ -481,13 +478,14 @@ const App = () => {
                                             className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                                         />
                                     </div>
-                                    <button
-                                        onClick={handlePayment}
-                                        className="px-4 py-2 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 transition-colors h-10"
-                                        disabled={!nequiAccountNumber || isDetailsConfirmed}
+                                    <a
+                                        href={nequiPaymentUrl}
+                                        className={`inline-block px-4 py-2 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 transition-colors h-10 leading-tight ${(!nequiAccountNumber || isDetailsConfirmed) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                        aria-disabled={!nequiAccountNumber || isDetailsConfirmed}
+                                        onClick={(e) => { if (!nequiAccountNumber || isDetailsConfirmed) e.preventDefault(); }}
                                     >
                                         Pagar
-                                    </button>
+                                    </a>
                                 </div>
                                 {!isDetailsConfirmed && (
                                     <div className="md:col-span-2">
