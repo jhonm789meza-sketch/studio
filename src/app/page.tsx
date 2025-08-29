@@ -5,7 +5,7 @@ import html2canvas from 'html2canvas';
 import { RaffleManager } from '@/lib/RaffleManager';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuCheckboxItem } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Search } from 'lucide-react';
+import { Menu } from 'lucide-react';
 
 type RaffleMode = 'two-digit' | 'three-digit';
 
@@ -45,7 +45,6 @@ const App = () => {
     const ticketModalRef = useRef(null);
 
     const [raffleMode, setRaffleMode] = useState<RaffleMode>('two-digit');
-    const [searchTerm, setSearchTerm] = useState('');
 
     const [twoDigitState, setTwoDigitState] = useState(initialRaffleState);
     const [threeDigitState, setThreeDigitState] = useState(initialRaffleState);
@@ -275,12 +274,6 @@ const App = () => {
         ? Array.from({ length: 100 }, (_, i) => i)
         : Array.from({ length: 900 }, (_, i) => i + 100);
 
-    const filteredParticipants = participants.filter(participant =>
-        (participant.raffleNumber && participant.raffleNumber.includes(searchTerm)) ||
-        (participant.name && participant.name.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
-
-
     const twoDigitRafflesInPlay = twoDigitState.isDetailsConfirmed ? 1 : 0;
     const threeDigitRafflesInPlay = threeDigitState.isDetailsConfirmed ? 1 : 0;
 
@@ -336,16 +329,7 @@ const App = () => {
                            <p className="text-lg opacity-90">Referencia del Juego: {raffleRef}</p>
                         )}
                     </div>
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                        <input
-                            type="text"
-                            placeholder="Buscar participante..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 text-black"
-                        />
-                    </div>
+                    <div></div>
                 </div>
 
                 <div className="flex border-b border-gray-200">
@@ -630,7 +614,7 @@ const App = () => {
                                 <p className="font-bold">Aviso</p>
                                 <p>Debes confirmar los detalles del premio en la pestaña "Tablero" para poder ver los participantes.</p>
                             </div>
-                        ) : filteredParticipants.length > 0 ? (
+                        ) : participants.length > 0 ? (
                             <div className="overflow-x-auto">
                                 <table className="min-w-full divide-y divide-gray-200">
                                     <thead className="bg-gray-50">
@@ -647,7 +631,7 @@ const App = () => {
                                         </tr>
                                     </thead>
                                     <tbody className="bg-white divide-y divide-gray-200">
-                                        {filteredParticipants.map((p) => (
+                                        {participants.map((p) => (
                                             <tr key={p.id}>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                                     {p.name}
@@ -664,7 +648,7 @@ const App = () => {
                                 </table>
                             </div>
                         ) : (
-                            <p className="text-gray-500">No se encontraron participantes que coincidan con la búsqueda.</p>
+                            <p className="text-gray-500">No hay participantes registrados.</p>
                         )}
                     </div>
                 </div>
@@ -770,5 +754,3 @@ const App = () => {
 };
 
 export default App;
-
-    
