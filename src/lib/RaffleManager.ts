@@ -1,9 +1,7 @@
 class RaffleManager {
-    private ref: string;
     private static RAFFLE_COUNTER_KEY = 'raffleCounter';
 
     constructor() {
-        this.ref = '';
     }
 
     private getNextRefNumber(): number {
@@ -17,16 +15,12 @@ class RaffleManager {
     }
 
     public startNewRaffle(): string {
-        this.ref = `JM${this.getNextRefNumber()}`;
-        return this.ref;
-    }
-
-    public getRef(): string {
-        return this.ref;
+        const ref = `JM${this.getNextRefNumber()}`;
+        return ref;
     }
 
     public resetRef(): void {
-        this.ref = '';
+        // No action needed here anymore as ref is generated on demand
     }
 }
 

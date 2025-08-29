@@ -653,7 +653,7 @@ const App = () => {
                                 </table>
                             </div>
                         ) : (
-                            <p className="text-gray-500">No se encontraron participantes con esa referencia.</p>
+                            <p className="text-gray-500">No se encontraron participantes que coincidan con la búsqueda.</p>
                         )}
                     </div>
                 </div>
