@@ -463,30 +463,6 @@ const App = () => {
                                          />
                                      </div>
                                  )}
-                                <div className="flex items-end gap-2">
-                                    <div className="flex-grow">
-                                        <label htmlFor="nequi-account-input" className="block text-sm font-medium text-gray-700 mb-1">
-                                            Número de Cuenta Nequi:
-                                        </label>
-                                        <input
-                                            id="nequi-account-input"
-                                            type="tel"
-                                            value={nequiAccountNumber}
-                                            onChange={(e) => setNequiAccountNumber(e.target.value.replace(/\D/g, ''))}
-                                            placeholder="Ej: 3001234567"
-                                            disabled={isDetailsConfirmed}
-                                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                                        />
-                                    </div>
-                                    <a
-                                        href={nequiPaymentUrl}
-                                        className={`inline-block px-4 py-2 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 transition-colors h-10 leading-tight ${(!nequiAccountNumber || isDetailsConfirmed) ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                        aria-disabled={!nequiAccountNumber || isDetailsConfirmed}
-                                        onClick={(e) => { if (!nequiAccountNumber || isDetailsConfirmed) e.preventDefault(); }}
-                                    >
-                                        Pagar
-                                    </a>
-                                </div>
                                 {!isDetailsConfirmed && (
                                     <div className="md:col-span-2">
                                         <button
@@ -597,7 +573,20 @@ const App = () => {
                                     <p className="text-red-500 text-sm mt-1">Este número ya está asignado</p>
                                 )}
                             </div>
-                            <div>
+                             <div>
+                                <label htmlFor="nequi-account-input" className="block text-sm font-medium text-gray-700 mb-1">
+                                    Número de Cuenta Nequi:
+                                </label>
+                                <input
+                                    id="nequi-account-input"
+                                    type="tel"
+                                    value={nequiAccountNumber}
+                                    onChange={(e) => setNequiAccountNumber(e.target.value.replace(/\D/g, ''))}
+                                    placeholder="Ej: 3001234567"
+                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                />
+                            </div>
+                            <div className="flex items-center gap-4">
                                 <button
                                     onClick={handleTicketConfirmation}
                                     disabled={!name || !phoneNumber || !raffleNumber || drawnNumbers.has(parseInt(raffleNumber)) || isWinnerConfirmed}
@@ -605,6 +594,14 @@ const App = () => {
                                 >
                                     Generar Tiquete
                                 </button>
+                                <a
+                                    href={nequiPaymentUrl}
+                                    className={`inline-block px-4 py-2 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 transition-colors h-10 leading-tight ${(!nequiAccountNumber) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    aria-disabled={!nequiAccountNumber}
+                                    onClick={(e) => { if (!nequiAccountNumber) e.preventDefault(); }}
+                                >
+                                    Pagar
+                                </a>
                             </div>
                         </fieldset>
 
