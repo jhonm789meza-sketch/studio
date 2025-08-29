@@ -51,7 +51,7 @@ const App = () => {
     const [threeDigitState, setThreeDigitState] = useState(initialRaffleState);
 
     const state = raffleMode === 'two-digit' ? twoDigitState : threeDigitState;
-    const setState = raffleMode === 'two-digit' ? setTwoDigitState : setThreeDigitState;
+    const setState = raffleMode === 'two-digit' ? setTwoDigitState : threeDigitState;
 
     const {
         drawnNumbers, lastDrawnNumber, prize, value, isWinnerConfirmed, isDetailsConfirmed,
@@ -596,11 +596,11 @@ const App = () => {
                                 </button>
                                 <a
                                     href={nequiPaymentUrl}
-                                    className={`inline-block px-4 py-2 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 transition-colors h-10 leading-tight ${(!nequiAccountNumber) ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                    aria-disabled={!nequiAccountNumber}
-                                    onClick={(e) => { if (!nequiAccountNumber) e.preventDefault(); }}
+                                    className={`inline-block px-4 py-2 bg-purple-500 text-white font-medium rounded-lg hover:bg-purple-600 transition-colors h-10 leading-tight ${(!nequiAccountNumber || !value) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    aria-disabled={!nequiAccountNumber || !value}
+                                    onClick={(e) => { if (!nequiAccountNumber || !value) e.preventDefault(); }}
                                 >
-                                    Pagar
+                                    Pagar con Nequi
                                 </a>
                             </div>
                         </fieldset>
@@ -770,3 +770,5 @@ const App = () => {
 };
 
 export default App;
+
+    
