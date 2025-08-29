@@ -284,6 +284,10 @@ const App = () => {
         participant.raffleNumber.includes(searchTerm) || participant.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    const twoDigitRafflesInPlay = twoDigitState.isDetailsConfirmed ? 1 : 0;
+    const threeDigitRafflesInPlay = threeDigitState.isDetailsConfirmed ? 1 : 0;
+
+
     if (loading) {
         return <div className="flex justify-center items-center h-screen text-xl font-semibold">Cargando...</div>;
     }
@@ -307,12 +311,22 @@ const App = () => {
                                     onSelect={() => changeRaffleMode('two-digit')}
                                 >
                                     Rifa de 2 Cifras
+                                    {twoDigitRafflesInPlay > 0 && (
+                                        <span className="ml-auto bg-green-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                                            {twoDigitRafflesInPlay} en juego
+                                        </span>
+                                    )}
                                 </DropdownMenuCheckboxItem>
                                 <DropdownMenuCheckboxItem
                                     checked={raffleMode === 'three-digit'}
                                     onSelect={() => changeRaffleMode('three-digit')}
                                 >
                                     Rifa de 3 Cifras
+                                    {threeDigitRafflesInPlay > 0 && (
+                                        <span className="ml-auto bg-green-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                                            {threeDigitRafflesInPlay} en juego
+                                        </span>
+                                    )}
                                 </DropdownMenuCheckboxItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
@@ -759,3 +773,5 @@ const App = () => {
 };
 
 export default App;
+
+    
