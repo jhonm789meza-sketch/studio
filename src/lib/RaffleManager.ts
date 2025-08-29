@@ -17,7 +17,7 @@ class RaffleManager {
     }
 
     public startNewRaffle(): string {
-        this.ref = String(this.getNextRefNumber());
+        this.ref = `JM${this.getNextRefNumber()}`;
         return this.ref;
     }
 
