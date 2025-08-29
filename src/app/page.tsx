@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/label';
 type RaffleMode = 'two-digit' | 'three-digit';
 
 const initialRaffleState = {
-    drawnNumbers: new Set(),
+    drawnNumbers: new Set<number>(),
     lastDrawnNumber: null,
     prize: '',
     value: '',
@@ -26,7 +26,7 @@ const initialRaffleState = {
     gameDate: '',
     lottery: '',
     customLottery: '',
-    participants: [],
+    participants: [] as any[],
     raffleManager: new RaffleManager(),
     raffleRef: '',
 };
@@ -42,44 +42,21 @@ const App = () => {
     const [ticketInfo, setTicketInfo] = useState(null);
     const [showConfirmation, setShowConfirmation] = useState(false);
     const [confirmationMessage, setConfirmationMessage] = useState('');
-    const [confirmationAction, setConfirmationAction] = useState(null);
+    const [confirmationAction, setConfirmationAction] = useState<(() => void) | null>(null);
     const [notification, setNotification] = useState({ show: false, message: '', type: '' });
     
     const ticketModalRef = useRef(null);
 
     const [raffleMode, setRaffleMode] = useState<RaffleMode>('two-digit');
 
-    const [twoDigitState, setTwoDigitState] = useState(initialRaffleState);
-    const [threeDigitState, setThreeDigitState] = useState(initialRaffleState);
-
+    const [twoDigitState, setTwoDigitState] = useState(() => ({...initialRaffleState, raffleManager: new RaffleManager()}));
+    const [threeDigitState, setThreeDigitState] = useState(() => ({...initialRaffleState, raffleManager: new RaffleManager()}));
+    
     const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
     const [adminRefSearch, setAdminRefSearch] = useState('');
-
-    const state = raffleMode === 'two-digit' ? twoDigitState : threeDigitState;
-    const setState = raffleMode === 'two-digit' ? setTwoDigitState : threeDigitState;
-
-    const {
-        drawnNumbers, lastDrawnNumber, prize, value, isWinnerConfirmed, isDetailsConfirmed,
-        name, phoneNumber, raffleNumber, nequiAccountNumber, gameDate, lottery, customLottery,
-        participants, raffleManager, raffleRef
-    } = state;
-
-    const setDrawnNumbers = (newDrawnNumbers) => setState(s => ({ ...s, drawnNumbers: newDrawnNumbers }));
-    const setLastDrawnNumber = (newLastDrawnNumber) => setState(s => ({ ...s, lastDrawnNumber: newLastDrawnNumber }));
-    const setPrize = (newPrize) => setState(s => ({ ...s, prize: newPrize }));
-    const setValue = (newValue) => setState(s => ({ ...s, value: newValue }));
-    const setIsWinnerConfirmed = (newIsWinnerConfirmed) => setState(s => ({ ...s, isWinnerConfirmed: newIsWinnerConfirmed }));
-    const setIsDetailsConfirmed = (newIsDetailsConfirmed) => setState(s => ({ ...s, isDetailsConfirmed: newIsDetailsConfirmed }));
-    const setName = (newName) => setState(s => ({ ...s, name: newName }));
-    const setPhoneNumber = (newPhoneNumber) => setState(s => ({ ...s, phoneNumber: newPhoneNumber }));
-    const setRaffleNumber = (newRaffleNumber) => setState(s => ({ ...s, raffleNumber: newRaffleNumber }));
-    const setNequiAccountNumber = (newNequiAccountNumber) => setState(s => ({ ...s, nequiAccountNumber: newNequiAccountNumber }));
-    const setGameDate = (newGameDate) => setState(s => ({ ...s, gameDate: newGameDate }));
-    const setLottery = (newLottery) => setState(s => ({ ...s, lottery: newLottery }));
-    const setCustomLottery = (newCustomLottery) => setState(s => ({ ...s, customLottery: newCustomLottery }));
-    const setParticipants = (newParticipants) => setState(s => ({ ...s, participants: newParticipants }));
-    const setRaffleRef = (newRaffleRef) => setState(s => ({ ...s, raffleRef: newRaffleRef }));
     
+    const currentState = raffleMode === 'two-digit' ? twoDigitState : threeDigitState;
+    const setCurrentState = raffleMode === 'two-digit' ? setTwoDigitState : setThreeDigitState;
 
     const totalNumbers = raffleMode === 'two-digit' ? 100 : 900;
     const numberLength = raffleMode === 'two-digit' ? 2 : 3;
@@ -98,13 +75,13 @@ const App = () => {
         setTimeout(() => setNotification({ show: false, message: '', type: '' }), 3000);
     };
 
-    const showConfirmationDialog = (message, action) => {
+    const showConfirmationDialog = (message: string, action: () => void) => {
         setConfirmationMessage(message);
         setConfirmationAction(() => action);
         setShowConfirmation(true);
     };
     
-    const formatValue = (rawValue) => {
+    const formatValue = (rawValue: string) => {
         if (!rawValue) return '';
         const numericValue = rawValue.toString().replace(/[^\d]/g, '');
         if (numericValue === '') return '';
@@ -115,73 +92,65 @@ const App = () => {
         return currencySymbol + ' ' + number.toLocaleString('es-CO');
     };
 
-    const handleValueChange = (e) => {
+    const handleValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const inputValue = e.target.value;
         const numericValue = inputValue.replace(/[^\d]/g, '');
-        setValue(numericValue);
+        setCurrentState(s => ({ ...s, value: numericValue }));
     };
 
-    const handleRaffleNumberChange = (e) => {
+    const handleRaffleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const inputValue = e.target.value.replace(/\D/g, '');
-        const num = parseInt(inputValue, 10);
-        
-        if (inputValue === '' || !isNaN(num)) {
-             if (raffleMode === 'two-digit' && inputValue.length <= 2) {
-                 setRaffleNumber(inputValue);
-             } else if (raffleMode === 'three-digit' && inputValue.length <= 3) {
-                 setRaffleNumber(inputValue);
-             }
+        if (inputValue === '' || (raffleMode === 'two-digit' && inputValue.length <= 2) || (raffleMode === 'three-digit' && inputValue.length <= 3)) {
+            setCurrentState(s => ({...s, raffleNumber: inputValue}));
         }
-
-        if (inputValue && drawnNumbers.has(parseInt(inputValue))) {
+        if (inputValue && currentState.drawnNumbers.has(parseInt(inputValue))) {
              showNotification('Este número ya ha sido asignado', 'warning');
         }
     };
 
-    const toggleNumber = (number) => {
-        if (isWinnerConfirmed) {
+    const toggleNumber = (number: number) => {
+        if (currentState.isWinnerConfirmed) {
             showNotification('El juego ha terminado. Reinicia el tablero para comenzar de nuevo.', 'info');
             return;
         }
-        if (drawnNumbers.has(number)) {
+        if (currentState.drawnNumbers.has(number)) {
             showNotification('Este número ya está asignado', 'warning');
             return;
         }
-        setRaffleNumber(String(number).padStart(numberLength, '0'));
+        setCurrentState(s => ({ ...s, raffleNumber: String(number).padStart(numberLength, '0') }));
         setActiveTab('register');
     };
 
     const handleConfirmWinner = () => {
-        setIsWinnerConfirmed(true);
+        setCurrentState(s => ({ ...s, isWinnerConfirmed: true }));
         showNotification('¡Ganador confirmado!', 'success');
     };
 
     const handleConfirmDetails = () => {
-        if (!prize.trim()) {
+        if (!currentState.prize.trim()) {
             showNotification('Por favor ingresa el premio', 'warning');
             return;
         }
-        if (!value.trim()) {
+        if (!currentState.value.trim()) {
             showNotification('Por favor ingresa el valor', 'warning');
             return;
         }
-        if (!gameDate) {
+        if (!currentState.gameDate) {
             showNotification('Por favor ingresa la fecha del juego', 'warning');
             return;
         }
-        if (!lottery) {
+        if (!currentState.lottery) {
             showNotification('Por favor selecciona la lotería', 'warning');
             return;
         }
-        if (lottery === 'Otro' && !customLottery.trim()) {
+        if (currentState.lottery === 'Otro' && !currentState.customLottery.trim()) {
             showNotification('Por favor especifica la lotería', 'warning');
             return;
         }
         
-        const newRef = raffleManager.startNewRaffle();
-        setRaffleRef(newRef);
+        const newRef = currentState.raffleManager.startNewRaffle();
+        setCurrentState(s => ({ ...s, raffleRef: newRef, isDetailsConfirmed: true }));
 
-        setIsDetailsConfirmed(true);
         showNotification('Detalles del premio confirmados', 'success');
     };
 
@@ -189,34 +158,34 @@ const App = () => {
         showConfirmationDialog(
             '¿Estás seguro de que deseas reiniciar el tablero? Se perderán todos los datos de esta modalidad.',
             () => {
-                setState(initialRaffleState);
+                setCurrentState({...initialRaffleState, raffleManager: new RaffleManager()});
                 showNotification('Tablero reiniciado correctamente', 'success');
             }
         );
     };
 
     const handleTicketConfirmation = () => {
-        if (!name.trim()) {
+        if (!currentState.name.trim()) {
             showNotification('Por favor ingresa el nombre', 'warning');
             return;
         }
-        if (!phoneNumber.trim()) {
+        if (!currentState.phoneNumber.trim()) {
             showNotification('Por favor ingresa el celular', 'warning');
             return;
         }
-        if (!raffleNumber.trim()) {
+        if (!currentState.raffleNumber.trim()) {
             showNotification('Por favor ingresa el número de rifa', 'warning');
             return;
         }
         
-        const num = parseInt(raffleNumber, 10);
+        const num = parseInt(currentState.raffleNumber, 10);
 
-        if (raffleMode === 'three-digit' && (num < 100 || num > 999)) {
+        if (raffleMode === 'three-digit' && (num < 100 || num > 999) && currentState.raffleNumber.length === 3) {
             showNotification('El número para esta modalidad debe estar entre 100 y 999', 'warning');
             return;
         }
 
-        if (drawnNumbers.has(num)) {
+        if (currentState.drawnNumbers.has(num)) {
             showNotification('Este número ya está asignado', 'warning');
             return;
         }
@@ -225,39 +194,41 @@ const App = () => {
 
         const newParticipant = {
             id: Date.now(),
-            name,
-            phoneNumber,
+            name: currentState.name,
+            phoneNumber: currentState.phoneNumber,
             raffleNumber: formattedRaffleNumber,
             timestamp: new Date()
         };
         
-        setParticipants([...participants, newParticipant]);
-        setDrawnNumbers(new Set([...drawnNumbers, num]));
+        setCurrentState(s => ({
+            ...s,
+            participants: [...s.participants, newParticipant],
+            drawnNumbers: new Set([...s.drawnNumbers, num]),
+            name: '',
+            phoneNumber: '',
+            raffleNumber: '',
+        }));
 
         const currentDate = new Date();
         setTicketInfo({
-            prize,
-            value: formatValue(value),
-            name,
-            phoneNumber,
+            prize: currentState.prize,
+            value: formatValue(currentState.value),
+            name: currentState.name,
+            phoneNumber: currentState.phoneNumber,
             raffleNumber: formattedRaffleNumber,
             date: currentDate.toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' }),
             time: currentDate.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }),
-            gameDate,
-            lottery: lottery === 'Otro' ? customLottery : lottery,
+            gameDate: currentState.gameDate,
+            lottery: currentState.lottery === 'Otro' ? currentState.customLottery : currentState.lottery,
         });
         
         setIsTicketModalOpen(true);
         
-        setName('');
-        setPhoneNumber('');
-        setRaffleNumber('');
-
         showNotification('Tiquete generado correctamente', 'success');
     };
 
     const handleDownloadTicket = () => {
-        if (!ticketModalRef.current) return;
+        if (!ticketModalRef.current || !ticketInfo) return;
 
         html2canvas(ticketModalRef.current, { scale: 2 }).then((canvas) => {
             const imgData = canvas.toDataURL('image/png');
@@ -302,7 +273,6 @@ const App = () => {
         }
     };
 
-
     const allNumbers = raffleMode === 'two-digit'
         ? Array.from({ length: 100 }, (_, i) => i)
         : Array.from({ length: 900 }, (_, i) => i + 100);
@@ -310,12 +280,11 @@ const App = () => {
     const twoDigitRafflesInPlay = twoDigitState.isDetailsConfirmed ? 1 : 0;
     const threeDigitRafflesInPlay = threeDigitState.isDetailsConfirmed ? 1 : 0;
 
-
     if (loading) {
         return <div className="flex justify-center items-center h-screen text-xl font-semibold">Cargando...</div>;
     }
 
-    const nequiPaymentUrl = `nequi://app/transfer?phone=${nequiAccountNumber}&amount=${value}&message=${encodeURIComponent(`Pago premio: ${prize}`)}`;
+    const nequiPaymentUrl = `nequi://app/transfer?phone=${currentState.nequiAccountNumber}&amount=${currentState.value}&message=${encodeURIComponent(`Pago premio: ${currentState.prize}`)}`;
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-purple-100 to-blue-100 p-4 font-sans">
@@ -360,8 +329,8 @@ const App = () => {
                     </div>
                     <div className="text-center">
                         <h1 className="text-4xl font-bold">Tablero de Rifa</h1>
-                        {isDetailsConfirmed && raffleRef && (
-                           <p className="text-lg opacity-90">Referencia del Juego: {raffleRef}</p>
+                        {currentState.isDetailsConfirmed && currentState.raffleRef && (
+                           <p className="text-lg opacity-90">Referencia del Juego: {currentState.raffleRef}</p>
                         )}
                     </div>
                     <div></div>
@@ -411,10 +380,10 @@ const App = () => {
                                     <input
                                         id="prize-input"
                                         type="text"
-                                        value={prize}
-                                        onChange={(e) => setPrize(e.target.value)}
+                                        value={currentState.prize}
+                                        onChange={(e) => setCurrentState(s => ({...s, prize: e.target.value}))}
                                         placeholder="Ej: Carro, Moto, Dinero"
-                                        disabled={isDetailsConfirmed}
+                                        disabled={currentState.isDetailsConfirmed}
                                         className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                                     />
                                 </div>
@@ -425,10 +394,10 @@ const App = () => {
                                     <input
                                         id="value-input"
                                         type="text"
-                                        value={formatValue(value)}
+                                        value={formatValue(currentState.value)}
                                         onChange={handleValueChange}
                                         placeholder="Ej: 5.000.000"
-                                        disabled={isDetailsConfirmed}
+                                        disabled={currentState.isDetailsConfirmed}
                                         className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                                     />
                                 </div>
@@ -439,9 +408,9 @@ const App = () => {
                                     <input
                                         id="game-date-input"
                                         type="date"
-                                        value={gameDate}
-                                        onChange={(e) => setGameDate(e.target.value)}
-                                        disabled={isDetailsConfirmed}
+                                        value={currentState.gameDate}
+                                        onChange={(e) => setCurrentState(s => ({...s, gameDate: e.target.value}))}
+                                        disabled={currentState.isDetailsConfirmed}
                                         className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                                     />
                                 </div>
@@ -451,9 +420,9 @@ const App = () => {
                                     </label>
                                     <select
                                         id="lottery-input"
-                                        value={lottery}
-                                        onChange={(e) => setLottery(e.target.value)}
-                                        disabled={isDetailsConfirmed}
+                                        value={currentState.lottery}
+                                        onChange={(e) => setCurrentState(s => ({...s, lottery: e.target.value}))}
+                                        disabled={currentState.isDetailsConfirmed}
                                         className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                                     >
                                         <option value="">Selecciona una lotería</option>
@@ -466,7 +435,7 @@ const App = () => {
                                         <option value="Otro">Otro</option>
                                     </select>
                                 </div>
-                                 {lottery === 'Otro' && (
+                                 {currentState.lottery === 'Otro' && (
                                      <div>
                                          <label htmlFor="custom-lottery-input" className="block text-sm font-medium text-gray-700 mb-1">
                                              Especificar Lotería:
@@ -474,15 +443,15 @@ const App = () => {
                                          <input
                                              id="custom-lottery-input"
                                              type="text"
-                                             value={customLottery}
-                                             onChange={(e) => setCustomLottery(e.target.value)}
+                                             value={currentState.customLottery}
+                                             onChange={(e) => setCurrentState(s => ({...s, customLottery: e.target.value}))}
                                              placeholder="Nombre de la lotería"
-                                             disabled={isDetailsConfirmed}
+                                             disabled={currentState.isDetailsConfirmed}
                                              className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                                          />
                                      </div>
                                  )}
-                                {!isDetailsConfirmed && (
+                                {!currentState.isDetailsConfirmed && (
                                     <div className="md:col-span-2">
                                         <button
                                             onClick={handleConfirmDetails}
@@ -497,7 +466,7 @@ const App = () => {
                         <div className="mb-6">
                             <h2 className="text-2xl font-bold text-gray-800 mb-4">Sorteo</h2>
                             <div className="flex flex-wrap gap-3">
-                                {isWinnerConfirmed && (
+                                {currentState.isWinnerConfirmed && (
                                     <button
                                         onClick={handleConfirmWinner}
                                         className="px-4 py-2 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 transition-colors"
@@ -518,9 +487,9 @@ const App = () => {
                             <div className="flex justify-between items-center mb-4">
                                 <h2 className="text-2xl font-bold text-gray-800 flex items-center">
                                     Tablero de Números ({raffleMode === 'two-digit' ? '00-99' : '100-999'})
-                                    {isDetailsConfirmed && raffleRef && (
+                                    {currentState.isDetailsConfirmed && currentState.raffleRef && (
                                       <span className="ml-2 text-base font-normal text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
-                                          Ref: {raffleRef}
+                                          Ref: {currentState.raffleRef}
                                       </span>
                                     )}
                                 </h2>
@@ -532,8 +501,8 @@ const App = () => {
                                         onClick={() => toggleNumber(number)}
                                         className={`
                                             number-cell text-center py-2 rounded-lg transition-all text-sm
-                                            ${isWinnerConfirmed ? 'cursor-not-allowed bg-gray-300 text-gray-500' : 'cursor-pointer'}
-                                            ${isDetailsConfirmed && drawnNumbers.has(number)
+                                            ${currentState.isWinnerConfirmed ? 'cursor-not-allowed bg-gray-300 text-gray-500' : 'cursor-pointer'}
+                                            ${currentState.isDetailsConfirmed && currentState.drawnNumbers.has(number)
                                                 ? 'bg-red-600 text-white shadow-lg transform scale-105 cursor-not-allowed'
                                                 : 'bg-green-200 text-green-800 hover:bg-green-300 hover:shadow-md'
                                             }
@@ -548,7 +517,7 @@ const App = () => {
 
                     <div className={`tab-content ${activeTab === 'register' ? 'active' : ''}`}>
                         <h2 className="text-2xl font-bold text-gray-800 mb-4">Registrar Participante</h2>
-                        <fieldset disabled={isWinnerConfirmed || !isDetailsConfirmed} className="disabled:opacity-50 space-y-4">
+                        <fieldset disabled={currentState.isWinnerConfirmed || !currentState.isDetailsConfirmed} className="disabled:opacity-50 space-y-4">
                             <div>
                                 <label htmlFor="name-input" className="block text-sm font-medium text-gray-700 mb-1">
                                     Nombre completo:
@@ -556,8 +525,8 @@ const App = () => {
                                 <input
                                     id="name-input"
                                     type="text"
-                                    value={name}
-                                    onChange={(e) => setName(e.target.value)}
+                                    value={currentState.name}
+                                    onChange={(e) => setCurrentState(s => ({...s, name: e.target.value}))}
                                     placeholder="Ej: Juan Pérez"
                                     className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
                                 />
@@ -569,8 +538,8 @@ const App = () => {
                                 <input
                                     id="phone-input"
                                     type="tel"
-                                    value={phoneNumber}
-                                    onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ''))}
+                                    value={currentState.phoneNumber}
+                                    onChange={(e) => setCurrentState(s => ({...s, phoneNumber: e.target.value.replace(/\D/g, '')}))}
                                     placeholder="Ej: 3001234567"
                                     className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
                                 />
@@ -582,13 +551,13 @@ const App = () => {
                                 <input
                                     id="raffle-number-input"
                                     type="text"
-                                    value={raffleNumber}
+                                    value={currentState.raffleNumber}
                                     onChange={handleRaffleNumberChange}
                                     placeholder={`Ej: ${raffleMode === 'two-digit' ? '05' : '142'}`}
                                     className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
                                     maxLength={numberLength}
                                 />
-                                {raffleNumber && drawnNumbers.has(parseInt(raffleNumber)) && (
+                                {currentState.raffleNumber && currentState.drawnNumbers.has(parseInt(currentState.raffleNumber)) && (
                                     <p className="text-red-500 text-sm mt-1">Este número ya está asignado</p>
                                 )}
                             </div>
@@ -599,8 +568,8 @@ const App = () => {
                                 <input
                                     id="nequi-account-input"
                                     type="tel"
-                                    value={nequiAccountNumber}
-                                    onChange={(e) => setNequiAccountNumber(e.target.value.replace(/\D/g, ''))}
+                                    value={currentState.nequiAccountNumber}
+                                    onChange={(e) => setCurrentState(s => ({...s, nequiAccountNumber: e.target.value.replace(/\D/g, '')}))}
                                     placeholder="Ej: 3001234567"
                                     className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
                                 />
@@ -608,30 +577,30 @@ const App = () => {
                             <div className="flex items-center gap-4">
                                 <button
                                     onClick={handleTicketConfirmation}
-                                    disabled={!name || !phoneNumber || !raffleNumber || drawnNumbers.has(parseInt(raffleNumber)) || isWinnerConfirmed}
+                                    disabled={!currentState.name || !currentState.phoneNumber || !currentState.raffleNumber || currentState.drawnNumbers.has(parseInt(currentState.raffleNumber)) || currentState.isWinnerConfirmed}
                                     className="px-4 py-2 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
                                 >
                                     Generar Tiquete
                                 </button>
                                 <a
                                     href={nequiPaymentUrl}
-                                    className={`inline-block px-4 py-2 bg-purple-500 text-white font-medium rounded-lg hover:bg-purple-600 transition-colors h-10 leading-tight ${(!nequiAccountNumber || !value) ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                    aria-disabled={!nequiAccountNumber || !value}
-                                    onClick={(e) => { if (!nequiAccountNumber || !value) e.preventDefault(); }}
+                                    className={`inline-block px-4 py-2 bg-purple-500 text-white font-medium rounded-lg hover:bg-purple-600 transition-colors h-10 leading-tight ${(!currentState.nequiAccountNumber || !currentState.value) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    aria-disabled={!currentState.nequiAccountNumber || !currentState.value}
+                                    onClick={(e) => { if (!currentState.nequiAccountNumber || !currentState.value) e.preventDefault(); }}
                                 >
                                     Pagar con Nequi
                                 </a>
                             </div>
                         </fieldset>
 
-                        {!isDetailsConfirmed && (
+                        {!currentState.isDetailsConfirmed && (
                              <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-6" role="alert">
                                 <p className="font-bold">Aviso</p>
                                 <p>Debes confirmar los detalles del premio en la pestaña "Tablero" para poder registrar participantes.</p>
                             </div>
                         )}
 
-                        {isWinnerConfirmed && (
+                        {currentState.isWinnerConfirmed && (
                             <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-6" role="alert">
                                 <p className="font-bold">Juego terminado</p>
                                 <p>El registro de nuevos participantes está deshabilitado porque ya se ha confirmado un ganador. Reinicia el tablero para comenzar una nueva rifa.</p>
@@ -644,12 +613,12 @@ const App = () => {
                              <h2 className="text-2xl font-bold text-gray-800">Participantes Registrados</h2>
                         </div>
 
-                        {!isDetailsConfirmed ? (
+                        {!currentState.isDetailsConfirmed ? (
                             <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-6" role="alert">
                                 <p className="font-bold">Aviso</p>
                                 <p>Debes confirmar los detalles del premio en la pestaña "Tablero" para poder ver los participantes.</p>
                             </div>
-                        ) : participants.length > 0 ? (
+                        ) : currentState.participants.length > 0 ? (
                             <div className="overflow-x-auto">
                                 <table className="min-w-full divide-y divide-gray-200">
                                     <thead className="bg-gray-50">
@@ -666,7 +635,7 @@ const App = () => {
                                         </tr>
                                     </thead>
                                     <tbody className="bg-white divide-y divide-gray-200">
-                                        {participants.map((p) => (
+                                        {currentState.participants.map((p) => (
                                             <tr key={p.id}>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                                     {p.name}
