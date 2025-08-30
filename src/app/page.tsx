@@ -3,6 +3,9 @@ import { useState, useEffect, useRef } from 'react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { RaffleManager } from '@/lib/RaffleManager';
+import { db } from '@/lib/firebase';
+import { doc, onSnapshot, setDoc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore';
+
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuCheckboxItem } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Menu } from 'lucide-react';
@@ -12,8 +15,8 @@ import { Label } from '@/components/ui/label';
 
 type RaffleMode = 'two-digit' | 'three-digit';
 
-const initialRaffleState = {
-    drawnNumbers: new Set<number>(),
+const initialRaffleData = {
+    drawnNumbers: [],
     lastDrawnNumber: null,
     prize: '',
     value: '',
@@ -27,20 +30,18 @@ const initialRaffleState = {
     lottery: '',
     customLottery: '',
     organizerName: '',
-    participants: [] as any[],
-    raffleManager: new RaffleManager(),
+    participants: [],
     raffleRef: '',
 };
 
+
 const App = () => {
-    const [db, setDb] = useState(null);
-    const [userId, setUserId] = useState(null);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('board');
     const [currencySymbol] = useState('$');
 
     const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
-    const [ticketInfo, setTicketInfo] = useState(null);
+    const [ticketInfo, setTicketInfo] = useState<any>(null);
     const [showConfirmation, setShowConfirmation] = useState(false);
     const [confirmationMessage, setConfirmationMessage] = useState('');
     const [confirmationAction, setConfirmationAction] = useState<(() => void) | null>(null);
@@ -49,29 +50,47 @@ const App = () => {
     const ticketModalRef = useRef(null);
 
     const [raffleMode, setRaffleMode] = useState<RaffleMode>('two-digit');
-
-    const [twoDigitState, setTwoDigitState] = useState(() => ({...initialRaffleState, raffleManager: new RaffleManager()}));
-    const [threeDigitState, setThreeDigitState] = useState(() => ({...initialRaffleState, raffleManager: new RaffleManager()}));
     
+    const [twoDigitState, setTwoDigitState] = useState<any>(initialRaffleData);
+    const [threeDigitState, setThreeDigitState] = useState<any>(initialRaffleData);
+
     const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
     const [adminRefSearch, setAdminRefSearch] = useState('');
     
     const currentState = raffleMode === 'two-digit' ? twoDigitState : threeDigitState;
     const setCurrentState = raffleMode === 'two-digit' ? setTwoDigitState : setThreeDigitState;
 
+    const raffleManager = new RaffleManager(db);
+
     const totalNumbers = raffleMode === 'two-digit' ? 100 : 1000;
     const numberLength = raffleMode === 'two-digit' ? 2 : 3;
 
     useEffect(() => {
-        // Simulación de Firebase
-        setTimeout(() => {
-            setDb({}); 
-            setUserId('demo-user-id');
-            setLoading(false);
-        }, 1000);
-    }, []);
+        setLoading(true);
+        const unsubTwoDigit = onSnapshot(doc(db, "raffles", "two-digit"), (doc) => {
+            if (doc.exists()) {
+                setTwoDigitState({ ...initialRaffleData, ...doc.data() });
+            } else {
+                setTwoDigitState(initialRaffleData);
+            }
+        });
+        const unsubThreeDigit = onSnapshot(doc(db, "raffles", "three-digit"), (doc) => {
+             if (doc.exists()) {
+                setThreeDigitState({ ...initialRaffleData, ...doc.data() });
+            } else {
+                setThreeDigitState(initialRaffleData);
+            }
+        });
 
-    const showNotification = (message, type = 'info') => {
+        setLoading(false);
+
+        return () => {
+            unsubTwoDigit();
+            unsubThreeDigit();
+        };
+    }, [db]);
+
+    const showNotification = (message: string, type = 'info') => {
         setNotification({ show: true, message, type });
         setTimeout(() => setNotification({ show: false, message: '', type: '' }), 3000);
     };
@@ -96,14 +115,14 @@ const App = () => {
     const handleValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const inputValue = e.target.value;
         const numericValue = inputValue.replace(/[^\d]/g, '');
-        setCurrentState(s => ({ ...s, value: numericValue }));
+        setCurrentState((s:any) => ({ ...s, value: numericValue }));
     };
 
     const handleRaffleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const inputValue = e.target.value.replace(/\D/g, '');
-        setCurrentState(s => ({...s, raffleNumber: inputValue}));
+        setCurrentState((s:any) => ({...s, raffleNumber: inputValue}));
 
-        if (inputValue && currentState.drawnNumbers.has(parseInt(inputValue))) {
+        if (inputValue && new Set(currentState.drawnNumbers).has(parseInt(inputValue))) {
              showNotification('Este número ya ha sido asignado', 'warning');
         }
     };
@@ -113,20 +132,20 @@ const App = () => {
             showNotification('El juego ha terminado. Reinicia el tablero para comenzar de nuevo.', 'info');
             return;
         }
-        if (currentState.drawnNumbers.has(number)) {
+        if (new Set(currentState.drawnNumbers).has(number)) {
             showNotification('Este número ya está asignado', 'warning');
             return;
         }
-        setCurrentState(s => ({ ...s, raffleNumber: String(number).padStart(numberLength, '0') }));
+        setCurrentState((s:any) => ({ ...s, raffleNumber: String(number).padStart(numberLength, '0') }));
         setActiveTab('register');
     };
 
-    const handleConfirmWinner = () => {
-        setCurrentState(s => ({ ...s, isWinnerConfirmed: true }));
+    const handleConfirmWinner = async () => {
+        await updateDoc(doc(db, "raffles", raffleMode), { isWinnerConfirmed: true });
         showNotification('¡Ganador confirmado!', 'success');
     };
 
-    const handleConfirmDetails = () => {
+    const handleConfirmDetails = async () => {
         if (!currentState.organizerName.trim()) {
             showNotification('Por favor ingresa el nombre del organizador', 'warning');
             return;
@@ -152,23 +171,30 @@ const App = () => {
             return;
         }
         
-        const newRef = currentState.raffleManager.startNewRaffle();
-        setCurrentState(s => ({ ...s, raffleRef: newRef, isDetailsConfirmed: true }));
+        const newRef = await raffleManager.startNewRaffle();
+        const raffleData = {
+            ...currentState,
+            raffleRef: newRef,
+            isDetailsConfirmed: true,
+        };
 
+        await setDoc(doc(db, "raffles", raffleMode), raffleData);
         showNotification('Detalles del premio confirmados', 'success');
     };
 
     const resetBoard = () => {
         showConfirmationDialog(
             '¿Estás seguro de que deseas reiniciar el tablero? Se perderán todos los datos de esta modalidad.',
-            () => {
-                setCurrentState({...initialRaffleState, raffleManager: new RaffleManager()});
+            async () => {
+                await deleteDoc(doc(db, "raffles", raffleMode));
+                if(raffleMode === 'two-digit') setTwoDigitState(initialRaffleData);
+                else setThreeDigitState(initialRaffleData);
                 showNotification('Tablero reiniciado correctamente', 'success');
             }
         );
     };
 
-    const handleTicketConfirmation = () => {
+    const handleTicketConfirmation = async () => {
         if (!currentState.name.trim()) {
             showNotification('Por favor ingresa el nombre', 'warning');
             return;
@@ -184,17 +210,17 @@ const App = () => {
         
         const num = parseInt(currentState.raffleNumber, 10);
 
-        if (currentState.raffleNumber.length < numberLength) {
+        if (currentState.raffleNumber.length !== numberLength) {
              showNotification(`El número para esta modalidad debe ser de ${numberLength} cifras`, 'warning');
              return;
         }
 
-        if (raffleMode === 'three-digit' && currentState.raffleNumber.length === 3 && (num < 100 || num > 999)) {
+        if (raffleMode === 'three-digit' && (num < 100 || num > 999)) {
             showNotification('El número para esta modalidad debe estar entre 100 y 999', 'warning');
             return;
         }
 
-        if (currentState.drawnNumbers.has(num)) {
+        if (new Set(currentState.drawnNumbers).has(num)) {
             showNotification('Este número ya está asignado', 'warning');
             return;
         }
@@ -209,32 +235,38 @@ const App = () => {
             timestamp: new Date()
         };
         
-        setCurrentState(s => ({
-            ...s,
-            participants: [...s.participants, newParticipant],
-            drawnNumbers: new Set([...s.drawnNumbers, num]),
-            name: '',
-            phoneNumber: '',
-            raffleNumber: '',
-        }));
+        const updatedParticipants = [...currentState.participants, newParticipant];
+        const updatedDrawnNumbers = [...currentState.drawnNumbers, num];
 
-        const currentDate = new Date();
-        setTicketInfo({
+        await updateDoc(doc(db, "raffles", raffleMode), {
+            participants: updatedParticipants,
+            drawnNumbers: updatedDrawnNumbers
+        });
+
+        const ticketData = {
             prize: currentState.prize,
             value: formatValue(currentState.value),
             name: currentState.name,
             phoneNumber: currentState.phoneNumber,
             raffleNumber: formattedRaffleNumber,
-            date: currentDate.toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' }),
-            time: currentDate.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }),
+            date: new Date().toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' }),
+            time: new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }),
             gameDate: currentState.gameDate,
             lottery: currentState.lottery === 'Otro' ? currentState.customLottery : currentState.lottery,
             raffleRef: currentState.raffleRef,
             organizerName: currentState.organizerName,
-        });
+        };
         
+        setTicketInfo(ticketData);
         setIsTicketModalOpen(true);
         
+        setCurrentState((s:any) => ({
+            ...s,
+            name: '',
+            phoneNumber: '',
+            raffleNumber: '',
+        }));
+
         showNotification('Tiquete generado correctamente', 'success');
     };
 
@@ -257,20 +289,24 @@ const App = () => {
     const changeRaffleMode = (mode: RaffleMode) => {
         if (mode === raffleMode) return;
         setRaffleMode(mode);
+        setActiveTab('board'); // Reset to board tab on mode change
         showNotification(`Cambiado a modo de ${mode === 'two-digit' ? '2' : '3'} cifras.`, 'success');
     };
 
-    const handleAdminSearch = () => {
+    const handleAdminSearch = async () => {
         if (!adminRefSearch.trim()) {
             showNotification('Por favor, ingresa una referencia.', 'warning');
             return;
         }
         
+        const twoDigitDoc = await getDoc(doc(db, "raffles", "two-digit"));
+        const threeDigitDoc = await getDoc(doc(db, "raffles", "three-digit"));
+
         let found = false;
-        if (twoDigitState.raffleRef && twoDigitState.raffleRef.toLowerCase() === adminRefSearch.toLowerCase()) {
+        if (twoDigitDoc.exists() && twoDigitDoc.data().raffleRef && twoDigitDoc.data().raffleRef.toLowerCase() === adminRefSearch.toLowerCase()) {
             setRaffleMode('two-digit');
             found = true;
-        } else if (threeDigitState.raffleRef && threeDigitState.raffleRef.toLowerCase() === adminRefSearch.toLowerCase()) {
+        } else if (threeDigitDoc.exists() && threeDigitDoc.data().raffleRef && threeDigitDoc.data().raffleRef.toLowerCase() === adminRefSearch.toLowerCase()) {
             setRaffleMode('three-digit');
             found = true;
         }
@@ -279,6 +315,7 @@ const App = () => {
             showNotification(`Cargando rifa con referencia: ${adminRefSearch}`, 'success');
             setIsAdminLoginOpen(false);
             setAdminRefSearch('');
+            setActiveTab('board');
         } else {
             showNotification('No se encontró ninguna rifa en juego con esa referencia.', 'error');
         }
@@ -290,12 +327,18 @@ const App = () => {
 
     const twoDigitRafflesInPlay = twoDigitState.isDetailsConfirmed ? 1 : 0;
     const threeDigitRafflesInPlay = threeDigitState.isDetailsConfirmed ? 1 : 0;
+    
+    const drawnNumbersSet = new Set(currentState.drawnNumbers);
 
     if (loading) {
         return <div className="flex justify-center items-center h-screen text-xl font-semibold">Cargando...</div>;
     }
 
     const nequiPaymentUrl = `nequi://app/transfer?phone=${currentState.nequiAccountNumber}&amount=${currentState.value}&message=${encodeURIComponent(`Pago premio: ${currentState.prize}`)}`;
+
+    const handleFieldChange = (field: string, value: any) => {
+        setCurrentState((s:any) => ({...s, [field]: value}));
+    }
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-purple-100 to-blue-100 p-4 font-sans">
@@ -392,7 +435,7 @@ const App = () => {
                                         id="organizer-name-input"
                                         type="text"
                                         value={currentState.organizerName}
-                                        onChange={(e) => setCurrentState(s => ({...s, organizerName: e.target.value}))}
+                                        onChange={(e) => handleFieldChange('organizerName', e.target.value)}
                                         placeholder="Nombre del organizador"
                                         disabled={currentState.isDetailsConfirmed}
                                         className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
@@ -406,7 +449,7 @@ const App = () => {
                                         id="prize-input"
                                         type="text"
                                         value={currentState.prize}
-                                        onChange={(e) => setCurrentState(s => ({...s, prize: e.target.value}))}
+                                        onChange={(e) => handleFieldChange('prize', e.target.value)}
                                         placeholder="Ej: Carro, Moto, Dinero"
                                         disabled={currentState.isDetailsConfirmed}
                                         className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
@@ -434,7 +477,7 @@ const App = () => {
                                         id="game-date-input"
                                         type="date"
                                         value={currentState.gameDate}
-                                        onChange={(e) => setCurrentState(s => ({...s, gameDate: e.target.value}))}
+                                        onChange={(e) => handleFieldChange('gameDate', e.target.value)}
                                         disabled={currentState.isDetailsConfirmed}
                                         className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                                     />
@@ -446,7 +489,7 @@ const App = () => {
                                     <select
                                         id="lottery-input"
                                         value={currentState.lottery}
-                                        onChange={(e) => setCurrentState(s => ({...s, lottery: e.target.value}))}
+                                        onChange={(e) => handleFieldChange('lottery', e.target.value)}
                                         disabled={currentState.isDetailsConfirmed}
                                         className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                                     >
@@ -469,7 +512,7 @@ const App = () => {
                                              id="custom-lottery-input"
                                              type="text"
                                              value={currentState.customLottery}
-                                             onChange={(e) => setCurrentState(s => ({...s, customLottery: e.target.value}))}
+                                             onChange={(e) => handleFieldChange('customLottery', e.target.value)}
                                              placeholder="Nombre de la lotería"
                                              disabled={currentState.isDetailsConfirmed}
                                              className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
@@ -527,7 +570,7 @@ const App = () => {
                                         className={`
                                             number-cell text-center py-2 rounded-lg transition-all text-sm
                                             ${currentState.isWinnerConfirmed ? 'cursor-not-allowed bg-gray-300 text-gray-500' : 'cursor-pointer'}
-                                            ${currentState.isDetailsConfirmed && currentState.drawnNumbers.has(number)
+                                            ${currentState.isDetailsConfirmed && drawnNumbersSet.has(number)
                                                 ? 'bg-red-600 text-white shadow-lg transform scale-105 cursor-not-allowed'
                                                 : 'bg-green-200 text-green-800 hover:bg-green-300 hover:shadow-md'
                                             }
@@ -551,7 +594,7 @@ const App = () => {
                                     id="name-input"
                                     type="text"
                                     value={currentState.name}
-                                    onChange={(e) => setCurrentState(s => ({...s, name: e.target.value}))}
+                                    onChange={(e) => handleFieldChange('name', e.target.value)}
                                     placeholder="Ej: Juan Pérez"
                                     className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
                                 />
@@ -564,7 +607,7 @@ const App = () => {
                                     id="phone-input"
                                     type="tel"
                                     value={currentState.phoneNumber}
-                                    onChange={(e) => setCurrentState(s => ({...s, phoneNumber: e.target.value.replace(/\D/g, '')}))}
+                                    onChange={(e) => handleFieldChange('phoneNumber', e.target.value.replace(/\D/g, ''))}
                                     placeholder="Ej: 3001234567"
                                     className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
                                 />
@@ -582,7 +625,7 @@ const App = () => {
                                     className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
                                     maxLength={numberLength}
                                 />
-                                {currentState.raffleNumber && currentState.drawnNumbers.has(parseInt(currentState.raffleNumber)) && (
+                                {currentState.raffleNumber && drawnNumbersSet.has(parseInt(currentState.raffleNumber)) && (
                                     <p className="text-red-500 text-sm mt-1">Este número ya está asignado</p>
                                 )}
                             </div>
@@ -594,7 +637,7 @@ const App = () => {
                                     id="nequi-account-input"
                                     type="tel"
                                     value={currentState.nequiAccountNumber}
-                                    onChange={(e) => setCurrentState(s => ({...s, nequiAccountNumber: e.target.value.replace(/\D/g, '')}))}
+                                    onChange={(e) => handleFieldChange('nequiAccountNumber', e.target.value.replace(/\D/g, ''))}
                                     placeholder="Ej: 3001234567"
                                     className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
                                 />
@@ -602,7 +645,7 @@ const App = () => {
                             <div className="flex items-center gap-4">
                                 <button
                                     onClick={handleTicketConfirmation}
-                                    disabled={!currentState.name || !currentState.phoneNumber || !currentState.raffleNumber || currentState.drawnNumbers.has(parseInt(currentState.raffleNumber)) || currentState.isWinnerConfirmed}
+                                    disabled={!currentState.name || !currentState.phoneNumber || !currentState.raffleNumber || drawnNumbersSet.has(parseInt(currentState.raffleNumber)) || currentState.isWinnerConfirmed}
                                     className="px-4 py-2 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
                                 >
                                     Generar Tiquete
@@ -667,7 +710,7 @@ const App = () => {
                                         </tr>
                                     </thead>
                                     <tbody className="bg-white divide-y divide-gray-200">
-                                        {currentState.participants.map((p) => (
+                                        {currentState.participants.map((p: any) => (
                                             <tr key={p.id}>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                                     {p.name}

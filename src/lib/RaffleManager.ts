@@ -1,26 +1,40 @@
-class RaffleManager {
-    private static RAFFLE_COUNTER_KEY = 'raffleCounter';
+import { doc, getDoc, setDoc, increment } from 'firebase/firestore';
+import type { Firestore } from 'firebase/firestore';
 
-    constructor() {
+class RaffleManager {
+    private db: Firestore;
+    private counterRef;
+
+    constructor(db: Firestore) {
+        this.db = db;
+        this.counterRef = doc(this.db, 'internal', 'raffleCounter');
     }
 
-    private getNextRefNumber(): number {
+    private async getNextRefNumber(): Promise<number> {
         if (typeof window === 'undefined') {
             return 1;
         }
-        const counter = parseInt(localStorage.getItem(RaffleManager.RAFFLE_COUNTER_KEY) || '0', 10);
-        const nextCounter = counter + 1;
-        localStorage.setItem(RaffleManager.RAFFLE_COUNTER_KEY, nextCounter.toString());
-        return nextCounter;
+        
+        const docSnap = await getDoc(this.counterRef);
+
+        if (docSnap.exists()) {
+            await setDoc(this.counterRef, { count: increment(1) }, { merge: true });
+            const updatedSnap = await getDoc(this.counterRef);
+            return updatedSnap.data()?.count || 1;
+        } else {
+            await setDoc(this.counterRef, { count: 1 });
+            return 1;
+        }
     }
 
-    public startNewRaffle(): string {
-        const ref = `JM${this.getNextRefNumber()}`;
+    public async startNewRaffle(): Promise<string> {
+        const nextNumber = await this.getNextRefNumber();
+        const ref = `JM${nextNumber}`;
         return ref;
     }
 
     public resetRef(): void {
-        // No action needed here anymore as ref is generated on demand
+        // This is now handled by Firestore
     }
 }
 
