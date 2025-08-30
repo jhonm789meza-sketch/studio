@@ -56,6 +56,7 @@ const App = () => {
 
     const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
     const [adminRefSearch, setAdminRefSearch] = useState('');
+    const [paymentInitiated, setPaymentInitiated] = useState(false);
     
     const currentState = raffleMode === 'two-digit' ? twoDigitState : threeDigitState;
     const setCurrentState = raffleMode === 'two-digit' ? setTwoDigitState : setThreeDigitState;
@@ -115,12 +116,18 @@ const App = () => {
 
     const handleRaffleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const inputValue = e.target.value.replace(/\D/g, '');
+        setPaymentInitiated(false);
         setCurrentState((s:any) => ({...s, raffleNumber: inputValue}));
 
         if (inputValue.length === numberLength && new Set(currentState.drawnNumbers).has(parseInt(inputValue))) {
              showNotification('Este número ya ha sido asignado', 'warning');
         }
     };
+    
+    const handleLocalFieldChange = (field: string, value: any) => {
+        setPaymentInitiated(false);
+        setCurrentState((s: any) => ({ ...s, [field]: value }));
+    }
 
     const toggleNumber = (number: number) => {
         if (currentState.isWinnerConfirmed) {
@@ -131,6 +138,7 @@ const App = () => {
             showNotification('Este número ya está asignado', 'warning');
             return;
         }
+        setPaymentInitiated(false);
         setCurrentState((s:any) => ({ ...s, raffleNumber: String(number).padStart(numberLength, '0') }));
         setActiveTab('register');
     };
@@ -256,6 +264,7 @@ const App = () => {
         
         setTicketInfo(ticketData);
         setIsTicketModalOpen(true);
+        setPaymentInitiated(false);
         
         setCurrentState((s:any) => ({
             ...s,
@@ -338,10 +347,7 @@ const App = () => {
         updateDoc(doc(db, "raffles", raffleMode), { [field]: value });
     }
 
-    const handleLocalFieldChange = (field: string, value: any) => {
-        setCurrentState((s: any) => ({ ...s, [field]: value }));
-    }
-
+    const isRegisterFormValid = currentState.name && currentState.phoneNumber && currentState.raffleNumber && !drawnNumbersSet.has(parseInt(currentState.raffleNumber));
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-purple-100 to-blue-100 p-4 font-sans">
@@ -438,7 +444,7 @@ const App = () => {
                                         id="organizer-name-input"
                                         type="text"
                                         value={currentState.organizerName}
-                                        onChange={(e) => handleLocalFieldChange('organizerName', e.target.value)}
+                                        onChange={(e) => setCurrentState((s: any) => ({ ...s, organizerName: e.target.value }))}
                                         onBlur={(e) => handleFieldChange('organizerName', e.target.value)}
                                         placeholder="Nombre del organizador"
                                         disabled={currentState.isDetailsConfirmed}
@@ -453,7 +459,7 @@ const App = () => {
                                         id="prize-input"
                                         type="text"
                                         value={currentState.prize}
-                                        onChange={(e) => handleLocalFieldChange('prize', e.target.value)}
+                                        onChange={(e) => setCurrentState((s: any) => ({ ...s, prize: e.target.value }))}
                                         onBlur={(e) => handleFieldChange('prize', e.target.value)}
                                         placeholder="Ej: Carro, Moto, Dinero"
                                         disabled={currentState.isDetailsConfirmed}
@@ -470,7 +476,7 @@ const App = () => {
                                         value={formatValue(currentState.value)}
                                         onChange={(e) => {
                                             const numericValue = e.target.value.replace(/[^\d]/g, '');
-                                            handleLocalFieldChange('value', numericValue);
+                                            setCurrentState((s: any) => ({ ...s, value: numericValue }));
                                         }}
                                         onBlur={(e) => {
                                             const numericValue = e.target.value.replace(/[^\d]/g, '');
@@ -489,7 +495,7 @@ const App = () => {
                                         id="game-date-input"
                                         type="date"
                                         value={currentState.gameDate}
-                                        onChange={(e) => handleLocalFieldChange('gameDate', e.target.value)}
+                                        onChange={(e) => setCurrentState((s: any) => ({ ...s, gameDate: e.target.value }))}
                                         onBlur={(e) => handleFieldChange('gameDate', e.target.value)}
                                         disabled={currentState.isDetailsConfirmed}
                                         className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
@@ -504,7 +510,7 @@ const App = () => {
                                         value={currentState.lottery}
                                         onChange={(e) => {
                                             const value = e.target.value;
-                                            handleLocalFieldChange('lottery', value);
+                                            setCurrentState((s: any) => ({ ...s, lottery: value }));
                                             handleFieldChange('lottery', value);
                                         }}
                                         disabled={currentState.isDetailsConfirmed}
@@ -529,7 +535,7 @@ const App = () => {
                                              id="custom-lottery-input"
                                              type="text"
                                              value={currentState.customLottery}
-                                             onChange={(e) => handleLocalFieldChange('customLottery', e.target.value)}
+                                             onChange={(e) => setCurrentState((s: any) => ({ ...s, customLottery: e.target.value }))}
                                              onBlur={(e) => handleFieldChange('customLottery', e.target.value)}
                                              placeholder="Nombre de la lotería"
                                              disabled={currentState.isDetailsConfirmed}
@@ -662,29 +668,36 @@ const App = () => {
                                 />
                             </div>
                             <div className="flex items-center gap-4">
-                                <button
-                                    onClick={handleTicketConfirmation}
-                                    disabled={!currentState.name || !currentState.phoneNumber || !currentState.raffleNumber || drawnNumbersSet.has(parseInt(currentState.raffleNumber)) || currentState.isWinnerConfirmed}
-                                    className="px-4 py-2 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-                                >
-                                    Generar Tiquete
-                                </button>
                                 <a
-                                    href={nequiPaymentUrl}
-                                    className={`inline-block px-4 py-2 bg-purple-500 text-white font-medium rounded-lg hover:bg-purple-600 transition-colors h-10 leading-tight ${(!currentState.nequiAccountNumber || !currentState.value) ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                    aria-disabled={!currentState.nequiAccountNumber || !currentState.value}
+                                    href={isRegisterFormValid ? nequiPaymentUrl : '#'}
+                                    className={`inline-block px-4 py-2 bg-purple-500 text-white font-medium rounded-lg hover:bg-purple-600 transition-colors h-10 leading-tight ${(!isRegisterFormValid || !currentState.nequiAccountNumber || !currentState.value) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    aria-disabled={!isRegisterFormValid || !currentState.nequiAccountNumber || !currentState.value}
                                     onClick={(e) => {
-                                        if (!currentState.nequiAccountNumber || !currentState.value) {
+                                        if (!isRegisterFormValid || !currentState.nequiAccountNumber || !currentState.value) {
                                             e.preventDefault();
-                                            showNotification('Completa el número de cuenta Nequi y el valor para poder pagar.', 'warning');
+                                            showNotification('Completa todos los campos, incluyendo el número de cuenta Nequi y el valor del premio, para poder pagar.', 'warning');
                                         } else {
-                                            showNotification('Redirigiendo a Nequi para realizar el pago...', 'info');
+                                            setPaymentInitiated(true);
+                                            showNotification('Redirigiendo a Nequi... Una vez completes el pago, podrás generar tu tiquete.', 'info');
                                         }
                                     }}
                                 >
                                     Pagar con Nequi
                                 </a>
+                                <button
+                                    onClick={handleTicketConfirmation}
+                                    disabled={!paymentInitiated || !isRegisterFormValid || currentState.isWinnerConfirmed}
+                                    className="px-4 py-2 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                                >
+                                    Generar Tiquete
+                                </button>
                             </div>
+                            {paymentInitiated && (
+                                <div className="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mt-4" role="alert">
+                                    <p className="font-bold">Acción requerida</p>
+                                    <p>Si ya has completado el pago en Nequi, haz clic en "Generar Tiquete" para confirmar tu número.</p>
+                                </div>
+                            )}
                         </fieldset>
 
                         {!currentState.isDetailsConfirmed && (
