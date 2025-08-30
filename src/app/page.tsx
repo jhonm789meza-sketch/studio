@@ -185,7 +185,7 @@ const App = () => {
             isDetailsConfirmed: true,
         };
 
-        await setDoc(doc(db, "raffles", raffleMode), raffleData);
+        await setDoc(doc(db, "raffles", raffleMode), raffleData, { merge: true });
         showNotification('Detalles del premio confirmados', 'success');
     };
 
@@ -799,66 +799,67 @@ const App = () => {
 
             {isTicketModalOpen && ticketInfo && (
                 <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50 font-mono">
-                    <div ref={ticketModalRef} className="bg-white rounded-lg shadow-xl w-full max-w-sm">
-                        <div className="p-6 border-b border-dashed border-gray-400">
-                            <h2 className="text-2xl font-bold text-center mb-2">RIFA EXPRESS</h2>
-                            {ticketInfo.raffleRef && (
-                                <p className="text-center text-sm font-semibold text-gray-700 mb-2">
-                                    Referencia: {ticketInfo.raffleRef}
+                    <div className="bg-white rounded-lg shadow-xl w-full max-w-sm flex flex-col">
+                        <div ref={ticketModalRef} className="bg-white rounded-t-lg p-6">
+                            <div className="border-b border-dashed border-gray-400 pb-6">
+                                <h2 className="text-2xl font-bold text-center mb-2">RIFA EXPRESS</h2>
+                                {ticketInfo.raffleRef && (
+                                    <p className="text-center text-sm font-semibold text-gray-700 mb-2">
+                                        Referencia: {ticketInfo.raffleRef}
+                                    </p>
+                                )}
+                                <p className="text-center text-sm text-gray-600">COMPROBANTE DE COMPRA</p>
+                                <div className="text-center text-sm text-gray-600 mt-2">
+                                    <span>{ticketInfo.date}</span> - <span>{ticketInfo.time}</span>
+                                </div>
+                            </div>
+
+                            <div className="py-6 space-y-3 text-sm">
+                                <div className="flex justify-between">
+                                    <span className="text-gray-600">CLIENTE:</span>
+                                    <span className="font-semibold text-right">{ticketInfo.name}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-gray-600">CELULAR:</span>
+                                    <span className="font-semibold">{ticketInfo.phoneNumber}</span>
+                                </div>
+                                
+                                <div className="border-t border-b border-dashed border-gray-400 my-4 py-4 space-y-2">
+                                    <p className="text-center font-bold text-base">DETALLES DE LA RIFA</p>
+                                    <div className="flex justify-between">
+                                        <span className="text-gray-600">PREMIO:</span>
+                                        <span className="font-semibold text-right">{ticketInfo.prize}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-gray-600">VALOR BOLETA:</span>
+                                        <span className="font-semibold">{ticketInfo.value}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-gray-600">FECHA SORTEO:</span>
+                                        <span className="font-semibold">{new Date(ticketInfo.gameDate + 'T00:00:00-05:00').toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-gray-600">JUEGA CON:</span>
+                                        <span className="font-semibold">{ticketInfo.lottery}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-gray-600">ORGANIZA:</span>
+                                        <span className="font-semibold text-right">{ticketInfo.organizerName}</span>
+                                    </div>
+                                    <div className="text-center pt-4">
+                                        <p className="text-gray-600 uppercase">Número Asignado</p>
+                                        <p className="text-6xl font-bold text-purple-600 tracking-wider">{ticketInfo.raffleNumber}</p>
+                                    </div>
+                                </div>
+                                
+                                <p className="text-center text-xs text-gray-500 mt-4">
+                                    ¡Gracias por participar!
                                 </p>
-                            )}
-                            <p className="text-center text-sm text-gray-600">COMPROBANTE DE COMPRA</p>
-                            <div className="text-center text-sm text-gray-600 mt-2">
-                                <span>{ticketInfo.date}</span> - <span>{ticketInfo.time}</span>
                             </div>
-                        </div>
-
-                        <div className="p-6 space-y-3 text-sm">
-                            <div className="flex justify-between">
-                                <span className="text-gray-600">CLIENTE:</span>
-                                <span className="font-semibold text-right">{ticketInfo.name}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="text-gray-600">CELULAR:</span>
-                                <span className="font-semibold">{ticketInfo.phoneNumber}</span>
-                            </div>
-                            
-                            <div className="border-t border-b border-dashed border-gray-400 my-4 py-4 space-y-2">
-                                <p className="text-center font-bold text-base">DETALLES DE LA RIFA</p>
-                                <div className="flex justify-between">
-                                    <span className="text-gray-600">PREMIO:</span>
-                                    <span className="font-semibold text-right">{ticketInfo.prize}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-gray-600">VALOR BOLETA:</span>
-                                    <span className="font-semibold">{ticketInfo.value}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-gray-600">FECHA SORTEO:</span>
-                                    <span className="font-semibold">{new Date(ticketInfo.gameDate + 'T00:00:00-05:00').toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-gray-600">JUEGA CON:</span>
-                                    <span className="font-semibold">{ticketInfo.lottery}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-gray-600">ORGANIZA:</span>
-                                    <span className="font-semibold text-right">{ticketInfo.organizerName}</span>
-                                </div>
-                                <div className="text-center pt-4">
-                                    <p className="text-gray-600 uppercase">Número Asignado</p>
-                                    <p className="text-6xl font-bold text-purple-600 tracking-wider">{ticketInfo.raffleNumber}</p>
-
-                                </div>
-                            </div>
-                            
-                            <p className="text-center text-xs text-gray-500 mt-4">
-                                ¡Gracias por participar!
-                            </p>
                         </div>
                         
-                        <div className="p-6 bg-gray-50 rounded-b-lg flex flex-col items-center">
-                             <div className="mt-6 flex justify-end space-x-3 w-full">
+                        <div className="p-6 bg-gray-50 rounded-b-lg flex flex-col items-center mt-auto">
+                             <div className="flex justify-end space-x-3 w-full">
                                 <button
                                     onClick={handleDownloadTicket}
                                     className="px-6 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors font-semibold shadow-md"
