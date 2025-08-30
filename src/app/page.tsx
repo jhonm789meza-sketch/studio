@@ -180,7 +180,7 @@ const App = () => {
         
         const num = parseInt(currentState.raffleNumber, 10);
 
-        if (raffleMode === 'three-digit' && (num < 100 || num > 999) && currentState.raffleNumber.length === 3) {
+        if (raffleMode === 'three-digit' && currentState.raffleNumber.length === 3 && (num < 100 || num > 999)) {
             showNotification('El número para esta modalidad debe estar entre 100 y 999', 'warning');
             return;
         }
@@ -220,6 +220,7 @@ const App = () => {
             time: currentDate.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }),
             gameDate: currentState.gameDate,
             lottery: currentState.lottery === 'Otro' ? currentState.customLottery : currentState.lottery,
+            raffleRef: currentState.raffleRef,
         });
         
         setIsTicketModalOpen(true);
@@ -688,7 +689,12 @@ const App = () => {
                 <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50 font-mono">
                     <div ref={ticketModalRef} className="bg-white rounded-lg shadow-xl w-full max-w-sm">
                         <div className="p-6 border-b border-dashed border-gray-400">
-                            <h2 className="text-2xl font-bold text-center mb-4">RIFA EXPRESS</h2>
+                            <h2 className="text-2xl font-bold text-center mb-2">RIFA EXPRESS</h2>
+                            {ticketInfo.raffleRef && (
+                                <p className="text-center text-sm font-semibold text-gray-700 mb-2">
+                                    Referencia: {ticketInfo.raffleRef}
+                                </p>
+                            )}
                             <p className="text-center text-sm text-gray-600">COMPROBANTE DE COMPRA</p>
                             <div className="text-center text-sm text-gray-600 mt-2">
                                 <span>{ticketInfo.date}</span> - <span>{ticketInfo.time}</span>
