@@ -8,10 +8,11 @@ import { doc, onSnapshot, setDoc, getDoc, deleteDoc } from 'firebase/firestore';
 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuCheckboxItem } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu } from 'lucide-react';
+import { Menu, Award } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Confetti } from '@/components/confetti';
 
 type RaffleMode = 'two-digit' | 'three-digit';
 
@@ -32,6 +33,7 @@ const initialRaffleData = {
     organizerName: '',
     participants: [],
     raffleRef: '',
+    winner: null,
 };
 
 
@@ -57,6 +59,7 @@ const App = () => {
     const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
     const [adminRefSearch, setAdminRefSearch] = useState('');
     const [paymentInitiated, setPaymentInitiated] = useState(false);
+    const [showConfetti, setShowConfetti] = useState(false);
     
     const currentState = raffleMode === 'two-digit' ? twoDigitState : threeDigitState;
     const setCurrentState = raffleMode === 'two-digit' ? setTwoDigitState : setThreeDigitState;
@@ -72,7 +75,7 @@ const App = () => {
             if (doc.exists()) {
                 setTwoDigitState({ ...initialRaffleData, ...doc.data() });
             } else {
-                setTwoDigitState(initialRaffleData);
+                setDoc(doc(db, "raffles", "two-digit"), initialRaffleData);
             }
             setLoading(false);
         });
@@ -80,7 +83,7 @@ const App = () => {
              if (doc.exists()) {
                 setThreeDigitState({ ...initialRaffleData, ...doc.data() });
             } else {
-                setThreeDigitState(initialRaffleData);
+                setDoc(doc(db, "raffles", "three-digit"), initialRaffleData);
             }
              setLoading(false);
         });
@@ -127,7 +130,7 @@ const App = () => {
     const handleLocalFieldChange = (field: string, value: any) => {
         setPaymentInitiated(false);
         setCurrentState((s: any) => ({ ...s, [field]: value }));
-    }
+    };
 
     const toggleNumber = (number: number) => {
         if (currentState.isWinnerConfirmed) {
@@ -144,8 +147,12 @@ const App = () => {
     };
 
     const handleConfirmWinner = async () => {
+        if (!currentState.winner) {
+            showNotification('Primero debes sortear un ganador.', 'warning');
+            return;
+        }
         await setDoc(doc(db, "raffles", raffleMode), { isWinnerConfirmed: true }, { merge: true });
-        showNotification('¡Ganador confirmado!', 'success');
+        showNotification('¡Ganador confirmado! El tablero ha sido bloqueado.', 'success');
     };
 
     const handleConfirmDetails = async () => {
@@ -194,9 +201,15 @@ const App = () => {
             '¿Estás seguro de que deseas reiniciar el tablero? Se perderán todos los datos de esta modalidad.',
             async () => {
                 await deleteDoc(doc(db, "raffles", raffleMode));
-                if(raffleMode === 'two-digit') setTwoDigitState(initialRaffleData);
-                else setThreeDigitState(initialRaffleData);
+                const resetState = { ...initialRaffleData };
+                if (raffleMode === 'two-digit') {
+                    setTwoDigitState(resetState);
+                } else {
+                    setThreeDigitState(resetState);
+                }
+                await setDoc(doc(db, "raffles", raffleMode), resetState);
                 showNotification('Tablero reiniciado correctamente', 'success');
+                setShowConfetti(false);
             }
         );
     };
@@ -330,6 +343,25 @@ const App = () => {
             showNotification('No se encontró ninguna rifa en juego con esa referencia.', 'error');
         }
     };
+    
+    const handleDrawWinner = async () => {
+        if (currentState.participants.length === 0) {
+            showNotification('No hay participantes para sortear un ganador.', 'warning');
+            return;
+        }
+
+        const winningNumber = currentState.drawnNumbers[Math.floor(Math.random() * currentState.drawnNumbers.length)];
+        const winner = currentState.participants.find((p: any) => parseInt(p.raffleNumber, 10) === winningNumber);
+
+        if (winner) {
+            await setDoc(doc(db, "raffles", raffleMode), { winner }, { merge: true });
+            setShowConfetti(true);
+            showNotification(`¡El ganador es ${winner.name} con el número ${winner.raffleNumber}!`, 'success');
+            setTimeout(() => setShowConfetti(false), 8000);
+        } else {
+            showNotification('Error: No se pudo encontrar al participante ganador.', 'error');
+        }
+    };
 
     const allNumbers = raffleMode === 'two-digit'
         ? Array.from({ length: 100 }, (_, i) => i)
@@ -344,7 +376,7 @@ const App = () => {
         return <div className="flex justify-center items-center h-screen text-xl font-semibold">Cargando...</div>;
     }
 
-    const nequiPaymentUrl = `nequi://app/transfer?phone=${currentState.nequiAccountNumber}&amount=${currentState.value}&message=${encodeURIComponent(`Pago premio: ${currentState.prize}`)}`;
+    const nequiPaymentUrl = `nequi://app/transfer?phone=${currentState.nequiAccountNumber}&amount=${currentState.value}&message=${encodeURIComponent(`Pago Rifa: ${currentState.raffleRef}`)}`;
 
     const handleFieldChange = (field: string, value: any) => {
         if(currentState.isDetailsConfirmed) return;
@@ -355,6 +387,7 @@ const App = () => {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-purple-100 to-blue-100 p-4 font-sans">
+            {showConfetti && <Confetti />}
             <div className="max-w-6xl mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden">
                 <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-6 flex justify-between items-center">
                     <div>
@@ -426,7 +459,7 @@ const App = () => {
 
                 <div className="p-6">
                     {notification.show && (
-                        <div className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg transition-opacity duration-300 ${
+                        <div className={`fixed top-4 right-4 z-[100] px-4 py-3 rounded-lg shadow-lg transition-opacity duration-300 ${
                             notification.type === 'error' ? 'bg-red-100 text-red-700 border border-red-300' :
                             notification.type === 'success' ? 'bg-green-100 text-green-700 border border-green-300' :
                             notification.type === 'warning' ? 'bg-yellow-100 text-yellow-700 border border-yellow-300' :
@@ -441,46 +474,40 @@ const App = () => {
                              <h2 className="text-2xl font-bold text-gray-800 mb-4">Configuración del Premio</h2>
                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                                 <div>
-                                    <label htmlFor="organizer-name-input" className="block text-sm font-medium text-gray-700 mb-1">
-                                        Organizador:
-                                    </label>
-                                    <input
+                                    <Label htmlFor="organizer-name-input">Organizador:</Label>
+                                    <Input
                                         id="organizer-name-input"
                                         type="text"
                                         value={currentState.organizerName}
-                                        onChange={(e) => setCurrentState((s: any) => ({ ...s, organizerName: e.target.value }))}
+                                        onChange={(e) => handleLocalFieldChange('organizerName', e.target.value)}
                                         onBlur={(e) => handleFieldChange('organizerName', e.target.value)}
                                         placeholder="Nombre del organizador"
                                         disabled={currentState.isDetailsConfirmed}
-                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                        className="w-full mt-1"
                                     />
                                 </div>
                                 <div>
-                                    <label htmlFor="prize-input" className="block text-sm font-medium text-gray-700 mb-1">
-                                        Premio:
-                                    </label>
-                                    <input
+                                    <Label htmlFor="prize-input">Premio:</Label>
+                                    <Input
                                         id="prize-input"
                                         type="text"
                                         value={currentState.prize}
-                                        onChange={(e) => setCurrentState((s: any) => ({ ...s, prize: e.target.value }))}
+                                        onChange={(e) => handleLocalFieldChange('prize', e.target.value)}
                                         onBlur={(e) => handleFieldChange('prize', e.target.value)}
                                         placeholder="Ej: Carro, Moto, Dinero"
                                         disabled={currentState.isDetailsConfirmed}
-                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                        className="w-full mt-1"
                                     />
                                 </div>
                                 <div>
-                                    <label htmlFor="value-input" className="block text-sm font-medium text-gray-700 mb-1">
-                                        Valor:
-                                    </label>
-                                    <input
+                                    <Label htmlFor="value-input">Valor:</Label>
+                                    <Input
                                         id="value-input"
                                         type="text"
                                         value={formatValue(currentState.value)}
                                         onChange={(e) => {
                                             const numericValue = e.target.value.replace(/[^\d]/g, '');
-                                            setCurrentState((s: any) => ({ ...s, value: numericValue }));
+                                            handleLocalFieldChange('value', numericValue);
                                         }}
                                         onBlur={(e) => {
                                             const numericValue = e.target.value.replace(/[^\d]/g, '');
@@ -488,110 +515,124 @@ const App = () => {
                                         }}
                                         placeholder="Ej: 5.000.000"
                                         disabled={currentState.isDetailsConfirmed}
-                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                        className="w-full mt-1"
                                     />
                                 </div>
                                 <div>
-                                    <label htmlFor="game-date-input" className="block text-sm font-medium text-gray-700 mb-1">
-                                        Fecha de juego:
-                                    </label>
-                                    <input
+                                    <Label htmlFor="game-date-input">Fecha de juego:</Label>
+                                    <Input
                                         id="game-date-input"
                                         type="date"
                                         value={currentState.gameDate}
-                                        onChange={(e) => setCurrentState((s: any) => ({ ...s, gameDate: e.target.value }))}
+                                        onChange={(e) => handleLocalFieldChange('gameDate', e.target.value)}
                                         onBlur={(e) => handleFieldChange('gameDate', e.target.value)}
                                         disabled={currentState.isDetailsConfirmed}
-                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                        className="w-full mt-1"
                                     />
                                 </div>
-                                <div>
-                                    <label htmlFor="lottery-input" className="block text-sm font-medium text-gray-700 mb-1">
-                                        Lotería:
-                                    </label>
-                                    <select
-                                        id="lottery-input"
-                                        value={currentState.lottery}
-                                        onChange={(e) => {
-                                            const value = e.target.value;
-                                            setCurrentState((s: any) => ({ ...s, lottery: value }));
-                                            handleFieldChange('lottery', value);
-                                        }}
-                                        disabled={currentState.isDetailsConfirmed}
-                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                                    >
-                                        <option value="">Selecciona una lotería</option>
-                                        <option value="Lotería de Bogotá">Lotería de Bogotá</option>
-                                        <option value="Lotería de Medellín">Lotería de Medellín</option>
-                                        <option value="Lotería de Cundinamarca">Lotería de Cundinamarca</option>
-                                        <option value="Lotería del Valle">Lotería del Valle</option>
-                                        <option value="Lotería del Tolima">Lotería del Tolima</option>
-                                        <option value="Lotería de la Cruz Roja">Lotería de la Cruz Roja</option>
-                                        <option value="Otro">Otro</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label htmlFor="nequi-account-input" className="block text-sm font-medium text-gray-700 mb-1">
-                                        Número cuenta Nequi:
-                                    </label>
-                                    <input
+                                <div className='grid grid-cols-2 gap-4'>
+                                    <div>
+                                        <Label htmlFor="lottery-input">Lotería:</Label>
+                                        <select
+                                            id="lottery-input"
+                                            value={currentState.lottery}
+                                            onChange={(e) => {
+                                                const value = e.target.value;
+                                                handleLocalFieldChange('lottery', value);
+                                                handleFieldChange('lottery', value);
+                                            }}
+                                            disabled={currentState.isDetailsConfirmed}
+                                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100 disabled:cursor-not-allowed mt-1"
+                                        >
+                                            <option value="">Selecciona una lotería</option>
+                                            <option value="Lotería de Bogotá">Lotería de Bogotá</option>
+                                            <option value="Lotería de Medellín">Lotería de Medellín</option>
+                                            <option value="Lotería de Cundinamarca">Lotería de Cundinamarca</option>
+                                            <option value="Lotería del Valle">Lotería del Valle</option>
+                                            <option value="Lotería del Tolima">Lotería del Tolima</option>
+                                            <option value="Lotería de la Cruz Roja">Lotería de la Cruz Roja</option>
+                                            <option value="Otro">Otro</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                    <Label htmlFor="nequi-account-input">Número cuenta Nequi:</Label>
+                                    <Input
                                         id="nequi-account-input"
                                         type="tel"
                                         value={currentState.nequiAccountNumber}
-                                        onChange={(e) => setCurrentState((s: any) => ({ ...s, nequiAccountNumber: e.target.value.replace(/\D/g, '') }))}
+                                        onChange={(e) => handleLocalFieldChange('nequiAccountNumber', e.target.value.replace(/\D/g, ''))}
                                         onBlur={(e) => handleFieldChange('nequiAccountNumber', e.target.value.replace(/\D/g, ''))}
                                         placeholder="Número de Nequi para pagos"
                                         disabled={currentState.isDetailsConfirmed}
-                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                        className="w-full mt-1"
                                     />
                                 </div>
+                                </div>
+
                                  {currentState.lottery === 'Otro' && (
                                      <div>
-                                         <label htmlFor="custom-lottery-input" className="block text-sm font-medium text-gray-700 mb-1">
-                                             Especificar Lotería:
-                                         </label>
-                                         <input
+                                         <Label htmlFor="custom-lottery-input">Especificar Lotería:</Label>
+                                         <Input
                                              id="custom-lottery-input"
                                              type="text"
                                              value={currentState.customLottery}
-                                             onChange={(e) => setCurrentState((s: any) => ({ ...s, customLottery: e.target.value }))}
+                                             onChange={(e) => handleLocalFieldChange('customLottery', e.target.value)}
                                              onBlur={(e) => handleFieldChange('customLottery', e.target.value)}
                                              placeholder="Nombre de la lotería"
                                              disabled={currentState.isDetailsConfirmed}
-                                             className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                             className="w-full mt-1"
                                          />
                                      </div>
                                  )}
                                 {!currentState.isDetailsConfirmed && (
                                     <div className="md:col-span-2">
-                                        <button
+                                        <Button
                                             onClick={handleConfirmDetails}
-                                            className="px-4 py-2 bg-purple-500 text-white font-medium rounded-lg hover:bg-purple-600 transition-colors"
+                                            className="w-full md:w-auto bg-purple-500 text-white font-medium rounded-lg hover:bg-purple-600 transition-colors"
                                         >
                                             Confirmar Detalles del Premio
-                                        </button>
+                                        </Button>
                                     </div>
                                 )}
                              </div>
                          </div>
-                        <div className="mb-6">
+                        <div className="mb-6 p-4 border rounded-lg bg-gray-50">
                             <h2 className="text-2xl font-bold text-gray-800 mb-4">Sorteo</h2>
-                            <div className="flex flex-wrap gap-3">
-                                {currentState.isWinnerConfirmed && (
-                                    <button
+                             {currentState.winner && (
+                                <div className="mb-4 p-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 rounded-lg">
+                                    <p className="font-bold text-lg flex items-center"><Award className="mr-2"/>¡Tenemos un ganador!</p>
+                                    <p><strong>Nombre:</strong> {currentState.winner.name}</p>
+                                    <p><strong>Número:</strong> {currentState.winner.raffleNumber}</p>
+                                </div>
+                            )}
+                            <div className="flex flex-wrap gap-3 items-center">
+                                 {!currentState.isWinnerConfirmed && (
+                                    <Button
+                                        onClick={handleDrawWinner}
+                                        disabled={currentState.isWinnerConfirmed || currentState.participants.length === 0}
+                                        className="bg-yellow-500 text-white font-medium rounded-lg hover:bg-yellow-600 transition-colors disabled:bg-gray-300"
+                                    >
+                                        Sortear Ganador
+                                    </Button>
+                                )}
+                                {currentState.winner && !currentState.isWinnerConfirmed && (
+                                    <Button
                                         onClick={handleConfirmWinner}
-                                        className="px-4 py-2 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 transition-colors"
+                                        className="bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 transition-colors"
                                     >
                                         Confirmar Ganador
-                                    </button>
+                                    </Button>
                                 )}
-                                <button
+                                <Button
                                     onClick={resetBoard}
-                                    className="px-4 py-2 bg-red-500 text-white font-medium rounded-lg hover:bg-red-600 transition-colors"
+                                    className="bg-red-500 text-white font-medium rounded-lg hover:bg-red-600 transition-colors"
                                 >
                                     Reiniciar Tablero
-                                </button>
+                                </Button>
                             </div>
+                            {currentState.isWinnerConfirmed && (
+                                <p className="mt-4 text-green-600 font-semibold">El ganador ha sido confirmado y el tablero está cerrado.</p>
+                            )}
                         </div>
 
                         <div>
@@ -617,6 +658,7 @@ const App = () => {
                                                 ? 'bg-red-600 text-white shadow-lg transform scale-105 cursor-not-allowed'
                                                 : 'bg-green-200 text-green-800 hover:bg-green-300 hover:shadow-md'
                                             }
+                                            ${currentState.winner?.raffleNumber === String(number).padStart(numberLength, '0') ? 'ring-4 ring-yellow-400 animate-pulse' : ''}
                                         `}
                                     >
                                         {String(number).padStart(numberLength, '0')}
@@ -630,42 +672,36 @@ const App = () => {
                         <h2 className="text-2xl font-bold text-gray-800 mb-4">Registrar Participante</h2>
                         <fieldset disabled={currentState.isWinnerConfirmed || !currentState.isDetailsConfirmed} className="disabled:opacity-50 space-y-4">
                             <div>
-                                <label htmlFor="name-input" className="block text-sm font-medium text-gray-700 mb-1">
-                                    Nombre completo:
-                                </label>
-                                <input
+                                <Label htmlFor="name-input">Nombre completo:</Label>
+                                <Input
                                     id="name-input"
                                     type="text"
                                     value={currentState.name}
                                     onChange={(e) => handleLocalFieldChange('name', e.target.value)}
                                     placeholder="Ej: Juan Pérez"
-                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                    className="w-full mt-1"
                                 />
                             </div>
                             <div>
-                                <label htmlFor="phone-input" className="block text-sm font-medium text-gray-700 mb-1">
-                                    Celular:
-                                </label>
-                                <input
+                                <Label htmlFor="phone-input">Celular:</Label>
+                                <Input
                                     id="phone-input"
                                     type="tel"
                                     value={currentState.phoneNumber}
                                     onChange={(e) => handleLocalFieldChange('phoneNumber', e.target.value.replace(/\D/g, ''))}
                                     placeholder="Ej: 3001234567"
-                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                    className="w-full mt-1"
                                 />
                             </div>
                             <div>
-                                <label htmlFor="raffle-number-input" className="block text-sm font-medium text-gray-700 mb-1">
-                                    Número de rifa ({raffleMode === 'two-digit' ? '00-99' : '100-999'}):
-                                </label>
-                                <input
+                                <Label htmlFor="raffle-number-input">Número de rifa ({raffleMode === 'two-digit' ? '00-99' : '100-999'}):</Label>
+                                <Input
                                     id="raffle-number-input"
                                     type="text"
                                     value={currentState.raffleNumber}
                                     onChange={handleRaffleNumberChange}
                                     placeholder={`Ej: ${raffleMode === 'two-digit' ? '05' : '142'}`}
-                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                    className="w-full mt-1"
                                     maxLength={numberLength}
                                 />
                                 {currentState.raffleNumber && drawnNumbersSet.has(parseInt(currentState.raffleNumber)) && (
@@ -681,7 +717,7 @@ const App = () => {
                                     onClick={(e) => {
                                         if (!isRegisterFormValid || !currentState.nequiAccountNumber || !currentState.value) {
                                             e.preventDefault();
-                                            showNotification('Completa todos los campos, incluyendo el número de cuenta Nequi y el valor del premio, para poder pagar.', 'warning');
+                                            showNotification('Completa todos los campos para poder pagar.', 'warning');
                                         } else {
                                             setPaymentInitiated(true);
                                             showNotification('Redirigiendo a Nequi... Una vez completes el pago, podrás generar tu tiquete.', 'info');
@@ -690,13 +726,13 @@ const App = () => {
                                 >
                                     Pagar con Nequi
                                 </a>
-                                <button
+                                <Button
                                     onClick={handleTicketConfirmation}
                                     disabled={!paymentInitiated || !isRegisterFormValid || currentState.isWinnerConfirmed}
                                     className="px-4 py-2 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
                                 >
                                     Generar Tiquete
-                                </button>
+                                </Button>
                             </div>
                             {paymentInitiated && (
                                 <div className="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mt-4" role="alert">
@@ -772,7 +808,7 @@ const App = () => {
             </div>
 
             {showConfirmation && (
-                <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
+                <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-[101]">
                     <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full">
                         <h3 className="text-lg font-medium text-gray-900 mb-4">Confirmar acción</h3>
                         <p className="text-gray-500 mb-6">{confirmationMessage}</p>
@@ -798,7 +834,7 @@ const App = () => {
             )}
 
             {isTicketModalOpen && ticketInfo && (
-                <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50 font-mono">
+                <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-[101] font-mono">
                     <div className="bg-white rounded-lg shadow-xl w-full max-w-sm flex flex-col">
                         <div ref={ticketModalRef} className="bg-white rounded-t-lg p-6">
                             <div className="border-b border-dashed border-gray-400 pb-6">
@@ -859,19 +895,19 @@ const App = () => {
                         </div>
                         
                         <div className="p-6 bg-gray-50 rounded-b-lg flex flex-col items-center mt-auto">
-                             <div className="flex justify-end space-x-3 w-full">
-                                <button
+                             <div className="flex justify-center space-x-3 w-full">
+                                <Button
                                     onClick={handleDownloadTicket}
                                     className="px-6 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors font-semibold shadow-md"
                                 >
                                     Descargar PDF
-                                </button>
-                                <button
+                                </Button>
+                                <Button
                                     onClick={() => setIsTicketModalOpen(false)}
-                                    className="px-6 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition-colors font-semibold"
+                                    variant="outline"
                                 >
                                     Cerrar
-                                </button>
+                                </Button>
                             </div>
                         </div>
                     </div>
