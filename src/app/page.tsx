@@ -25,7 +25,7 @@ const initialRaffleData = {
     name: '',
     phoneNumber: '',
     raffleNumber: '',
-    nequiAccountNumber: '3001234567', // Nequi number is now fixed
+    nequiAccountNumber: '3145696687', // Nequi number is now fixed
     gameDate: '',
     lottery: '',
     customLottery: '',
@@ -892,5 +892,3 @@ const App = () => {
 };
 
 export default App;
-
-    
