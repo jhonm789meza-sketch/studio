@@ -1,4 +1,4 @@
-import { doc, getDoc, setDoc, increment } from 'firebase/firestore';
+import { doc, getDoc, setDoc, increment, updateDoc } from 'firebase/firestore';
 import type { Firestore } from 'firebase/firestore';
 
 class RaffleManager {
@@ -11,19 +11,30 @@ class RaffleManager {
     }
 
     private async getNextRefNumber(): Promise<number> {
+        // This function should only run on the client-side where there's a user context.
         if (typeof window === 'undefined') {
-            return 1;
+            // Returning a placeholder or handling server-side rendering appropriately.
+            return 1; 
         }
         
-        const docSnap = await getDoc(this.counterRef);
+        try {
+            const docSnap = await getDoc(this.counterRef);
 
-        if (docSnap.exists()) {
-            await setDoc(this.counterRef, { count: increment(1) }, { merge: true });
-            const updatedSnap = await getDoc(this.counterRef);
-            return updatedSnap.data()?.count || 1;
-        } else {
-            await setDoc(this.counterRef, { count: 1 });
-            return 1;
+            if (docSnap.exists()) {
+                // Use updateDoc with increment for atomic operation
+                await updateDoc(this.counterRef, { count: increment(1) });
+                // Re-fetch the document to get the updated count
+                const updatedSnap = await getDoc(this.counterRef);
+                return updatedSnap.data()?.count || 1;
+            } else {
+                // If the counter document doesn't exist, create it.
+                await setDoc(this.counterRef, { count: 1 });
+                return 1;
+            }
+        } catch (error) {
+            console.error("Error getting next ref number:", error);
+            // Fallback in case of error
+            return Math.floor(Math.random() * 1000);
         }
     }
 
@@ -33,8 +44,10 @@ class RaffleManager {
         return ref;
     }
 
-    public resetRef(): void {
-        // This is now handled by Firestore
+    public async resetRef(): Promise<void> {
+        if (typeof window !== 'undefined') {
+            await setDoc(this.counterRef, { count: 0 });
+        }
     }
 }
 
