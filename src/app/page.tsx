@@ -4,7 +4,7 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { RaffleManager } from '@/lib/RaffleManager';
 import { db } from '@/lib/firebase';
-import { doc, onSnapshot, setDoc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc, getDoc, deleteDoc } from 'firebase/firestore';
 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuCheckboxItem } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
@@ -25,7 +25,7 @@ const initialRaffleData = {
     name: '',
     phoneNumber: '',
     raffleNumber: '',
-    nequiAccountNumber: '3145696687', // Nequi number is now part of state
+    nequiAccountNumber: '3145696687',
     gameDate: '',
     lottery: '',
     customLottery: '',
@@ -144,7 +144,7 @@ const App = () => {
     };
 
     const handleConfirmWinner = async () => {
-        await updateDoc(doc(db, "raffles", raffleMode), { isWinnerConfirmed: true });
+        await setDoc(doc(db, "raffles", raffleMode), { isWinnerConfirmed: true }, { merge: true });
         showNotification('¡Ganador confirmado!', 'success');
     };
 
@@ -247,10 +247,10 @@ const App = () => {
         const updatedParticipants = [...currentState.participants, newParticipant];
         const updatedDrawnNumbers = [...currentState.drawnNumbers, num];
 
-        await updateDoc(doc(db, "raffles", raffleMode), {
+        await setDoc(doc(db, "raffles", raffleMode), {
             participants: updatedParticipants,
             drawnNumbers: updatedDrawnNumbers
-        });
+        }, { merge: true });
 
         const ticketData = {
             prize: currentState.prize,
@@ -348,7 +348,7 @@ const App = () => {
 
     const handleFieldChange = (field: string, value: any) => {
         if(currentState.isDetailsConfirmed) return;
-        updateDoc(doc(db, "raffles", raffleMode), { [field]: value });
+        setDoc(doc(db, "raffles", raffleMode), { [field]: value }, { merge: true });
     }
 
     const isRegisterFormValid = currentState.name && currentState.phoneNumber && currentState.raffleNumber && !drawnNumbersSet.has(parseInt(currentState.raffleNumber));
