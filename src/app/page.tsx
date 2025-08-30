@@ -101,9 +101,8 @@ const App = () => {
 
     const handleRaffleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const inputValue = e.target.value.replace(/\D/g, '');
-        if (inputValue === '' || (raffleMode === 'two-digit' && inputValue.length <= 2) || (raffleMode === 'three-digit' && inputValue.length <= 3)) {
-            setCurrentState(s => ({...s, raffleNumber: inputValue}));
-        }
+        setCurrentState(s => ({...s, raffleNumber: inputValue}));
+
         if (inputValue && currentState.drawnNumbers.has(parseInt(inputValue))) {
              showNotification('Este número ya ha sido asignado', 'warning');
         }
@@ -185,7 +184,12 @@ const App = () => {
         
         const num = parseInt(currentState.raffleNumber, 10);
 
-        if (raffleMode === 'three-digit' && currentState.raffleNumber.length === 3 && (num < 100 || num > 999)) {
+        if (currentState.raffleNumber.length < numberLength) {
+             showNotification(`El número para esta modalidad debe ser de ${numberLength} cifras`, 'warning');
+             return;
+        }
+
+        if (raffleMode === 'three-digit' && (num < 100 || num > 999)) {
             showNotification('El número para esta modalidad debe estar entre 100 y 999', 'warning');
             return;
         }
@@ -726,10 +730,6 @@ const App = () => {
                                 <span className="text-gray-600">CLIENTE:</span>
                                 <span className="font-semibold text-right">{ticketInfo.name}</span>
                             </div>
-                             <div className="flex justify-between">
-                                <span className="text-gray-600">ORGANIZA:</span>
-                                <span className="font-semibold text-right">{ticketInfo.organizerName}</span>
-                            </div>
                             <div className="flex justify-between">
                                 <span className="text-gray-600">CELULAR:</span>
                                 <span className="font-semibold">{ticketInfo.phoneNumber}</span>
@@ -752,6 +752,10 @@ const App = () => {
                                 <div className="flex justify-between">
                                     <span className="text-gray-600">JUEGA CON:</span>
                                     <span className="font-semibold">{ticketInfo.lottery}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-gray-600">ORGANIZA:</span>
+                                    <span className="font-semibold text-right">{ticketInfo.organizerName}</span>
                                 </div>
                                 <div className="text-center pt-4">
                                     <p className="text-gray-600 uppercase">Número Asignado</p>
