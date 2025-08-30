@@ -305,10 +305,6 @@ const App = () => {
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent>
-                                <DropdownMenuItem onSelect={() => setIsAdminLoginOpen(true)}>
-                                    Entrar como administrador
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
                                 <DropdownMenuCheckboxItem
                                     checked={raffleMode === 'two-digit'}
                                     onSelect={() => changeRaffleMode('two-digit')}
@@ -331,6 +327,10 @@ const App = () => {
                                         </span>
                                     )}
                                 </DropdownMenuCheckboxItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onSelect={() => setIsAdminLoginOpen(true)}>
+                                    Buscar por Referencia
+                                </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
                     </div>
@@ -787,7 +787,7 @@ const App = () => {
             <Dialog open={isAdminLoginOpen} onOpenChange={setIsAdminLoginOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Acceso de Administrador</DialogTitle>
+                        <DialogTitle>Buscar Juego por Referencia</DialogTitle>
                         <DialogDescription>
                             Ingresa la referencia del juego para cargarlo.
                         </DialogDescription>
