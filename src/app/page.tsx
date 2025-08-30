@@ -20,7 +20,7 @@ const initialRaffleData = {
     drawnNumbers: [],
     lastDrawnNumber: null,
     prize: '',
-    value: '',
+    value: '10000',
     isWinnerConfirmed: false,
     isDetailsConfirmed: false,
     name: '',
