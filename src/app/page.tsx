@@ -73,6 +73,7 @@ const App = () => {
             } else {
                 setTwoDigitState(initialRaffleData);
             }
+            setLoading(false);
         });
         const unsubThreeDigit = onSnapshot(doc(db, "raffles", "three-digit"), (doc) => {
              if (doc.exists()) {
@@ -80,15 +81,15 @@ const App = () => {
             } else {
                 setThreeDigitState(initialRaffleData);
             }
+             setLoading(false);
         });
 
-        setLoading(false);
 
         return () => {
             unsubTwoDigit();
             unsubThreeDigit();
         };
-    }, [db]);
+    }, []);
 
     const showNotification = (message: string, type = 'info') => {
         setNotification({ show: true, message, type });
@@ -122,7 +123,7 @@ const App = () => {
         const inputValue = e.target.value.replace(/\D/g, '');
         setCurrentState((s:any) => ({...s, raffleNumber: inputValue}));
 
-        if (inputValue && new Set(currentState.drawnNumbers).has(parseInt(inputValue))) {
+        if (inputValue.length === numberLength && new Set(currentState.drawnNumbers).has(parseInt(inputValue))) {
              showNotification('Este número ya ha sido asignado', 'warning');
         }
     };
@@ -216,7 +217,9 @@ const App = () => {
         }
 
         if (raffleMode === 'three-digit' && (num < 100 || num > 999)) {
-            showNotification('El número para esta modalidad debe estar entre 100 y 999', 'warning');
+            if (String(num).length === 3) { // Only show if the user has typed a 3 digit number.
+                showNotification('El número para esta modalidad debe estar entre 100 y 999', 'warning');
+            }
             return;
         }
 
@@ -337,8 +340,26 @@ const App = () => {
     const nequiPaymentUrl = `nequi://app/transfer?phone=${currentState.nequiAccountNumber}&amount=${currentState.value}&message=${encodeURIComponent(`Pago premio: ${currentState.prize}`)}`;
 
     const handleFieldChange = (field: string, value: any) => {
-        setCurrentState((s:any) => ({...s, [field]: value}));
+        const stateToUpdate = raffleMode === 'two-digit' ? { ...twoDigitState } : { ...threeDigitState };
+        stateToUpdate[field] = value;
+        
+        if (raffleMode === 'two-digit') {
+            setTwoDigitState(stateToUpdate);
+        } else {
+            setThreeDigitState(stateToUpdate);
+        }
+
+        updateDoc(doc(db, "raffles", raffleMode), { [field]: value });
     }
+
+    const handleLocalFieldChange = (field: string, value: any) => {
+        if (raffleMode === 'two-digit') {
+            setTwoDigitState(s => ({ ...s, [field]: value }));
+        } else {
+            setThreeDigitState(s => ({ ...s, [field]: value }));
+        }
+    }
+
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-purple-100 to-blue-100 p-4 font-sans">
@@ -435,7 +456,8 @@ const App = () => {
                                         id="organizer-name-input"
                                         type="text"
                                         value={currentState.organizerName}
-                                        onChange={(e) => handleFieldChange('organizerName', e.target.value)}
+                                        onChange={(e) => handleLocalFieldChange('organizerName', e.target.value)}
+                                        onBlur={(e) => handleFieldChange('organizerName', e.target.value)}
                                         placeholder="Nombre del organizador"
                                         disabled={currentState.isDetailsConfirmed}
                                         className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
@@ -449,7 +471,8 @@ const App = () => {
                                         id="prize-input"
                                         type="text"
                                         value={currentState.prize}
-                                        onChange={(e) => handleFieldChange('prize', e.target.value)}
+                                        onChange={(e) => handleLocalFieldChange('prize', e.target.value)}
+                                        onBlur={(e) => handleFieldChange('prize', e.target.value)}
                                         placeholder="Ej: Carro, Moto, Dinero"
                                         disabled={currentState.isDetailsConfirmed}
                                         className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
@@ -463,7 +486,14 @@ const App = () => {
                                         id="value-input"
                                         type="text"
                                         value={formatValue(currentState.value)}
-                                        onChange={handleValueChange}
+                                        onChange={(e) => {
+                                            const numericValue = e.target.value.replace(/[^\d]/g, '');
+                                            handleLocalFieldChange('value', numericValue);
+                                        }}
+                                        onBlur={(e) => {
+                                            const numericValue = e.target.value.replace(/[^\d]/g, '');
+                                            handleFieldChange('value', numericValue)
+                                        }}
                                         placeholder="Ej: 5.000.000"
                                         disabled={currentState.isDetailsConfirmed}
                                         className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
@@ -477,7 +507,8 @@ const App = () => {
                                         id="game-date-input"
                                         type="date"
                                         value={currentState.gameDate}
-                                        onChange={(e) => handleFieldChange('gameDate', e.target.value)}
+                                        onChange={(e) => handleLocalFieldChange('gameDate', e.target.value)}
+                                        onBlur={(e) => handleFieldChange('gameDate', e.target.value)}
                                         disabled={currentState.isDetailsConfirmed}
                                         className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                                     />
@@ -489,7 +520,10 @@ const App = () => {
                                     <select
                                         id="lottery-input"
                                         value={currentState.lottery}
-                                        onChange={(e) => handleFieldChange('lottery', e.target.value)}
+                                        onChange={(e) => {
+                                            handleLocalFieldChange('lottery', e.target.value);
+                                            handleFieldChange('lottery', e.target.value);
+                                        }}
                                         disabled={currentState.isDetailsConfirmed}
                                         className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                                     >
@@ -512,7 +546,8 @@ const App = () => {
                                              id="custom-lottery-input"
                                              type="text"
                                              value={currentState.customLottery}
-                                             onChange={(e) => handleFieldChange('customLottery', e.target.value)}
+                                             onChange={(e) => handleLocalFieldChange('customLottery', e.target.value)}
+                                             onBlur={(e) => handleFieldChange('customLottery', e.target.value)}
                                              placeholder="Nombre de la lotería"
                                              disabled={currentState.isDetailsConfirmed}
                                              className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
@@ -594,7 +629,7 @@ const App = () => {
                                     id="name-input"
                                     type="text"
                                     value={currentState.name}
-                                    onChange={(e) => handleFieldChange('name', e.target.value)}
+                                    onChange={(e) => handleLocalFieldChange('name', e.target.value)}
                                     placeholder="Ej: Juan Pérez"
                                     className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
                                 />
@@ -607,7 +642,7 @@ const App = () => {
                                     id="phone-input"
                                     type="tel"
                                     value={currentState.phoneNumber}
-                                    onChange={(e) => handleFieldChange('phoneNumber', e.target.value.replace(/\D/g, ''))}
+                                    onChange={(e) => handleLocalFieldChange('phoneNumber', e.target.value.replace(/\D/g, ''))}
                                     placeholder="Ej: 3001234567"
                                     className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
                                 />
@@ -637,7 +672,8 @@ const App = () => {
                                     id="nequi-account-input"
                                     type="tel"
                                     value={currentState.nequiAccountNumber}
-                                    onChange={(e) => handleFieldChange('nequiAccountNumber', e.target.value.replace(/\D/g, ''))}
+                                    onChange={(e) => handleLocalFieldChange('nequiAccountNumber', e.target.value.replace(/\D/g, ''))}
+                                    onBlur={(e) => handleFieldChange('nequiAccountNumber', e.target.value.replace(/\D/g, ''))}
                                     placeholder="Ej: 3001234567"
                                     className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
                                 />
@@ -810,6 +846,7 @@ const App = () => {
                                 <div className="text-center pt-4">
                                     <p className="text-gray-600 uppercase">Número Asignado</p>
                                     <p className="text-6xl font-bold text-purple-600 tracking-wider">{ticketInfo.raffleNumber}</p>
+
                                 </div>
                             </div>
                             
