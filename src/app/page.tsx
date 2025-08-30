@@ -25,7 +25,7 @@ const initialRaffleData = {
     name: '',
     phoneNumber: '',
     raffleNumber: '',
-    nequiAccountNumber: '',
+    nequiAccountNumber: '3001234567', // Nequi number is now fixed
     gameDate: '',
     lottery: '',
     customLottery: '',
@@ -653,20 +653,7 @@ const App = () => {
                                     <p className="text-red-500 text-sm mt-1">Este número ya está asignado</p>
                                 )}
                             </div>
-                             <div>
-                                <label htmlFor="nequi-account-input" className="block text-sm font-medium text-gray-700 mb-1">
-                                    Número de Cuenta Nequi (para pago):
-                                </label>
-                                <input
-                                    id="nequi-account-input"
-                                    type="tel"
-                                    value={currentState.nequiAccountNumber}
-                                    onChange={(e) => handleLocalFieldChange('nequiAccountNumber', e.target.value.replace(/\D/g, ''))}
-                                    onBlur={(e) => handleFieldChange('nequiAccountNumber', e.target.value.replace(/\D/g, ''))}
-                                    placeholder="Ej: 3001234567"
-                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                />
-                            </div>
+                            
                             <div className="flex items-center gap-4">
                                 <a
                                     href={isRegisterFormValid ? nequiPaymentUrl : '#'}
@@ -905,3 +892,5 @@ const App = () => {
 };
 
 export default App;
+
+    
