@@ -26,6 +26,7 @@ const initialRaffleState = {
     gameDate: '',
     lottery: '',
     customLottery: '',
+    organizerName: '',
     participants: [] as any[],
     raffleManager: new RaffleManager(),
     raffleRef: '',
@@ -127,6 +128,10 @@ const App = () => {
     };
 
     const handleConfirmDetails = () => {
+        if (!currentState.organizerName.trim()) {
+            showNotification('Por favor ingresa el nombre del organizador', 'warning');
+            return;
+        }
         if (!currentState.prize.trim()) {
             showNotification('Por favor ingresa el premio', 'warning');
             return;
@@ -221,6 +226,7 @@ const App = () => {
             gameDate: currentState.gameDate,
             lottery: currentState.lottery === 'Otro' ? currentState.customLottery : currentState.lottery,
             raffleRef: currentState.raffleRef,
+            organizerName: currentState.organizerName,
         });
         
         setIsTicketModalOpen(true);
@@ -374,6 +380,20 @@ const App = () => {
                          <div className="mb-6">
                              <h2 className="text-2xl font-bold text-gray-800 mb-4">Configuración del Premio</h2>
                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                                <div>
+                                    <label htmlFor="organizer-name-input" className="block text-sm font-medium text-gray-700 mb-1">
+                                        Organizador:
+                                    </label>
+                                    <input
+                                        id="organizer-name-input"
+                                        type="text"
+                                        value={currentState.organizerName}
+                                        onChange={(e) => setCurrentState(s => ({...s, organizerName: e.target.value}))}
+                                        placeholder="Nombre del organizador"
+                                        disabled={currentState.isDetailsConfirmed}
+                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                    />
+                                </div>
                                 <div>
                                     <label htmlFor="prize-input" className="block text-sm font-medium text-gray-700 mb-1">
                                         Premio:
@@ -564,7 +584,7 @@ const App = () => {
                             </div>
                              <div>
                                 <label htmlFor="nequi-account-input" className="block text-sm font-medium text-gray-700 mb-1">
-                                    Número de Cuenta Nequi:
+                                    Número de Cuenta Nequi (para pago):
                                 </label>
                                 <input
                                     id="nequi-account-input"
@@ -705,6 +725,10 @@ const App = () => {
                             <div className="flex justify-between">
                                 <span className="text-gray-600">CLIENTE:</span>
                                 <span className="font-semibold text-right">{ticketInfo.name}</span>
+                            </div>
+                             <div className="flex justify-between">
+                                <span className="text-gray-600">ORGANIZA:</span>
+                                <span className="font-semibold text-right">{ticketInfo.organizerName}</span>
                             </div>
                             <div className="flex justify-between">
                                 <span className="text-gray-600">CELULAR:</span>
