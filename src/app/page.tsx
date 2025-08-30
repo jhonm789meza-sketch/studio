@@ -4,7 +4,7 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { RaffleManager } from '@/lib/RaffleManager';
 import { db } from '@/lib/firebase';
-import { doc, onSnapshot, setDoc, getDoc, deleteDoc } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc, getDoc, deleteDoc, updateDoc } from 'firebase/firestore';
 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuCheckboxItem } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
@@ -71,17 +71,17 @@ const App = () => {
 
     useEffect(() => {
         setLoading(true);
-        const unsubTwoDigit = onSnapshot(doc(db, "raffles", "two-digit"), (doc) => {
-            if (doc.exists()) {
-                setTwoDigitState({ ...initialRaffleData, ...doc.data() });
+        const unsubTwoDigit = onSnapshot(doc(db, "raffles", "two-digit"), (docSnapshot) => {
+            if (docSnapshot.exists()) {
+                setTwoDigitState({ ...initialRaffleData, ...docSnapshot.data() });
             } else {
                 setDoc(doc(db, "raffles", "two-digit"), initialRaffleData);
             }
             setLoading(false);
         });
-        const unsubThreeDigit = onSnapshot(doc(db, "raffles", "three-digit"), (doc) => {
-             if (doc.exists()) {
-                setThreeDigitState({ ...initialRaffleData, ...doc.data() });
+        const unsubThreeDigit = onSnapshot(doc(db, "raffles", "three-digit"), (docSnapshot) => {
+             if (docSnapshot.exists()) {
+                setThreeDigitState({ ...initialRaffleData, ...docSnapshot.data() });
             } else {
                 setDoc(doc(db, "raffles", "three-digit"), initialRaffleData);
             }
@@ -363,6 +363,16 @@ const App = () => {
         }
     };
 
+    const handleFieldChange = async (field: string, value: any) => {
+        if (currentState.isDetailsConfirmed) return;
+        try {
+            await setDoc(doc(db, "raffles", raffleMode), { [field]: value }, { merge: true });
+        } catch (error) {
+            console.error("Error updating document:", error);
+            showNotification("Error al guardar los cambios.", "error");
+        }
+    };
+
     const allNumbers = raffleMode === 'two-digit'
         ? Array.from({ length: 100 }, (_, i) => i)
         : Array.from({ length: 900 }, (_, i) => i + 100);
@@ -376,13 +386,8 @@ const App = () => {
         return <div className="flex justify-center items-center h-screen text-xl font-semibold">Cargando...</div>;
     }
 
-    const nequiPaymentUrl = `nequi://app/transfer?phone=${currentState.nequiAccountNumber}&amount=${currentState.value}&message=${encodeURIComponent(`Pago Rifa: ${currentState.raffleRef}`)}`;
-
-    const handleFieldChange = (field: string, value: any) => {
-        if(currentState.isDetailsConfirmed) return;
-        setDoc(doc(db, "raffles", raffleMode), { [field]: value }, { merge: true });
-    }
-
+    const nequiPaymentUrl = `nequi://app/transfer?phone=${currentState.nequiAccountNumber}&amount=${currentState.value.replace(/[^\d]/g, '')}&message=${encodeURIComponent(`Pago Rifa: ${currentState.raffleRef}`)}`;
+    
     const isRegisterFormValid = currentState.name && currentState.phoneNumber && currentState.raffleNumber && !drawnNumbersSet.has(parseInt(currentState.raffleNumber));
 
     return (
