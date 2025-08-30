@@ -59,7 +59,7 @@ const App = () => {
     const currentState = raffleMode === 'two-digit' ? twoDigitState : threeDigitState;
     const setCurrentState = raffleMode === 'two-digit' ? setTwoDigitState : setThreeDigitState;
 
-    const totalNumbers = raffleMode === 'two-digit' ? 100 : 900;
+    const totalNumbers = raffleMode === 'two-digit' ? 100 : 1000;
     const numberLength = raffleMode === 'two-digit' ? 2 : 3;
 
     useEffect(() => {
@@ -189,7 +189,7 @@ const App = () => {
              return;
         }
 
-        if (raffleMode === 'three-digit' && (num < 100 || num > 999)) {
+        if (raffleMode === 'three-digit' && currentState.raffleNumber.length === 3 && (num < 100 || num > 999)) {
             showNotification('El número para esta modalidad debe estar entre 100 y 999', 'warning');
             return;
         }
@@ -611,7 +611,14 @@ const App = () => {
                                     href={nequiPaymentUrl}
                                     className={`inline-block px-4 py-2 bg-purple-500 text-white font-medium rounded-lg hover:bg-purple-600 transition-colors h-10 leading-tight ${(!currentState.nequiAccountNumber || !currentState.value) ? 'opacity-50 cursor-not-allowed' : ''}`}
                                     aria-disabled={!currentState.nequiAccountNumber || !currentState.value}
-                                    onClick={(e) => { if (!currentState.nequiAccountNumber || !currentState.value) e.preventDefault(); }}
+                                    onClick={(e) => {
+                                        if (!currentState.nequiAccountNumber || !currentState.value) {
+                                            e.preventDefault();
+                                            showNotification('Completa el número de cuenta Nequi y el valor para poder pagar.', 'warning');
+                                        } else {
+                                            showNotification('Redirigiendo a Nequi para realizar el pago...', 'info');
+                                        }
+                                    }}
                                 >
                                     Pagar con Nequi
                                 </a>
