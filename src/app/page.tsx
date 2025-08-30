@@ -25,7 +25,7 @@ const initialRaffleData = {
     name: '',
     phoneNumber: '',
     raffleNumber: '',
-    nequiAccountNumber: '3145696687', // Nequi number is now fixed
+    nequiAccountNumber: '3145696687', // Nequi number is now part of state
     gameDate: '',
     lottery: '',
     customLottery: '',
@@ -171,6 +171,10 @@ const App = () => {
         }
         if (currentState.lottery === 'Otro' && !currentState.customLottery.trim()) {
             showNotification('Por favor especifica la lotería', 'warning');
+            return;
+        }
+        if (!currentState.nequiAccountNumber.trim()) {
+            showNotification('Por favor ingresa el número de cuenta Nequi', 'warning');
             return;
         }
         
@@ -525,6 +529,21 @@ const App = () => {
                                         <option value="Lotería de la Cruz Roja">Lotería de la Cruz Roja</option>
                                         <option value="Otro">Otro</option>
                                     </select>
+                                </div>
+                                <div>
+                                    <label htmlFor="nequi-account-input" className="block text-sm font-medium text-gray-700 mb-1">
+                                        Número cuenta Nequi:
+                                    </label>
+                                    <input
+                                        id="nequi-account-input"
+                                        type="tel"
+                                        value={currentState.nequiAccountNumber}
+                                        onChange={(e) => setCurrentState((s: any) => ({ ...s, nequiAccountNumber: e.target.value.replace(/\D/g, '') }))}
+                                        onBlur={(e) => handleFieldChange('nequiAccountNumber', e.target.value.replace(/\D/g, ''))}
+                                        placeholder="Número de Nequi para pagos"
+                                        disabled={currentState.isDetailsConfirmed}
+                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                    />
                                 </div>
                                  {currentState.lottery === 'Otro' && (
                                      <div>
