@@ -4,7 +4,7 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { RaffleManager } from '@/lib/RaffleManager';
 import { db } from '@/lib/firebase';
-import { doc, onSnapshot, setDoc, getDoc, deleteDoc, updateDoc } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc, getDoc, deleteDoc } from 'firebase/firestore';
 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuCheckboxItem } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
@@ -34,6 +34,7 @@ const initialRaffleData = {
     participants: [],
     raffleRef: '',
     winner: null,
+    manualWinnerNumber: '',
 };
 
 
@@ -75,7 +76,7 @@ const App = () => {
             if (docSnapshot.exists()) {
                 setTwoDigitState({ ...initialRaffleData, ...docSnapshot.data() });
             } else {
-                setDoc(doc(db, "raffles", "two-digit"), initialRaffleData);
+                setDoc(doc(db, "raffles", "two-digit"), initialRaffleData, { merge: true });
             }
             setLoading(false);
         });
@@ -83,7 +84,7 @@ const App = () => {
              if (docSnapshot.exists()) {
                 setThreeDigitState({ ...initialRaffleData, ...docSnapshot.data() });
             } else {
-                setDoc(doc(db, "raffles", "three-digit"), initialRaffleData);
+                setDoc(doc(db, "raffles", "three-digit"), initialRaffleData, { merge: true });
             }
              setLoading(false);
         });
@@ -207,7 +208,7 @@ const App = () => {
                 } else {
                     setThreeDigitState(resetState);
                 }
-                await setDoc(doc(db, "raffles", raffleMode), resetState);
+                await setDoc(doc(db, "raffles", raffleMode), resetState, { merge: true });
                 showNotification('Tablero reiniciado correctamente', 'success');
                 setShowConfetti(false);
             }
@@ -345,13 +346,19 @@ const App = () => {
     };
     
     const handleDrawWinner = async () => {
-        if (currentState.participants.length === 0) {
-            showNotification('No hay participantes para sortear un ganador.', 'warning');
+        const winningNumberStr = currentState.manualWinnerNumber;
+        if (!winningNumberStr || winningNumberStr.length !== numberLength) {
+            showNotification(`Por favor, ingresa un número ganador válido de ${numberLength} cifras.`, 'warning');
             return;
         }
 
-        const winningNumber = currentState.drawnNumbers[Math.floor(Math.random() * currentState.drawnNumbers.length)];
-        const winner = currentState.participants.find((p: any) => parseInt(p.raffleNumber, 10) === winningNumber);
+        const winningNumber = parseInt(winningNumberStr, 10);
+        if (!new Set(currentState.drawnNumbers).has(winningNumber)) {
+            showNotification(`El número ${winningNumberStr} no ha sido vendido.`, 'error');
+            return;
+        }
+
+        const winner = currentState.participants.find((p: any) => p.raffleNumber === winningNumberStr);
 
         if (winner) {
             await setDoc(doc(db, "raffles", raffleMode), { winner }, { merge: true });
@@ -359,7 +366,7 @@ const App = () => {
             showNotification(`¡El ganador es ${winner.name} con el número ${winner.raffleNumber}!`, 'success');
             setTimeout(() => setShowConfetti(false), 8000);
         } else {
-            showNotification('Error: No se pudo encontrar al participante ganador.', 'error');
+            showNotification('Error: No se pudo encontrar al participante ganador, aunque el número fue vendido.', 'error');
         }
     };
 
@@ -611,14 +618,29 @@ const App = () => {
                                 </div>
                             )}
                             <div className="flex flex-wrap gap-3 items-center">
-                                 {!currentState.isWinnerConfirmed && (
-                                    <Button
-                                        onClick={handleDrawWinner}
-                                        disabled={currentState.isWinnerConfirmed || currentState.participants.length === 0}
-                                        className="bg-yellow-500 text-white font-medium rounded-lg hover:bg-yellow-600 transition-colors disabled:bg-gray-300"
-                                    >
-                                        Sortear Ganador
-                                    </Button>
+                                {!currentState.isWinnerConfirmed && (
+                                    <>
+                                        <div className="flex items-center gap-2">
+                                            <Label htmlFor="manual-winner-input" className="sr-only">Número Ganador</Label>
+                                            <Input
+                                                id="manual-winner-input"
+                                                type="text"
+                                                placeholder={`Número (${numberLength} cifras)`}
+                                                value={currentState.manualWinnerNumber}
+                                                onChange={(e) => handleLocalFieldChange('manualWinnerNumber', e.target.value.replace(/\D/g, ''))}
+                                                maxLength={numberLength}
+                                                disabled={currentState.isWinnerConfirmed || currentState.participants.length === 0}
+                                                className="w-36"
+                                            />
+                                            <Button
+                                                onClick={handleDrawWinner}
+                                                disabled={currentState.isWinnerConfirmed || currentState.participants.length === 0}
+                                                className="bg-yellow-500 text-white font-medium rounded-lg hover:bg-yellow-600 transition-colors disabled:bg-gray-300"
+                                            >
+                                                Buscar Ganador
+                                            </Button>
+                                        </div>
+                                    </>
                                 )}
                                 {currentState.winner && !currentState.isWinnerConfirmed && (
                                     <Button
