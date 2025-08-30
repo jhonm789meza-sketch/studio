@@ -113,12 +113,6 @@ const App = () => {
         return currencySymbol + ' ' + number.toLocaleString('es-CO');
     };
 
-    const handleValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const inputValue = e.target.value;
-        const numericValue = inputValue.replace(/[^\d]/g, '');
-        setCurrentState((s:any) => ({ ...s, value: numericValue }));
-    };
-
     const handleRaffleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const inputValue = e.target.value.replace(/\D/g, '');
         setCurrentState((s:any) => ({...s, raffleNumber: inputValue}));
@@ -340,24 +334,12 @@ const App = () => {
     const nequiPaymentUrl = `nequi://app/transfer?phone=${currentState.nequiAccountNumber}&amount=${currentState.value}&message=${encodeURIComponent(`Pago premio: ${currentState.prize}`)}`;
 
     const handleFieldChange = (field: string, value: any) => {
-        const stateToUpdate = raffleMode === 'two-digit' ? { ...twoDigitState } : { ...threeDigitState };
-        stateToUpdate[field] = value;
-        
-        if (raffleMode === 'two-digit') {
-            setTwoDigitState(stateToUpdate);
-        } else {
-            setThreeDigitState(stateToUpdate);
-        }
-
+        if(currentState.isDetailsConfirmed) return;
         updateDoc(doc(db, "raffles", raffleMode), { [field]: value });
     }
 
     const handleLocalFieldChange = (field: string, value: any) => {
-        if (raffleMode === 'two-digit') {
-            setTwoDigitState(s => ({ ...s, [field]: value }));
-        } else {
-            setThreeDigitState(s => ({ ...s, [field]: value }));
-        }
+        setCurrentState((s: any) => ({ ...s, [field]: value }));
     }
 
 
@@ -521,8 +503,9 @@ const App = () => {
                                         id="lottery-input"
                                         value={currentState.lottery}
                                         onChange={(e) => {
-                                            handleLocalFieldChange('lottery', e.target.value);
-                                            handleFieldChange('lottery', e.target.value);
+                                            const value = e.target.value;
+                                            handleLocalFieldChange('lottery', value);
+                                            handleFieldChange('lottery', value);
                                         }}
                                         disabled={currentState.isDetailsConfirmed}
                                         className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
