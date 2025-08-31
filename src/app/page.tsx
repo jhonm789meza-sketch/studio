@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import jsPDF from 'jspdf';
@@ -9,13 +10,11 @@ import Image from 'next/image';
 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuCheckboxItem } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House, QrCode, Upload } from 'lucide-react';
+import { Menu, Award, Lock, House } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Confetti } from '@/components/confetti';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Checkbox } from '@/components/ui/checkbox';
 
 type RaffleMode = 'two-digit' | 'three-digit';
 
@@ -137,6 +136,10 @@ const App = () => {
     };
 
     const toggleNumber = (number: number) => {
+        if (!currentState.isDetailsConfirmed) {
+            showNotification('Primero debes confirmar los detalles del premio para seleccionar un número.', 'info');
+            return;
+        }
         if (currentState.isWinnerConfirmed) {
             showNotification('El juego ha terminado. Reinicia el tablero para comenzar de nuevo.', 'info');
             return;
@@ -621,9 +624,11 @@ const App = () => {
                                onClick={() => toggleNumber(number)}
                                className={`
                                    number-cell text-center py-2 rounded-lg transition-all text-sm
-                                   ${currentState.isWinnerConfirmed ? 'cursor-not-allowed bg-gray-300 text-gray-500' : 'cursor-pointer'}
-                                   ${currentState.isDetailsConfirmed && drawnNumbersSet.has(number)
+                                   ${currentState.isWinnerConfirmed || !currentState.isDetailsConfirmed ? 'cursor-not-allowed' : 'cursor-pointer'}
+                                   ${drawnNumbersSet.has(number)
                                        ? 'bg-red-600 text-white shadow-lg transform scale-105 cursor-not-allowed'
+                                       : !currentState.isDetailsConfirmed
+                                       ? 'bg-gray-200 text-gray-500'
                                        : 'bg-green-200 text-green-800 hover:bg-green-300 hover:shadow-md'
                                    }
                                    ${currentState.winner?.raffleNumber === String(number).padStart(numberLength, '0') ? 'ring-4 ring-yellow-400 animate-pulse' : ''}
@@ -633,6 +638,12 @@ const App = () => {
                            </div>
                        ))}
                    </div>
+                   {!currentState.isDetailsConfirmed && (
+                        <div className="mt-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4" role="alert">
+                            <p className="font-bold">Tablero Bloqueado</p>
+                            <p>Debes completar y confirmar los detalles del premio para poder seleccionar números.</p>
+                        </div>
+                    )}
                </div>
             </>
         )
@@ -1003,3 +1014,5 @@ const App = () => {
 };
 
 export default App;
+
+    
