@@ -744,28 +744,6 @@ const App = () => {
                         <h2 className="text-2xl font-bold text-gray-800 mb-4">Registrar Participante</h2>
                         <fieldset disabled={currentState.isWinnerConfirmed || !currentState.isDetailsConfirmed || !currentState.isPaid} className="disabled:opacity-50 space-y-4">
                             <div>
-                                <Label htmlFor="name-input">Nombre completo:</Label>
-                                <Input
-                                    id="name-input"
-                                    type="text"
-                                    value={currentState.name}
-                                    onChange={(e) => handleLocalFieldChange('name', e.target.value)}
-                                    placeholder="Ej: Juan Pérez"
-                                    className="w-full mt-1"
-                                />
-                            </div>
-                            <div>
-                                <Label htmlFor="phone-input">Celular:</Label>
-                                <Input
-                                    id="phone-input"
-                                    type="tel"
-                                    value={currentState.phoneNumber}
-                                    onChange={(e) => handleLocalFieldChange('phoneNumber', e.target.value.replace(/\D/g, ''))}
-                                    placeholder="Ej: 3001234567"
-                                    className="w-full mt-1"
-                                />
-                            </div>
-                            <div>
                                 <Label htmlFor="raffle-number-input">Número de rifa ({raffleMode === 'two-digit' ? '00-99' : '100-999'}):</Label>
                                 <Input
                                     id="raffle-number-input"
@@ -806,6 +784,30 @@ const App = () => {
                                     Generar Tiquete
                                 </Button>
                             </div>
+
+                            <div>
+                                <Label htmlFor="name-input">Nombre completo:</Label>
+                                <Input
+                                    id="name-input"
+                                    type="text"
+                                    value={currentState.name}
+                                    onChange={(e) => handleLocalFieldChange('name', e.target.value)}
+                                    placeholder="Ej: Juan Pérez"
+                                    className="w-full mt-1"
+                                />
+                            </div>
+                            <div>
+                                <Label htmlFor="phone-input">Celular:</Label>
+                                <Input
+                                    id="phone-input"
+                                    type="tel"
+                                    value={currentState.phoneNumber}
+                                    onChange={(e) => handleLocalFieldChange('phoneNumber', e.target.value.replace(/\D/g, ''))}
+                                    placeholder="Ej: 3001234567"
+                                    className="w-full mt-1"
+                                />
+                            </div>
+
                             {paymentInitiated && (
                                 <div className="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mt-4" role="alert">
                                     <p className="font-bold">Acción requerida</p>
