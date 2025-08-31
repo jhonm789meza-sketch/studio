@@ -29,7 +29,7 @@ const initialRaffleData = {
     phoneNumber: '',
     raffleNumber: '',
     nequiAccountNumber: '3145696687',
-    nequiQrCodeUrl: '',
+    nequiQrCodeUrl: '', // This will now store a Data URL for the uploaded image
     gameDate: '',
     lottery: '',
     customLottery: '',
@@ -55,7 +55,6 @@ const App = () => {
     const [notification, setNotification] = useState({ show: false, message: '', type: '' });
     
     const ticketModalRef = useRef(null);
-    const qrCodeCanvasRef = useRef<HTMLCanvasElement>(null);
 
     const [raffleMode, setRaffleMode] = useState<RaffleMode>('two-digit');
     
@@ -100,14 +99,6 @@ const App = () => {
         };
     }, []);
 
-    useEffect(() => {
-      if (currentState.nequiQrCodeUrl && qrCodeCanvasRef.current) {
-        QRCode.toCanvas(qrCodeCanvasRef.current, currentState.nequiQrCodeUrl, { width: 192, margin: 2 }, (error) => {
-          if (error) console.error("Error generating QR code:", error);
-        });
-      }
-    }, [currentState.nequiQrCodeUrl, activeTab]);
-
     const showNotification = (message: string, type = 'info') => {
         setNotification({ show: true, message, type });
         setTimeout(() => setNotification({ show: false, message: '', type: '' }), 3000);
@@ -141,6 +132,18 @@ const App = () => {
     
     const handleLocalFieldChange = (field: string, value: any) => {
         setCurrentState((s: any) => ({ ...s, [field]: value }));
+    };
+
+    const handleQrCodeUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const dataUrl = event.target?.result as string;
+                handleFieldChange('nequiQrCodeUrl', dataUrl);
+            };
+            reader.readAsDataURL(file);
+        }
     };
 
     const toggleNumber = (number: number) => {
@@ -510,14 +513,12 @@ const App = () => {
                                />
                             </div>
                            <div>
-                                <Label htmlFor="nequi-qr-url-input">URL de pago (para QR):</Label>
+                                <Label htmlFor="nequi-qr-url-input">Subir imagen QR de pago:</Label>
                                 <Input
                                     id="nequi-qr-url-input"
-                                    type="text"
-                                    value={currentState.nequiQrCodeUrl}
-                                    onChange={(e) => handleLocalFieldChange('nequiQrCodeUrl', e.target.value)}
-                                    onBlur={(e) => handleFieldChange('nequiQrCodeUrl', e.target.value)}
-                                    placeholder="https://.../pagar"
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleQrCodeUpload}
                                     disabled={currentState.isDetailsConfirmed}
                                     className="w-full mt-1"
                                 />
@@ -768,7 +769,7 @@ const App = () => {
                                         Escanea el código QR para pagar tu boleta de {formatValue(currentState.value)}.
                                     </p>
                                     <div className="relative w-48 h-48 mx-auto border-4 border-purple-200 rounded-lg overflow-hidden flex items-center justify-center">
-                                        <canvas ref={qrCodeCanvasRef} />
+                                         <Image src={currentState.nequiQrCodeUrl} alt="Código QR Nequi" width={192} height={192} style={{ objectFit: 'contain' }} />
                                     </div>
                                     <p className="text-xs text-gray-500 mt-4">
                                         Una vez realizado el pago, completa tu información y genera el tiquete.
