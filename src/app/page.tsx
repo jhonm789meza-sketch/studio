@@ -55,7 +55,6 @@ const App = () => {
     const [notification, setNotification] = useState({ show: false, message: '', type: '' });
     
     const ticketModalRef = useRef(null);
-    const qrFileInputRef = useRef<HTMLInputElement>(null);
 
     const [raffleMode, setRaffleMode] = useState<RaffleMode>('two-digit');
     
@@ -373,26 +372,6 @@ const App = () => {
         await setDoc(doc(db, "raffles", raffleMode), { [field]: value }, { merge: true });
     };
 
-    const handleQrCodeUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (file) {
-            if (file.size > 2 * 1024 * 1024) { // 2MB limit
-                showNotification('La imagen es muy grande. El límite es de 2MB.', 'error');
-                return;
-            }
-            const reader = new FileReader();
-            reader.onload = async (e) => {
-                const dataUrl = e.target?.result as string;
-                await handleFieldChange('qrCodeImageUrl', dataUrl);
-                showNotification('Imagen del QR actualizada.', 'success');
-            };
-            reader.onerror = () => {
-                showNotification('Error al leer el archivo de imagen.', 'error');
-            };
-            reader.readAsDataURL(file);
-        }
-    };
-    
     const handleActivateBoard = async () => {
         showConfirmationDialog(
             `Estás a punto de pagar $10.000 para activar este tablero de ${raffleMode === 'two-digit' ? '2' : '3'} cifras. ¿Continuar?`,
@@ -522,6 +501,19 @@ const App = () => {
                                <option value="Otro">Otro</option>
                            </select>
                        </div>
+                       <div>
+                            <Label htmlFor="nequi-account-input">Cuenta Nequi:</Label>
+                            <Input
+                                id="nequi-account-input"
+                                type="tel"
+                                value={currentState.nequiAccountNumber}
+                                onChange={(e) => handleLocalFieldChange('nequiAccountNumber', e.target.value)}
+                                onBlur={(e) => handleFieldChange('nequiAccountNumber', e.target.value)}
+                                placeholder="Ej: 3001234567"
+                                disabled={currentState.isDetailsConfirmed}
+                                className="w-full mt-1"
+                            />
+                        </div>
 
                         {currentState.lottery === 'Otro' && (
                             <div>
@@ -737,6 +729,19 @@ const App = () => {
                         <h2 className="text-2xl font-bold text-gray-800 mb-4">Registrar Participante</h2>
                         <fieldset disabled={currentState.isWinnerConfirmed || !currentState.isDetailsConfirmed || !currentState.isPaid} className="disabled:opacity-50 space-y-4">
                             
+                             <div className="bg-blue-50 border-l-4 border-blue-500 text-blue-800 p-4 rounded-lg">
+                                <p className="font-bold">Instrucciones de Pago</p>
+                                <p>Realiza el pago de {formatValue(currentState.value)} al número de Nequi <strong className="font-mono">{currentState.nequiAccountNumber}</strong>.</p>
+                                <p>Una vez completado el pago, llena tus datos y genera tu tiquete.</p>
+                                <Button
+                                    asChild
+                                    className="mt-3 bg-purple-600 text-white hover:bg-purple-700"
+                                >
+                                    <a href={`nequi://send-money?phone=${currentState.nequiAccountNumber}&value=${currentState.value}`} target="_blank" rel="noopener noreferrer">
+                                        Pagar por Nequi
+                                    </a>
+                                </Button>
+                            </div>
 
                             <div>
                                 <Label htmlFor="raffle-number-input">Número de rifa ({raffleMode === 'two-digit' ? '00-99' : '100-999'}):</Label>
