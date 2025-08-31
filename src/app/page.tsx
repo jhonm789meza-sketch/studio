@@ -8,7 +8,7 @@ import { doc, onSnapshot, setDoc, getDoc, deleteDoc } from 'firebase/firestore';
 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuCheckboxItem } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock } from 'lucide-react';
+import { Menu, Award, Lock, House } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -154,7 +154,7 @@ const App = () => {
             return;
         }
         await setDoc(doc(db, "raffles", raffleMode), { isWinnerConfirmed: true }, { merge: true });
-        showNotification('¡Ganador confirmado! El tablero ha sido bloqueado.', 'success');
+        showNotification('¡Resultado confirmado! El tablero ha sido bloqueado.', 'success');
     };
 
     const handleConfirmDetails = async () => {
@@ -353,12 +353,6 @@ const App = () => {
             return;
         }
 
-        const winningNumber = parseInt(winningNumberStr, 10);
-        if (!new Set(currentState.drawnNumbers).has(winningNumber)) {
-            showNotification(`El número ${winningNumberStr} no ha sido vendido.`, 'error');
-            return;
-        }
-
         const winner = currentState.participants.find((p: any) => p.raffleNumber === winningNumberStr);
 
         if (winner) {
@@ -367,7 +361,14 @@ const App = () => {
             showNotification(`¡El ganador es ${winner.name} con el número ${winner.raffleNumber}!`, 'success');
             setTimeout(() => setShowConfetti(false), 8000);
         } else {
-            showNotification('Error: No se pudo encontrar al participante ganador, aunque el número fue vendido.', 'error');
+            // Number was not sold
+             const houseWinner = {
+                name: "El Premio Queda en Casa",
+                raffleNumber: winningNumberStr,
+                isHouse: true,
+            };
+            await setDoc(doc(db, "raffles", raffleMode), { winner: houseWinner }, { merge: true });
+            showNotification(`El número ${winningNumberStr} no fue vendido. El premio queda en casa.`, 'info');
         }
     };
 
@@ -560,9 +561,15 @@ const App = () => {
                    <h2 className="text-2xl font-bold text-gray-800 mb-4">Sorteo</h2>
                     {currentState.winner && (
                        <div className="mb-4 p-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 rounded-lg">
-                           <p className="font-bold text-lg flex items-center"><Award className="mr-2"/>¡Tenemos un ganador!</p>
-                           <p><strong>Nombre:</strong> {currentState.winner.name}</p>
+                           {currentState.winner.isHouse ? (
+                               <p className="font-bold text-lg flex items-center"><House className="mr-2"/>¡El premio queda en casa!</p>
+                           ) : (
+                               <p className="font-bold text-lg flex items-center"><Award className="mr-2"/>¡Tenemos un ganador!</p>
+                           )}
                            <p><strong>Número:</strong> {currentState.winner.raffleNumber}</p>
+                           {!currentState.winner.isHouse && (
+                            <p><strong>Nombre:</strong> {currentState.winner.name}</p>
+                           )}
                        </div>
                    )}
                    <div className="flex flex-wrap gap-3 items-center">
@@ -595,7 +602,7 @@ const App = () => {
                                onClick={handleConfirmWinner}
                                className="bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 transition-colors"
                            >
-                               Confirmar Ganador
+                               Confirmar Resultado
                            </Button>
                        )}
                        <Button
@@ -606,7 +613,7 @@ const App = () => {
                        </Button>
                    </div>
                    {currentState.isWinnerConfirmed && (
-                       <p className="mt-4 text-green-600 font-semibold">El ganador ha sido confirmado y el tablero está cerrado.</p>
+                       <p className="mt-4 text-green-600 font-semibold">El resultado ha sido confirmado y el tablero está cerrado.</p>
                    )}
                </div>
 
