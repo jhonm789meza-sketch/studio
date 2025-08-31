@@ -776,13 +776,6 @@ const App = () => {
                                 >
                                     Pagar con Nequi
                                 </a>
-                                <Button
-                                    onClick={handleTicketConfirmation}
-                                    disabled={!paymentInitiated || !isRegisterFormValid || currentState.isWinnerConfirmed}
-                                    className="px-4 py-2 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-                                >
-                                    Generar Tiquete
-                                </Button>
                             </div>
 
                             <div>
@@ -807,6 +800,14 @@ const App = () => {
                                     className="w-full mt-1"
                                 />
                             </div>
+
+                             <Button
+                                onClick={handleTicketConfirmation}
+                                disabled={!paymentInitiated || !isRegisterFormValid || currentState.isWinnerConfirmed}
+                                className="w-full px-4 py-2 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                            >
+                                Generar Tiquete
+                            </Button>
 
                             {paymentInitiated && (
                                 <div className="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mt-4" role="alert">
