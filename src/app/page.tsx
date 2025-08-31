@@ -30,7 +30,7 @@ const initialRaffleData = {
     phoneNumber: '',
     raffleNumber: '',
     nequiAccountNumber: '3145696687',
-    qrCodeImageUrl: '', // This will store the payment QR image Data URL
+    qrCodeImageUrl: '',
     gameDate: '',
     lottery: '',
     customLottery: '',
@@ -746,47 +746,6 @@ const App = () => {
                                 </Button>
                             </div>
 
-                            <div>
-                                <Label htmlFor="raffle-number-input">Número de rifa ({raffleMode === 'two-digit' ? '00-99' : '100-999'}):</Label>
-                                <div className="flex items-center gap-2 mt-1">
-                                    <Input
-                                        id="raffle-number-input"
-                                        type="text"
-                                        value={currentState.raffleNumber}
-                                        onChange={handleRaffleNumberChange}
-                                        placeholder={`Ej: ${raffleMode === 'two-digit' ? '05' : '142'}`}
-                                        className="w-full"
-                                        maxLength={numberLength}
-                                    />
-                                </div>
-                                {currentState.raffleNumber && drawnNumbersSet.has(parseInt(currentState.raffleNumber)) && (
-                                    <p className="text-red-500 text-sm mt-1">Este número ya está asignado</p>
-                                )}
-                            </div>
-                            
-                            <div>
-                                <Label htmlFor="name-input">Nombre completo:</Label>
-                                <Input
-                                    id="name-input"
-                                    type="text"
-                                    value={currentState.name}
-                                    onChange={(e) => handleLocalFieldChange('name', e.target.value)}
-                                    placeholder="Ej: Juan Pérez"
-                                    className="w-full mt-1"
-                                />
-                            </div>
-                            <div>
-                                <Label htmlFor="phone-input">Celular:</Label>
-                                <Input
-                                    id="phone-input"
-                                    type="tel"
-                                    value={currentState.phoneNumber}
-                                    onChange={(e) => handleLocalFieldChange('phoneNumber', e.target.value.replace(/\D/g, ''))}
-                                    placeholder="Ej: 3001234567"
-                                    className="w-full mt-1"
-                                />
-                            </div>
-
                              <div className="flex items-center space-x-2 py-2">
                                 <Checkbox
                                     id="payment-confirmation"
@@ -800,6 +759,49 @@ const App = () => {
                                     Pago Recibido
                                 </label>
                              </div>
+
+                            <fieldset disabled={!isPaymentConfirmedByAdmin} className="space-y-4">
+                                <div>
+                                    <Label htmlFor="raffle-number-input">Número de rifa ({raffleMode === 'two-digit' ? '00-99' : '100-999'}):</Label>
+                                    <div className="flex items-center gap-2 mt-1">
+                                        <Input
+                                            id="raffle-number-input"
+                                            type="text"
+                                            value={currentState.raffleNumber}
+                                            onChange={handleRaffleNumberChange}
+                                            placeholder={`Ej: ${raffleMode === 'two-digit' ? '05' : '142'}`}
+                                            className="w-full"
+                                            maxLength={numberLength}
+                                        />
+                                    </div>
+                                    {currentState.raffleNumber && drawnNumbersSet.has(parseInt(currentState.raffleNumber)) && (
+                                        <p className="text-red-500 text-sm mt-1">Este número ya está asignado</p>
+                                    )}
+                                </div>
+                                
+                                <div>
+                                    <Label htmlFor="name-input">Nombre completo:</Label>
+                                    <Input
+                                        id="name-input"
+                                        type="text"
+                                        value={currentState.name}
+                                        onChange={(e) => handleLocalFieldChange('name', e.target.value)}
+                                        placeholder="Ej: Juan Pérez"
+                                        className="w-full mt-1"
+                                    />
+                                </div>
+                                <div>
+                                    <Label htmlFor="phone-input">Celular:</Label>
+                                    <Input
+                                        id="phone-input"
+                                        type="tel"
+                                        value={currentState.phoneNumber}
+                                        onChange={(e) => handleLocalFieldChange('phoneNumber', e.target.value.replace(/\D/g, ''))}
+                                        placeholder="Ej: 3001234567"
+                                        className="w-full mt-1"
+                                    />
+                                </div>
+                            </fieldset>
 
                              <Button
                                 onClick={handleTicketConfirmation}
