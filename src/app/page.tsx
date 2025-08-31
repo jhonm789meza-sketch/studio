@@ -2,7 +2,6 @@
 import { useState, useEffect, useRef } from 'react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-import QRCode from 'qrcode';
 import { RaffleManager } from '@/lib/RaffleManager';
 import { db } from '@/lib/firebase';
 import { doc, onSnapshot, setDoc, getDoc, deleteDoc } from 'firebase/firestore';
@@ -10,7 +9,7 @@ import Image from 'next/image';
 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuCheckboxItem } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House, QrCode } from 'lucide-react';
+import { Menu, Award, Lock, House, QrCode, Upload } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -30,7 +29,7 @@ const initialRaffleData = {
     phoneNumber: '',
     raffleNumber: '',
     nequiAccountNumber: '3145696687',
-    nequiPaymentUrl: '', // This will store the payment URL
+    qrCodeImageUrl: '', // This will store the payment QR image Data URL
     gameDate: '',
     lottery: '',
     customLottery: '',
@@ -56,6 +55,7 @@ const App = () => {
     const [notification, setNotification] = useState({ show: false, message: '', type: '' });
     
     const ticketModalRef = useRef(null);
+    const qrFileInputRef = useRef<HTMLInputElement>(null);
 
     const [raffleMode, setRaffleMode] = useState<RaffleMode>('two-digit');
     
@@ -65,7 +65,6 @@ const App = () => {
     const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
     const [adminRefSearch, setAdminRefSearch] = useState('');
     const [showConfetti, setShowConfetti] = useState(false);
-    const [qrCodeDataUrl, setQrCodeDataUrl] = useState('');
     
     const currentState = raffleMode === 'two-digit' ? twoDigitState : threeDigitState;
     const setCurrentState = raffleMode === 'two-digit' ? setTwoDigitState : setThreeDigitState;
@@ -74,21 +73,6 @@ const App = () => {
 
     const totalNumbers = raffleMode === 'two-digit' ? 100 : 1000;
     const numberLength = raffleMode === 'two-digit' ? 2 : 3;
-
-    useEffect(() => {
-        if (currentState.nequiPaymentUrl) {
-            QRCode.toDataURL(currentState.nequiPaymentUrl, { width: 192 })
-                .then(url => {
-                    setQrCodeDataUrl(url);
-                })
-                .catch(err => {
-                    console.error(err);
-                    setQrCodeDataUrl('');
-                });
-        } else {
-            setQrCodeDataUrl('');
-        }
-    }, [currentState.nequiPaymentUrl]);
 
     useEffect(() => {
         setLoading(true);
@@ -384,15 +368,27 @@ const App = () => {
 
     const handleFieldChange = async (field: string, value: any) => {
         if (currentState.isDetailsConfirmed) return;
-        try {
-            // Optimistically update local state first
-            setCurrentState((s: any) => ({ ...s, [field]: value }));
-            // Then persist to Firestore
-            await setDoc(doc(db, "raffles", raffleMode), { [field]: value }, { merge: true });
-        } catch (error) {
-            console.error("Error updating document:", error);
-            showNotification("Error al guardar los cambios.", "error");
-            // Optionally, revert state if Firestore update fails
+        handleLocalFieldChange(field, value);
+        await setDoc(doc(db, "raffles", raffleMode), { [field]: value }, { merge: true });
+    };
+
+    const handleQrCodeUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+            if (file.size > 2 * 1024 * 1024) { // 2MB limit
+                showNotification('La imagen es muy grande. El límite es de 2MB.', 'error');
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const dataUrl = e.target?.result as string;
+                await handleFieldChange('qrCodeImageUrl', dataUrl);
+                showNotification('Imagen del QR actualizada.', 'success');
+            };
+            reader.onerror = () => {
+                showNotification('Error al leer el archivo de imagen.', 'error');
+            };
+            reader.readAsDataURL(file);
         }
     };
     
@@ -503,19 +499,30 @@ const App = () => {
                                className="w-full mt-1"
                            />
                        </div>
-                       <div>
-                           <Label htmlFor="nequi-payment-url-input">URL de Pago Nequi:</Label>
-                           <Input
-                               id="nequi-payment-url-input"
-                               type="text"
-                               value={currentState.nequiPaymentUrl}
-                               onChange={(e) => handleLocalFieldChange('nequiPaymentUrl', e.target.value)}
-                               onBlur={(e) => handleFieldChange('nequiPaymentUrl', e.target.value)}
-                               placeholder="Pega el link de pago de Nequi aquí"
-                               disabled={currentState.isDetailsConfirmed}
-                               className="w-full mt-1"
-                           />
-                       </div>
+                        <div>
+                            <Label>Código QR de Pago</Label>
+                            <Input 
+                                type="file" 
+                                ref={qrFileInputRef}
+                                onChange={handleQrCodeUpload}
+                                className="hidden"
+                                accept="image/png, image/jpeg, image/webp"
+                            />
+                            <Button 
+                                onClick={() => qrFileInputRef.current?.click()}
+                                disabled={currentState.isDetailsConfirmed}
+                                variant="outline"
+                                className="w-full mt-1"
+                            >
+                                <Upload className="mr-2 h-4 w-4" />
+                                Subir Imagen de QR
+                            </Button>
+                             {currentState.qrCodeImageUrl && (
+                                <div className="mt-2 p-2 border rounded-md relative w-32 h-32">
+                                     <Image src={currentState.qrCodeImageUrl} alt="Previsualización del QR" layout="fill" objectFit="contain" />
+                                </div>
+                            )}
+                        </div>
                        <div>
                            <Label htmlFor="lottery-input">Lotería:</Label>
                            <select
@@ -753,17 +760,15 @@ const App = () => {
                         <h2 className="text-2xl font-bold text-gray-800 mb-4">Registrar Participante</h2>
                         <fieldset disabled={currentState.isWinnerConfirmed || !currentState.isDetailsConfirmed || !currentState.isPaid} className="disabled:opacity-50 space-y-4">
                             
-                             {qrCodeDataUrl && currentState.nequiPaymentUrl && (
+                             {currentState.qrCodeImageUrl && (
                                 <div className="p-4 border rounded-lg bg-gray-50 text-center">
                                     <h3 className="text-lg font-semibold mb-2">Paga con Nequi</h3>
                                     <p className="text-sm text-gray-600 mb-4">
-                                        Escanea el código QR o haz clic en él para pagar tu boleta de {formatValue(currentState.value)}.
+                                        Escanea el código QR para pagar tu boleta de {formatValue(currentState.value)}.
                                     </p>
-                                    <a href={currentState.nequiPaymentUrl} target="_blank" rel="noopener noreferrer" className="inline-block cursor-pointer">
-                                        <div className="relative w-48 h-48 mx-auto border-4 border-purple-200 rounded-lg overflow-hidden flex items-center justify-center">
-                                             <Image src={qrCodeDataUrl} alt="Código QR de pago Nequi" width={192} height={192} style={{ objectFit: 'contain' }} />
-                                        </div>
-                                    </a>
+                                    <div className="relative w-48 h-48 mx-auto border-4 border-purple-200 rounded-lg overflow-hidden flex items-center justify-center">
+                                         <Image src={currentState.qrCodeImageUrl} alt="Código QR de pago Nequi" width={192} height={192} style={{ objectFit: 'contain' }} />
+                                    </div>
                                     <p className="text-xs text-gray-500 mt-4">
                                         Una vez realizado el pago, completa tu información y genera el tiquete.
                                     </p>
