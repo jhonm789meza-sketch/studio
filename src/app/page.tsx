@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { Html5QrcodeScanner } from 'html5-qrcode';
 import { RaffleManager } from '@/lib/RaffleManager';
 import { db } from '@/lib/firebase';
 import { doc, onSnapshot, setDoc, getDoc, deleteDoc } from 'firebase/firestore';
@@ -9,7 +10,7 @@ import Image from 'next/image';
 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuCheckboxItem } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House, QrCode, Upload } from 'lucide-react';
+import { Menu, Award, Lock, House, QrCode, Upload, ScanLine } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -65,6 +66,7 @@ const App = () => {
     const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
     const [adminRefSearch, setAdminRefSearch] = useState('');
     const [showConfetti, setShowConfetti] = useState(false);
+    const [isScannerOpen, setIsScannerOpen] = useState(false);
     
     const currentState = raffleMode === 'two-digit' ? twoDigitState : threeDigitState;
     const setCurrentState = raffleMode === 'two-digit' ? setTwoDigitState : setThreeDigitState;
@@ -99,6 +101,40 @@ const App = () => {
             unsubThreeDigit();
         };
     }, []);
+
+    useEffect(() => {
+        if (activeTab !== 'register' || !isScannerOpen) {
+            return;
+        }
+
+        const scanner = new Html5QrcodeScanner(
+            'qr-scanner', 
+            { fps: 10, qrbox: 250 },
+            /* verbose= */ false
+        );
+
+        const onScanSuccess = (decodedText: string, decodedResult: any) => {
+            showNotification(`QR Escaneado: ${decodedText}`, 'success');
+            handleLocalFieldChange('raffleNumber', decodedText);
+            scanner.clear();
+            setIsScannerOpen(false);
+        };
+
+        const onScanError = (error: any) => {
+            // console.warn(`QR scan error = ${error}`);
+        };
+        
+        scanner.render(onScanSuccess, onScanError);
+
+        return () => {
+            if (scanner && scanner.getState() === 2) { // 2 === SCANNING
+               scanner.clear().catch(error => {
+                   console.error("Failed to clear scanner.", error);
+               });
+            }
+        };
+    }, [activeTab, isScannerOpen]);
+
 
     const showNotification = (message: string, type = 'info') => {
         setNotification({ show: true, message, type });
@@ -777,19 +813,31 @@ const App = () => {
 
                             <div>
                                 <Label htmlFor="raffle-number-input">Número de rifa ({raffleMode === 'two-digit' ? '00-99' : '100-999'}):</Label>
-                                <Input
-                                    id="raffle-number-input"
-                                    type="text"
-                                    value={currentState.raffleNumber}
-                                    onChange={handleRaffleNumberChange}
-                                    placeholder={`Ej: ${raffleMode === 'two-digit' ? '05' : '142'}`}
-                                    className="w-full mt-1"
-                                    maxLength={numberLength}
-                                />
+                                <div className="flex items-center gap-2 mt-1">
+                                    <Input
+                                        id="raffle-number-input"
+                                        type="text"
+                                        value={currentState.raffleNumber}
+                                        onChange={handleRaffleNumberChange}
+                                        placeholder={`Ej: ${raffleMode === 'two-digit' ? '05' : '142'}`}
+                                        className="w-full"
+                                        maxLength={numberLength}
+                                    />
+                                    <Button variant="outline" size="icon" onClick={() => setIsScannerOpen(prev => !prev)}>
+                                        <ScanLine className="h-5 w-5" />
+                                        <span className="sr-only">Escanear QR</span>
+                                    </Button>
+                                </div>
                                 {currentState.raffleNumber && drawnNumbersSet.has(parseInt(currentState.raffleNumber)) && (
                                     <p className="text-red-500 text-sm mt-1">Este número ya está asignado</p>
                                 )}
                             </div>
+
+                            {isScannerOpen && (
+                                <div className="border rounded-lg overflow-hidden">
+                                     <div id="qr-scanner" className="w-full"></div>
+                                </div>
+                            )}
                             
                             <div>
                                 <Label htmlFor="name-input">Nombre completo:</Label>
