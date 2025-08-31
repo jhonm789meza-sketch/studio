@@ -2,13 +2,14 @@
 import { useState, useEffect, useRef } from 'react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import QRCode from 'qrcode';
 import { RaffleManager } from '@/lib/RaffleManager';
 import { db } from '@/lib/firebase';
 import { doc, onSnapshot, setDoc, getDoc, deleteDoc } from 'firebase/firestore';
 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuCheckboxItem } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House } from 'lucide-react';
+import { Menu, Award, Lock, House, Copy } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -46,6 +47,7 @@ const App = () => {
 
     const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
     const [ticketInfo, setTicketInfo] = useState<any>(null);
+    const [qrCodeUrl, setQrCodeUrl] = useState('');
     const [showConfirmation, setShowConfirmation] = useState(false);
     const [confirmationMessage, setConfirmationMessage] = useState('');
     const [confirmationAction, setConfirmationAction] = useState<(() => void) | null>(null);
@@ -128,11 +130,7 @@ const App = () => {
     };
     
     const handleLocalFieldChange = (field: string, value: any) => {
-        if (field === 'raffleNumber') {
-          setCurrentState((s: any) => ({ ...s, name: '', phoneNumber: '', [field]: value }));
-        } else {
-          setCurrentState((s: any) => ({ ...s, [field]: value }));
-        }
+        setCurrentState((s: any) => ({ ...s, [field]: value }));
     };
 
     const toggleNumber = (number: number) => {
@@ -282,6 +280,11 @@ const App = () => {
         };
         
         setTicketInfo(ticketData);
+        
+        const qrData = JSON.stringify(ticketData, null, 2);
+        const qrUrl = await QRCode.toDataURL(qrData, { errorCorrectionLevel: 'H' });
+        setQrCodeUrl(qrUrl);
+        
         setIsTicketModalOpen(true);
         
         setCurrentState((s:any) => ({
@@ -308,6 +311,22 @@ const App = () => {
             pdf.save(`tiquete_${ticketInfo.raffleNumber}.pdf`);
             showNotification('Tiquete descargado', 'success');
         });
+    };
+
+    const handleCopyQr = async () => {
+        try {
+            const response = await fetch(qrCodeUrl);
+            const blob = await response.blob();
+            await navigator.clipboard.write([
+                new ClipboardItem({
+                    [blob.type]: blob,
+                }),
+            ]);
+            showNotification('Código QR copiado al portapapeles', 'success');
+        } catch (error) {
+            console.error('Failed to copy QR code: ', error);
+            showNotification('No se pudo copiar el código QR', 'error');
+        }
     };
     
     const changeRaffleMode = (mode: RaffleMode) => {
@@ -409,8 +428,7 @@ const App = () => {
         return <div className="flex justify-center items-center h-screen text-xl font-semibold">Cargando...</div>;
     }
     
-    const isRegisterReadyForPayment = currentState.raffleNumber && !drawnNumbersSet.has(parseInt(currentState.raffleNumber));
-    const isRegisterFormValidForSubmit = currentState.name && currentState.phoneNumber && isRegisterReadyForPayment;
+    const isRegisterFormValidForSubmit = currentState.name && currentState.phoneNumber && currentState.raffleNumber && !drawnNumbersSet.has(parseInt(currentState.raffleNumber));
 
     const renderBoardContent = () => {
         if (!currentState.isPaid) {
@@ -935,6 +953,12 @@ const App = () => {
                                         <p className="text-6xl font-bold text-purple-600 tracking-wider">{ticketInfo.raffleNumber}</p>
                                     </div>
                                 </div>
+
+                                {qrCodeUrl && (
+                                    <div className="flex flex-col items-center justify-center pt-4">
+                                        <img src={qrCodeUrl} alt="Código QR del Tiquete" className="w-40 h-40" />
+                                    </div>
+                                )}
                                 
                                 <p className="text-center text-xs text-gray-500 mt-4">
                                     ¡Gracias por participar!
@@ -950,6 +974,16 @@ const App = () => {
                                 >
                                     Descargar PDF
                                 </Button>
+                                {qrCodeUrl && (
+                                    <Button
+                                        onClick={handleCopyQr}
+                                        variant="outline"
+                                        className="gap-2"
+                                    >
+                                        <Copy className="h-4 w-4" />
+                                        Copiar QR
+                                    </Button>
+                                )}
                                 <Button
                                     onClick={() => setIsTicketModalOpen(false)}
                                     variant="outline"
