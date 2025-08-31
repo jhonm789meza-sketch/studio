@@ -816,12 +816,6 @@ const App = () => {
                                 Generar Tiquete
                             </Button>
 
-                            {paymentInitiated && (
-                                <div className="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mt-4" role="alert">
-                                    <p className="font-bold">Acción requerida</p>
-                                    <p>Si ya has completado el pago en Nequi, completa tu información y haz clic en "Generar Tiquete" para confirmar tu número.</p>
-                                </div>
-                            )}
                         </fieldset>
 
                         {(!currentState.isDetailsConfirmed || !currentState.isPaid) && (
