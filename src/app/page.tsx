@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import QRCode from 'qrcode';
 import { RaffleManager } from '@/lib/RaffleManager';
 import { db } from '@/lib/firebase';
 import { doc, onSnapshot, setDoc, getDoc, deleteDoc } from 'firebase/firestore';
@@ -54,6 +55,7 @@ const App = () => {
     const [notification, setNotification] = useState({ show: false, message: '', type: '' });
     
     const ticketModalRef = useRef(null);
+    const qrCodeCanvasRef = useRef<HTMLCanvasElement>(null);
 
     const [raffleMode, setRaffleMode] = useState<RaffleMode>('two-digit');
     
@@ -97,6 +99,14 @@ const App = () => {
             unsubThreeDigit();
         };
     }, []);
+
+    useEffect(() => {
+      if (currentState.nequiQrCodeUrl && qrCodeCanvasRef.current) {
+        QRCode.toCanvas(qrCodeCanvasRef.current, currentState.nequiQrCodeUrl, { width: 192, margin: 2 }, (error) => {
+          if (error) console.error("Error generating QR code:", error);
+        });
+      }
+    }, [currentState.nequiQrCodeUrl, activeTab]);
 
     const showNotification = (message: string, type = 'info') => {
         setNotification({ show: true, message, type });
@@ -499,15 +509,15 @@ const App = () => {
                                    className="w-full mt-1"
                                />
                             </div>
-                            <div>
-                                <Label htmlFor="nequi-qr-url-input">URL del QR de Nequi:</Label>
+                           <div>
+                                <Label htmlFor="nequi-qr-url-input">URL de pago (para QR):</Label>
                                 <Input
                                     id="nequi-qr-url-input"
                                     type="text"
                                     value={currentState.nequiQrCodeUrl}
                                     onChange={(e) => handleLocalFieldChange('nequiQrCodeUrl', e.target.value)}
                                     onBlur={(e) => handleFieldChange('nequiQrCodeUrl', e.target.value)}
-                                    placeholder="https://.../qr.png"
+                                    placeholder="https://.../pagar"
                                     disabled={currentState.isDetailsConfirmed}
                                     className="w-full mt-1"
                                 />
@@ -757,13 +767,8 @@ const App = () => {
                                     <p className="text-sm text-gray-600 mb-4">
                                         Escanea el código QR para pagar tu boleta de {formatValue(currentState.value)}.
                                     </p>
-                                    <div className="relative w-48 h-48 mx-auto border-4 border-purple-200 rounded-lg overflow-hidden">
-                                        <Image
-                                            src={currentState.nequiQrCodeUrl}
-                                            alt="Código QR de Nequi"
-                                            layout="fill"
-                                            objectFit="contain"
-                                        />
+                                    <div className="relative w-48 h-48 mx-auto border-4 border-purple-200 rounded-lg overflow-hidden flex items-center justify-center">
+                                        <canvas ref={qrCodeCanvasRef} />
                                     </div>
                                     <p className="text-xs text-gray-500 mt-4">
                                         Una vez realizado el pago, completa tu información y genera el tiquete.
