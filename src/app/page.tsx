@@ -5,6 +5,7 @@ import html2canvas from 'html2canvas';
 import { RaffleManager } from '@/lib/RaffleManager';
 import { db } from '@/lib/firebase';
 import { doc, onSnapshot, setDoc, getDoc, deleteDoc } from 'firebase/firestore';
+import Image from 'next/image';
 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuCheckboxItem } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
@@ -27,6 +28,7 @@ const initialRaffleData = {
     phoneNumber: '',
     raffleNumber: '',
     nequiAccountNumber: '3145696687',
+    nequiQrCodeUrl: '',
     gameDate: '',
     lottery: '',
     customLottery: '',
@@ -483,43 +485,56 @@ const App = () => {
                                className="w-full mt-1"
                            />
                        </div>
-                       <div className='grid grid-cols-2 gap-4'>
-                           <div>
-                               <Label htmlFor="lottery-input">Lotería:</Label>
-                               <select
-                                   id="lottery-input"
-                                   value={currentState.lottery}
-                                   onChange={(e) => {
-                                       const value = e.target.value;
-                                       handleLocalFieldChange('lottery', value);
-                                       handleFieldChange('lottery', value);
-                                   }}
+                       <div className="grid grid-cols-2 gap-4">
+                            <div>
+                               <Label htmlFor="nequi-account-input">Número cuenta Nequi:</Label>
+                               <Input
+                                   id="nequi-account-input"
+                                   type="tel"
+                                   value={currentState.nequiAccountNumber}
+                                   onChange={(e) => handleLocalFieldChange('nequiAccountNumber', e.target.value.replace(/\D/g, ''))}
+                                   onBlur={(e) => handleFieldChange('nequiAccountNumber', e.target.value.replace(/\D/g, ''))}
+                                   placeholder="Número de Nequi para pagos"
                                    disabled={currentState.isDetailsConfirmed}
-                                   className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100 disabled:cursor-not-allowed mt-1"
-                               >
-                                   <option value="">Selecciona una lotería</option>
-                                   <option value="Lotería de Bogotá">Lotería de Bogotá</option>
-                                   <option value="Lotería de Medellín">Lotería de Medellín</option>
-                                   <option value="Lotería de Cundinamarca">Lotería de Cundinamarca</option>
-                                   <option value="Lotería del Valle">Lotería del Valle</option>
-                                   <option value="Lotería del Tolima">Lotería del Tolima</option>
-                                   <option value="Lotería de la Cruz Roja">Lotería de la Cruz Roja</option>
-                                   <option value="Otro">Otro</option>
-                               </select>
-                           </div>
-                           <div>
-                           <Label htmlFor="nequi-account-input">Número cuenta Nequi:</Label>
-                           <Input
-                               id="nequi-account-input"
-                               type="tel"
-                               value={currentState.nequiAccountNumber}
-                               onChange={(e) => handleLocalFieldChange('nequiAccountNumber', e.target.value.replace(/\D/g, ''))}
-                               onBlur={(e) => handleFieldChange('nequiAccountNumber', e.target.value.replace(/\D/g, ''))}
-                               placeholder="Número de Nequi para pagos"
-                               disabled={currentState.isDetailsConfirmed}
-                               className="w-full mt-1"
-                           />
+                                   className="w-full mt-1"
+                               />
+                            </div>
+                            <div>
+                                <Label htmlFor="nequi-qr-url-input">URL del QR de Nequi:</Label>
+                                <Input
+                                    id="nequi-qr-url-input"
+                                    type="text"
+                                    value={currentState.nequiQrCodeUrl}
+                                    onChange={(e) => handleLocalFieldChange('nequiQrCodeUrl', e.target.value)}
+                                    onBlur={(e) => handleFieldChange('nequiQrCodeUrl', e.target.value)}
+                                    placeholder="https://.../qr.png"
+                                    disabled={currentState.isDetailsConfirmed}
+                                    className="w-full mt-1"
+                                />
+                            </div>
                        </div>
+                       <div>
+                           <Label htmlFor="lottery-input">Lotería:</Label>
+                           <select
+                               id="lottery-input"
+                               value={currentState.lottery}
+                               onChange={(e) => {
+                                   const value = e.target.value;
+                                   handleLocalFieldChange('lottery', value);
+                                   handleFieldChange('lottery', value);
+                               }}
+                               disabled={currentState.isDetailsConfirmed}
+                               className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100 disabled:cursor-not-allowed mt-1"
+                           >
+                               <option value="">Selecciona una lotería</option>
+                               <option value="Lotería de Bogotá">Lotería de Bogotá</option>
+                               <option value="Lotería de Medellín">Lotería de Medellín</option>
+                               <option value="Lotería de Cundinamarca">Lotería de Cundinamarca</option>
+                               <option value="Lotería del Valle">Lotería del Valle</option>
+                               <option value="Lotería del Tolima">Lotería del Tolima</option>
+                               <option value="Lotería de la Cruz Roja">Lotería de la Cruz Roja</option>
+                               <option value="Otro">Otro</option>
+                           </select>
                        </div>
 
                         {currentState.lottery === 'Otro' && (
@@ -735,6 +750,27 @@ const App = () => {
                     <div className={`tab-content ${activeTab === 'register' ? 'active' : ''}`}>
                         <h2 className="text-2xl font-bold text-gray-800 mb-4">Registrar Participante</h2>
                         <fieldset disabled={currentState.isWinnerConfirmed || !currentState.isDetailsConfirmed || !currentState.isPaid} className="disabled:opacity-50 space-y-4">
+                            
+                            {currentState.nequiQrCodeUrl && (
+                                <div className="p-4 border rounded-lg bg-gray-50 text-center">
+                                    <h3 className="text-lg font-semibold mb-2">Paga con Nequi</h3>
+                                    <p className="text-sm text-gray-600 mb-4">
+                                        Escanea el código QR para pagar tu boleta de {formatValue(currentState.value)}.
+                                    </p>
+                                    <div className="relative w-48 h-48 mx-auto border-4 border-purple-200 rounded-lg overflow-hidden">
+                                        <Image
+                                            src={currentState.nequiQrCodeUrl}
+                                            alt="Código QR de Nequi"
+                                            layout="fill"
+                                            objectFit="contain"
+                                        />
+                                    </div>
+                                    <p className="text-xs text-gray-500 mt-4">
+                                        Una vez realizado el pago, completa tu información y genera el tiquete.
+                                    </p>
+                                </div>
+                            )}
+
                             <div>
                                 <Label htmlFor="raffle-number-input">Número de rifa ({raffleMode === 'two-digit' ? '00-99' : '100-999'}):</Label>
                                 <Input
@@ -990,4 +1026,3 @@ const App = () => {
 };
 
 export default App;
-
