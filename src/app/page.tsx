@@ -385,10 +385,14 @@ const App = () => {
     const handleFieldChange = async (field: string, value: any) => {
         if (currentState.isDetailsConfirmed) return;
         try {
+            // Optimistically update local state first
+            setCurrentState((s: any) => ({ ...s, [field]: value }));
+            // Then persist to Firestore
             await setDoc(doc(db, "raffles", raffleMode), { [field]: value }, { merge: true });
         } catch (error) {
             console.error("Error updating document:", error);
             showNotification("Error al guardar los cambios.", "error");
+            // Optionally, revert state if Firestore update fails
         }
     };
     
@@ -519,7 +523,6 @@ const App = () => {
                                value={currentState.lottery}
                                onChange={(e) => {
                                    const value = e.target.value;
-                                   handleLocalFieldChange('lottery', value);
                                    handleFieldChange('lottery', value);
                                }}
                                disabled={currentState.isDetailsConfirmed}
