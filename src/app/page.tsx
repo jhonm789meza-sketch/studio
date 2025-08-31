@@ -10,11 +10,12 @@ import Image from 'next/image';
 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuCheckboxItem } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House } from 'lucide-react';
+import { Menu, Award, Lock, House, QrCode } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Confetti } from '@/components/confetti';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 type RaffleMode = 'two-digit' | 'three-digit';
 
@@ -29,7 +30,7 @@ const initialRaffleData = {
     phoneNumber: '',
     raffleNumber: '',
     nequiAccountNumber: '3145696687',
-    nequiQrCodeUrl: '', // This will now store a Data URL for the uploaded image
+    nequiPaymentUrl: '', // This will store the payment URL
     gameDate: '',
     lottery: '',
     customLottery: '',
@@ -64,6 +65,7 @@ const App = () => {
     const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
     const [adminRefSearch, setAdminRefSearch] = useState('');
     const [showConfetti, setShowConfetti] = useState(false);
+    const [qrCodeDataUrl, setQrCodeDataUrl] = useState('');
     
     const currentState = raffleMode === 'two-digit' ? twoDigitState : threeDigitState;
     const setCurrentState = raffleMode === 'two-digit' ? setTwoDigitState : setThreeDigitState;
@@ -72,6 +74,21 @@ const App = () => {
 
     const totalNumbers = raffleMode === 'two-digit' ? 100 : 1000;
     const numberLength = raffleMode === 'two-digit' ? 2 : 3;
+
+    useEffect(() => {
+        if (currentState.nequiPaymentUrl) {
+            QRCode.toDataURL(currentState.nequiPaymentUrl, { width: 192 })
+                .then(url => {
+                    setQrCodeDataUrl(url);
+                })
+                .catch(err => {
+                    console.error(err);
+                    setQrCodeDataUrl('');
+                });
+        } else {
+            setQrCodeDataUrl('');
+        }
+    }, [currentState.nequiPaymentUrl]);
 
     useEffect(() => {
         setLoading(true);
@@ -134,18 +151,6 @@ const App = () => {
         setCurrentState((s: any) => ({ ...s, [field]: value }));
     };
 
-    const handleQrCodeUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                const dataUrl = event.target?.result as string;
-                handleFieldChange('nequiQrCodeUrl', dataUrl);
-            };
-            reader.readAsDataURL(file);
-        }
-    };
-
     const toggleNumber = (number: number) => {
         if (currentState.isWinnerConfirmed) {
             showNotification('El juego ha terminado. Reinicia el tablero para comenzar de nuevo.', 'info');
@@ -191,10 +196,6 @@ const App = () => {
         }
         if (currentState.lottery === 'Otro' && !currentState.customLottery.trim()) {
             showNotification('Por favor especifica la lotería', 'warning');
-            return;
-        }
-        if (!currentState.nequiAccountNumber.trim()) {
-            showNotification('Por favor ingresa el número de cuenta Nequi', 'warning');
             return;
         }
         
@@ -498,31 +499,18 @@ const App = () => {
                                className="w-full mt-1"
                            />
                        </div>
-                       <div className="grid grid-cols-2 gap-4">
-                            <div>
-                               <Label htmlFor="nequi-account-input">Número cuenta Nequi:</Label>
-                               <Input
-                                   id="nequi-account-input"
-                                   type="tel"
-                                   value={currentState.nequiAccountNumber}
-                                   onChange={(e) => handleLocalFieldChange('nequiAccountNumber', e.target.value.replace(/\D/g, ''))}
-                                   onBlur={(e) => handleFieldChange('nequiAccountNumber', e.target.value.replace(/\D/g, ''))}
-                                   placeholder="Número de Nequi para pagos"
-                                   disabled={currentState.isDetailsConfirmed}
-                                   className="w-full mt-1"
-                               />
-                            </div>
-                           <div>
-                                <Label htmlFor="nequi-qr-url-input">Subir imagen QR de pago:</Label>
-                                <Input
-                                    id="nequi-qr-url-input"
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={handleQrCodeUpload}
-                                    disabled={currentState.isDetailsConfirmed}
-                                    className="w-full mt-1"
-                                />
-                            </div>
+                       <div>
+                           <Label htmlFor="nequi-payment-url-input">URL de Pago Nequi:</Label>
+                           <Input
+                               id="nequi-payment-url-input"
+                               type="text"
+                               value={currentState.nequiPaymentUrl}
+                               onChange={(e) => handleLocalFieldChange('nequiPaymentUrl', e.target.value)}
+                               onBlur={(e) => handleFieldChange('nequiPaymentUrl', e.target.value)}
+                               placeholder="Pega el link de pago de Nequi aquí"
+                               disabled={currentState.isDetailsConfirmed}
+                               className="w-full mt-1"
+                           />
                        </div>
                        <div>
                            <Label htmlFor="lottery-input">Lotería:</Label>
@@ -762,15 +750,17 @@ const App = () => {
                         <h2 className="text-2xl font-bold text-gray-800 mb-4">Registrar Participante</h2>
                         <fieldset disabled={currentState.isWinnerConfirmed || !currentState.isDetailsConfirmed || !currentState.isPaid} className="disabled:opacity-50 space-y-4">
                             
-                            {currentState.nequiQrCodeUrl && (
+                             {qrCodeDataUrl && currentState.nequiPaymentUrl && (
                                 <div className="p-4 border rounded-lg bg-gray-50 text-center">
                                     <h3 className="text-lg font-semibold mb-2">Paga con Nequi</h3>
                                     <p className="text-sm text-gray-600 mb-4">
-                                        Escanea el código QR para pagar tu boleta de {formatValue(currentState.value)}.
+                                        Escanea el código QR o haz clic en él para pagar tu boleta de {formatValue(currentState.value)}.
                                     </p>
-                                    <div className="relative w-48 h-48 mx-auto border-4 border-purple-200 rounded-lg overflow-hidden flex items-center justify-center">
-                                         <Image src={currentState.nequiQrCodeUrl} alt="Código QR Nequi" width={192} height={192} style={{ objectFit: 'contain' }} />
-                                    </div>
+                                    <a href={currentState.nequiPaymentUrl} target="_blank" rel="noopener noreferrer" className="inline-block cursor-pointer">
+                                        <div className="relative w-48 h-48 mx-auto border-4 border-purple-200 rounded-lg overflow-hidden flex items-center justify-center">
+                                             <Image src={qrCodeDataUrl} alt="Código QR de pago Nequi" width={192} height={192} style={{ objectFit: 'contain' }} />
+                                        </div>
+                                    </a>
                                     <p className="text-xs text-gray-500 mt-4">
                                         Una vez realizado el pago, completa tu información y genera el tiquete.
                                     </p>
