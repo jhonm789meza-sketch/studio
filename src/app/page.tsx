@@ -122,7 +122,7 @@ const App = () => {
     const handleRaffleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const inputValue = e.target.value.replace(/\D/g, '');
         setPaymentInitiated(false);
-        setCurrentState((s:any) => ({...s, raffleNumber: inputValue}));
+        setCurrentState((s:any) => ({...s, raffleNumber: inputValue, name: '', phoneNumber: ''}));
 
         if (inputValue.length === numberLength && new Set(currentState.drawnNumbers).has(parseInt(inputValue))) {
              showNotification('Este número ya ha sido asignado', 'warning');
@@ -130,8 +130,12 @@ const App = () => {
     };
     
     const handleLocalFieldChange = (field: string, value: any) => {
-        setPaymentInitiated(false);
-        setCurrentState((s: any) => ({ ...s, [field]: value }));
+        if (field === 'raffleNumber') {
+          setPaymentInitiated(false);
+          setCurrentState((s: any) => ({ ...s, name: '', phoneNumber: '', [field]: value }));
+        } else {
+          setCurrentState((s: any) => ({ ...s, [field]: value }));
+        }
     };
 
     const toggleNumber = (number: number) => {
@@ -144,7 +148,7 @@ const App = () => {
             return;
         }
         setPaymentInitiated(false);
-        setCurrentState((s:any) => ({ ...s, raffleNumber: String(number).padStart(numberLength, '0') }));
+        setCurrentState((s:any) => ({ ...s, raffleNumber: String(number).padStart(numberLength, '0'), name: '', phoneNumber: '' }));
         setActiveTab('register');
     };
 
@@ -412,7 +416,8 @@ const App = () => {
 
     const nequiPaymentUrl = `nequi://app/transfer?phone=${currentState.nequiAccountNumber}&amount=${currentState.value.replace(/[^\d]/g, '')}&message=${encodeURIComponent(`Pago Rifa: ${currentState.raffleRef}`)}`;
     
-    const isRegisterFormValid = currentState.name && currentState.phoneNumber && currentState.raffleNumber && !drawnNumbersSet.has(parseInt(currentState.raffleNumber));
+    const isRegisterReadyForPayment = currentState.raffleNumber && !drawnNumbersSet.has(parseInt(currentState.raffleNumber));
+    const isRegisterFormValidForSubmit = currentState.name && currentState.phoneNumber && isRegisterReadyForPayment;
 
     const renderBoardContent = () => {
         if (!currentState.isPaid) {
@@ -761,11 +766,11 @@ const App = () => {
                             
                             <div className="flex items-center gap-4">
                                 <a
-                                    href={isRegisterFormValid ? nequiPaymentUrl : '#'}
-                                    className={`inline-block px-4 py-2 bg-purple-500 text-white font-medium rounded-lg hover:bg-purple-600 transition-colors h-10 leading-tight ${(!isRegisterFormValid || !currentState.nequiAccountNumber || !currentState.value) ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                    aria-disabled={!isRegisterFormValid || !currentState.nequiAccountNumber || !currentState.value}
+                                    href={isRegisterReadyForPayment ? nequiPaymentUrl : '#'}
+                                    className={`inline-block px-4 py-2 bg-purple-500 text-white font-medium rounded-lg hover:bg-purple-600 transition-colors h-10 leading-tight ${(!isRegisterReadyForPayment || !currentState.nequiAccountNumber || !currentState.value) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    aria-disabled={!isRegisterReadyForPayment || !currentState.nequiAccountNumber || !currentState.value}
                                     onClick={(e) => {
-                                        if (!isRegisterFormValid || !currentState.nequiAccountNumber || !currentState.value) {
+                                        if (!isRegisterReadyForPayment || !currentState.nequiAccountNumber || !currentState.value) {
                                             e.preventDefault();
                                             showNotification('Completa todos los campos para poder pagar.', 'warning');
                                         } else {
@@ -778,32 +783,34 @@ const App = () => {
                                 </a>
                             </div>
 
-                            <div>
-                                <Label htmlFor="name-input">Nombre completo:</Label>
-                                <Input
-                                    id="name-input"
-                                    type="text"
-                                    value={currentState.name}
-                                    onChange={(e) => handleLocalFieldChange('name', e.target.value)}
-                                    placeholder="Ej: Juan Pérez"
-                                    className="w-full mt-1"
-                                />
-                            </div>
-                            <div>
-                                <Label htmlFor="phone-input">Celular:</Label>
-                                <Input
-                                    id="phone-input"
-                                    type="tel"
-                                    value={currentState.phoneNumber}
-                                    onChange={(e) => handleLocalFieldChange('phoneNumber', e.target.value.replace(/\D/g, ''))}
-                                    placeholder="Ej: 3001234567"
-                                    className="w-full mt-1"
-                                />
-                            </div>
+                            <fieldset disabled={!paymentInitiated} className="space-y-4">
+                                <div>
+                                    <Label htmlFor="name-input">Nombre completo:</Label>
+                                    <Input
+                                        id="name-input"
+                                        type="text"
+                                        value={currentState.name}
+                                        onChange={(e) => handleLocalFieldChange('name', e.target.value)}
+                                        placeholder="Ej: Juan Pérez"
+                                        className="w-full mt-1"
+                                    />
+                                </div>
+                                <div>
+                                    <Label htmlFor="phone-input">Celular:</Label>
+                                    <Input
+                                        id="phone-input"
+                                        type="tel"
+                                        value={currentState.phoneNumber}
+                                        onChange={(e) => handleLocalFieldChange('phoneNumber', e.target.value.replace(/\D/g, ''))}
+                                        placeholder="Ej: 3001234567"
+                                        className="w-full mt-1"
+                                    />
+                                </div>
+                            </fieldset>
 
                              <Button
                                 onClick={handleTicketConfirmation}
-                                disabled={!paymentInitiated || !isRegisterFormValid || currentState.isWinnerConfirmed}
+                                disabled={!paymentInitiated || !isRegisterFormValidForSubmit || currentState.isWinnerConfirmed}
                                 className="w-full px-4 py-2 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
                             >
                                 Generar Tiquete
@@ -812,7 +819,7 @@ const App = () => {
                             {paymentInitiated && (
                                 <div className="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mt-4" role="alert">
                                     <p className="font-bold">Acción requerida</p>
-                                    <p>Si ya has completado el pago en Nequi, haz clic en "Generar Tiquete" para confirmar tu número.</p>
+                                    <p>Si ya has completado el pago en Nequi, completa tu información y haz clic en "Generar Tiquete" para confirmar tu número.</p>
                                 </div>
                             )}
                         </fieldset>
