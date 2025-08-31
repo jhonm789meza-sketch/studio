@@ -500,30 +500,6 @@ const App = () => {
                                className="w-full mt-1"
                            />
                        </div>
-                        <div>
-                            <Label>Código QR de Pago</Label>
-                            <Input 
-                                type="file" 
-                                ref={qrFileInputRef}
-                                onChange={handleQrCodeUpload}
-                                className="hidden"
-                                accept="image/png, image/jpeg, image/webp"
-                            />
-                            <Button 
-                                onClick={() => qrFileInputRef.current?.click()}
-                                disabled={currentState.isDetailsConfirmed}
-                                variant="outline"
-                                className="w-full mt-1"
-                            >
-                                <Upload className="mr-2 h-4 w-4" />
-                                Subir Imagen de QR
-                            </Button>
-                             {currentState.qrCodeImageUrl && (
-                                <div className="mt-2 p-2 border rounded-md relative w-32 h-32">
-                                     <Image src={currentState.qrCodeImageUrl} alt="Previsualización del QR" layout="fill" objectFit="contain" />
-                                </div>
-                            )}
-                        </div>
                        <div>
                            <Label htmlFor="lottery-input">Lotería:</Label>
                            <select
@@ -761,20 +737,6 @@ const App = () => {
                         <h2 className="text-2xl font-bold text-gray-800 mb-4">Registrar Participante</h2>
                         <fieldset disabled={currentState.isWinnerConfirmed || !currentState.isDetailsConfirmed || !currentState.isPaid} className="disabled:opacity-50 space-y-4">
                             
-                             {currentState.qrCodeImageUrl && (
-                                <div className="p-4 border rounded-lg bg-gray-50 text-center">
-                                    <h3 className="text-lg font-semibold mb-2">Paga con Nequi</h3>
-                                    <p className="text-sm text-gray-600 mb-4">
-                                        Escanea el código QR para pagar tu boleta de {formatValue(currentState.value)}.
-                                    </p>
-                                    <div className="relative w-48 h-48 mx-auto border-4 border-purple-200 rounded-lg overflow-hidden flex items-center justify-center">
-                                         <Image src={currentState.qrCodeImageUrl} alt="Código QR de pago Nequi" width={192} height={192} style={{ objectFit: 'contain' }} />
-                                    </div>
-                                    <p className="text-xs text-gray-500 mt-4">
-                                        Una vez realizado el pago, completa tu información y genera el tiquete.
-                                    </p>
-                                </div>
-                            )}
 
                             <div>
                                 <Label htmlFor="raffle-number-input">Número de rifa ({raffleMode === 'two-digit' ? '00-99' : '100-999'}):</Label>
