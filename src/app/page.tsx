@@ -65,7 +65,6 @@ const App = () => {
     const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
     const [adminRefSearch, setAdminRefSearch] = useState('');
     const [showConfetti, setShowConfetti] = useState(false);
-    const [isPaymentConfirmedByAdmin, setIsPaymentConfirmedByAdmin] = useState(false);
     
     const currentState = raffleMode === 'two-digit' ? twoDigitState : threeDigitState;
     const setCurrentState = raffleMode === 'two-digit' ? setTwoDigitState : setThreeDigitState;
@@ -288,7 +287,6 @@ const App = () => {
             phoneNumber: '',
             raffleNumber: '',
         }));
-        setIsPaymentConfirmedByAdmin(false);
 
         showNotification('Tiquete generado correctamente', 'success');
     };
@@ -403,7 +401,7 @@ const App = () => {
         return <div className="flex justify-center items-center h-screen text-xl font-semibold">Cargando...</div>;
     }
     
-    const isRegisterFormValidForSubmit = currentState.name && currentState.phoneNumber && currentState.raffleNumber && !drawnNumbersSet.has(parseInt(currentState.raffleNumber)) && isPaymentConfirmedByAdmin;
+    const isRegisterFormValidForSubmit = currentState.name && currentState.phoneNumber && currentState.raffleNumber && !drawnNumbersSet.has(parseInt(currentState.raffleNumber));
 
     const renderBoardContent = () => {
         if (!currentState.isPaid) {
@@ -746,21 +744,7 @@ const App = () => {
                                 </Button>
                             </div>
 
-                             <div className="flex items-center space-x-2 py-2">
-                                <Checkbox
-                                    id="payment-confirmation"
-                                    checked={isPaymentConfirmedByAdmin}
-                                    onCheckedChange={(checked) => setIsPaymentConfirmedByAdmin(checked as boolean)}
-                                />
-                                <label
-                                    htmlFor="payment-confirmation"
-                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                                >
-                                    Pago Recibido
-                                </label>
-                             </div>
-
-                            <fieldset disabled={!isPaymentConfirmedByAdmin} className="space-y-4">
+                            <div className="space-y-4">
                                 <div>
                                     <Label htmlFor="raffle-number-input">Número de rifa ({raffleMode === 'two-digit' ? '00-99' : '100-999'}):</Label>
                                     <div className="flex items-center gap-2 mt-1">
@@ -801,7 +785,7 @@ const App = () => {
                                         className="w-full mt-1"
                                     />
                                 </div>
-                            </fieldset>
+                            </div>
 
                              <Button
                                 onClick={handleTicketConfirmation}
