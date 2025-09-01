@@ -60,6 +60,8 @@ const App = () => {
     
     const [twoDigitState, setTwoDigitState] = useState<any>(initialRaffleData);
     const [threeDigitState, setThreeDigitState] = useState<any>(initialRaffleData);
+    
+    const [paymentReceived, setPaymentReceived] = useState(false);
 
     const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
     const [adminRefSearch, setAdminRefSearch] = useState('');
@@ -290,6 +292,7 @@ const App = () => {
             phoneNumber: '',
             raffleNumber: '',
         }));
+        setPaymentReceived(false);
         showNotification('Tiquete generado correctamente', 'success');
     };
 
@@ -403,7 +406,7 @@ const App = () => {
         return <div className="flex justify-center items-center h-screen text-xl font-semibold">Cargando...</div>;
     }
     
-    const isRegisterFormValidForSubmit = currentState.name && currentState.phoneNumber && currentState.raffleNumber && !drawnNumbersSet.has(parseInt(currentState.raffleNumber));
+    const isRegisterFormValidForSubmit = currentState.name && currentState.phoneNumber && currentState.raffleNumber && !drawnNumbersSet.has(parseInt(currentState.raffleNumber)) && paymentReceived;
 
     const renderBoardContent = () => {
         if (!currentState.isPaid) {
@@ -780,6 +783,11 @@ const App = () => {
                                         className="w-full mt-1"
                                     />
                                 </div>
+                            </div>
+                            
+                            <div className="flex items-center space-x-2">
+                                <Checkbox id="payment-received" checked={paymentReceived} onCheckedChange={(checked) => setPaymentReceived(checked as boolean)} />
+                                <Label htmlFor="payment-received">Pago Recibido</Label>
                             </div>
 
                             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
