@@ -739,11 +739,6 @@ const App = () => {
                     <div className={`tab-content ${activeTab === 'register' ? 'active' : ''}`}>
                         <h2 className="text-2xl font-bold text-gray-800 mb-4">Registrar Participante</h2>
                         <fieldset disabled={currentState.isWinnerConfirmed || !currentState.isDetailsConfirmed || !currentState.isPaid} className="disabled:opacity-50 space-y-4">
-                            
-                             <div className="bg-blue-50 border-l-4 border-blue-500 text-blue-800 p-4 rounded-lg">
-                                <p className="font-bold">Paso 1: Realizar el Pago</p>
-                                <p>Realiza el pago de {formatValue(currentState.value)} al número de Nequi <strong className="font-mono">{currentState.nequiAccountNumber}</strong>.</p>
-                            </div>
 
                             <div className="space-y-4">
                                 <div>
