@@ -765,17 +765,6 @@ const App = () => {
                                 </div>
                                 
                                 <div>
-                                    <Label htmlFor="name-input">Nombre completo:</Label>
-                                    <Input
-                                        id="name-input"
-                                        type="text"
-                                        value={currentState.name}
-                                        onChange={(e) => handleLocalFieldChange('name', e.target.value)}
-                                        placeholder="Ej: Juan Pérez"
-                                        className="w-full mt-1"
-                                    />
-                                </div>
-                                <div>
                                     <Label htmlFor="phone-input">Celular:</Label>
                                     <Input
                                         id="phone-input"
@@ -783,6 +772,17 @@ const App = () => {
                                         value={currentState.phoneNumber}
                                         onChange={(e) => handleLocalFieldChange('phoneNumber', e.target.value.replace(/\D/g, ''))}
                                         placeholder="Ej: 3001234567"
+                                        className="w-full mt-1"
+                                    />
+                                </div>
+                                <div>
+                                    <Label htmlFor="name-input">Nombre completo:</Label>
+                                    <Input
+                                        id="name-input"
+                                        type="text"
+                                        value={currentState.name}
+                                        onChange={(e) => handleLocalFieldChange('name', e.target.value)}
+                                        placeholder="Ej: Juan Pérez"
                                         className="w-full mt-1"
                                     />
                                 </div>
@@ -1014,5 +1014,3 @@ const App = () => {
 };
 
 export default App;
-
-    
