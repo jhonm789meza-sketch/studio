@@ -124,7 +124,7 @@ const App = () => {
 
     const handleRaffleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const inputValue = e.target.value.replace(/\D/g, '');
-        setCurrentState((s:any) => ({...s, raffleNumber: inputValue, name: '', phoneNumber: ''}));
+        setCurrentState((s:any) => ({...s, raffleNumber: inputValue}));
 
         if (inputValue.length === numberLength && new Set(currentState.drawnNumbers).has(parseInt(inputValue))) {
              showNotification('Este número ya ha sido asignado', 'warning');
@@ -148,7 +148,7 @@ const App = () => {
             showNotification('Este número ya está asignado', 'warning');
             return;
         }
-        setCurrentState((s:any) => ({ ...s, raffleNumber: String(number).padStart(numberLength, '0'), name: '', phoneNumber: '' }));
+        setCurrentState((s:any) => ({ ...s, raffleNumber: String(number).padStart(numberLength, '0')}));
         setActiveTab('register');
     };
 
