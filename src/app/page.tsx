@@ -61,6 +61,7 @@ const App = () => {
     const [twoDigitState, setTwoDigitState] = useState<any>(initialRaffleData);
     const [threeDigitState, setThreeDigitState] = useState<any>(initialRaffleData);
     
+    const [isPaymentConfirmed, setIsPaymentConfirmed] = useState(false);
 
     const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
     const [adminRefSearch, setAdminRefSearch] = useState('');
@@ -291,6 +292,7 @@ const App = () => {
             phoneNumber: '',
             raffleNumber: '',
         }));
+        setIsPaymentConfirmed(false);
         showNotification('Tiquete generado correctamente', 'success');
     };
 
@@ -404,7 +406,7 @@ const App = () => {
         return <div className="flex justify-center items-center h-screen text-xl font-semibold">Cargando...</div>;
     }
     
-    const isRegisterFormValidForSubmit = currentState.name && currentState.phoneNumber && currentState.raffleNumber && !drawnNumbersSet.has(parseInt(currentState.raffleNumber));
+    const isRegisterFormValidForSubmit = currentState.name && currentState.phoneNumber && currentState.raffleNumber && !drawnNumbersSet.has(parseInt(currentState.raffleNumber)) && isPaymentConfirmed;
 
     const renderBoardContent = () => {
         if (!currentState.isPaid) {
@@ -792,6 +794,12 @@ const App = () => {
                                         Pagar por Nequi
                                     </a>
                                 </Button>
+                                <div className="flex items-center space-x-2 mt-4">
+                                  <Checkbox id="payment-confirmed" checked={isPaymentConfirmed} onCheckedChange={(checked) => setIsPaymentConfirmed(!!checked)} />
+                                  <Label htmlFor="payment-confirmed" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                                      Pago Recibido
+                                  </Label>
+                                </div>
                                 <Button
                                     onClick={handleTicketConfirmation}
                                     disabled={!isRegisterFormValidForSubmit || currentState.isWinnerConfirmed}
