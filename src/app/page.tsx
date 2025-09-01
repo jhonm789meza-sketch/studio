@@ -64,7 +64,6 @@ const App = () => {
     const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
     const [adminRefSearch, setAdminRefSearch] = useState('');
     const [showConfetti, setShowConfetti] = useState(false);
-    const [isPaymentConfirmed, setIsPaymentConfirmed] = useState(false);
     
     const currentState = raffleMode === 'two-digit' ? twoDigitState : threeDigitState;
     const setCurrentState = raffleMode === 'two-digit' ? setTwoDigitState : setThreeDigitState;
@@ -291,7 +290,6 @@ const App = () => {
             phoneNumber: '',
             raffleNumber: '',
         }));
-        setIsPaymentConfirmed(false); // Reset payment confirmation
         showNotification('Tiquete generado correctamente', 'success');
     };
 
@@ -315,7 +313,6 @@ const App = () => {
         if (mode === raffleMode) return;
         setRaffleMode(mode);
         setActiveTab('board'); // Reset to board tab on mode change
-        setIsPaymentConfirmed(false);
         showNotification(`Cambiado a modo de ${mode === 'two-digit' ? '2' : '3'} cifras.`, 'success');
     };
 
@@ -406,7 +403,7 @@ const App = () => {
         return <div className="flex justify-center items-center h-screen text-xl font-semibold">Cargando...</div>;
     }
     
-    const isRegisterFormValidForSubmit = isPaymentConfirmed && currentState.name && currentState.phoneNumber && currentState.raffleNumber && !drawnNumbersSet.has(parseInt(currentState.raffleNumber));
+    const isRegisterFormValidForSubmit = currentState.name && currentState.phoneNumber && currentState.raffleNumber && !drawnNumbersSet.has(parseInt(currentState.raffleNumber));
 
     const renderBoardContent = () => {
         if (!currentState.isPaid) {
@@ -748,22 +745,7 @@ const App = () => {
                                 <p>Realiza el pago de {formatValue(currentState.value)} al número de Nequi <strong className="font-mono">{currentState.nequiAccountNumber}</strong>.</p>
                             </div>
 
-                            <div className="items-top flex space-x-2">
-                                <Checkbox id="payment-confirmation" checked={isPaymentConfirmed} onCheckedChange={(checked) => setIsPaymentConfirmed(!!checked)} />
-                                <div className="grid gap-1.5 leading-none">
-                                    <label
-                                        htmlFor="payment-confirmation"
-                                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                                    >
-                                        Confirmo que he realizado el pago
-                                    </label>
-                                    <p className="text-sm text-muted-foreground">
-                                        Marca esta casilla para habilitar el registro.
-                                    </p>
-                                </div>
-                            </div>
-
-                            <fieldset disabled={!isPaymentConfirmed} className="space-y-4 disabled:opacity-50">
+                            <div className="space-y-4">
                                 <div>
                                     <Label htmlFor="raffle-number-input">Número de rifa ({raffleMode === 'two-digit' ? '00-99' : '100-999'}):</Label>
                                     <div className="flex items-center gap-2 mt-1">
@@ -804,7 +786,7 @@ const App = () => {
                                         className="w-full mt-1"
                                     />
                                 </div>
-                            </fieldset>
+                            </div>
 
                             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                                 <Button
@@ -1032,3 +1014,5 @@ const App = () => {
 };
 
 export default App;
+
+    
