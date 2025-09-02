@@ -783,6 +783,13 @@ const App = () => {
                             </div>
                             
                             <div className="flex flex-col gap-4">
+                                 <Button
+                                    variant="outline"
+                                    className="w-full"
+                                    onClick={() => window.open('https://www.pse.com.co/', '_blank')}
+                                >
+                                    Pagar con PSE
+                                </Button>
                                 <Button
                                     onClick={handleTicketConfirmation}
                                     disabled={!isRegisterFormValidForSubmit || currentState.isWinnerConfirmed}
