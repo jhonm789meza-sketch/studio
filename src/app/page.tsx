@@ -784,14 +784,6 @@ const App = () => {
                             
                             <div className="flex flex-col gap-4">
                                 <Button
-                                    asChild
-                                    className="w-full bg-purple-600 text-white hover:bg-purple-700"
-                                >
-                                    <a href={`nequi://send-money?phone=${currentState.nequiAccountNumber}&value=${currentState.value}`} target="_blank" rel="noopener noreferrer">
-                                        Pagar por Nequi
-                                    </a>
-                                </Button>
-                                <Button
                                     onClick={handleTicketConfirmation}
                                     disabled={!isRegisterFormValidForSubmit || currentState.isWinnerConfirmed}
                                     className="w-full px-4 py-2 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
