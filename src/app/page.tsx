@@ -64,6 +64,7 @@ const App = () => {
     const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
     const [adminRefSearch, setAdminRefSearch] = useState('');
     const [showConfetti, setShowConfetti] = useState(false);
+    const [isPaymentConfirmed, setIsPaymentConfirmed] = useState(false);
     
     const currentState = raffleMode === 'two-digit' ? twoDigitState : threeDigitState;
     const setCurrentState = raffleMode === 'two-digit' ? setTwoDigitState : setThreeDigitState;
@@ -290,6 +291,7 @@ const App = () => {
             phoneNumber: '',
             raffleNumber: '',
         }));
+        setIsPaymentConfirmed(false);
         showNotification('Tiquete generado correctamente', 'success');
     };
 
@@ -403,7 +405,7 @@ const App = () => {
         return <div className="flex justify-center items-center h-screen text-xl font-semibold">Cargando...</div>;
     }
     
-    const isRegisterFormValidForSubmit = currentState.name && currentState.phoneNumber && currentState.raffleNumber && !drawnNumbersSet.has(parseInt(currentState.raffleNumber));
+    const isRegisterFormValidForSubmit = currentState.name && currentState.phoneNumber && currentState.raffleNumber && !drawnNumbersSet.has(parseInt(currentState.raffleNumber)) && isPaymentConfirmed;
 
     const renderBoardContent = () => {
         if (!currentState.isPaid) {
@@ -781,8 +783,25 @@ const App = () => {
                                     />
                                 </div>
                             </div>
+
+                            <div className="flex items-center space-x-2">
+                                <Checkbox id="payment-confirmed" checked={isPaymentConfirmed} onCheckedChange={(checked) => setIsPaymentConfirmed(!!checked)} />
+                                <label
+                                    htmlFor="payment-confirmed"
+                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                >
+                                    Pago Recibido
+                                </label>
+                            </div>
                             
                             <div className="flex flex-col gap-4">
+                                <Button
+                                    variant="outline"
+                                    className="w-full"
+                                    onClick={() => window.open('https://www.nequi.com.co/pagos-en-linea', '_blank')}
+                                >
+                                    Pagar con Nequi
+                                </Button>
                                  <Button
                                     variant="outline"
                                     className="w-full"
