@@ -433,7 +433,7 @@ const App = () => {
                     <h2 className="text-2xl font-bold text-gray-800 mb-4">Configuración del Premio</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                        <div>
-                           <Label htmlFor="organizer-name-input">Organizador:</Label>
+                           <Label htmlFor="organizer-name-input">Quien Organiza:</Label>
                            <Input
                                id="organizer-name-input"
                                type="text"
@@ -966,7 +966,7 @@ const App = () => {
                                             <span className="font-semibold">{ticketInfo.lottery}</span>
                                         </div>
                                         <div className="flex justify-between">
-                                            <span className="text-gray-600">ORGANIZA:</span>
+                                            <span className="text-gray-600">QUIEN ORGANIZA:</span>
                                             <span className="font-semibold text-right">{ticketInfo.organizerName}</span>
                                         </div>
                                         <div className="text-center pt-4">
