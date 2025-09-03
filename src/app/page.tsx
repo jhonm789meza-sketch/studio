@@ -462,17 +462,11 @@ const App = () => {
                            <Label htmlFor="value-input">Valor:</Label>
                            <Input
                                id="value-input"
-                               type="text"
-                               value={formatValue(currentState.value)}
-                               onChange={(e) => {
-                                   const numericValue = e.target.value.replace(/[^\d]/g, '');
-                                   handleLocalFieldChange('value', numericValue);
-                               }}
-                               onBlur={(e) => {
-                                   const numericValue = e.target.value.replace(/[^\d]/g, '');
-                                   handleFieldChange('value', numericValue)
-                               }}
-                               placeholder="Ej: 5.000.000"
+                               type="number"
+                               value={currentState.value}
+                               onChange={(e) => handleLocalFieldChange('value', e.target.value)}
+                               onBlur={(e) => handleFieldChange('value', e.target.value)}
+                               placeholder="Ej: 5000000"
                                disabled={currentState.isDetailsConfirmed}
                                className="w-full mt-1"
                            />
