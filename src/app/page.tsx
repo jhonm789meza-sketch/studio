@@ -398,7 +398,7 @@ const App = () => {
         );
     };
 
-    const handleShare = (platform: 'whatsapp' | 'facebook' | 'messenger' | 'copy') => {
+    const handleShare = (platform: 'whatsapp' | 'facebook' | 'copy') => {
         const shareText = `¡Participa en la rifa por un ${currentState.prize}! Organizada por ${currentState.organizerName}. Referencia: ${currentState.raffleRef}`;
         const shareUrl = window.location.href;
         let url = '';
@@ -409,10 +409,6 @@ const App = () => {
                 break;
             case 'facebook':
                 url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
-                break;
-            case 'messenger':
-                // Note: Messenger direct links are tricky. This opens the Facebook share dialog which is a good fallback.
-                url = `https://www.facebook.com/dialog/send?app_id=123456789&link=${encodeURIComponent(shareUrl)}&redirect_uri=${encodeURIComponent(shareUrl)}`;
                 break;
             case 'copy':
                 navigator.clipboard.writeText(shareUrl);
@@ -1089,10 +1085,6 @@ const App = () => {
                             <FacebookIcon />
                             <span className="ml-2">Facebook</span>
                         </Button>
-                        <Button onClick={() => handleShare('messenger')} className="bg-blue-500 hover:bg-blue-600 text-white w-full">
-                            <MessageCircle />
-                            <span className="ml-2">Messenger</span>
-                        </Button>
                         <Button onClick={() => handleShare('copy')} variant="outline" className="w-full">
                             <Copy />
                             <span className="ml-2">Copiar Enlace</span>
@@ -1109,5 +1101,3 @@ const App = () => {
 };
 
 export default App;
-
-    
