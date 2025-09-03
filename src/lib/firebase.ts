@@ -1,5 +1,5 @@
-import { initializeApp } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
+import { initializeApp, getApp, FirebaseApp } from 'firebase/app';
+import { getFirestore, Firestore } from 'firebase/firestore';
 
 const firebaseConfig = {
   "projectId": "rifaexpress",
@@ -11,7 +11,13 @@ const firebaseConfig = {
   "messagingSenderId": "945876849893"
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+let app: FirebaseApp;
+try {
+  app = getApp();
+} catch (e) {
+  app = initializeApp(firebaseConfig);
+}
+
+const db: Firestore = getFirestore(app);
 
 export { db };

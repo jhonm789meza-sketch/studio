@@ -11,23 +11,19 @@ class RaffleManager {
     }
 
     private async getNextRefNumber(): Promise<number> {
-        // This function should only run on the client-side where there's a user context.
+        // This function should only run on the client-side.
         if (typeof window === 'undefined') {
-            // Returning a placeholder or handling server-side rendering appropriately.
-            return 1; 
+            return 1; // Return a placeholder for SSR.
         }
         
         try {
             const docSnap = await getDoc(this.counterRef);
 
             if (docSnap.exists()) {
-                // Use updateDoc with increment for atomic operation
                 await updateDoc(this.counterRef, { count: increment(1) });
-                // Re-fetch the document to get the updated count
                 const updatedSnap = await getDoc(this.counterRef);
                 return updatedSnap.data()?.count || 1;
             } else {
-                // If the counter document doesn't exist, create it.
                 await setDoc(this.counterRef, { count: 1 });
                 return 1;
             }
@@ -39,6 +35,9 @@ class RaffleManager {
     }
 
     public async startNewRaffle(): Promise<string> {
+        if (typeof window === 'undefined') {
+             return 'JM-SERVER'; // Fallback for server-side execution
+        }
         const nextNumber = await this.getNextRefNumber();
         const ref = `JM${nextNumber}`;
         return ref;
