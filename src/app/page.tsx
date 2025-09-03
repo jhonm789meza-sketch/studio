@@ -9,7 +9,7 @@ import Image from 'next/image';
 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuCheckboxItem } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House, Share2 } from 'lucide-react';
+import { Menu, Award, Lock, House, Share2, MessageCircle, Copy } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -63,6 +63,7 @@ const App = () => {
     const [threeDigitState, setThreeDigitState] = useState<any>(initialRaffleData);
     
     const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
+    const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
     const [adminRefSearch, setAdminRefSearch] = useState('');
     const [showConfetti, setShowConfetti] = useState(false);
     const [isPaymentConfirmed, setIsPaymentConfirmed] = useState(false);
@@ -397,21 +398,32 @@ const App = () => {
         );
     };
 
-    const handleShare = () => {
-        if (navigator.share) {
-            navigator.share({
-                title: `Rifa: ${currentState.prize}`,
-                text: `¡Participa en la rifa por un ${currentState.prize}! Organizada por ${currentState.organizerName}. Referencia: ${currentState.raffleRef}`,
-                url: window.location.href,
-            })
-            .then(() => showNotification('¡Gracias por compartir!', 'success'))
-            .catch((error) => console.log('Error al compartir', error));
-        } else {
-            // Fallback for browsers that don't support navigator.share
-            navigator.clipboard.writeText(window.location.href);
-            showNotification('Enlace copiado al portapapeles', 'success');
+    const handleShare = (platform: 'whatsapp' | 'facebook' | 'messenger' | 'copy') => {
+        const shareText = `¡Participa en la rifa por un ${currentState.prize}! Organizada por ${currentState.organizerName}. Referencia: ${currentState.raffleRef}`;
+        const shareUrl = window.location.href;
+        let url = '';
+
+        switch (platform) {
+            case 'whatsapp':
+                url = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText + ' ' + shareUrl)}`;
+                break;
+            case 'facebook':
+                url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
+                break;
+            case 'messenger':
+                // Note: Messenger direct links are tricky. This opens the Facebook share dialog which is a good fallback.
+                url = `https://www.facebook.com/dialog/send?app_id=123456789&link=${encodeURIComponent(shareUrl)}&redirect_uri=${encodeURIComponent(shareUrl)}`;
+                break;
+            case 'copy':
+                navigator.clipboard.writeText(shareUrl);
+                showNotification('Enlace copiado al portapapeles', 'success');
+                return;
         }
+
+        window.open(url, '_blank');
+        setIsShareDialogOpen(false);
     };
+
 
     const allNumbers = raffleMode === 'two-digit'
         ? Array.from({ length: 100 }, (_, i) => i)
@@ -671,6 +683,15 @@ const App = () => {
         )
     }
 
+    const WhatsappIcon = () => (
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-message-circle"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.38 1.25 4.85L2.25 22l5.25-1.38c1.47.79 3.1 1.25 4.85 1.25 5.46 0 9.91-4.45 9.91-9.91S17.5 2 12.04 2zM9.51 16.42c-.22 0-.44-.04-.65-.12-.22-.08-.43-.2-.64-.35-.21-.15-.4-.32-.59-.52s-.36-.42-.51-.66c-.15-.24-.28-.5-.39-.77s-.19-.55-.26-.83c-.07-.28-.1-.56-.1-.85 0-.58.11-1.12.33-1.61s.51-.92.86-1.28.78-.65 1.28-.86c.5-.22 1.04-.33 1.61-.33.28 0 .55.03.82.1.27.07.53.16.78.28.25.12.48.26.69.43.21.17.39.36.55.57l.01.01c.45.61.68 1.32.68 2.12 0 .22-.03.43-.08.64s-.12.41-.21.59c-.09.18-.2.35-.33.51s-.28.3-.44.44c-.17.13-.34.25-.53.35-.19.1-.39.18-.6.25-.21.07-.42.1-.64.1z"/></svg>
+    );
+
+    const FacebookIcon = () => (
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-facebook"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+    );
+    
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-purple-100 to-blue-100 p-4 font-sans">
             {showConfetti && <Confetti />}
@@ -710,7 +731,7 @@ const App = () => {
                                 <DropdownMenuItem onSelect={() => setIsAdminLoginOpen(true)}>
                                     Buscar por Referencia
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onSelect={handleShare} disabled={!currentState.isDetailsConfirmed}>
+                                <DropdownMenuItem onSelect={() => setIsShareDialogOpen(true)} disabled={!currentState.isDetailsConfirmed}>
                                     <Share2 className="mr-2 h-4 w-4" />
                                     <span>Compartir</span>
                                 </DropdownMenuItem>
@@ -1051,8 +1072,42 @@ const App = () => {
                 </DialogContent>
             </Dialog>
 
+            <Dialog open={isShareDialogOpen} onOpenChange={setIsShareDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Compartir Rifa</DialogTitle>
+                        <DialogDescription>
+                            Comparte esta rifa con tus amigos y familiares.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4">
+                        <Button onClick={() => handleShare('whatsapp')} className="bg-green-500 hover:bg-green-600 text-white w-full">
+                            <WhatsappIcon />
+                            <span className="ml-2">WhatsApp</span>
+                        </Button>
+                        <Button onClick={() => handleShare('facebook')} className="bg-blue-600 hover:bg-blue-700 text-white w-full">
+                            <FacebookIcon />
+                            <span className="ml-2">Facebook</span>
+                        </Button>
+                        <Button onClick={() => handleShare('messenger')} className="bg-blue-500 hover:bg-blue-600 text-white w-full">
+                            <MessageCircle />
+                            <span className="ml-2">Messenger</span>
+                        </Button>
+                        <Button onClick={() => handleShare('copy')} variant="outline" className="w-full">
+                            <Copy />
+                            <span className="ml-2">Copiar Enlace</span>
+                        </Button>
+                    </div>
+                     <DialogFooter>
+                        <Button type="button" variant="outline" onClick={() => setIsShareDialogOpen(false)}>Cerrar</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
         </div>
     );
 };
 
 export default App;
+
+    
