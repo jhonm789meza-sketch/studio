@@ -274,7 +274,7 @@ const App = () => {
         }, { merge: true });
 
         const ticketData = {
-            prize: currentState.prize,
+            prize: formatValue(currentState.prize),
             value: formatValue(currentState.value),
             name: currentState.name,
             phoneNumber: currentState.phoneNumber,
@@ -450,10 +450,10 @@ const App = () => {
                            <Input
                                id="prize-input"
                                type="text"
-                               value={currentState.prize}
-                               onChange={(e) => handleLocalFieldChange('prize', e.target.value)}
-                               onBlur={(e) => handleFieldChange('prize', e.target.value)}
-                               placeholder="Ej: Carro, Moto, Dinero"
+                               value={formatValue(currentState.prize)}
+                               onChange={(e) => handleLocalFieldChange('prize', e.target.value.replace(/[^\d]/g, ''))}
+                               onBlur={(e) => handleFieldChange('prize', e.target.value.replace(/[^\d]/g, ''))}
+                               placeholder="Ej: 5000000"
                                disabled={currentState.isDetailsConfirmed}
                                className="w-full mt-1"
                            />
