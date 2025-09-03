@@ -9,7 +9,7 @@ import Image from 'next/image';
 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuCheckboxItem } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House } from 'lucide-react';
+import { Menu, Award, Lock, House, Share2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -397,6 +397,22 @@ const App = () => {
         );
     };
 
+    const handleShare = () => {
+        if (navigator.share) {
+            navigator.share({
+                title: `Rifa: ${currentState.prize}`,
+                text: `¡Participa en la rifa por un ${currentState.prize}! Organizada por ${currentState.organizerName}. Referencia: ${currentState.raffleRef}`,
+                url: window.location.href,
+            })
+            .then(() => showNotification('¡Gracias por compartir!', 'success'))
+            .catch((error) => console.log('Error al compartir', error));
+        } else {
+            // Fallback for browsers that don't support navigator.share
+            navigator.clipboard.writeText(window.location.href);
+            showNotification('Enlace copiado al portapapeles', 'success');
+        }
+    };
+
     const allNumbers = raffleMode === 'two-digit'
         ? Array.from({ length: 100 }, (_, i) => i)
         : Array.from({ length: 900 }, (_, i) => i + 100);
@@ -693,6 +709,10 @@ const App = () => {
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem onSelect={() => setIsAdminLoginOpen(true)}>
                                     Buscar por Referencia
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onSelect={handleShare} disabled={!currentState.isDetailsConfirmed}>
+                                    <Share2 className="mr-2 h-4 w-4" />
+                                    <span>Compartir</span>
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
