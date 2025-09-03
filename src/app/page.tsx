@@ -573,12 +573,12 @@ const App = () => {
                                        value={currentState.manualWinnerNumber}
                                        onChange={(e) => handleLocalFieldChange('manualWinnerNumber', e.target.value.replace(/\D/g, ''))}
                                        maxLength={numberLength}
-                                       disabled={currentState.isWinnerConfirmed || currentState.participants.length === 0}
+                                       disabled={currentState.isWinnerConfirmed || !!currentState.winner || currentState.participants.length === 0}
                                        className="w-36"
                                    />
                                    <Button
                                        onClick={handleDrawWinner}
-                                       disabled={currentState.isWinnerConfirmed || currentState.participants.length === 0}
+                                       disabled={currentState.isWinnerConfirmed || !!currentState.winner || currentState.participants.length === 0}
                                        className="bg-yellow-500 text-white font-medium rounded-lg hover:bg-yellow-600 transition-colors disabled:bg-gray-300"
                                    >
                                        Buscar Ganador
