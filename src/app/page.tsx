@@ -146,7 +146,7 @@ const App = () => {
             showNotification('Primero debes confirmar los detalles del premio para seleccionar un número.', 'info');
             return;
         }
-        if (currentState.isWinnerConfirmed) {
+        if (currentState.isWinnerConfirmed || !!currentState.winner) {
             showNotification('El juego ha terminado. Reinicia el tablero para comenzar de nuevo.', 'info');
             return;
         }
@@ -573,12 +573,12 @@ const App = () => {
                                        value={currentState.manualWinnerNumber}
                                        onChange={(e) => handleLocalFieldChange('manualWinnerNumber', e.target.value.replace(/\D/g, ''))}
                                        maxLength={numberLength}
-                                       disabled={currentState.isWinnerConfirmed || !!currentState.winner || currentState.participants.length === 0}
+                                       disabled={currentState.isWinnerConfirmed || !!currentState.winner}
                                        className="w-36"
                                    />
                                    <Button
                                        onClick={handleDrawWinner}
-                                       disabled={currentState.isWinnerConfirmed || !!currentState.winner || currentState.participants.length === 0}
+                                       disabled={currentState.isWinnerConfirmed || !!currentState.winner}
                                        className="bg-yellow-500 text-white font-medium rounded-lg hover:bg-yellow-600 transition-colors disabled:bg-gray-300"
                                    >
                                        Buscar Ganador
@@ -624,10 +624,10 @@ const App = () => {
                                onClick={() => toggleNumber(number)}
                                className={`
                                    number-cell text-center py-2 rounded-lg transition-all text-sm
-                                   ${currentState.isWinnerConfirmed || !currentState.isDetailsConfirmed ? 'cursor-not-allowed' : 'cursor-pointer'}
+                                   ${currentState.isWinnerConfirmed || !currentState.isDetailsConfirmed || !!currentState.winner ? 'cursor-not-allowed' : 'cursor-pointer'}
                                    ${drawnNumbersSet.has(number)
                                        ? 'bg-red-600 text-white shadow-lg transform scale-105 cursor-not-allowed'
-                                       : !currentState.isDetailsConfirmed
+                                       : !currentState.isDetailsConfirmed || !!currentState.winner
                                        ? 'bg-gray-200 text-gray-500'
                                        : 'bg-green-200 text-green-800 hover:bg-green-300 hover:shadow-md'
                                    }
@@ -638,6 +638,12 @@ const App = () => {
                            </div>
                        ))}
                    </div>
+                   {!!currentState.winner && !currentState.isWinnerConfirmed && (
+                        <div className="mt-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4" role="alert">
+                            <p className="font-bold">Tablero Bloqueado</p>
+                            <p>Se ha encontrado un ganador. Confirma el resultado o reinicia el tablero para continuar.</p>
+                        </div>
+                    )}
                    {!currentState.isDetailsConfirmed && (
                         <div className="mt-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4" role="alert">
                             <p className="font-bold">Tablero Bloqueado</p>
