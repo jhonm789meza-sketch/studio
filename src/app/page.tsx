@@ -730,7 +730,7 @@ const App = () => {
                                 <DropdownMenuItem onSelect={() => setIsAdminLoginOpen(true)}>
                                     Buscar por Referencia
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onSelect={() => setIsShareDialogOpen(true)} disabled={!currentState.isDetailsConfirmed}>
+                                <DropdownMenuItem onSelect={() => setIsShareDialogOpen(true)}>
                                     <Share2 className="mr-2 h-4 w-4" />
                                     <span>Compartir</span>
                                 </DropdownMenuItem>
