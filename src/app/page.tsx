@@ -774,8 +774,7 @@ const App = () => {
                     <div className={activeTab === 'register' ? 'tab-content active' : 'tab-content'}>
                         <h2 className="text-2xl font-bold text-gray-800 mb-4">Registrar Participante</h2>
                         <fieldset disabled={currentState.isWinnerConfirmed || !currentState.isDetailsConfirmed || !currentState.isPaid} className="disabled:opacity-50 space-y-4">
-
-                            <div className="space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div>
                                     <Label htmlFor="name-input">Nombre completo:</Label>
                                     <Input
@@ -789,17 +788,15 @@ const App = () => {
                                 </div>
                                 <div>
                                     <Label htmlFor="raffle-number-input">Número de rifa ({raffleMode === 'two-digit' ? '00-99' : '100-999'}):</Label>
-                                    <div className="flex items-center gap-2 mt-1">
-                                        <Input
-                                            id="raffle-number-input"
-                                            type="text"
-                                            value={currentState.raffleNumber}
-                                            onChange={handleRaffleNumberChange}
-                                            placeholder={`Ej: ${raffleMode === 'two-digit' ? '05' : '142'}`}
-                                            className="w-full"
-                                            maxLength={numberLength}
-                                        />
-                                    </div>
+                                    <Input
+                                        id="raffle-number-input"
+                                        type="text"
+                                        value={currentState.raffleNumber}
+                                        onChange={handleRaffleNumberChange}
+                                        placeholder={`Ej: ${raffleMode === 'two-digit' ? '05' : '142'}`}
+                                        className="w-full mt-1"
+                                        maxLength={numberLength}
+                                    />
                                     {currentState.raffleNumber && drawnNumbersSet.has(parseInt(currentState.raffleNumber)) && (
                                         <p className="text-red-500 text-sm mt-1">Este número ya está asignado</p>
                                     )}
