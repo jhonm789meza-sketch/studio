@@ -40,6 +40,7 @@ const initialRaffleData = {
     winner: null,
     manualWinnerNumber: '',
     isPaid: false,
+    adminId: null,
 };
 
 
@@ -67,6 +68,8 @@ const App = () => {
     const [adminRefSearch, setAdminRefSearch] = useState('');
     const [showConfetti, setShowConfetti] = useState(false);
     const [isPaymentConfirmed, setIsPaymentConfirmed] = useState(false);
+    const [currentAdminId, setCurrentAdminId] = useState<string | null>(null);
+
 
     const currentState = raffleMode === 'two-digit' ? twoDigitState : threeDigitState;
     const setCurrentState = raffleMode === 'two-digit' ? setTwoDigitState : setThreeDigitState;
@@ -81,10 +84,22 @@ const App = () => {
     };
     
     useEffect(() => {
+        let adminId = localStorage.getItem('rifaAdminId');
+        if (!adminId) {
+            adminId = `admin_${Date.now()}_${Math.random()}`;
+            localStorage.setItem('rifaAdminId', adminId);
+        }
+        setCurrentAdminId(adminId);
+
         setLoading(true);
         const unsubTwoDigit = onSnapshot(doc(db, "raffles", "two-digit"), (docSnapshot) => {
             if (docSnapshot.exists()) {
-                setTwoDigitState({ ...initialRaffleData, ...docSnapshot.data() });
+                const data = docSnapshot.data();
+                if (data.adminId !== adminId) {
+                    setTwoDigitState({ ...initialRaffleData, ...data, isPaid: false });
+                } else {
+                    setTwoDigitState({ ...initialRaffleData, ...data });
+                }
             } else {
                 setDoc(doc(db, "raffles", "two-digit"), initialRaffleData, { merge: true });
             }
@@ -92,7 +107,12 @@ const App = () => {
         });
         const unsubThreeDigit = onSnapshot(doc(db, "raffles", "three-digit"), (docSnapshot) => {
              if (docSnapshot.exists()) {
-                setThreeDigitState({ ...initialRaffleData, ...docSnapshot.data() });
+                const data = docSnapshot.data();
+                if (data.adminId !== adminId) {
+                    setThreeDigitState({ ...initialRaffleData, ...data, isPaid: false });
+                } else {
+                    setThreeDigitState({ ...initialRaffleData, ...data });
+                }
             } else {
                 setDoc(doc(db, "raffles", "three-digit"), initialRaffleData, { merge: true });
             }
@@ -329,19 +349,24 @@ const App = () => {
             showNotification('Por favor, ingresa una referencia.', 'warning');
             return;
         }
-        
-        const twoDigitDoc = await getDoc(doc(db, "raffles", "two-digit"));
-        const threeDigitDoc = await getDoc(doc(db, "raffles", "three-digit"));
-
+    
+        const refUpper = adminRefSearch.toUpperCase();
         let found = false;
-        if (twoDigitDoc.exists() && twoDigitDoc.data().raffleRef && twoDigitDoc.data().raffleRef.toLowerCase() === adminRefSearch.toLowerCase()) {
+    
+        const twoDigitDoc = await getDoc(doc(db, "raffles", "two-digit"));
+        if (twoDigitDoc.exists() && twoDigitDoc.data().raffleRef?.toUpperCase() === refUpper) {
             setRaffleMode('two-digit');
-            found = true;
-        } else if (threeDigitDoc.exists() && threeDigitDoc.data().raffleRef && threeDigitDoc.data().raffleRef.toLowerCase() === adminRefSearch.toLowerCase()) {
-            setRaffleMode('three-digit');
+            setTwoDigitState({ ...initialRaffleData, ...twoDigitDoc.data() });
             found = true;
         }
-
+    
+        const threeDigitDoc = await getDoc(doc(db, "raffles", "three-digit"));
+        if (threeDigitDoc.exists() && threeDigitDoc.data().raffleRef?.toUpperCase() === refUpper) {
+            setRaffleMode('three-digit');
+            setThreeDigitState({ ...initialRaffleData, ...threeDigitDoc.data() });
+            found = true;
+        }
+    
         if (found) {
             showNotification(`Cargando rifa con referencia: ${adminRefSearch}`, 'success');
             setIsAdminLoginOpen(false);
@@ -388,7 +413,7 @@ const App = () => {
             `Estás a punto de pagar $10.000 para activar este tablero de ${raffleMode === 'two-digit' ? '2' : '3'} cifras. ¿Continuar?`,
             async () => {
                 try {
-                    await setDoc(doc(db, "raffles", raffleMode), { isPaid: true }, { merge: true });
+                    await setDoc(doc(db, "raffles", raffleMode), { isPaid: true, adminId: currentAdminId }, { merge: true });
                     showNotification('¡Tablero activado! Ahora eres el administrador y puedes configurar los detalles del premio.', 'success');
                 } catch (error) {
                     console.error("Error activating board:", error);
@@ -435,9 +460,11 @@ const App = () => {
     }
     
     const isRegisterFormValidForSubmit = currentState.name && currentState.phoneNumber && currentState.raffleNumber && !drawnNumbersSet.has(parseInt(currentState.raffleNumber)) && isPaymentConfirmed;
+    const isCurrentUserAdmin = currentState.adminId === currentAdminId;
+
 
     const renderBoardContent = () => {
-        if (!currentState.isPaid) {
+        if (!currentState.isPaid || !isCurrentUserAdmin) {
             return (
                 <div className="text-center p-10 bg-gray-50 rounded-lg border-2 border-dashed">
                     <Lock className="mx-auto h-12 w-12 text-gray-400 mb-4" />
@@ -776,7 +803,7 @@ const App = () => {
                     </div>
                     <div className={activeTab === 'register' ? 'tab-content active' : 'tab-content'}>
                         <h2 className="text-2xl font-bold text-gray-800 mb-4">Registrar Participante</h2>
-                        <fieldset disabled={currentState.isWinnerConfirmed || !currentState.isDetailsConfirmed || !currentState.isPaid} className="disabled:opacity-50 space-y-4">
+                        <fieldset disabled={currentState.isWinnerConfirmed || !currentState.isDetailsConfirmed || (!currentState.isPaid && !isCurrentUserAdmin)} className="disabled:opacity-50 space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div>
                                     <Label htmlFor="name-input">Nombre completo:</Label>
@@ -853,7 +880,7 @@ const App = () => {
 
                         </fieldset>
 
-                        {(!currentState.isDetailsConfirmed || !currentState.isPaid) && (
+                        {(!currentState.isDetailsConfirmed || (!currentState.isPaid && !isCurrentUserAdmin)) && (
                                 <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-6" role="alert">
                                 <p className="font-bold">Aviso</p>
                                 <p>Debes activar y confirmar los detalles del premio en la pestaña "Tablero" para poder registrar participantes.</p>
@@ -872,7 +899,7 @@ const App = () => {
                                 <h2 className="text-2xl font-bold text-gray-800">Participantes Registrados</h2>
                         </div>
 
-                        {!currentState.isDetailsConfirmed || !currentState.isPaid ? (
+                        {!currentState.isDetailsConfirmed || (!currentState.isPaid && !isCurrentUserAdmin) ? (
                             <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-6" role="alert">
                                 <p className="font-bold">Aviso</p>
                                 <p>Debes activar y confirmar los detalles del premio en la pestaña "Tablero" para poder ver los participantes.</p>
@@ -1104,5 +1131,3 @@ const App = () => {
 };
 
 export default App;
-
-    
