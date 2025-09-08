@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import jsPDF from 'jspdf';
@@ -183,28 +184,8 @@ const App = () => {
     };
 
     const handleConfirmDetails = async () => {
-        if (!currentState.organizerName.trim()) {
-            showNotification('Por favor ingresa el nombre del organizador', 'warning');
-            return;
-        }
-        if (!currentState.prize.trim()) {
-            showNotification('Por favor ingresa el premio', 'warning');
-            return;
-        }
-        if (!currentState.value.trim()) {
-            showNotification('Por favor ingresa el valor', 'warning');
-            return;
-        }
-        if (!currentState.gameDate) {
-            showNotification('Por favor ingresa la fecha del juego', 'warning');
-            return;
-        }
-        if (!currentState.lottery) {
-            showNotification('Por favor selecciona la lotería', 'warning');
-            return;
-        }
-        if (currentState.lottery === 'Otro' && !currentState.customLottery.trim()) {
-            showNotification('Por favor especifica la lotería', 'warning');
+        if (!currentState.organizerName.trim() || !currentState.prize.trim() || !currentState.value.trim() || !currentState.gameDate || !currentState.lottery || !currentState.nequiAccountNumber.trim() || (currentState.lottery === 'Otro' && !currentState.customLottery.trim())) {
+            showNotification('Por favor, completa todos los campos de configuración del premio.', 'warning');
             return;
         }
         
@@ -346,22 +327,32 @@ const App = () => {
     
         const refUpper = adminRefSearch.toUpperCase();
         let found = false;
+        let isTwoDigit = false;
     
         const twoDigitDoc = await getDoc(doc(db, "raffles", "two-digit"));
         if (twoDigitDoc.exists() && twoDigitDoc.data().raffleRef?.toUpperCase() === refUpper) {
             setRaffleMode('two-digit');
-            setTwoDigitState({ ...initialRaffleData, ...twoDigitDoc.data() });
+            isTwoDigit = true;
             found = true;
-        }
-    
-        const threeDigitDoc = await getDoc(doc(db, "raffles", "three-digit"));
-        if (threeDigitDoc.exists() && threeDigitDoc.data().raffleRef?.toUpperCase() === refUpper) {
-            setRaffleMode('three-digit');
-            setThreeDigitState({ ...initialRaffleData, ...threeDigitDoc.data() });
-            found = true;
+        } else {
+            const threeDigitDoc = await getDoc(doc(db, "raffles", "three-digit"));
+            if (threeDigitDoc.exists() && threeDigitDoc.data().raffleRef?.toUpperCase() === refUpper) {
+                setRaffleMode('three-digit');
+                isTwoDigit = false;
+                found = true;
+            }
         }
     
         if (found) {
+            // Force re-render with the correct state, even though onSnapshot will also fire.
+            // This ensures immediate UI update after searching.
+            if(isTwoDigit) {
+                setTwoDigitState({ ...initialRaffleData, ...twoDigitDoc.data() });
+            } else {
+                const threeDigitDoc = await getDoc(doc(db, "raffles", "three-digit"));
+                setThreeDigitState({ ...initialRaffleData, ...threeDigitDoc.data()! });
+            }
+            
             showNotification(`Cargando rifa con referencia: ${adminRefSearch}`, 'success');
             setIsAdminLoginOpen(false);
             setAdminRefSearch('');
@@ -455,10 +446,10 @@ const App = () => {
     
     const isRegisterFormValidForSubmit = currentState.name && currentState.phoneNumber && currentState.raffleNumber && !drawnNumbersSet.has(parseInt(currentState.raffleNumber)) && isPaymentConfirmed;
     const isCurrentUserAdmin = currentState.adminId === currentAdminId;
-
+    const shouldShowAsPaid = currentState.isPaid && isCurrentUserAdmin;
 
     const renderBoardContent = () => {
-        if (!currentState.isPaid && !isCurrentUserAdmin) {
+        if (!shouldShowAsPaid) {
             return (
                 <div className="text-center p-10 bg-gray-50 rounded-lg border-2 border-dashed">
                     <Lock className="mx-auto h-12 w-12 text-gray-400 mb-4" />
@@ -476,71 +467,6 @@ const App = () => {
                     </div>
                 </div>
             );
-        }
-
-        if (!currentState.isPaid && isCurrentUserAdmin) {
-             return (
-                <div className="text-center p-10 bg-gray-50 rounded-lg border-2 border-dashed">
-                    <Lock className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                    <h2 className="text-2xl font-bold text-gray-800 mb-2">Tablero Bloqueado</h2>
-                    <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                        Para usar este tablero de rifa de {raffleMode === 'two-digit' ? '2' : '3'} cifras, necesitas activarlo.
-                    </p>
-                    <Button onClick={handleActivateBoard} size="lg" className="bg-green-500 hover:bg-green-600 text-white font-bold">
-                        Pagar $10,000 para Activar
-                    </Button>
-                </div>
-            )
-        }
-        
-        if (!isCurrentUserAdmin) {
-            return (
-                <div>
-                   <div className="flex justify-between items-center mb-4">
-                       <h2 className="text-2xl font-bold text-gray-800 flex items-center">
-                           Tablero de Números ({raffleMode === 'two-digit' ? '00-99' : '100-999'})
-                           {currentState.isDetailsConfirmed && currentState.raffleRef && (
-                             <span className="ml-2 text-base font-normal text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
-                                 Ref: {currentState.raffleRef}
-                             </span>
-                           )}
-                       </h2>
-                   </div>
-                   <div className={`grid gap-2 ${raffleMode === 'two-digit' ? 'grid-cols-10' : 'grid-cols-10 md:grid-cols-20 lg:grid-cols-25'}`}>
-                       {allNumbers.map((number) => (
-                           <div
-                               key={number}
-                               onClick={() => toggleNumber(number)}
-                               className={`
-                                   number-cell text-center py-2 rounded-lg transition-all text-sm
-                                   ${currentState.isWinnerConfirmed || !currentState.isDetailsConfirmed || !!currentState.winner ? 'cursor-not-allowed' : 'cursor-pointer'}
-                                   ${drawnNumbersSet.has(number)
-                                       ? 'bg-red-600 text-white shadow-lg transform scale-105 cursor-not-allowed'
-                                       : !currentState.isDetailsConfirmed || !!currentState.winner
-                                       ? 'bg-gray-200 text-gray-500'
-                                       : 'bg-green-200 text-green-800 hover:bg-green-300 hover:shadow-md'
-                                   }
-                                   ${currentState.winner?.raffleNumber === String(number).padStart(numberLength, '0') ? 'ring-4 ring-yellow-400 animate-pulse' : ''}
-                               `}
-                           >
-                               {String(number).padStart(numberLength, '0')}
-                           </div>
-                       ))}
-                   </div>
-                   {!!currentState.winner && !currentState.isWinnerConfirmed && (
-                        <div className="mt-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4" role="alert">
-                            <p className="font-bold">Tablero Bloqueado</p>
-                            <p>Se ha encontrado un ganador. Confirma el resultado o reinicia el tablero para continuar.</p>
-                        </div>
-                    )}
-                   {!currentState.isDetailsConfirmed && (
-                        <div className="mt-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4" role="alert">
-                            <p className="font-bold">Tablero Bloqueado</p>
-                            <p>Debes completar y confirmar los detalles del premio para poder seleccionar números.</p>
-                        </div>
-                    )}
-               </div>
-            )
         }
         
         return (
