@@ -446,9 +446,9 @@ const App = () => {
         return <div className="flex justify-center items-center h-screen text-xl font-semibold">Cargando...</div>;
     }
     
-    const isCurrentUserAdmin = currentState.adminId === currentAdminId;
-    const isGuestViewingSharedRaffle = guestRaffleRef === currentState.raffleRef?.toUpperCase();
-    const shouldShowAsPaid = (currentState.isPaid && isCurrentUserAdmin) || isGuestViewingSharedRaffle;
+    const isCurrentUserAdmin = !!currentState.adminId && currentState.adminId === currentAdminId;
+    const isGuestViewingSharedRaffle = guestRaffleRef != null && guestRaffleRef === currentState.raffleRef?.toUpperCase();
+    const shouldShowAsPaid = currentState.isPaid || isGuestViewingSharedRaffle;
     
     const isRegisterFormValidForSubmit = currentState.name && currentState.phoneNumber && currentState.raffleNumber && !drawnNumbersSet.has(parseInt(currentState.raffleNumber)) && isPaymentConfirmed;
 
@@ -1136,4 +1136,3 @@ const App = () => {
 };
 
 export default App;
-
