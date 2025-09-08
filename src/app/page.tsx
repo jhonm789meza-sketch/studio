@@ -389,7 +389,7 @@ const App = () => {
             async () => {
                 try {
                     await setDoc(doc(db, "raffles", raffleMode), { isPaid: true }, { merge: true });
-                    showNotification('¡Tablero activado! Ahora puedes configurar los detalles del premio.', 'success');
+                    showNotification('¡Tablero activado! Ahora eres el administrador y puedes configurar los detalles del premio.', 'success');
                 } catch (error) {
                     console.error("Error activating board:", error);
                     showNotification("Error al activar el tablero.", "error");
@@ -454,6 +454,9 @@ const App = () => {
         return (
             <>
                 <div className="mb-6">
+                    <div className="p-4 bg-blue-50 border-l-4 border-blue-500 text-blue-800 rounded-lg mb-6">
+                        <p className="font-bold">Eres el administrador de este tablero.</p>
+                    </div>
                     <h2 className="text-2xl font-bold text-gray-800 mb-4">Configuración del Premio</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                        <div>
@@ -787,6 +790,17 @@ const App = () => {
                                     />
                                 </div>
                                 <div>
+                                    <Label htmlFor="phone-input">Celular:</Label>
+                                    <Input
+                                        id="phone-input"
+                                        type="tel"
+                                        value={currentState.phoneNumber}
+                                        onChange={(e) => handleLocalFieldChange('phoneNumber', e.target.value.replace(/\D/g, ''))}
+                                        placeholder="Ej: 3001234567"
+                                        className="w-full mt-1"
+                                    />
+                                </div>
+                                <div>
                                     <Label htmlFor="raffle-number-input">Número de rifa ({raffleMode === 'two-digit' ? '00-99' : '100-999'}):</Label>
                                     <Input
                                         id="raffle-number-input"
@@ -800,17 +814,6 @@ const App = () => {
                                     {currentState.raffleNumber && drawnNumbersSet.has(parseInt(currentState.raffleNumber)) && (
                                         <p className="text-red-500 text-sm mt-1">Este número ya está asignado</p>
                                     )}
-                                </div>
-                                <div>
-                                    <Label htmlFor="phone-input">Celular:</Label>
-                                    <Input
-                                        id="phone-input"
-                                        type="tel"
-                                        value={currentState.phoneNumber}
-                                        onChange={(e) => handleLocalFieldChange('phoneNumber', e.target.value.replace(/\D/g, ''))}
-                                        placeholder="Ej: 3001234567"
-                                        className="w-full mt-1"
-                                    />
                                 </div>
                             </div>
 
@@ -1101,3 +1104,5 @@ const App = () => {
 };
 
 export default App;
+
+    
