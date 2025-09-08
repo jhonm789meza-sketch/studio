@@ -467,7 +467,7 @@ const App = () => {
                         </Button>
                          { !guestRaffleRef && (
                             <Button onClick={handleActivateBoard} size="lg" className="bg-green-500 hover:bg-green-600 text-white font-bold">
-                                Activar mi Rifa
+                                Pagar $10.000
                             </Button>
                          )}
                     </div>
