@@ -70,6 +70,7 @@ const App = () => {
     const [showConfetti, setShowConfetti] = useState(false);
     const [isPaymentConfirmed, setIsPaymentConfirmed] = useState(false);
     const [currentAdminId, setCurrentAdminId] = useState<string | null>(null);
+    const [guestRaffleRef, setGuestRaffleRef] = useState<string | null>(null);
 
 
     const currentState = raffleMode === 'two-digit' ? twoDigitState : threeDigitState;
@@ -314,6 +315,7 @@ const App = () => {
     
     const changeRaffleMode = (mode: RaffleMode) => {
         if (mode === raffleMode) return;
+        setGuestRaffleRef(null);
         setRaffleMode(mode);
         handleTabClick('board'); // Reset to board tab on mode change
         showNotification(`Cambiado a modo de ${mode === 'two-digit' ? '2' : '3'} cifras.`, 'success');
@@ -344,8 +346,6 @@ const App = () => {
         }
     
         if (found) {
-            // Force re-render with the correct state, even though onSnapshot will also fire.
-            // This ensures immediate UI update after searching.
             if(isTwoDigit) {
                 setTwoDigitState({ ...initialRaffleData, ...twoDigitDoc.data() });
             } else {
@@ -354,11 +354,13 @@ const App = () => {
             }
             
             showNotification(`Cargando rifa con referencia: ${adminRefSearch}`, 'success');
+            setGuestRaffleRef(refUpper);
             setIsAdminLoginOpen(false);
             setAdminRefSearch('');
             handleTabClick('board');
         } else {
             showNotification('No se encontró ninguna rifa en juego con esa referencia.', 'error');
+            setGuestRaffleRef(null);
         }
     };
     
@@ -444,9 +446,11 @@ const App = () => {
         return <div className="flex justify-center items-center h-screen text-xl font-semibold">Cargando...</div>;
     }
     
-    const isRegisterFormValidForSubmit = currentState.name && currentState.phoneNumber && currentState.raffleNumber && !drawnNumbersSet.has(parseInt(currentState.raffleNumber)) && isPaymentConfirmed;
     const isCurrentUserAdmin = currentState.adminId === currentAdminId;
-    const shouldShowAsPaid = currentState.isPaid && isCurrentUserAdmin;
+    const isGuestViewingSharedRaffle = guestRaffleRef === currentState.raffleRef?.toUpperCase();
+    const shouldShowAsPaid = (currentState.isPaid && isCurrentUserAdmin) || isGuestViewingSharedRaffle;
+    
+    const isRegisterFormValidForSubmit = currentState.name && currentState.phoneNumber && currentState.raffleNumber && !drawnNumbersSet.has(parseInt(currentState.raffleNumber)) && isPaymentConfirmed;
 
     const renderBoardContent = () => {
         if (!shouldShowAsPaid) {
@@ -472,9 +476,11 @@ const App = () => {
         return (
             <>
                 <div className="mb-6">
-                    <div className="p-4 bg-blue-50 border-l-4 border-blue-500 text-blue-800 rounded-lg mb-6">
-                        <p className="font-bold">Eres el administrador de este tablero.</p>
-                    </div>
+                    {isCurrentUserAdmin && (
+                      <div className="p-4 bg-blue-50 border-l-4 border-blue-500 text-blue-800 rounded-lg mb-6">
+                          <p className="font-bold">Eres el administrador de este tablero.</p>
+                      </div>
+                    )}
                     <h2 className="text-2xl font-bold text-gray-800 mb-4">Configuración del Premio</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                        <div>
@@ -486,7 +492,7 @@ const App = () => {
                                onChange={(e) => handleLocalFieldChange('organizerName', e.target.value)}
                                onBlur={(e) => handleFieldChange('organizerName', e.target.value)}
                                placeholder="Nombre del organizador"
-                               disabled={currentState.isDetailsConfirmed}
+                               disabled={currentState.isDetailsConfirmed || !isCurrentUserAdmin}
                                className="w-full mt-1"
                            />
                        </div>
@@ -499,7 +505,7 @@ const App = () => {
                                onChange={(e) => handleLocalFieldChange('prize', e.target.value)}
                                onBlur={(e) => handleFieldChange('prize', e.target.value)}
                                placeholder="Ej: Carro o una bicicleta"
-                               disabled={currentState.isDetailsConfirmed}
+                               disabled={currentState.isDetailsConfirmed || !isCurrentUserAdmin}
                                className="w-full mt-1"
                            />
                        </div>
@@ -512,7 +518,7 @@ const App = () => {
                                onChange={(e) => handleLocalFieldChange('value', e.target.value.replace(/[^\d]/g, ''))}
                                onBlur={(e) => handleFieldChange('value', e.target.value.replace(/[^\d]/g, ''))}
                                placeholder="Ej: 5000"
-                               disabled={currentState.isDetailsConfirmed}
+                               disabled={currentState.isDetailsConfirmed || !isCurrentUserAdmin}
                                className="w-full mt-1"
                            />
                        </div>
@@ -524,7 +530,7 @@ const App = () => {
                                value={currentState.gameDate}
                                onChange={(e) => handleLocalFieldChange('gameDate', e.target.value)}
                                onBlur={(e) => handleFieldChange('gameDate', e.target.value)}
-                               disabled={currentState.isDetailsConfirmed}
+                               disabled={currentState.isDetailsConfirmed || !isCurrentUserAdmin}
                                className="w-full mt-1"
                            />
                        </div>
@@ -537,7 +543,7 @@ const App = () => {
                                    const value = e.target.value;
                                    handleFieldChange('lottery', value);
                                }}
-                               disabled={currentState.isDetailsConfirmed}
+                               disabled={currentState.isDetailsConfirmed || !isCurrentUserAdmin}
                                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100 disabled:cursor-not-allowed mt-1"
                            >
                                <option value="">Selecciona una lotería</option>
@@ -559,7 +565,7 @@ const App = () => {
                                 onChange={(e) => handleLocalFieldChange('nequiAccountNumber', e.target.value)}
                                 onBlur={(e) => handleFieldChange('nequiAccountNumber', e.target.value)}
                                 placeholder="Ej: 3001234567"
-                                disabled={currentState.isDetailsConfirmed}
+                                disabled={currentState.isDetailsConfirmed || !isCurrentUserAdmin}
                                 className="w-full mt-1"
                             />
                         </div>
@@ -574,12 +580,12 @@ const App = () => {
                                     onChange={(e) => handleLocalFieldChange('customLottery', e.target.value)}
                                     onBlur={(e) => handleFieldChange('customLottery', e.target.value)}
                                     placeholder="Nombre de la lotería"
-                                    disabled={currentState.isDetailsConfirmed}
+                                    disabled={currentState.isDetailsConfirmed || !isCurrentUserAdmin}
                                     className="w-full mt-1"
                                 />
                             </div>
                         )}
-                       {!currentState.isDetailsConfirmed && (
+                       {isCurrentUserAdmin && !currentState.isDetailsConfirmed && (
                            <div className="md:col-span-2">
                                <Button
                                    onClick={handleConfirmDetails}
@@ -591,65 +597,67 @@ const App = () => {
                        )}
                     </div>
                 </div>
-               <div className="mb-6 p-4 border rounded-lg bg-gray-50">
-                   <h2 className="text-2xl font-bold text-gray-800 mb-4">Sorteo</h2>
-                    {currentState.winner && (
-                       <div className="mb-4 p-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 rounded-lg">
-                           {currentState.winner.isHouse ? (
-                               <p className="font-bold text-lg flex items-center"><House className="mr-2"/>¡El premio queda en casa!</p>
-                           ) : (
-                               <p className="font-bold text-lg flex items-center"><Award className="mr-2"/>¡Tenemos un ganador!</p>
-                           )}
-                           <p><strong>Número:</strong> {currentState.winner.raffleNumber}</p>
-                           {!currentState.winner.isHouse && (
-                            <p><strong>Nombre:</strong> {currentState.winner.name}</p>
-                           )}
-                       </div>
-                   )}
-                   <div className="flex flex-wrap gap-3 items-center">
-                       {!currentState.isWinnerConfirmed && (
-                           <>
-                               <div className="flex items-center gap-2">
-                                   <Label htmlFor="manual-winner-input" className="sr-only">Número Ganador</Label>
-                                   <Input
-                                       id="manual-winner-input"
-                                       type="text"
-                                       placeholder={`Número (${numberLength} cifras)`}
-                                       value={currentState.manualWinnerNumber}
-                                       onChange={(e) => handleLocalFieldChange('manualWinnerNumber', e.target.value.replace(/\D/g, ''))}
-                                       maxLength={numberLength}
-                                       disabled={currentState.isWinnerConfirmed || !!currentState.winner}
-                                       className="w-36"
-                                   />
-                                   <Button
-                                       onClick={handleDrawWinner}
-                                       disabled={currentState.isWinnerConfirmed || !!currentState.winner}
-                                       className="bg-yellow-500 text-white font-medium rounded-lg hover:bg-yellow-600 transition-colors disabled:bg-gray-300"
-                                   >
-                                       Buscar Ganador
-                                   </Button>
-                               </div>
-                           </>
-                       )}
-                       {currentState.winner && !currentState.isWinnerConfirmed && (
-                           <Button
-                               onClick={handleConfirmWinner}
-                               className="bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 transition-colors"
-                           >
-                               Confirmar Resultado
-                           </Button>
-                       )}
-                       <Button
-                           onClick={resetBoard}
-                           className="bg-red-500 text-white font-medium rounded-lg hover:bg-red-600 transition-colors"
-                       >
-                           Reiniciar Tablero
-                       </Button>
-                   </div>
-                   {currentState.isWinnerConfirmed && (
-                       <p className="mt-4 text-green-600 font-semibold">El resultado ha sido confirmado y el tablero está cerrado.</p>
-                   )}
-               </div>
+               {isCurrentUserAdmin && (
+                 <div className="mb-6 p-4 border rounded-lg bg-gray-50">
+                     <h2 className="text-2xl font-bold text-gray-800 mb-4">Sorteo</h2>
+                      {currentState.winner && (
+                         <div className="mb-4 p-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 rounded-lg">
+                             {currentState.winner.isHouse ? (
+                                 <p className="font-bold text-lg flex items-center"><House className="mr-2"/>¡El premio queda en casa!</p>
+                             ) : (
+                                 <p className="font-bold text-lg flex items-center"><Award className="mr-2"/>¡Tenemos un ganador!</p>
+                             )}
+                             <p><strong>Número:</strong> {currentState.winner.raffleNumber}</p>
+                             {!currentState.winner.isHouse && (
+                              <p><strong>Nombre:</strong> {currentState.winner.name}</p>
+                             )}
+                         </div>
+                     )}
+                     <div className="flex flex-wrap gap-3 items-center">
+                         {!currentState.isWinnerConfirmed && (
+                             <>
+                                 <div className="flex items-center gap-2">
+                                     <Label htmlFor="manual-winner-input" className="sr-only">Número Ganador</Label>
+                                     <Input
+                                         id="manual-winner-input"
+                                         type="text"
+                                         placeholder={`Número (${numberLength} cifras)`}
+                                         value={currentState.manualWinnerNumber}
+                                         onChange={(e) => handleLocalFieldChange('manualWinnerNumber', e.target.value.replace(/\D/g, ''))}
+                                         maxLength={numberLength}
+                                         disabled={currentState.isWinnerConfirmed || !!currentState.winner}
+                                         className="w-36"
+                                     />
+                                     <Button
+                                         onClick={handleDrawWinner}
+                                         disabled={currentState.isWinnerConfirmed || !!currentState.winner}
+                                         className="bg-yellow-500 text-white font-medium rounded-lg hover:bg-yellow-600 transition-colors disabled:bg-gray-300"
+                                     >
+                                         Buscar Ganador
+                                     </Button>
+                                 </div>
+                             </>
+                         )}
+                         {currentState.winner && !currentState.isWinnerConfirmed && (
+                             <Button
+                                 onClick={handleConfirmWinner}
+                                 className="bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 transition-colors"
+                             >
+                                 Confirmar Resultado
+                             </Button>
+                         )}
+                         <Button
+                             onClick={resetBoard}
+                             className="bg-red-500 text-white font-medium rounded-lg hover:bg-red-600 transition-colors"
+                         >
+                             Reiniciar Tablero
+                         </Button>
+                     </div>
+                     {currentState.isWinnerConfirmed && (
+                         <p className="mt-4 text-green-600 font-semibold">El resultado ha sido confirmado y el tablero está cerrado.</p>
+                     )}
+                 </div>
+               )}
 
                <div>
                    <div className="flex justify-between items-center mb-4">
@@ -751,10 +759,12 @@ const App = () => {
                                 <DropdownMenuItem onSelect={() => setIsAdminLoginOpen(true)}>
                                     Buscar por Referencia
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onSelect={() => setIsShareDialogOpen(true)}>
-                                    <Share2 className="mr-2 h-4 w-4" />
-                                    <span>Compartir</span>
-                                </DropdownMenuItem>
+                                {shouldShowAsPaid && (
+                                    <DropdownMenuItem onSelect={() => setIsShareDialogOpen(true)}>
+                                        <Share2 className="mr-2 h-4 w-4" />
+                                        <span>Compartir</span>
+                                    </DropdownMenuItem>
+                                )}
                             </DropdownMenuContent>
                         </DropdownMenu>
                     </div>
@@ -777,12 +787,14 @@ const App = () => {
                     <button 
                         className={`px-6 py-3 font-medium text-lg ${activeTab === 'register' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
                         onClick={() => handleTabClick('register')}
+                        disabled={!shouldShowAsPaid}
                     >
                         Registrar
                     </button>
                     <button 
                         className={`px-6 py-3 font-medium text-lg ${activeTab === 'participants' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
                         onClick={() => handleTabClick('participants')}
+                        disabled={!shouldShowAsPaid}
                     >
                         Participantes
                     </button>
@@ -794,7 +806,7 @@ const App = () => {
                     </div>
                     <div className={activeTab === 'register' ? 'tab-content active' : 'tab-content'}>
                         <h2 className="text-2xl font-bold text-gray-800 mb-4">Registrar Participante</h2>
-                        <fieldset disabled={currentState.isWinnerConfirmed || !currentState.isDetailsConfirmed || !currentState.isPaid} className="disabled:opacity-50 space-y-4">
+                        <fieldset disabled={currentState.isWinnerConfirmed || !currentState.isDetailsConfirmed || !shouldShowAsPaid} className="disabled:opacity-50 space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div>
                                     <Label htmlFor="name-input">Nombre completo:</Label>
@@ -871,10 +883,10 @@ const App = () => {
 
                         </fieldset>
 
-                        {(!currentState.isDetailsConfirmed || !currentState.isPaid) && (
+                        {(!currentState.isDetailsConfirmed || !shouldShowAsPaid) && (
                                 <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-6" role="alert">
                                 <p className="font-bold">Aviso</p>
-                                <p>Debes activar y confirmar los detalles del premio en la pestaña "Tablero" para poder registrar participantes.</p>
+                                <p>Debes activar o buscar una rifa y confirmar los detalles del premio en la pestaña "Tablero" para poder registrar participantes.</p>
                             </div>
                         )}
 
@@ -890,10 +902,10 @@ const App = () => {
                                 <h2 className="text-2xl font-bold text-gray-800">Participantes Registrados</h2>
                         </div>
 
-                        {!currentState.isDetailsConfirmed || !currentState.isPaid ? (
+                        {!shouldShowAsPaid ? (
                             <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-6" role="alert">
                                 <p className="font-bold">Aviso</p>
-                                <p>Debes activar y confirmar los detalles del premio en la pestaña "Tablero" para poder ver los participantes.</p>
+                                <p>Debes activar o buscar una rifa en la pestaña "Tablero" para poder ver los participantes.</p>
                             </div>
                         ) : currentState.participants.length > 0 ? (
                             <div className="overflow-x-auto">
