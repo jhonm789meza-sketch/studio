@@ -90,16 +90,12 @@ const App = () => {
             localStorage.setItem('rifaAdminId', adminId);
         }
         setCurrentAdminId(adminId);
-
+    
         setLoading(true);
         const unsubTwoDigit = onSnapshot(doc(db, "raffles", "two-digit"), (docSnapshot) => {
             if (docSnapshot.exists()) {
                 const data = docSnapshot.data();
-                if (data.adminId !== adminId) {
-                    setTwoDigitState({ ...initialRaffleData, ...data, isPaid: false });
-                } else {
-                    setTwoDigitState({ ...initialRaffleData, ...data });
-                }
+                setTwoDigitState({ ...initialRaffleData, ...data });
             } else {
                 setDoc(doc(db, "raffles", "two-digit"), initialRaffleData, { merge: true });
             }
@@ -108,18 +104,14 @@ const App = () => {
         const unsubThreeDigit = onSnapshot(doc(db, "raffles", "three-digit"), (docSnapshot) => {
              if (docSnapshot.exists()) {
                 const data = docSnapshot.data();
-                if (data.adminId !== adminId) {
-                    setThreeDigitState({ ...initialRaffleData, ...data, isPaid: false });
-                } else {
-                    setThreeDigitState({ ...initialRaffleData, ...data });
-                }
+                setThreeDigitState({ ...initialRaffleData, ...data });
             } else {
                 setDoc(doc(db, "raffles", "three-digit"), initialRaffleData, { merge: true });
             }
              setLoading(false);
         });
-
-
+    
+    
         return () => {
             unsubTwoDigit();
             unsubThreeDigit();
@@ -464,7 +456,7 @@ const App = () => {
 
 
     const renderBoardContent = () => {
-        if (!currentState.isPaid || !isCurrentUserAdmin) {
+        if (!currentState.isPaid) {
             return (
                 <div className="text-center p-10 bg-gray-50 rounded-lg border-2 border-dashed">
                     <Lock className="mx-auto h-12 w-12 text-gray-400 mb-4" />
@@ -478,6 +470,57 @@ const App = () => {
                 </div>
             )
         }
+        
+        if (!isCurrentUserAdmin) {
+            return (
+                <div>
+                   <div className="flex justify-between items-center mb-4">
+                       <h2 className="text-2xl font-bold text-gray-800 flex items-center">
+                           Tablero de Números ({raffleMode === 'two-digit' ? '00-99' : '100-999'})
+                           {currentState.isDetailsConfirmed && currentState.raffleRef && (
+                             <span className="ml-2 text-base font-normal text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                                 Ref: {currentState.raffleRef}
+                             </span>
+                           )}
+                       </h2>
+                   </div>
+                   <div className={`grid gap-2 ${raffleMode === 'two-digit' ? 'grid-cols-10' : 'grid-cols-10 md:grid-cols-20 lg:grid-cols-25'}`}>
+                       {allNumbers.map((number) => (
+                           <div
+                               key={number}
+                               onClick={() => toggleNumber(number)}
+                               className={`
+                                   number-cell text-center py-2 rounded-lg transition-all text-sm
+                                   ${currentState.isWinnerConfirmed || !currentState.isDetailsConfirmed || !!currentState.winner ? 'cursor-not-allowed' : 'cursor-pointer'}
+                                   ${drawnNumbersSet.has(number)
+                                       ? 'bg-red-600 text-white shadow-lg transform scale-105 cursor-not-allowed'
+                                       : !currentState.isDetailsConfirmed || !!currentState.winner
+                                       ? 'bg-gray-200 text-gray-500'
+                                       : 'bg-green-200 text-green-800 hover:bg-green-300 hover:shadow-md'
+                                   }
+                                   ${currentState.winner?.raffleNumber === String(number).padStart(numberLength, '0') ? 'ring-4 ring-yellow-400 animate-pulse' : ''}
+                               `}
+                           >
+                               {String(number).padStart(numberLength, '0')}
+                           </div>
+                       ))}
+                   </div>
+                   {!!currentState.winner && !currentState.isWinnerConfirmed && (
+                        <div className="mt-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4" role="alert">
+                            <p className="font-bold">Tablero Bloqueado</p>
+                            <p>Se ha encontrado un ganador. Confirma el resultado o reinicia el tablero para continuar.</p>
+                        </div>
+                    )}
+                   {!currentState.isDetailsConfirmed && (
+                        <div className="mt-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4" role="alert">
+                            <p className="font-bold">Tablero Bloqueado</p>
+                            <p>Debes completar y confirmar los detalles del premio para poder seleccionar números.</p>
+                        </div>
+                    )}
+               </div>
+            )
+        }
+        
         return (
             <>
                 <div className="mb-6">
@@ -880,7 +923,7 @@ const App = () => {
 
                         </fieldset>
 
-                        {(!currentState.isDetailsConfirmed || (!currentState.isPaid && !isCurrentUserAdmin)) && (
+                        {(!currentState.isDetailsConfirmed || !currentState.isPaid) && (
                                 <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-6" role="alert">
                                 <p className="font-bold">Aviso</p>
                                 <p>Debes activar y confirmar los detalles del premio en la pestaña "Tablero" para poder registrar participantes.</p>
@@ -899,7 +942,7 @@ const App = () => {
                                 <h2 className="text-2xl font-bold text-gray-800">Participantes Registrados</h2>
                         </div>
 
-                        {!currentState.isDetailsConfirmed || (!currentState.isPaid && !isCurrentUserAdmin) ? (
+                        {!currentState.isDetailsConfirmed || !currentState.isPaid ? (
                             <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-6" role="alert">
                                 <p className="font-bold">Aviso</p>
                                 <p>Debes activar y confirmar los detalles del premio en la pestaña "Tablero" para poder ver los participantes.</p>
