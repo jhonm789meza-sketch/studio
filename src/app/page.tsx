@@ -64,7 +64,7 @@ const App = () => {
     const [threeDigitState, setThreeDigitState] = useState<any>(initialRaffleData);
     
     const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
-    const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
+    const [isShareDialogOpen, setIsShareDialogOpen]    = useState(false);
     const [adminRefSearch, setAdminRefSearch] = useState('');
     const [showConfetti, setShowConfetti] = useState(false);
     const [isPaymentConfirmed, setIsPaymentConfirmed] = useState(false);
@@ -92,31 +92,33 @@ const App = () => {
         setCurrentAdminId(adminId);
     
         setLoading(true);
+    
         const unsubTwoDigit = onSnapshot(doc(db, "raffles", "two-digit"), (docSnapshot) => {
             if (docSnapshot.exists()) {
-                const data = docSnapshot.data();
-                setTwoDigitState({ ...initialRaffleData, ...data });
+                setTwoDigitState({ ...initialRaffleData, ...docSnapshot.data() });
             } else {
+                setTwoDigitState(initialRaffleData);
                 setDoc(doc(db, "raffles", "two-digit"), initialRaffleData, { merge: true });
             }
             setLoading(false);
         });
+    
         const unsubThreeDigit = onSnapshot(doc(db, "raffles", "three-digit"), (docSnapshot) => {
              if (docSnapshot.exists()) {
-                const data = docSnapshot.data();
-                setThreeDigitState({ ...initialRaffleData, ...data });
+                setThreeDigitState({ ...initialRaffleData, ...docSnapshot.data() });
             } else {
+                setThreeDigitState(initialRaffleData);
                 setDoc(doc(db, "raffles", "three-digit"), initialRaffleData, { merge: true });
             }
              setLoading(false);
         });
-    
     
         return () => {
             unsubTwoDigit();
             unsubThreeDigit();
         };
     }, []);
+
 
 
     const showNotification = (message: string, type = 'info') => {
@@ -456,8 +458,28 @@ const App = () => {
 
 
     const renderBoardContent = () => {
-        if (!currentState.isPaid) {
+        if (!currentState.isPaid && !isCurrentUserAdmin) {
             return (
+                <div className="text-center p-10 bg-gray-50 rounded-lg border-2 border-dashed">
+                    <Lock className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                    <h2 className="text-2xl font-bold text-gray-800 mb-2">Tablero Bloqueado</h2>
+                    <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                        Para ver el tablero de la rifa de {raffleMode === 'two-digit' ? '2' : '3'} cifras, busca el juego por su referencia. Si quieres crear tu propia rifa, actívala.
+                    </p>
+                    <div className="flex justify-center gap-4">
+                        <Button onClick={() => setIsAdminLoginOpen(true)} size="lg">
+                            Buscar por Referencia
+                        </Button>
+                        <Button onClick={handleActivateBoard} size="lg" className="bg-green-500 hover:bg-green-600 text-white font-bold">
+                            Activar mi Rifa
+                        </Button>
+                    </div>
+                </div>
+            );
+        }
+
+        if (!currentState.isPaid && isCurrentUserAdmin) {
+             return (
                 <div className="text-center p-10 bg-gray-50 rounded-lg border-2 border-dashed">
                     <Lock className="mx-auto h-12 w-12 text-gray-400 mb-4" />
                     <h2 className="text-2xl font-bold text-gray-800 mb-2">Tablero Bloqueado</h2>
@@ -846,7 +868,7 @@ const App = () => {
                     </div>
                     <div className={activeTab === 'register' ? 'tab-content active' : 'tab-content'}>
                         <h2 className="text-2xl font-bold text-gray-800 mb-4">Registrar Participante</h2>
-                        <fieldset disabled={currentState.isWinnerConfirmed || !currentState.isDetailsConfirmed || (!currentState.isPaid && !isCurrentUserAdmin)} className="disabled:opacity-50 space-y-4">
+                        <fieldset disabled={currentState.isWinnerConfirmed || !currentState.isDetailsConfirmed || !currentState.isPaid} className="disabled:opacity-50 space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div>
                                     <Label htmlFor="name-input">Nombre completo:</Label>
