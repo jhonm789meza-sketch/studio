@@ -8,7 +8,7 @@ import { db } from '@/lib/firebase';
 import { doc, onSnapshot, setDoc, getDoc, deleteDoc } from 'firebase/firestore';
 import Image from 'next/image';
 
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuCheckboxItem } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuCheckboxItem } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Menu, Award, Lock, House, Share2, MessageCircle, Copy } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
