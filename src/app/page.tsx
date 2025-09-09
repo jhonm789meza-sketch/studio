@@ -670,11 +670,6 @@ const App = () => {
                    <div className="flex justify-between items-center mb-4">
                        <h2 className="text-2xl font-bold text-gray-800 flex items-center">
                            Tablero de Números ({raffleMode === 'two-digit' ? '00-99' : '100-999'})
-                           {currentState.isDetailsConfirmed && currentState.raffleRef && (
-                             <span className="ml-2 text-base font-normal text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
-                                 Ref: {currentState.raffleRef}
-                             </span>
-                           )}
                        </h2>
                    </div>
                    <div className={`grid gap-2 ${raffleMode === 'two-digit' ? 'grid-cols-10' : 'grid-cols-10 md:grid-cols-20 lg:grid-cols-25'}`}>
@@ -777,9 +772,6 @@ const App = () => {
                     </div>
                     <div className="text-center">
                         <h1 className="text-4xl font-bold">Tablero de Rifa</h1>
-                        {currentState.isDetailsConfirmed && currentState.raffleRef && (
-                           <p className="text-lg opacity-90">Referencia del Juego: {currentState.raffleRef}</p>
-                        )}
                     </div>
                     <div></div>
                 </div>
