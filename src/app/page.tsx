@@ -488,6 +488,19 @@ const App = () => {
                           <p className="font-bold">Eres el administrador de este tablero.</p>
                       </div>
                     )}
+                    {currentState.winner && (
+                        <div className="mb-6 p-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 rounded-lg">
+                            {currentState.winner.isHouse ? (
+                                <p className="font-bold text-lg flex items-center"><House className="mr-2"/>¡El premio queda en casa!</p>
+                            ) : (
+                                <p className="font-bold text-lg flex items-center"><Award className="mr-2"/>¡Tenemos un ganador!</p>
+                            )}
+                            <p><strong>Número:</strong> {currentState.winner.raffleNumber}</p>
+                            {!currentState.winner.isHouse && (
+                             <p><strong>Nombre:</strong> {currentState.winner.name}</p>
+                            )}
+                        </div>
+                    )}
                     {currentState.isDetailsConfirmed && currentState.raffleRef && (
                         <div className="mb-4 text-center">
                             <p className="text-sm text-gray-500">Referencia del Juego</p>
@@ -613,19 +626,6 @@ const App = () => {
                {isCurrentUserAdmin && (
                  <div className="mb-6 p-4 border rounded-lg bg-gray-50">
                      <h2 className="text-2xl font-bold text-gray-800 mb-4">Sorteo</h2>
-                      {currentState.winner && (
-                         <div className="mb-4 p-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 rounded-lg">
-                             {currentState.winner.isHouse ? (
-                                 <p className="font-bold text-lg flex items-center"><House className="mr-2"/>¡El premio queda en casa!</p>
-                             ) : (
-                                 <p className="font-bold text-lg flex items-center"><Award className="mr-2"/>¡Tenemos un ganador!</p>
-                             )}
-                             <p><strong>Número:</strong> {currentState.winner.raffleNumber}</p>
-                             {!currentState.winner.isHouse && (
-                              <p><strong>Nombre:</strong> {currentState.winner.name}</p>
-                             )}
-                         </div>
-                     )}
                      <div className="flex flex-wrap gap-3 items-center">
                          {!currentState.isWinnerConfirmed && (
                              <>
