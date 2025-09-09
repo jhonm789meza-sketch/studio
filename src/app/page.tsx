@@ -8,7 +8,7 @@ import { db } from '@/lib/firebase';
 import { doc, onSnapshot, setDoc, getDoc, deleteDoc } from 'firebase/firestore';
 import Image from 'next/image';
 
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuCheckboxItem } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuCheckboxItem } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Menu, Award, Lock, House, Share2, MessageCircle, Copy } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
@@ -448,7 +448,7 @@ const App = () => {
     
     const isCurrentUserAdmin = !!currentState.adminId && currentState.adminId === currentAdminId;
     const isGuestViewingSharedRaffle = guestRaffleRef != null && guestRaffleRef === currentState.raffleRef?.toUpperCase();
-    const shouldShowAsPaid = currentState.isPaid || isGuestViewingSharedRaffle;
+    const shouldShowAsPaid = currentState.isPaid && (isCurrentUserAdmin || isGuestViewingSharedRaffle);
     
     const isRegisterFormValidForSubmit = currentState.name && currentState.phoneNumber && currentState.raffleNumber && !drawnNumbersSet.has(parseInt(currentState.raffleNumber)) && isPaymentConfirmed;
 
@@ -1136,3 +1136,5 @@ const App = () => {
 };
 
 export default App;
+
+    
