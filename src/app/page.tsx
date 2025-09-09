@@ -472,9 +472,9 @@ const App = () => {
                         <Button onClick={() => setIsAdminLoginOpen(true)} size="lg">
                             Buscar por Referencia
                         </Button>
-                        <Button onClick={handleActivateBoard} size="lg" className="bg-green-500 hover:bg-green-600 text-white font-bold">
-                            Pagar $10.000
-                        </Button>
+                         <Button onClick={handleActivateBoard} size="lg" className="bg-green-500 hover:bg-green-600 text-white font-bold">
+                             Pagar $10.000
+                         </Button>
                     </div>
                 </div>
             );
@@ -487,6 +487,12 @@ const App = () => {
                       <div className="p-4 bg-blue-50 border-l-4 border-blue-500 text-blue-800 rounded-lg mb-6">
                           <p className="font-bold">Eres el administrador de este tablero.</p>
                       </div>
+                    )}
+                    {currentState.isDetailsConfirmed && currentState.raffleRef && (
+                        <div className="mb-4 text-center">
+                            <p className="text-sm text-gray-500">Referencia del Juego</p>
+                            <p className="text-2xl font-bold text-gray-800 tracking-wider">{currentState.raffleRef}</p>
+                        </div>
                     )}
                     <h2 className="text-2xl font-bold text-gray-800 mb-4">Configuración del Premio</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
