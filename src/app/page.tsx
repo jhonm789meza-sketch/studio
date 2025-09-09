@@ -399,6 +399,7 @@ const App = () => {
             `Estás a punto de pagar $10.000 para activar este tablero de ${raffleMode === 'two-digit' ? '2' : '3'} cifras. ¿Continuar?`,
             async () => {
                 try {
+                    // Critical: Save the current user's unique ID as the admin for this raffle mode
                     await setDoc(doc(db, "raffles", raffleMode), { isPaid: true, adminId: currentAdminId }, { merge: true });
                     showNotification('¡Tablero activado! Ahora eres el administrador y puedes configurar los detalles del premio.', 'success');
                 } catch (error) {
@@ -445,7 +446,10 @@ const App = () => {
         return <div className="flex justify-center items-center h-screen text-xl font-semibold">Cargando...</div>;
     }
     
+    // This is the single source of truth for determining admin access.
+    // It strictly compares the adminId from the database with the one in the user's local storage.
     const isCurrentUserAdmin = !!currentState.adminId && currentState.adminId === currentAdminId;
+    
     const isGuestViewingSharedRaffle = guestRaffleRef != null && guestRaffleRef === currentState.raffleRef?.toUpperCase();
     const shouldShowAsPaid = currentState.isPaid && (isCurrentUserAdmin || isGuestViewingSharedRaffle);
     
