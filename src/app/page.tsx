@@ -395,11 +395,15 @@ const App = () => {
     };
 
     const handleActivateBoard = async () => {
+        if (currentState.adminId) {
+            showNotification(`Este tablero ya tiene un administrador. No puedes sobrescribir una rifa existente.`, 'error');
+            return;
+        }
+
         showConfirmationDialog(
             `Estás a punto de pagar $10.000 para activar este tablero de ${raffleMode === 'two-digit' ? '2' : '3'} cifras. ¿Continuar?`,
             async () => {
                 try {
-                    // Critical: Save the current user's unique ID as the admin for this raffle mode
                     await setDoc(doc(db, "raffles", raffleMode), { isPaid: true, adminId: currentAdminId }, { merge: true });
                     showNotification('¡Tablero activado! Ahora eres el administrador y puedes configurar los detalles del premio.', 'success');
                 } catch (error) {
@@ -468,11 +472,9 @@ const App = () => {
                         <Button onClick={() => setIsAdminLoginOpen(true)} size="lg">
                             Buscar por Referencia
                         </Button>
-                         { !guestRaffleRef && (
-                            <Button onClick={handleActivateBoard} size="lg" className="bg-green-500 hover:bg-green-600 text-white font-bold">
-                                Pagar $10.000
-                            </Button>
-                         )}
+                        <Button onClick={handleActivateBoard} size="lg" className="bg-green-500 hover:bg-green-600 text-white font-bold">
+                            Pagar $10.000
+                        </Button>
                     </div>
                 </div>
             );
