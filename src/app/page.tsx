@@ -157,7 +157,13 @@ const App = () => {
         setCurrentState((s: any) => ({ ...s, [field]: value }));
     };
 
+    const isCurrentUserAdmin = !!currentState.adminId && currentState.adminId === currentAdminId;
+
     const toggleNumber = (number: number) => {
+        if (isCurrentUserAdmin) {
+            showNotification('El administrador no puede seleccionar números.', 'info');
+            return;
+        }
         if (!currentState.isDetailsConfirmed) {
             showNotification('Primero debes confirmar los detalles del premio para seleccionar un número.', 'info');
             return;
@@ -452,7 +458,6 @@ const App = () => {
     
     // This is the single source of truth for determining admin access.
     // It strictly compares the adminId from the database with the one in the user's local storage.
-    const isCurrentUserAdmin = !!currentState.adminId && currentState.adminId === currentAdminId;
     
     const isGuestViewingSharedRaffle = guestRaffleRef != null && guestRaffleRef === currentState.raffleRef?.toUpperCase();
     const shouldShowAsPaid = currentState.isPaid && (isCurrentUserAdmin || isGuestViewingSharedRaffle);
