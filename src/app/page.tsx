@@ -512,13 +512,14 @@ const App = () => {
                             )}
                         </div>
                     )}
+                    
+                    <h2 className="text-2xl font-bold text-gray-800 mb-4">Configuración del Premio</h2>
                     {currentState.isDetailsConfirmed && currentState.raffleRef && (
-                        <div className="mb-4 text-center">
+                        <div className="mb-4">
                             <p className="text-sm text-gray-500">Referencia del Juego</p>
                             <p className="text-2xl font-bold text-gray-800 tracking-wider">{currentState.raffleRef}</p>
                         </div>
                     )}
-                    <h2 className="text-2xl font-bold text-gray-800 mb-4">Configuración del Premio</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                        <div>
                            <Label htmlFor="organizer-name-input">Quien Organiza:</Label>
@@ -936,6 +937,9 @@ const App = () => {
                                     <thead className="bg-gray-50">
                                         <tr>
                                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                #
+                                            </th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                 Nombre
                                             </th>
                                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -947,8 +951,11 @@ const App = () => {
                                         </tr>
                                     </thead>
                                     <tbody className="bg-white divide-y divide-gray-200">
-                                        {currentState.participants.map((p: any) => (
+                                        {currentState.participants.map((p: any, index: number) => (
                                             <tr key={p.id}>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    {index + 1}
+                                                </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                                     {p.name}
                                                 </td>
