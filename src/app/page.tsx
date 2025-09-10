@@ -822,7 +822,7 @@ const App = () => {
                     </div>
                     <div className={activeTab === 'register' ? 'tab-content active' : 'tab-content'}>
                         <h2 className="text-2xl font-bold text-gray-800 mb-4">Registrar Participante</h2>
-                        <fieldset disabled={currentState.isWinnerConfirmed || !currentState.isDetailsConfirmed || !shouldShowAsPaid} className="disabled:opacity-50 space-y-4">
+                        <fieldset disabled={isCurrentUserAdmin || currentState.isWinnerConfirmed || !currentState.isDetailsConfirmed || !shouldShowAsPaid} className="disabled:opacity-50 space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div>
                                     <Label htmlFor="name-input">Nombre completo:</Label>
@@ -899,7 +899,14 @@ const App = () => {
 
                         </fieldset>
 
-                        {(!currentState.isDetailsConfirmed || !shouldShowAsPaid) && (
+                        {isCurrentUserAdmin && (
+                            <div className="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mt-6" role="alert">
+                                <p className="font-bold">Modo Administrador</p>
+                                <p>Como administrador, no puedes registrar participantes. Esta tarea deben realizarla los propios jugadores.</p>
+                            </div>
+                        )}
+
+                        {(!currentState.isDetailsConfirmed || !shouldShowAsPaid) && !isCurrentUserAdmin && (
                                 <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-6" role="alert">
                                 <p className="font-bold">Aviso</p>
                                 <p>Debes activar o buscar una rifa y confirmar los detalles del premio en la pestaña "Tablero" para poder registrar participantes.</p>
