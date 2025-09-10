@@ -256,7 +256,8 @@ const App = () => {
             showNotification('Este número ya está asignado', 'warning');
             return;
         }
-
+        
+        const participantName = currentState.name;
         const formattedRaffleNumber = String(num).padStart(numberLength, '0');
 
         const newParticipant = {
@@ -299,7 +300,12 @@ const App = () => {
             raffleNumber: '',
         }));
         setIsPaymentConfirmed(false);
-        showNotification('Tiquete generado correctamente', 'success');
+
+        if (isCurrentUserAdmin) {
+            showNotification(`¡Nuevo pago recibido! Se ha registrado el tiquete para ${participantName}.`, 'success');
+        } else {
+            showNotification('Tiquete generado correctamente', 'success');
+        }
     };
 
     const handleDownloadTicket = () => {
