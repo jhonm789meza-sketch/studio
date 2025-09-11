@@ -9,7 +9,7 @@ import Image from 'next/image';
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuCheckboxItem } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House, Share2, MessageCircle, Copy } from 'lucide-react';
+import { Menu, Award, Lock, House, Share2, Copy } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -782,20 +782,10 @@ const App = () => {
                                     Buscar por Referencia
                                 </DropdownMenuItem>
                                 {currentState.raffleRef && (
-                                  <>
                                     <DropdownMenuItem onSelect={() => setIsShareDialogOpen(true)}>
                                         <Share2 className="mr-2 h-4 w-4" />
                                         <span>Compartir</span>
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem onSelect={() => {
-                                      const phone = currentState.nequiAccountNumber;
-                                      const message = `Hola ${currentState.organizerName}, estoy interesado en la rifa '${currentState.prize}'.`;
-                                      window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
-                                    }}>
-                                      <MessageCircle className="mr-2 h-4 w-4" />
-                                      <span>Chatear con el Organizador</span>
-                                    </DropdownMenuItem>
-                                  </>
                                 )}
                             </DropdownMenuContent>
                         </DropdownMenu>
