@@ -781,7 +781,7 @@ const App = () => {
                                 <DropdownMenuItem onSelect={() => setIsAdminLoginOpen(true)}>
                                     Buscar por Referencia
                                 </DropdownMenuItem>
-                                {(isCurrentUserAdmin || isGuestViewingSharedRaffle) && (
+                                {currentState.raffleRef && (
                                   <>
                                     <DropdownMenuItem onSelect={() => setIsShareDialogOpen(true)}>
                                         <Share2 className="mr-2 h-4 w-4" />
