@@ -478,29 +478,31 @@ const App = () => {
     const renderBoardContent = () => {
         if (!shouldShowAsPaid) {
             return (
-                <div className="text-center p-10 bg-gray-50 rounded-lg border-2 border-dashed">
-                    <div className="relative mx-auto mb-4 h-48 w-full max-w-sm">
+                <div className="relative text-center bg-gray-50 rounded-lg border-2 border-dashed overflow-hidden">
+                    <div className="absolute inset-0">
                         <Image
-                            src="https://picsum.photos/seed/boardgames/600/400"
-                            alt="Juegos de Mesa"
+                            src="https://picsum.photos/seed/rafflecard/800/400"
+                            alt="Cartón de Rifa"
                             fill
                             style={{ objectFit: 'cover' }}
-                            className="rounded-lg"
-                            data-ai-hint="juegos de mesa"
+                            className="opacity-20"
+                            data-ai-hint="carton rifa"
                         />
                     </div>
-                    <Lock className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                    <h2 className="text-2xl font-bold text-gray-800 mb-2">Tablero Bloqueado</h2>
-                    <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                        Para ver el tablero de la rifa de {raffleMode === 'two-digit' ? '2' : '3'} cifras, busca el juego por su referencia. Si quieres crear tu propia rifa, actívala.
-                    </p>
-                    <div className="flex justify-center gap-4">
-                        <Button onClick={() => setIsAdminLoginOpen(true)} size="lg">
-                            Buscar por Referencia
-                        </Button>
-                         <Button onClick={handleActivateBoard} size="lg" className="bg-green-500 hover:bg-green-600 text-white font-bold">
-                             Pagar $10.000 por Nequi
-                         </Button>
+                    <div className="relative p-10">
+                        <Lock className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                        <h2 className="text-2xl font-bold text-gray-800 mb-2">Tablero Bloqueado</h2>
+                        <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                            Para ver el tablero de la rifa de {raffleMode === 'two-digit' ? '2' : '3'} cifras, busca el juego por su referencia. Si quieres crear tu propia rifa, actívala.
+                        </p>
+                        <div className="flex flex-col sm:flex-row justify-center gap-4">
+                            <Button onClick={() => setIsAdminLoginOpen(true)} size="lg">
+                                Buscar por Referencia
+                            </Button>
+                            <Button onClick={handleActivateBoard} size="lg" className="bg-green-500 hover:bg-green-600 text-white font-bold">
+                                Pagar $10.000 por Nequi
+                            </Button>
+                        </div>
                     </div>
                 </div>
             );
