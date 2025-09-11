@@ -424,7 +424,10 @@ const App = () => {
     };
 
     const handleShare = (platform: 'whatsapp' | 'facebook' | 'copy') => {
-        const shareText = `¡Participa en la rifa por un ${currentState.prize}! Organizada por ${currentState.organizerName}. Referencia: ${currentState.raffleRef}`;
+        const hasRaffle = currentState.raffleRef;
+        const shareText = hasRaffle
+            ? `¡Participa en la rifa por un ${currentState.prize}! Organizada por ${currentState.organizerName}. Referencia: ${currentState.raffleRef}`
+            : '¡Crea y gestiona tus rifas fácilmente con esta increíble aplicación!';
         const shareUrl = window.location.href;
         let url = '';
 
@@ -781,12 +784,10 @@ const App = () => {
                                 <DropdownMenuItem onSelect={() => setIsAdminLoginOpen(true)}>
                                     Buscar por Referencia
                                 </DropdownMenuItem>
-                                {currentState.raffleRef && (
-                                    <DropdownMenuItem onSelect={() => setIsShareDialogOpen(true)}>
-                                        <Share2 className="mr-2 h-4 w-4" />
-                                        <span>Compartir</span>
-                                    </DropdownMenuItem>
-                                )}
+                                <DropdownMenuItem onSelect={() => setIsShareDialogOpen(true)}>
+                                    <Share2 className="mr-2 h-4 w-4" />
+                                    <span>Compartir</span>
+                                </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
                     </div>
