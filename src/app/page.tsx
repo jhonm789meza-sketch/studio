@@ -882,13 +882,6 @@ const App = () => {
                                 >
                                     Pagar con Nequi
                                 </Button>
-                                    <Button
-                                    variant="outline"
-                                    className="w-full"
-                                    onClick={() => window.open('https://www.pse.com.co/', '_blank')}
-                                >
-                                    Pagar con PSE
-                                </Button>
                                 <Button
                                     onClick={handleTicketConfirmation}
                                     disabled={!isRegisterFormValidForSubmit || currentState.isWinnerConfirmed}
