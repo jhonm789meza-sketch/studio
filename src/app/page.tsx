@@ -448,6 +448,11 @@ const App = () => {
         setIsShareDialogOpen(false);
     };
 
+    const handleNequiPayment = () => {
+        window.open('nequi://', '_blank');
+        setIsPaymentConfirmed(true);
+    }
+
 
     const allNumbers = raffleMode === 'two-digit'
         ? Array.from({ length: 100 }, (_, i) => i)
@@ -878,7 +883,7 @@ const App = () => {
                                 <Button
                                     variant="outline"
                                     className="w-full"
-                                    onClick={() => window.open('nequi://', '_blank')}
+                                    onClick={handleNequiPayment}
                                 >
                                     Pagar con Nequi
                                 </Button>
