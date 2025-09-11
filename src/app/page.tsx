@@ -407,7 +407,8 @@ const App = () => {
     };
 
     const handleActivateBoard = async () => {
-        if (currentState.adminId) {
+        const currentRaffleDoc = await getDoc(doc(db, "raffles", raffleMode));
+        if (currentRaffleDoc.exists() && currentRaffleDoc.data().adminId) {
             showNotification(`Este tablero ya tiene un administrador. No puedes sobrescribir una rifa existente.`, 'error');
             return;
         }
@@ -780,7 +781,7 @@ const App = () => {
                                 <DropdownMenuItem onSelect={() => setIsAdminLoginOpen(true)}>
                                     Buscar por Referencia
                                 </DropdownMenuItem>
-                                {isGuestViewingSharedRaffle && (
+                                {(isCurrentUserAdmin || isGuestViewingSharedRaffle) && currentState.isDetailsConfirmed && (
                                   <>
                                     <DropdownMenuItem onSelect={() => setIsShareDialogOpen(true)}>
                                         <Share2 className="mr-2 h-4 w-4" />
