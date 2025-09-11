@@ -781,10 +781,20 @@ const App = () => {
                                     Buscar por Referencia
                                 </DropdownMenuItem>
                                 {isGuestViewingSharedRaffle && (
+                                  <>
                                     <DropdownMenuItem onSelect={() => setIsShareDialogOpen(true)}>
                                         <Share2 className="mr-2 h-4 w-4" />
                                         <span>Compartir</span>
                                     </DropdownMenuItem>
+                                    <DropdownMenuItem onSelect={() => {
+                                      const phone = currentState.nequiAccountNumber;
+                                      const message = `Hola ${currentState.organizerName}, estoy interesado en la rifa '${currentState.prize}'.`;
+                                      window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
+                                    }}>
+                                      <MessageCircle className="mr-2 h-4 w-4" />
+                                      <span>Chatear con el Organizador</span>
+                                    </DropdownMenuItem>
+                                  </>
                                 )}
                             </DropdownMenuContent>
                         </DropdownMenu>
