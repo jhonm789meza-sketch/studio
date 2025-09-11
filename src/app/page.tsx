@@ -484,7 +484,7 @@ const App = () => {
                             Buscar por Referencia
                         </Button>
                          <Button onClick={handleActivateBoard} size="lg" className="bg-green-500 hover:bg-green-600 text-white font-bold">
-                             Pagar $10.000
+                             Pagar $10.000 por Nequi
                          </Button>
                     </div>
                 </div>
