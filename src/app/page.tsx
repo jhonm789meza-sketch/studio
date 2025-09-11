@@ -479,6 +479,16 @@ const App = () => {
         if (!shouldShowAsPaid) {
             return (
                 <div className="text-center p-10 bg-gray-50 rounded-lg border-2 border-dashed">
+                    <div className="relative mx-auto mb-4 h-48 w-full max-w-sm">
+                        <Image
+                            src="https://picsum.photos/seed/boardgames/600/400"
+                            alt="Juegos de Mesa"
+                            fill
+                            style={{ objectFit: 'cover' }}
+                            className="rounded-lg"
+                            data-ai-hint="juegos de mesa"
+                        />
+                    </div>
                     <Lock className="mx-auto h-12 w-12 text-gray-400 mb-4" />
                     <h2 className="text-2xl font-bold text-gray-800 mb-2">Tablero Bloqueado</h2>
                     <p className="text-gray-600 mb-6 max-w-md mx-auto">
