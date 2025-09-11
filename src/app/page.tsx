@@ -878,7 +878,7 @@ const App = () => {
                                 <Button
                                     variant="outline"
                                     className="w-full"
-                                    onClick={() => window.open('https://www.nequi.com.co/pagos-en-linea', '_blank')}
+                                    onClick={() => window.open('nequi://', '_blank')}
                                 >
                                     Pagar con Nequi
                                 </Button>
