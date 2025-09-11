@@ -412,18 +412,14 @@ const App = () => {
             return;
         }
 
-        showConfirmationDialog(
-            `Estás a punto de pagar $10.000 para activar este tablero de ${raffleMode === 'two-digit' ? '2' : '3'} cifras. ¿Continuar?`,
-            async () => {
-                try {
-                    await setDoc(doc(db, "raffles", raffleMode), { isPaid: true, adminId: currentAdminId }, { merge: true });
-                    showNotification('¡Tablero activado! Ahora eres el administrador y puedes configurar los detalles del premio.', 'success');
-                } catch (error) {
-                    console.error("Error activating board:", error);
-                    showNotification("Error al activar el tablero.", "error");
-                }
-            }
-        );
+        try {
+            window.open('nequi://', '_blank');
+            await setDoc(doc(db, "raffles", raffleMode), { isPaid: true, adminId: currentAdminId }, { merge: true });
+            showNotification('¡Tablero activado! Ahora eres el administrador y puedes configurar los detalles del premio.', 'success');
+        } catch (error) {
+            console.error("Error activating board:", error);
+            showNotification("Error al activar el tablero.", "error");
+        }
     };
 
     const handleShare = (platform: 'whatsapp' | 'facebook' | 'copy') => {
