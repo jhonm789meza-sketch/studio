@@ -93,13 +93,19 @@ const App = () => {
         setCurrentAdminId(adminId);
     
         setLoading(true);
-    
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const refFromUrl = urlParams.get('ref');
+
         const unsubTwoDigit = onSnapshot(doc(db, "raffles", "two-digit"), (docSnapshot) => {
             if (docSnapshot.exists()) {
                 setTwoDigitState({ ...initialRaffleData, ...docSnapshot.data() });
             } else {
                 setTwoDigitState(initialRaffleData);
                 setDoc(doc(db, "raffles", "two-digit"), initialRaffleData, { merge: true });
+            }
+            if (refFromUrl && docSnapshot.data()?.raffleRef?.toUpperCase() === refFromUrl.toUpperCase()) {
+                handleAdminSearch(refFromUrl);
             }
             setLoading(false);
         });
@@ -110,6 +116,9 @@ const App = () => {
             } else {
                 setThreeDigitState(initialRaffleData);
                 setDoc(doc(db, "raffles", "three-digit"), initialRaffleData, { merge: true });
+            }
+             if (refFromUrl && docSnapshot.data()?.raffleRef?.toUpperCase() === refFromUrl.toUpperCase()) {
+                handleAdminSearch(refFromUrl);
             }
              setLoading(false);
         });
@@ -332,13 +341,15 @@ const App = () => {
         showNotification(`Cambiado a modo de ${mode === 'two-digit' ? '2' : '3'} cifras.`, 'success');
     };
 
-    const handleAdminSearch = async () => {
-        if (!adminRefSearch.trim()) {
+    const handleAdminSearch = async (refToSearch?: string) => {
+        const aRef = refToSearch || adminRefSearch;
+
+        if (!aRef.trim()) {
             showNotification('Por favor, ingresa una referencia.', 'warning');
             return;
         }
     
-        const refUpper = adminRefSearch.toUpperCase();
+        const refUpper = aRef.toUpperCase();
         let found = false;
         let isTwoDigit = false;
     
@@ -364,11 +375,12 @@ const App = () => {
                 setThreeDigitState({ ...initialRaffleData, ...threeDigitDoc.data()! });
             }
             
-            showNotification(`Cargando rifa con referencia: ${adminRefSearch}`, 'success');
+            showNotification(`Cargando rifa con referencia: ${refUpper}`, 'success');
             setGuestRaffleRef(refUpper);
             setIsAdminLoginOpen(false);
             setAdminRefSearch('');
             handleTabClick('board');
+            window.history.replaceState({}, '', `?ref=${refUpper}`);
         } else {
             showNotification('No se encontró ninguna rifa en juego con esa referencia.', 'error');
             setGuestRaffleRef(null);
@@ -428,7 +440,10 @@ const App = () => {
         const shareText = hasRaffle
             ? `¡Participa en la rifa por un ${currentState.prize}! Organizada por ${currentState.organizerName}. Referencia: ${currentState.raffleRef}`
             : '¡Crea y gestiona tus rifas fácilmente con esta increíble aplicación!';
-        const shareUrl = window.location.href;
+        
+        const baseUrl = window.location.origin + window.location.pathname;
+        const shareUrl = hasRaffle ? `${baseUrl}?ref=${currentState.raffleRef}` : baseUrl;
+
         let url = '';
 
         switch (platform) {
@@ -467,9 +482,6 @@ const App = () => {
     if (loading) {
         return <div className="flex justify-center items-center h-screen text-xl font-semibold">Cargando...</div>;
     }
-    
-    // This is the single source of truth for determining admin access.
-    // It strictly compares the adminId from the database with the one in the user's local storage.
     
     const isGuestViewingSharedRaffle = guestRaffleRef != null && guestRaffleRef === currentState.raffleRef?.toUpperCase();
     const shouldShowAsPaid = currentState.isPaid && (isCurrentUserAdmin || isGuestViewingSharedRaffle);
@@ -1135,7 +1147,7 @@ const App = () => {
                     </div>
                     <DialogFooter>
                         <Button type="button" variant="outline" onClick={() => setIsAdminLoginOpen(false)}>Cancelar</Button>
-                        <Button type="submit" onClick={handleAdminSearch}>Buscar Juego</Button>
+                        <Button type="submit" onClick={() => handleAdminSearch()}>Buscar Juego</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
