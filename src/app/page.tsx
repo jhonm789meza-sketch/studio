@@ -9,7 +9,7 @@ import Image from 'next/image';
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuCheckboxItem } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House, Share2, Copy, MessageCircle } from 'lucide-react';
+import { Menu, Award, Lock, House, Share2, Copy } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -98,27 +98,25 @@ const App = () => {
         const refFromUrl = urlParams.get('ref');
 
         const unsubTwoDigit = onSnapshot(doc(db, "raffles", "two-digit"), (docSnapshot) => {
-            if (docSnapshot.exists()) {
-                setTwoDigitState({ ...initialRaffleData, ...docSnapshot.data() });
-            } else {
-                setTwoDigitState(initialRaffleData);
-                setDoc(doc(db, "raffles", "two-digit"), initialRaffleData, { merge: true });
-            }
-            if (refFromUrl && docSnapshot.data()?.raffleRef?.toUpperCase() === refFromUrl.toUpperCase()) {
+            const data = docSnapshot.exists() ? docSnapshot.data() : initialRaffleData;
+            setTwoDigitState({ ...initialRaffleData, ...data });
+            if (refFromUrl && data.raffleRef?.toUpperCase() === refFromUrl.toUpperCase()) {
                 handleAdminSearch(refFromUrl);
+            }
+            if (!docSnapshot.exists()) {
+                setDoc(doc(db, "raffles", "two-digit"), initialRaffleData, { merge: true });
             }
             setLoading(false);
         });
     
         const unsubThreeDigit = onSnapshot(doc(db, "raffles", "three-digit"), (docSnapshot) => {
-             if (docSnapshot.exists()) {
-                setThreeDigitState({ ...initialRaffleData, ...docSnapshot.data() });
-            } else {
-                setThreeDigitState(initialRaffleData);
-                setDoc(doc(db, "raffles", "three-digit"), initialRaffleData, { merge: true });
-            }
-             if (refFromUrl && docSnapshot.data()?.raffleRef?.toUpperCase() === refFromUrl.toUpperCase()) {
+             const data = docSnapshot.exists() ? docSnapshot.data() : initialRaffleData;
+             setThreeDigitState({ ...initialRaffleData, ...data });
+             if (refFromUrl && data.raffleRef?.toUpperCase() === refFromUrl.toUpperCase()) {
                 handleAdminSearch(refFromUrl);
+            }
+             if (!docSnapshot.exists()) {
+                setDoc(doc(db, "raffles", "three-digit"), initialRaffleData, { merge: true });
             }
              setLoading(false);
         });
@@ -1185,3 +1183,5 @@ const App = () => {
 };
 
 export default App;
+
+    
