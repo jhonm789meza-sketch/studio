@@ -4,7 +4,7 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { RaffleManager } from '@/lib/RaffleManager';
 import { db } from '@/lib/firebase';
-import { doc, onSnapshot, setDoc, getDoc, deleteDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc, getDoc, deleteDoc, Unsubscribe } from 'firebase/firestore';
 import Image from 'next/image';
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuCheckboxItem } from '@/components/ui/dropdown-menu';
@@ -58,6 +58,7 @@ const App = () => {
     const [notification, setNotification] = useState({ show: false, message: '', type: '' });
     
     const ticketModalRef = useRef(null);
+    const raffleSubscription = useRef<Unsubscribe | null>(null);
     
     const [raffleState, setRaffleState] = useState<any>(null);
     
@@ -85,50 +86,27 @@ const App = () => {
             localStorage.setItem('rifaAdminId', adminId);
         }
         setCurrentAdminId(adminId);
-    
-        const urlParams = new URLSearchParams(window.location.search);
-        const refFromUrl = urlParams.get('ref');
 
-        if (refFromUrl) {
-            handleAdminSearch(refFromUrl);
-        } else {
-            setRaffleState(null);
-            setLoading(false);
-        }
-
-        const handlePopState = () => {
+        const handleUrlRef = () => {
             const urlParams = new URLSearchParams(window.location.search);
             const refFromUrl = urlParams.get('ref');
             if (refFromUrl) {
                 handleAdminSearch(refFromUrl);
             } else {
                 setRaffleState(null);
+                setLoading(false);
             }
         };
 
-        window.addEventListener('popstate', handlePopState);
+        handleUrlRef(); // Initial check
+
+        window.addEventListener('popstate', handleUrlRef);
 
         return () => {
-            window.removeEventListener('popstate', handlePopState);
+            window.removeEventListener('popstate', handleUrlRef);
+            raffleSubscription.current?.();
         };
     }, []);
-
-    useEffect(() => {
-        if (!raffleState || !raffleState.raffleRef) return;
-    
-        const unsubscribe = onSnapshot(doc(db, "raffles", raffleState.raffleRef), (docSnapshot) => {
-            if (docSnapshot.exists()) {
-                setRaffleState(docSnapshot.data());
-            } else {
-                showNotification('La rifa que estabas viendo ya no existe.', 'error');
-                setRaffleState(null);
-                window.history.pushState({}, '', window.location.pathname);
-            }
-        });
-    
-        return () => unsubscribe();
-    }, [raffleState?.raffleRef]);
-
 
     const showNotification = (message: string, type = 'info') => {
         setNotification({ show: true, message, type });
@@ -327,38 +305,48 @@ const App = () => {
         });
     };
     
-    const changeRaffleMode = (mode: RaffleMode) => {
-        if (!raffleState || mode === raffleMode) return;
-        setRaffleState((s: any) => ({ ...s, raffleMode: mode }));
-        handleTabClick('board'); // Reset to board tab on mode change
+    const changeRaffleMode = async (mode: RaffleMode) => {
+        if (!raffleState || !raffleState.raffleRef || mode === raffleMode) return;
+        await setDoc(doc(db, "raffles", raffleState.raffleRef), { raffleMode: mode }, { merge: true });
         showNotification(`Cambiado a modo de ${mode === 'two-digit' ? '2' : '3'} cifras.`, 'success');
     };
 
-    const handleAdminSearch = async (refToSearch?: string) => {
+    const handleAdminSearch = (refToSearch?: string) => {
         const aRef = (refToSearch || adminRefSearch).trim().toUpperCase();
-
         if (!aRef) {
             showNotification('Por favor, ingresa una referencia.', 'warning');
             return;
         }
-        setLoading(true);
 
-        const raffleDocRef = doc(db, 'raffles', aRef);
-        const raffleDoc = await getDoc(raffleDocRef);
+        raffleSubscription.current?.();
+        setLoading(true);
+        setRaffleState(null);
         
-        if (raffleDoc.exists()) {
-            setRaffleState(raffleDoc.data());
-            showNotification(`Cargando rifa con referencia: ${aRef}`, 'success');
-            setIsAdminLoginOpen(false);
-            setAdminRefSearch('');
-            handleTabClick('board');
-            window.history.pushState({}, '', `?ref=${aRef}`);
-        } else {
-            showNotification('No se encontró ninguna rifa con esa referencia.', 'error');
-            setRaffleState(null);
-            window.history.pushState({}, '', window.location.pathname);
-        }
-        setLoading(false);
+        const raffleDocRef = doc(db, 'raffles', aRef);
+
+        raffleSubscription.current = onSnapshot(raffleDocRef, (docSnapshot) => {
+            if (docSnapshot.exists()) {
+                setRaffleState(docSnapshot.data());
+                if (loading) { // Only show notification on initial load
+                    showNotification(`Cargando rifa con referencia: ${aRef}`, 'success');
+                }
+                setIsAdminLoginOpen(false);
+                setAdminRefSearch('');
+                handleTabClick('board');
+                if (window.location.search !== `?ref=${aRef}`) {
+                    window.history.pushState({}, '', `?ref=${aRef}`);
+                }
+            } else {
+                showNotification('No se encontró ninguna rifa con esa referencia.', 'error');
+                setRaffleState(null);
+                window.history.pushState({}, '', window.location.pathname);
+            }
+            setLoading(false);
+        }, (error) => {
+            console.error("Error subscribing to raffle:", error);
+            showNotification('Error al cargar la rifa.', 'error');
+            setLoading(false);
+        });
     };
     
     const handleDrawWinner = async () => {
@@ -409,8 +397,7 @@ const App = () => {
 
             window.open('nequi://', '_blank');
 
-            setRaffleState(newRaffleData);
-            window.history.pushState({}, '', `?ref=${newRef}`);
+            handleAdminSearch(newRef);
             
             showNotification('¡Nueva rifa activada! Ahora eres el administrador y puedes configurar los detalles del premio.', 'success');
         } catch (error) {
@@ -710,6 +697,31 @@ const App = () => {
                        <h2 className="text-2xl font-bold text-gray-800 flex items-center">
                            Tablero de Números ({raffleMode === 'two-digit' ? '00-99' : '100-999'})
                        </h2>
+                       {isCurrentUserAdmin && (
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline">
+                                    Modo: {raffleMode === 'two-digit' ? '2 Cifras' : '3 Cifras'}
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                                <DropdownMenuCheckboxItem
+                                    checked={raffleMode === 'two-digit'}
+                                    onSelect={() => changeRaffleMode('two-digit')}
+                                    disabled={raffleState.participants.length > 0}
+                                >
+                                    2 Cifras
+                                </DropdownMenuCheckboxItem>
+                                <DropdownMenuCheckboxItem
+                                    checked={raffleMode === 'three-digit'}
+                                    onSelect={() => changeRaffleMode('three-digit')}
+                                    disabled={raffleState.participants.length > 0}
+                                >
+                                    3 Cifras
+                                </DropdownMenuCheckboxItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                       )}
                    </div>
                    <div className={`grid gap-2 ${raffleMode === 'two-digit' ? 'grid-cols-10' : 'grid-cols-10 md:grid-cols-20 lg:grid-cols-25'}`}>
                        {allNumbers.map((number) => (
@@ -774,23 +786,6 @@ const App = () => {
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent>
-                                {raffleState && isCurrentUserAdmin && (
-                                    <>
-                                        <DropdownMenuCheckboxItem
-                                            checked={raffleMode === 'two-digit'}
-                                            onSelect={() => changeRaffleMode('two-digit')}
-                                        >
-                                            Rifa de 2 Cifras
-                                        </DropdownMenuCheckboxItem>
-                                        <DropdownMenuCheckboxItem
-                                            checked={raffleMode === 'three-digit'}
-                                            onSelect={() => changeRaffleMode('three-digit')}
-                                        >
-                                            Rifa de 3 Cifras
-                                        </DropdownMenuCheckboxItem>
-                                        <DropdownMenuSeparator />
-                                    </>
-                                )}
                                 <DropdownMenuItem onSelect={() => setIsAdminLoginOpen(true)}>
                                     Buscar por Referencia
                                 </DropdownMenuItem>
