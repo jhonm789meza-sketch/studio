@@ -10,10 +10,9 @@ class RaffleManager {
         this.counterRef = doc(this.db, 'internal', 'raffleCounter');
     }
 
-    private async getNextRefNumber(): Promise<number> {
-        // This function should only run on the client-side.
+    public async getNextRefNumber(): Promise<number> {
         if (typeof window === 'undefined') {
-            return 1; // Return a placeholder for SSR.
+            return 1;
         }
         
         try {
@@ -29,14 +28,13 @@ class RaffleManager {
             }
         } catch (error) {
             console.error("Error getting next ref number:", error);
-            // Fallback in case of error
             return Math.floor(Math.random() * 1000);
         }
     }
 
-    public async startNewRaffle(): Promise<string> {
+    public async createNewRaffleRef(): Promise<string> {
         if (typeof window === 'undefined') {
-             return 'JM-SERVER'; // Fallback for server-side execution
+             return 'JM-SERVER';
         }
         const nextNumber = await this.getNextRefNumber();
         const ref = `JM${nextNumber}`;

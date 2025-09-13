@@ -4,7 +4,7 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { RaffleManager } from '@/lib/RaffleManager';
 import { db } from '@/lib/firebase';
-import { doc, onSnapshot, setDoc, getDoc, deleteDoc } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc, getDoc, deleteDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import Image from 'next/image';
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuCheckboxItem } from '@/components/ui/dropdown-menu';
@@ -41,6 +41,7 @@ const initialRaffleData = {
     manualWinnerNumber: '',
     isPaid: false,
     adminId: null,
+    raffleMode: 'two-digit'
 };
 
 
@@ -57,11 +58,8 @@ const App = () => {
     const [notification, setNotification] = useState({ show: false, message: '', type: '' });
     
     const ticketModalRef = useRef(null);
-
-    const [raffleMode, setRaffleMode] = useState<RaffleMode>('two-digit');
     
-    const [twoDigitState, setTwoDigitState] = useState<any>(initialRaffleData);
-    const [threeDigitState, setThreeDigitState] = useState<any>(initialRaffleData);
+    const [raffleState, setRaffleState] = useState<any>(null);
     
     const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
     const [isShareDialogOpen, setIsShareDialogOpen]    = useState(false);
@@ -69,14 +67,10 @@ const App = () => {
     const [showConfetti, setShowConfetti] = useState(false);
     const [isPaymentConfirmed, setIsPaymentConfirmed] = useState(false);
     const [currentAdminId, setCurrentAdminId] = useState<string | null>(null);
-    const [guestRaffleRef, setGuestRaffleRef] = useState<string | null>(null);
-
-
-    const currentState = raffleMode === 'two-digit' ? twoDigitState : threeDigitState;
-    const setCurrentState = raffleMode === 'two-digit' ? setTwoDigitState : setThreeDigitState;
 
     const raffleManager = new RaffleManager(db);
-
+    
+    const raffleMode = raffleState?.raffleMode || 'two-digit';
     const totalNumbers = raffleMode === 'two-digit' ? 100 : 1000;
     const numberLength = raffleMode === 'two-digit' ? 2 : 3;
 
@@ -92,41 +86,48 @@ const App = () => {
         }
         setCurrentAdminId(adminId);
     
-        setLoading(true);
-
         const urlParams = new URLSearchParams(window.location.search);
         const refFromUrl = urlParams.get('ref');
 
-        const unsubTwoDigit = onSnapshot(doc(db, "raffles", "two-digit"), (docSnapshot) => {
-            const data = docSnapshot.exists() ? docSnapshot.data() : initialRaffleData;
-            setTwoDigitState({ ...initialRaffleData, ...data });
-            if (refFromUrl && data.raffleRef?.toUpperCase() === refFromUrl.toUpperCase()) {
-                handleAdminSearch(refFromUrl);
-            }
-            if (!docSnapshot.exists()) {
-                setDoc(doc(db, "raffles", "two-digit"), initialRaffleData, { merge: true });
-            }
+        if (refFromUrl) {
+            handleAdminSearch(refFromUrl);
+        } else {
+            setRaffleState(null);
             setLoading(false);
-        });
-    
-        const unsubThreeDigit = onSnapshot(doc(db, "raffles", "three-digit"), (docSnapshot) => {
-             const data = docSnapshot.exists() ? docSnapshot.data() : initialRaffleData;
-             setThreeDigitState({ ...initialRaffleData, ...data });
-             if (refFromUrl && data.raffleRef?.toUpperCase() === refFromUrl.toUpperCase()) {
+        }
+
+        const handlePopState = () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const refFromUrl = urlParams.get('ref');
+            if (refFromUrl) {
                 handleAdminSearch(refFromUrl);
+            } else {
+                setRaffleState(null);
             }
-             if (!docSnapshot.exists()) {
-                setDoc(doc(db, "raffles", "three-digit"), initialRaffleData, { merge: true });
-            }
-             setLoading(false);
-        });
-    
+        };
+
+        window.addEventListener('popstate', handlePopState);
+
         return () => {
-            unsubTwoDigit();
-            unsubThreeDigit();
+            window.removeEventListener('popstate', handlePopState);
         };
     }, []);
 
+    useEffect(() => {
+        if (!raffleState || !raffleState.raffleRef) return;
+    
+        const unsubscribe = onSnapshot(doc(db, "raffles", raffleState.raffleRef), (docSnapshot) => {
+            if (docSnapshot.exists()) {
+                setRaffleState(docSnapshot.data());
+            } else {
+                showNotification('La rifa que estabas viendo ya no existe.', 'error');
+                setRaffleState(null);
+                window.history.pushState({}, '', window.location.pathname);
+            }
+        });
+    
+        return () => unsubscribe();
+    }, [raffleState?.raffleRef]);
 
 
     const showNotification = (message: string, type = 'info') => {
@@ -155,99 +156,103 @@ const App = () => {
         const inputValue = e.target.value.replace(/\D/g, '');
         handleLocalFieldChange('raffleNumber', inputValue);
 
-        if (inputValue.length === numberLength && new Set(currentState.drawnNumbers).has(parseInt(inputValue))) {
+        if (inputValue.length === numberLength && new Set(raffleState.drawnNumbers).has(parseInt(inputValue))) {
              showNotification('Este número ya ha sido asignado', 'warning');
         }
     };
     
     const handleLocalFieldChange = (field: string, value: any) => {
-        setCurrentState((s: any) => ({ ...s, [field]: value }));
+        setRaffleState((s: any) => ({ ...s, [field]: value }));
     };
 
-    const isCurrentUserAdmin = !!currentState.adminId && currentState.adminId === currentAdminId;
+    const isCurrentUserAdmin = !!raffleState?.adminId && raffleState.adminId === currentAdminId;
 
     const toggleNumber = (number: number) => {
+        if (!raffleState) return;
         if (isCurrentUserAdmin) {
             showNotification('El administrador no puede seleccionar números.', 'info');
             return;
         }
-        if (!currentState.isDetailsConfirmed) {
+        if (!raffleState.isDetailsConfirmed) {
             showNotification('Primero debes confirmar los detalles del premio para seleccionar un número.', 'info');
             return;
         }
-        if (currentState.isWinnerConfirmed || !!currentState.winner) {
+        if (raffleState.isWinnerConfirmed || !!raffleState.winner) {
             showNotification('El juego ha terminado. Reinicia el tablero para comenzar de nuevo.', 'info');
             return;
         }
-        if (new Set(currentState.drawnNumbers).has(number)) {
+        if (new Set(raffleState.drawnNumbers).has(number)) {
             showNotification('Este número ya está asignado', 'warning');
             return;
         }
-        setCurrentState((s:any) => ({ ...s, raffleNumber: String(number).padStart(numberLength, '0')}));
+        setRaffleState((s:any) => ({ ...s, raffleNumber: String(number).padStart(numberLength, '0')}));
         handleTabClick('register');
     };
 
     const handleConfirmWinner = async () => {
-        if (!currentState.winner) {
+        if (!raffleState || !raffleState.raffleRef) return;
+        if (!raffleState.winner) {
             showNotification('Primero debes sortear un ganador.', 'warning');
             return;
         }
-        await setDoc(doc(db, "raffles", raffleMode), { isWinnerConfirmed: true }, { merge: true });
+        await setDoc(doc(db, "raffles", raffleState.raffleRef), { isWinnerConfirmed: true }, { merge: true });
         showNotification('¡Resultado confirmado! El tablero ha sido bloqueado.', 'success');
     };
 
     const handleConfirmDetails = async () => {
-        if (!currentState.organizerName.trim() || !currentState.prize.trim() || !currentState.value.trim() || !currentState.gameDate || !currentState.lottery || !currentState.nequiAccountNumber.trim() || (currentState.lottery === 'Otro' && !currentState.customLottery.trim())) {
+        if (!raffleState || !raffleState.raffleRef) return;
+        if (!raffleState.organizerName.trim() || !raffleState.prize.trim() || !raffleState.value.trim() || !raffleState.gameDate || !raffleState.lottery || !raffleState.nequiAccountNumber.trim() || (raffleState.lottery === 'Otro' && !raffleState.customLottery.trim())) {
             showNotification('Por favor, completa todos los campos de configuración del premio.', 'warning');
             return;
         }
         
-        const newRef = await raffleManager.startNewRaffle();
-        const raffleData = {
-            ...currentState,
-            raffleRef: newRef,
-            isDetailsConfirmed: true,
-        };
-
-        await setDoc(doc(db, "raffles", raffleMode), raffleData, { merge: true });
+        await setDoc(doc(db, "raffles", raffleState.raffleRef), { isDetailsConfirmed: true }, { merge: true });
         showNotification('Detalles del premio confirmados', 'success');
     };
 
     const resetBoard = () => {
+        if (!raffleState || !raffleState.raffleRef) return;
         showConfirmationDialog(
-            '¿Estás seguro de que deseas reiniciar el tablero? Se perderán todos los datos de esta modalidad.',
+            '¿Estás seguro de que deseas reiniciar el tablero? Se perderán todos los datos de esta rifa.',
             async () => {
-                await deleteDoc(doc(db, "raffles", raffleMode));
-                const resetState = { ...initialRaffleData };
-                if (raffleMode === 'two-digit') {
-                    setTwoDigitState(resetState);
-                } else {
-                    setThreeDigitState(resetState);
-                }
-                await setDoc(doc(db, "raffles", raffleMode), resetState, { merge: true });
-                showNotification('Tablero reiniciado correctamente', 'success');
+                const newRef = await raffleManager.createNewRaffleRef();
+                const newRaffleData = {
+                    ...initialRaffleData,
+                    adminId: currentAdminId,
+                    isPaid: true,
+                    raffleRef: newRef,
+                    raffleMode: raffleState.raffleMode,
+                };
+                
+                await deleteDoc(doc(db, "raffles", raffleState.raffleRef));
+                await setDoc(doc(db, "raffles", newRef), newRaffleData);
+
+                setRaffleState(newRaffleData);
+                window.history.pushState({}, '', `?ref=${newRef}`);
+                showNotification('Tablero reiniciado correctamente con una nueva referencia', 'success');
                 setShowConfetti(false);
             }
         );
     };
 
     const handleTicketConfirmation = async () => {
-        if (!currentState.name.trim()) {
+        if (!raffleState || !raffleState.raffleRef) return;
+        if (!raffleState.name.trim()) {
             showNotification('Por favor ingresa el nombre', 'warning');
             return;
         }
-        if (!currentState.phoneNumber.trim()) {
+        if (!raffleState.phoneNumber.trim()) {
             showNotification('Por favor ingresa el celular', 'warning');
             return;
         }
-        if (!currentState.raffleNumber.trim()) {
+        if (!raffleState.raffleNumber.trim()) {
             showNotification('Por favor ingresa el número de rifa', 'warning');
             return;
         }
         
-        const num = parseInt(currentState.raffleNumber, 10);
+        const num = parseInt(raffleState.raffleNumber, 10);
 
-        if (currentState.raffleNumber.length !== numberLength) {
+        if (raffleState.raffleNumber.length !== numberLength) {
              showNotification(`El número para esta modalidad debe ser de ${numberLength} cifras`, 'warning');
              return;
         }
@@ -259,48 +264,48 @@ const App = () => {
             return;
         }
 
-        if (new Set(currentState.drawnNumbers).has(num)) {
+        if (new Set(raffleState.drawnNumbers).has(num)) {
             showNotification('Este número ya está asignado', 'warning');
             return;
         }
         
-        const participantName = currentState.name;
+        const participantName = raffleState.name;
         const formattedRaffleNumber = String(num).padStart(numberLength, '0');
 
         const newParticipant = {
             id: Date.now(),
-            name: currentState.name,
-            phoneNumber: currentState.phoneNumber,
+            name: raffleState.name,
+            phoneNumber: raffleState.phoneNumber,
             raffleNumber: formattedRaffleNumber,
             timestamp: new Date()
         };
         
-        const updatedParticipants = [...currentState.participants, newParticipant];
-        const updatedDrawnNumbers = [...currentState.drawnNumbers, num];
+        const updatedParticipants = [...raffleState.participants, newParticipant];
+        const updatedDrawnNumbers = [...raffleState.drawnNumbers, num];
 
-        await setDoc(doc(db, "raffles", raffleMode), {
+        await setDoc(doc(db, "raffles", raffleState.raffleRef), {
             participants: updatedParticipants,
             drawnNumbers: updatedDrawnNumbers
         }, { merge: true });
 
         const ticketData = {
-            prize: currentState.prize,
-            value: formatValue(currentState.value),
-            name: currentState.name,
-            phoneNumber: currentState.phoneNumber,
+            prize: raffleState.prize,
+            value: formatValue(raffleState.value),
+            name: raffleState.name,
+            phoneNumber: raffleState.phoneNumber,
             raffleNumber: formattedRaffleNumber,
             date: new Date().toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' }),
             time: new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }),
-            gameDate: currentState.gameDate,
-            lottery: currentState.lottery === 'Otro' ? currentState.customLottery : currentState.lottery,
-            raffleRef: currentState.raffleRef,
-            organizerName: currentState.organizerName,
+            gameDate: raffleState.gameDate,
+            lottery: raffleState.lottery === 'Otro' ? raffleState.customLottery : raffleState.lottery,
+            raffleRef: raffleState.raffleRef,
+            organizerName: raffleState.organizerName,
         };
         
         setTicketInfo(ticketData);
         setIsTicketModalOpen(true);
         
-        setCurrentState((s:any) => ({
+        setRaffleState((s:any) => ({
             ...s,
             name: '',
             phoneNumber: '',
@@ -332,70 +337,51 @@ const App = () => {
     };
     
     const changeRaffleMode = (mode: RaffleMode) => {
-        if (mode === raffleMode) return;
-        setGuestRaffleRef(null);
-        setRaffleMode(mode);
+        if (!raffleState || mode === raffleMode) return;
+        setRaffleState((s: any) => ({ ...s, raffleMode: mode }));
         handleTabClick('board'); // Reset to board tab on mode change
         showNotification(`Cambiado a modo de ${mode === 'two-digit' ? '2' : '3'} cifras.`, 'success');
     };
 
     const handleAdminSearch = async (refToSearch?: string) => {
-        const aRef = refToSearch || adminRefSearch;
+        const aRef = (refToSearch || adminRefSearch).trim().toUpperCase();
 
-        if (!aRef.trim()) {
+        if (!aRef) {
             showNotification('Por favor, ingresa una referencia.', 'warning');
             return;
         }
-    
-        const refUpper = aRef.toUpperCase();
-        let found = false;
-        let isTwoDigit = false;
-    
-        const twoDigitDoc = await getDoc(doc(db, "raffles", "two-digit"));
-        if (twoDigitDoc.exists() && twoDigitDoc.data().raffleRef?.toUpperCase() === refUpper) {
-            setRaffleMode('two-digit');
-            isTwoDigit = true;
-            found = true;
-        } else {
-            const threeDigitDoc = await getDoc(doc(db, "raffles", "three-digit"));
-            if (threeDigitDoc.exists() && threeDigitDoc.data().raffleRef?.toUpperCase() === refUpper) {
-                setRaffleMode('three-digit');
-                isTwoDigit = false;
-                found = true;
-            }
-        }
-    
-        if (found) {
-            if(isTwoDigit) {
-                setTwoDigitState({ ...initialRaffleData, ...twoDigitDoc.data() });
-            } else {
-                const threeDigitDoc = await getDoc(doc(db, "raffles", "three-digit"));
-                setThreeDigitState({ ...initialRaffleData, ...threeDigitDoc.data()! });
-            }
-            
-            showNotification(`Cargando rifa con referencia: ${refUpper}`, 'success');
-            setGuestRaffleRef(refUpper);
+        setLoading(true);
+
+        const raffleDocRef = doc(db, 'raffles', aRef);
+        const raffleDoc = await getDoc(raffleDocRef);
+        
+        if (raffleDoc.exists()) {
+            setRaffleState(raffleDoc.data());
+            showNotification(`Cargando rifa con referencia: ${aRef}`, 'success');
             setIsAdminLoginOpen(false);
             setAdminRefSearch('');
             handleTabClick('board');
-            window.history.replaceState({}, '', `?ref=${refUpper}`);
+            window.history.pushState({}, '', `?ref=${aRef}`);
         } else {
-            showNotification('No se encontró ninguna rifa en juego con esa referencia.', 'error');
-            setGuestRaffleRef(null);
+            showNotification('No se encontró ninguna rifa con esa referencia.', 'error');
+            setRaffleState(null);
+            window.history.pushState({}, '', window.location.pathname);
         }
+        setLoading(false);
     };
     
     const handleDrawWinner = async () => {
-        const winningNumberStr = currentState.manualWinnerNumber;
+        if (!raffleState || !raffleState.raffleRef) return;
+        const winningNumberStr = raffleState.manualWinnerNumber;
         if (!winningNumberStr || winningNumberStr.length !== numberLength) {
             showNotification(`Por favor, ingresa un número ganador válido de ${numberLength} cifras.`, 'warning');
             return;
         }
 
-        const winner = currentState.participants.find((p: any) => p.raffleNumber === winningNumberStr);
+        const winner = raffleState.participants.find((p: any) => p.raffleNumber === winningNumberStr);
 
         if (winner) {
-            await setDoc(doc(db, "raffles", raffleMode), { winner }, { merge: true });
+            await setDoc(doc(db, "raffles", raffleState.raffleRef), { winner }, { merge: true });
             setShowConfetti(true);
             showNotification(`¡El ganador es ${winner.name} con el número ${winner.raffleNumber}!`, 'success');
             setTimeout(() => setShowConfetti(false), 8000);
@@ -405,42 +391,53 @@ const App = () => {
                 raffleNumber: winningNumberStr,
                 isHouse: true,
             };
-            await setDoc(doc(db, "raffles", raffleMode), { winner: houseWinner }, { merge: true });
+            await setDoc(doc(db, "raffles", raffleState.raffleRef), { winner: houseWinner }, { merge: true });
             showNotification(`El número ${winningNumberStr} no fue vendido. El premio queda en casa.`, 'info');
         }
     };
 
     const handleFieldChange = async (field: string, value: any) => {
-        if (currentState.isDetailsConfirmed) return;
+        if (!raffleState || !raffleState.raffleRef || raffleState.isDetailsConfirmed) return;
         handleLocalFieldChange(field, value);
-        await setDoc(doc(db, "raffles", raffleMode), { [field]: value }, { merge: true });
+        await setDoc(doc(db, "raffles", raffleState.raffleRef), { [field]: value }, { merge: true });
     };
 
-    const handleActivateBoard = async () => {
-        const currentRaffleDoc = await getDoc(doc(db, "raffles", raffleMode));
-        if (currentRaffleDoc.exists() && currentRaffleDoc.data().adminId) {
-            showNotification(`Este tablero ya tiene un administrador. No puedes sobrescribir una rifa existente.`, 'error');
-            return;
-        }
-
+    const handleActivateBoard = async (mode: RaffleMode) => {
+        setLoading(true);
         try {
+            const newRef = await raffleManager.createNewRaffleRef();
+            const newRaffleData = {
+                ...initialRaffleData,
+                raffleMode: mode,
+                adminId: currentAdminId,
+                isPaid: true,
+                raffleRef: newRef,
+            };
+            
+            await setDoc(doc(db, "raffles", newRef), newRaffleData);
+
             window.open('nequi://', '_blank');
-            await setDoc(doc(db, "raffles", raffleMode), { isPaid: true, adminId: currentAdminId }, { merge: true });
-            showNotification('¡Tablero activado! Ahora eres el administrador y puedes configurar los detalles del premio.', 'success');
+
+            setRaffleState(newRaffleData);
+            window.history.pushState({}, '', `?ref=${newRef}`);
+            
+            showNotification('¡Nueva rifa activada! Ahora eres el administrador y puedes configurar los detalles del premio.', 'success');
         } catch (error) {
             console.error("Error activating board:", error);
             showNotification("Error al activar el tablero.", "error");
+        } finally {
+            setLoading(false);
         }
     };
 
     const handleShare = (platform: 'whatsapp' | 'facebook' | 'copy') => {
-        const hasRaffle = currentState.raffleRef;
+        const hasRaffle = raffleState && raffleState.raffleRef;
         const shareText = hasRaffle
-            ? `¡Participa en la rifa por un ${currentState.prize}! Organizada por ${currentState.organizerName}. Referencia: ${currentState.raffleRef}`
+            ? `¡Participa en la rifa por un ${raffleState.prize}! Organizada por ${raffleState.organizerName}. Referencia: ${raffleState.raffleRef}`
             : '¡Crea y gestiona tus rifas fácilmente con esta increíble aplicación!';
         
         const baseUrl = window.location.origin + window.location.pathname;
-        const shareUrl = hasRaffle ? `${baseUrl}?ref=${currentState.raffleRef}` : baseUrl;
+        const shareUrl = hasRaffle ? `${baseUrl}?ref=${raffleState.raffleRef}` : baseUrl;
 
         let url = '';
 
@@ -467,27 +464,20 @@ const App = () => {
         setIsPaymentConfirmed(true);
     }
 
-
     const allNumbers = raffleMode === 'two-digit'
         ? Array.from({ length: 100 }, (_, i) => i)
         : Array.from({ length: 900 }, (_, i) => i + 100);
 
-    const twoDigitRafflesInPlay = twoDigitState.isDetailsConfirmed ? 1 : 0;
-    const threeDigitRafflesInPlay = threeDigitState.isDetailsConfirmed ? 1 : 0;
-    
-    const drawnNumbersSet = new Set(currentState.drawnNumbers);
+    const drawnNumbersSet = new Set(raffleState?.drawnNumbers || []);
 
     if (loading) {
         return <div className="flex justify-center items-center h-screen text-xl font-semibold">Cargando...</div>;
     }
     
-    const isGuestViewingSharedRaffle = guestRaffleRef != null && guestRaffleRef === currentState.raffleRef?.toUpperCase();
-    const shouldShowAsPaid = currentState.isPaid && (isCurrentUserAdmin || isGuestViewingSharedRaffle);
-    
-    const isRegisterFormValidForSubmit = currentState.name && currentState.phoneNumber && currentState.raffleNumber && !drawnNumbersSet.has(parseInt(currentState.raffleNumber)) && isPaymentConfirmed;
+    const isRegisterFormValidForSubmit = raffleState?.name && raffleState?.phoneNumber && raffleState?.raffleNumber && !drawnNumbersSet.has(parseInt(raffleState.raffleNumber)) && isPaymentConfirmed;
 
     const renderBoardContent = () => {
-        if (!shouldShowAsPaid) {
+        if (!raffleState) {
             return (
                 <div className="relative text-center bg-gray-50 rounded-lg border-2 border-dashed overflow-hidden">
                     <div className="absolute inset-0">
@@ -504,15 +494,27 @@ const App = () => {
                         <Lock className="mx-auto h-12 w-12 text-gray-400 mb-4" />
                         <h2 className="text-2xl font-bold text-gray-800 mb-2">Tablero Bloqueado</h2>
                         <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                            Para ver el tablero de la rifa de {raffleMode === 'two-digit' ? '2' : '3'} cifras, busca el juego por su referencia. Si quieres crear tu propia rifa, actívala.
+                           Busca una rifa por su referencia o crea la tuya para empezar.
                         </p>
                         <div className="flex flex-col sm:flex-row justify-center gap-4">
                             <Button onClick={() => setIsAdminLoginOpen(true)} size="lg">
                                 Buscar por Referencia
                             </Button>
-                            <Button onClick={handleActivateBoard} size="lg" className="bg-green-500 hover:bg-green-600 text-white font-bold">
-                                Pagar $10.000 por Nequi
-                            </Button>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button size="lg" className="bg-green-500 hover:bg-green-600 text-white font-bold">
+                                        Pagar $10.000 y Activar Rifa
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent>
+                                    <DropdownMenuItem onSelect={() => handleActivateBoard('two-digit')}>
+                                        Activar Rifa de 2 Cifras
+                                    </DropdownMenuItem>
+                                     <DropdownMenuItem onSelect={() => handleActivateBoard('three-digit')}>
+                                        Activar Rifa de 3 Cifras
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                         </div>
                     </div>
                 </div>
@@ -527,25 +529,25 @@ const App = () => {
                           <p className="font-bold">Eres el administrador de este tablero.</p>
                       </div>
                     )}
-                    {currentState.winner && (
+                    {raffleState.winner && (
                         <div className="mb-6 p-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 rounded-lg">
-                            {currentState.winner.isHouse ? (
+                            {raffleState.winner.isHouse ? (
                                 <p className="font-bold text-lg flex items-center"><House className="mr-2"/>¡El premio queda en casa!</p>
                             ) : (
                                 <p className="font-bold text-lg flex items-center"><Award className="mr-2"/>¡Tenemos un ganador!</p>
                             )}
-                            <p><strong>Número:</strong> {currentState.winner.raffleNumber}</p>
-                            {!currentState.winner.isHouse && (
-                             <p><strong>Nombre:</strong> {currentState.winner.name}</p>
+                            <p><strong>Número:</strong> {raffleState.winner.raffleNumber}</p>
+                            {!raffleState.winner.isHouse && (
+                             <p><strong>Nombre:</strong> {raffleState.winner.name}</p>
                             )}
                         </div>
                     )}
                     
                     <h2 className="text-2xl font-bold text-gray-800 mb-4">Configuración del Premio</h2>
-                    {currentState.isDetailsConfirmed && currentState.raffleRef && (
+                    {raffleState.isDetailsConfirmed && raffleState.raffleRef && (
                         <div className="mb-4">
                             <p className="text-sm text-gray-500">Referencia del Juego</p>
-                            <p className="text-2xl font-bold text-gray-800 tracking-wider">{currentState.raffleRef}</p>
+                            <p className="text-2xl font-bold text-gray-800 tracking-wider">{raffleState.raffleRef}</p>
                         </div>
                     )}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
@@ -554,11 +556,11 @@ const App = () => {
                            <Input
                                id="organizer-name-input"
                                type="text"
-                               value={currentState.organizerName}
+                               value={raffleState.organizerName}
                                onChange={(e) => handleLocalFieldChange('organizerName', e.target.value)}
                                onBlur={(e) => handleFieldChange('organizerName', e.target.value)}
                                placeholder="Nombre del organizador"
-                               disabled={currentState.isDetailsConfirmed || !isCurrentUserAdmin}
+                               disabled={raffleState.isDetailsConfirmed || !isCurrentUserAdmin}
                                className="w-full mt-1"
                            />
                        </div>
@@ -567,11 +569,11 @@ const App = () => {
                            <Input
                                id="prize-input"
                                type="text"
-                               value={currentState.prize}
+                               value={raffleState.prize}
                                onChange={(e) => handleLocalFieldChange('prize', e.target.value)}
                                onBlur={(e) => handleFieldChange('prize', e.target.value)}
                                placeholder="Ej: Carro o una bicicleta"
-                               disabled={currentState.isDetailsConfirmed || !isCurrentUserAdmin}
+                               disabled={raffleState.isDetailsConfirmed || !isCurrentUserAdmin}
                                className="w-full mt-1"
                            />
                        </div>
@@ -580,11 +582,11 @@ const App = () => {
                            <Input
                                id="value-input"
                                type="text"
-                               value={formatValue(currentState.value)}
+                               value={formatValue(raffleState.value)}
                                onChange={(e) => handleLocalFieldChange('value', e.target.value.replace(/[^\d]/g, ''))}
                                onBlur={(e) => handleFieldChange('value', e.target.value.replace(/[^\d]/g, ''))}
                                placeholder="Ej: 5000"
-                               disabled={currentState.isDetailsConfirmed || !isCurrentUserAdmin}
+                               disabled={raffleState.isDetailsConfirmed || !isCurrentUserAdmin}
                                className="w-full mt-1"
                            />
                        </div>
@@ -593,10 +595,10 @@ const App = () => {
                            <Input
                                id="game-date-input"
                                type="date"
-                               value={currentState.gameDate}
+                               value={raffleState.gameDate}
                                onChange={(e) => handleLocalFieldChange('gameDate', e.target.value)}
                                onBlur={(e) => handleFieldChange('gameDate', e.target.value)}
-                               disabled={currentState.isDetailsConfirmed || !isCurrentUserAdmin}
+                               disabled={raffleState.isDetailsConfirmed || !isCurrentUserAdmin}
                                className="w-full mt-1"
                            />
                        </div>
@@ -604,12 +606,12 @@ const App = () => {
                            <Label htmlFor="lottery-input">Lotería:</Label>
                            <select
                                id="lottery-input"
-                               value={currentState.lottery}
+                               value={raffleState.lottery}
                                onChange={(e) => {
                                    const value = e.target.value;
                                    handleFieldChange('lottery', value);
                                }}
-                               disabled={currentState.isDetailsConfirmed || !isCurrentUserAdmin}
+                               disabled={raffleState.isDetailsConfirmed || !isCurrentUserAdmin}
                                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100 disabled:cursor-not-allowed mt-1"
                            >
                                <option value="">Selecciona una lotería</option>
@@ -627,31 +629,31 @@ const App = () => {
                             <Input
                                 id="nequi-account-input"
                                 type="tel"
-                                value={currentState.nequiAccountNumber}
+                                value={raffleState.nequiAccountNumber}
                                 onChange={(e) => handleLocalFieldChange('nequiAccountNumber', e.target.value)}
                                 onBlur={(e) => handleFieldChange('nequiAccountNumber', e.target.value)}
                                 placeholder="Ej: 3001234567"
-                                disabled={currentState.isDetailsConfirmed || !isCurrentUserAdmin}
+                                disabled={raffleState.isDetailsConfirmed || !isCurrentUserAdmin}
                                 className="w-full mt-1"
                             />
                         </div>
 
-                        {currentState.lottery === 'Otro' && (
+                        {raffleState.lottery === 'Otro' && (
                             <div>
                                 <Label htmlFor="custom-lottery-input">Especificar Lotería:</Label>
                                 <Input
                                     id="custom-lottery-input"
                                     type="text"
-                                    value={currentState.customLottery}
+                                    value={raffleState.customLottery}
                                     onChange={(e) => handleLocalFieldChange('customLottery', e.target.value)}
                                     onBlur={(e) => handleFieldChange('customLottery', e.target.value)}
                                     placeholder="Nombre de la lotería"
-                                    disabled={currentState.isDetailsConfirmed || !isCurrentUserAdmin}
+                                    disabled={raffleState.isDetailsConfirmed || !isCurrentUserAdmin}
                                     className="w-full mt-1"
                                 />
                             </div>
                         )}
-                       {isCurrentUserAdmin && !currentState.isDetailsConfirmed && (
+                       {isCurrentUserAdmin && !raffleState.isDetailsConfirmed && (
                            <div className="md:col-span-2">
                                <Button
                                    onClick={handleConfirmDetails}
@@ -667,7 +669,7 @@ const App = () => {
                  <div className="mb-6 p-4 border rounded-lg bg-gray-50">
                      <h2 className="text-2xl font-bold text-gray-800 mb-4">Sorteo</h2>
                      <div className="flex flex-wrap gap-3 items-center">
-                         {!currentState.isWinnerConfirmed && (
+                         {!raffleState.isWinnerConfirmed && (
                              <>
                                  <div className="flex items-center gap-2">
                                      <Label htmlFor="manual-winner-input" className="sr-only">Número Ganador</Label>
@@ -675,15 +677,15 @@ const App = () => {
                                          id="manual-winner-input"
                                          type="text"
                                          placeholder={`Número (${numberLength} cifras)`}
-                                         value={currentState.manualWinnerNumber}
+                                         value={raffleState.manualWinnerNumber}
                                          onChange={(e) => handleLocalFieldChange('manualWinnerNumber', e.target.value.replace(/\D/g, ''))}
                                          maxLength={numberLength}
-                                         disabled={currentState.isWinnerConfirmed || !!currentState.winner}
+                                         disabled={raffleState.isWinnerConfirmed || !!raffleState.winner}
                                          className="w-36"
                                      />
                                      <Button
                                          onClick={handleDrawWinner}
-                                         disabled={currentState.isWinnerConfirmed || !!currentState.winner}
+                                         disabled={raffleState.isWinnerConfirmed || !!raffleState.winner}
                                          className="bg-yellow-500 text-white font-medium rounded-lg hover:bg-yellow-600 transition-colors disabled:bg-gray-300"
                                      >
                                          Buscar Ganador
@@ -691,7 +693,7 @@ const App = () => {
                                  </div>
                              </>
                          )}
-                         {currentState.winner && !currentState.isWinnerConfirmed && (
+                         {raffleState.winner && !raffleState.isWinnerConfirmed && (
                              <Button
                                  onClick={handleConfirmWinner}
                                  className="bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 transition-colors"
@@ -706,7 +708,7 @@ const App = () => {
                              Reiniciar Tablero
                          </Button>
                      </div>
-                     {currentState.isWinnerConfirmed && (
+                     {raffleState.isWinnerConfirmed && (
                          <p className="mt-4 text-green-600 font-semibold">El resultado ha sido confirmado y el tablero está cerrado.</p>
                      )}
                  </div>
@@ -725,27 +727,27 @@ const App = () => {
                                onClick={() => toggleNumber(number)}
                                className={`
                                    number-cell text-center py-2 rounded-lg transition-all text-sm
-                                   ${currentState.isWinnerConfirmed || !currentState.isDetailsConfirmed || !!currentState.winner ? 'cursor-not-allowed' : 'cursor-pointer'}
+                                   ${raffleState.isWinnerConfirmed || !raffleState.isDetailsConfirmed || !!raffleState.winner ? 'cursor-not-allowed' : 'cursor-pointer'}
                                    ${drawnNumbersSet.has(number)
                                        ? 'bg-red-600 text-white shadow-lg transform scale-105 cursor-not-allowed'
-                                       : !currentState.isDetailsConfirmed || !!currentState.winner
+                                       : !raffleState.isDetailsConfirmed || !!raffleState.winner
                                        ? 'bg-gray-200 text-gray-500'
                                        : 'bg-green-200 text-green-800 hover:bg-green-300 hover:shadow-md'
                                    }
-                                   ${currentState.winner?.raffleNumber === String(number).padStart(numberLength, '0') ? 'ring-4 ring-yellow-400 animate-pulse' : ''}
+                                   ${raffleState.winner?.raffleNumber === String(number).padStart(numberLength, '0') ? 'ring-4 ring-yellow-400 animate-pulse' : ''}
                                `}
                            >
                                {String(number).padStart(numberLength, '0')}
                            </div>
                        ))}
                    </div>
-                   {!!currentState.winner && !currentState.isWinnerConfirmed && (
+                   {!!raffleState.winner && !raffleState.isWinnerConfirmed && (
                         <div className="mt-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4" role="alert">
                             <p className="font-bold">Tablero Bloqueado</p>
                             <p>Se ha encontrado un ganador. Confirma el resultado o reinicia el tablero para continuar.</p>
                         </div>
                     )}
-                   {!currentState.isDetailsConfirmed && (
+                   {!raffleState.isDetailsConfirmed && (
                         <div className="mt-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4" role="alert">
                             <p className="font-bold">Tablero Bloqueado</p>
                             <p>Debes completar y confirmar los detalles del premio para poder seleccionar números.</p>
@@ -781,29 +783,23 @@ const App = () => {
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent>
-                                <DropdownMenuCheckboxItem
-                                    checked={raffleMode === 'two-digit'}
-                                    onSelect={() => changeRaffleMode('two-digit')}
-                                >
-                                    Rifa de 2 Cifras
-                                    {twoDigitRafflesInPlay > 0 && (
-                                        <span className="ml-auto bg-green-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                                            {twoDigitRafflesInPlay} en juego
-                                        </span>
-                                    )}
-                                </DropdownMenuCheckboxItem>
-                                <DropdownMenuCheckboxItem
-                                    checked={raffleMode === 'three-digit'}
-                                    onSelect={() => changeRaffleMode('three-digit')}
-                                >
-                                    Rifa de 3 Cifras
-                                    {threeDigitRafflesInPlay > 0 && (
-                                        <span className="ml-auto bg-green-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                                            {threeDigitRafflesInPlay} en juego
-                                        </span>
-                                    )}
-                                </DropdownMenuCheckboxItem>
-                                <DropdownMenuSeparator />
+                                {raffleState && isCurrentUserAdmin && (
+                                    <>
+                                        <DropdownMenuCheckboxItem
+                                            checked={raffleMode === 'two-digit'}
+                                            onSelect={() => changeRaffleMode('two-digit')}
+                                        >
+                                            Rifa de 2 Cifras
+                                        </DropdownMenuCheckboxItem>
+                                        <DropdownMenuCheckboxItem
+                                            checked={raffleMode === 'three-digit'}
+                                            onSelect={() => changeRaffleMode('three-digit')}
+                                        >
+                                            Rifa de 3 Cifras
+                                        </DropdownMenuCheckboxItem>
+                                        <DropdownMenuSeparator />
+                                    </>
+                                )}
                                 <DropdownMenuItem onSelect={() => setIsAdminLoginOpen(true)}>
                                     Buscar por Referencia
                                 </DropdownMenuItem>
@@ -830,14 +826,14 @@ const App = () => {
                     <button 
                         className={`px-6 py-3 font-medium text-lg ${activeTab === 'register' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
                         onClick={() => handleTabClick('register')}
-                        disabled={!shouldShowAsPaid}
+                        disabled={!raffleState}
                     >
                         Registrar
                     </button>
                     <button 
                         className={`px-6 py-3 font-medium text-lg ${activeTab === 'participants' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
                         onClick={() => handleTabClick('participants')}
-                        disabled={!shouldShowAsPaid}
+                        disabled={!raffleState}
                     >
                         Participantes
                     </button>
@@ -849,14 +845,14 @@ const App = () => {
                     </div>
                     <div className={activeTab === 'register' ? 'tab-content active' : 'tab-content'}>
                         <h2 className="text-2xl font-bold text-gray-800 mb-4">Registrar Participante</h2>
-                        <fieldset disabled={isCurrentUserAdmin || currentState.isWinnerConfirmed || !currentState.isDetailsConfirmed || !shouldShowAsPaid} className="disabled:opacity-50 space-y-4">
+                        <fieldset disabled={!raffleState || isCurrentUserAdmin || raffleState?.isWinnerConfirmed || !raffleState?.isDetailsConfirmed} className="disabled:opacity-50 space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div>
                                     <Label htmlFor="name-input">Nombre completo:</Label>
                                     <Input
                                         id="name-input"
                                         type="text"
-                                        value={currentState.name}
+                                        value={raffleState?.name || ''}
                                         onChange={(e) => handleLocalFieldChange('name', e.target.value)}
                                         placeholder="Ej: Juan Pérez"
                                         className="w-full mt-1"
@@ -867,7 +863,7 @@ const App = () => {
                                     <Input
                                         id="phone-input"
                                         type="tel"
-                                        value={currentState.phoneNumber}
+                                        value={raffleState?.phoneNumber || ''}
                                         onChange={(e) => handleLocalFieldChange('phoneNumber', e.target.value.replace(/\D/g, ''))}
                                         placeholder="Ej: 3001234567"
                                         className="w-full mt-1"
@@ -878,13 +874,13 @@ const App = () => {
                                     <Input
                                         id="raffle-number-input"
                                         type="text"
-                                        value={currentState.raffleNumber}
+                                        value={raffleState?.raffleNumber || ''}
                                         onChange={handleRaffleNumberChange}
                                         placeholder={`Ej: ${raffleMode === 'two-digit' ? '05' : '142'}`}
                                         className="w-full mt-1"
                                         maxLength={numberLength}
                                     />
-                                    {currentState.raffleNumber && drawnNumbersSet.has(parseInt(currentState.raffleNumber)) && (
+                                    {raffleState?.raffleNumber && drawnNumbersSet.has(parseInt(raffleState.raffleNumber)) && (
                                         <p className="text-red-500 text-sm mt-1">Este número ya está asignado</p>
                                     )}
                                 </div>
@@ -910,7 +906,7 @@ const App = () => {
                                 </Button>
                                 <Button
                                     onClick={handleTicketConfirmation}
-                                    disabled={!isRegisterFormValidForSubmit || currentState.isWinnerConfirmed}
+                                    disabled={!isRegisterFormValidForSubmit || raffleState?.isWinnerConfirmed}
                                     className="w-full px-4 py-2 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
                                 >
                                     Generar Tiquete
@@ -925,15 +921,15 @@ const App = () => {
                                 <p>Como administrador, no puedes registrar participantes. Esta tarea deben realizarla los propios jugadores.</p>
                             </div>
                         )}
-
-                        {(!currentState.isDetailsConfirmed || !shouldShowAsPaid) && !isCurrentUserAdmin && (
+                        
+                        {(!raffleState || !raffleState.isDetailsConfirmed) && (
                                 <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-6" role="alert">
                                 <p className="font-bold">Aviso</p>
                                 <p>Debes activar o buscar una rifa y confirmar los detalles del premio en la pestaña "Tablero" para poder registrar participantes.</p>
                             </div>
                         )}
 
-                        {currentState.isWinnerConfirmed && (
+                        {raffleState?.isWinnerConfirmed && (
                             <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-6" role="alert">
                                 <p className="font-bold">Juego terminado</p>
                                 <p>El registro de nuevos participantes está deshabilitado porque ya se ha confirmado un ganador. Reinicia el tablero para comenzar una nueva rifa.</p>
@@ -945,12 +941,12 @@ const App = () => {
                                 <h2 className="text-2xl font-bold text-gray-800">Participantes Registrados</h2>
                         </div>
 
-                        {!shouldShowAsPaid ? (
+                        {!raffleState ? (
                             <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-6" role="alert">
                                 <p className="font-bold">Aviso</p>
                                 <p>Debes activar o buscar una rifa en la pestaña "Tablero" para poder ver los participantes.</p>
                             </div>
-                        ) : currentState.participants.length > 0 ? (
+                        ) : raffleState.participants.length > 0 ? (
                             <div className="overflow-x-auto">
                                 <table className="min-w-full divide-y divide-gray-200">
                                     <thead className="bg-gray-50">
@@ -970,7 +966,7 @@ const App = () => {
                                         </tr>
                                     </thead>
                                     <tbody className="bg-white divide-y divide-gray-200">
-                                        {currentState.participants.map((p: any, index: number) => (
+                                        {raffleState.participants.map((p: any, index: number) => (
                                             <tr key={p.id}>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                     {index + 1}
@@ -1183,5 +1179,3 @@ const App = () => {
 };
 
 export default App;
-
-    
