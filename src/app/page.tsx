@@ -213,23 +213,27 @@ const App = () => {
     const resetBoard = () => {
         if (!raffleState || !raffleState.raffleRef) return;
         showConfirmationDialog(
-            '¿Estás seguro de que deseas reiniciar el tablero? Se perderán todos los datos de esta rifa.',
+            '¿Estás seguro de que deseas reiniciar el tablero? Se perderán todos los datos de esta rifa y se creará una nueva.',
             async () => {
+                if (!currentAdminId) return;
+
+                const oldRaffleRef = raffleState.raffleRef;
                 const newRef = await raffleManager.createNewRaffleRef();
+                
                 const newRaffleData = {
                     ...initialRaffleData,
                     adminId: currentAdminId,
-                    isPaid: true,
+                    isPaid: true, // Assuming a new payment is not needed for a reset by the same admin
                     raffleRef: newRef,
                     raffleMode: raffleState.raffleMode,
                 };
                 
-                await deleteDoc(doc(db, "raffles", raffleState.raffleRef));
+                await deleteDoc(doc(db, "raffles", oldRaffleRef));
                 await setDoc(doc(db, "raffles", newRef), newRaffleData);
 
                 setRaffleState(newRaffleData);
                 window.history.pushState({}, '', `?ref=${newRef}`);
-                showNotification('Tablero reiniciado correctamente con una nueva referencia', 'success');
+                showNotification('Tablero reiniciado con una nueva referencia.', 'success');
                 setShowConfetti(false);
             }
         );
@@ -1179,3 +1183,5 @@ const App = () => {
 };
 
 export default App;
+
+    
