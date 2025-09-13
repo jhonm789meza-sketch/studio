@@ -384,6 +384,9 @@ const App = () => {
     const handleActivateBoard = async (mode: RaffleMode) => {
         setLoading(true);
         try {
+            // Simulate payment first
+            window.open('nequi://', '_blank');
+
             const newRef = await raffleManager.createNewRaffleRef();
             const newRaffleData = {
                 ...initialRaffleData,
@@ -394,9 +397,7 @@ const App = () => {
             };
             
             await setDoc(doc(db, "raffles", newRef), newRaffleData);
-
-            window.open('nequi://', '_blank');
-
+            
             handleAdminSearch(newRef);
             
             showNotification('¡Nueva rifa activada! Ahora eres el administrador y puedes configurar los detalles del premio.', 'success');
