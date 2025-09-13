@@ -475,24 +475,15 @@ const App = () => {
                            Busca una rifa por su referencia o crea la tuya para empezar.
                         </p>
                         <div className="flex flex-col sm:flex-row justify-center gap-4">
-                            <Button onClick={() => setIsAdminLoginOpen(true)} size="lg">
+                             <Button onClick={() => setIsAdminLoginOpen(true)} size="lg">
                                 Buscar por Referencia
                             </Button>
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button size="lg" className="bg-green-500 hover:bg-green-600 text-white font-bold">
-                                        Pagar $10.000 y Activar Rifa
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent>
-                                    <DropdownMenuItem onSelect={() => handleActivateBoard('two-digit')}>
-                                        Activar Rifa de 2 Cifras
-                                    </DropdownMenuItem>
-                                     <DropdownMenuItem onSelect={() => handleActivateBoard('three-digit')}>
-                                        Activar Rifa de 3 Cifras
-                                    </DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
+                            <Button onClick={() => handleActivateBoard('two-digit')} size="lg" className="bg-green-500 hover:bg-green-600 text-white font-bold">
+                                Activar Rifa de 2 Cifras ($10.000)
+                            </Button>
+                            <Button onClick={() => handleActivateBoard('three-digit')} size="lg" className="bg-blue-500 hover:bg-blue-600 text-white font-bold">
+                                Activar Rifa de 3 Cifras ($20.000)
+                            </Button>
                         </div>
                     </div>
                 </div>
