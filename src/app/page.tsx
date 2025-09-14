@@ -7,7 +7,7 @@ import { db } from '@/lib/firebase';
 import { doc, onSnapshot, setDoc, getDoc, deleteDoc, Unsubscribe } from 'firebase/firestore';
 import Image from 'next/image';
 
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuCheckboxItem } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Menu, Award, Lock, House, Share2, Copy } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
@@ -305,12 +305,6 @@ const App = () => {
         });
     };
     
-    const changeRaffleMode = async (mode: RaffleMode) => {
-        if (!raffleState || !raffleState.raffleRef || mode === raffleMode) return;
-        await setDoc(doc(db, "raffles", raffleState.raffleRef), { raffleMode: mode }, { merge: true });
-        showNotification(`Cambiado a modo de ${mode === 'two-digit' ? '2' : '3'} cifras.`, 'success');
-    };
-
     const handleAdminSearch = (refToSearch?: string) => {
         const aRef = (refToSearch || adminRefSearch).trim().toUpperCase();
         if (!aRef) {
@@ -654,32 +648,12 @@ const App = () => {
                <div>
                    <div className="flex justify-between items-center mb-4">
                        <h2 className="text-2xl font-bold text-gray-800 flex items-center">
-                           Tablero de Números ({raffleMode === 'two-digit' ? '00-99' : '100-999'})
+                           Tablero de Números
                        </h2>
                        {isCurrentUserAdmin && (
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="outline">
-                                    Modo: {raffleMode === 'two-digit' ? '2 Cifras' : '3 Cifras'}
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent>
-                                <DropdownMenuCheckboxItem
-                                    checked={raffleMode === 'two-digit'}
-                                    onSelect={() => changeRaffleMode('two-digit')}
-                                    disabled={raffleState.participants.length > 0 || raffleState.isDetailsConfirmed}
-                                >
-                                    2 Cifras
-                                </DropdownMenuCheckboxItem>
-                                <DropdownMenuCheckboxItem
-                                    checked={raffleMode === 'three-digit'}
-                                    onSelect={() => changeRaffleMode('three-digit')}
-                                    disabled={raffleState.participants.length > 0 || raffleState.isDetailsConfirmed}
-                                >
-                                    3 Cifras
-                                </DropdownMenuCheckboxItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                            <div className="font-semibold text-gray-700">
+                                Modo: {raffleMode === 'two-digit' ? '2 Cifras' : '3 Cifras'}
+                            </div>
                        )}
                    </div>
                    <div className={`grid gap-2 ${raffleMode === 'two-digit' ? 'grid-cols-10' : 'grid-cols-10 md:grid-cols-20 lg:grid-cols-25'}`}>
@@ -1161,5 +1135,3 @@ const App = () => {
 };
 
 export default App;
-
-    
