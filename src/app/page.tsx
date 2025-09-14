@@ -407,13 +407,9 @@ const App = () => {
     };
 
     const handleShare = (platform: 'whatsapp' | 'facebook' | 'copy') => {
-        const hasRaffle = raffleState && raffleState.raffleRef;
-        const shareText = hasRaffle
-            ? `¡Participa en la rifa por un ${raffleState.prize}! Organizada por ${raffleState.organizerName}. Referencia: ${raffleState.raffleRef}`
-            : '¡Crea y gestiona tus rifas fácilmente con esta increíble aplicación!';
-        
+        const shareText = '¡Crea y gestiona tus rifas fácilmente con esta increíble aplicación!';
         const baseUrl = window.location.origin + window.location.pathname;
-        const shareUrl = hasRaffle ? `${baseUrl}?ref=${raffleState.raffleRef}` : baseUrl;
+        const shareUrl = baseUrl;
 
         let url = '';
 
