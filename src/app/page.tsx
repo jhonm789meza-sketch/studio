@@ -408,8 +408,7 @@ const App = () => {
 
     const handleShare = (platform: 'whatsapp' | 'facebook' | 'copy') => {
         const shareText = '¡Crea y gestiona tus rifas fácilmente con esta increíble aplicación!';
-        const baseUrl = window.location.origin + window.location.pathname;
-        const shareUrl = baseUrl;
+        const shareUrl = window.location.origin;
 
         let url = '';
 
