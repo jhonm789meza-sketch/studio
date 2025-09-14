@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { RaffleManager } from '@/lib/RaffleManager';
-import { db } from '@/lib/firebase';
+import { db, persistenceEnabled } from '@/lib/firebase';
 import { doc, onSnapshot, setDoc, getDoc, deleteDoc, Unsubscribe } from 'firebase/firestore';
 import Image from 'next/image';
 
@@ -87,7 +87,10 @@ const App = () => {
         }
         setCurrentAdminId(adminId);
 
-        const handleUrlRef = () => {
+        const handleUrlRef = async () => {
+            if (persistenceEnabled) {
+                await persistenceEnabled;
+            }
             const urlParams = new URLSearchParams(window.location.search);
             const refFromUrl = urlParams.get('ref');
             if (refFromUrl) {

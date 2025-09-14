@@ -1,5 +1,6 @@
 import { doc, getDoc, setDoc, increment, updateDoc } from 'firebase/firestore';
 import type { Firestore } from 'firebase/firestore';
+import { persistenceEnabled } from './firebase';
 
 class RaffleManager {
     private db: Firestore;
@@ -13,6 +14,10 @@ class RaffleManager {
     public async getNextRefNumber(): Promise<number> {
         if (typeof window === 'undefined') {
             return 1;
+        }
+
+        if (persistenceEnabled) {
+            await persistenceEnabled;
         }
         
         try {
