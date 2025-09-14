@@ -191,7 +191,7 @@ const App = () => {
     const resetBoard = () => {
         if (!raffleState || !raffleState.raffleRef) return;
         showConfirmationDialog(
-            '¿Estás seguro de que deseas reiniciar el tablero? Se perderán todos los datos de esta rifa y deberás realizar otro pago para crear una nueva.',
+            '¿Estás seguro de que deseas reiniciar el tablero? Esta acción eliminará la rifa actual y deberás realizar otro pago para crear una nueva.',
             async () => {
                 const oldRaffleRef = raffleState.raffleRef;
                 await deleteDoc(doc(db, "raffles", oldRaffleRef));
@@ -667,14 +667,14 @@ const App = () => {
                                 <DropdownMenuCheckboxItem
                                     checked={raffleMode === 'two-digit'}
                                     onSelect={() => changeRaffleMode('two-digit')}
-                                    disabled={raffleState.participants.length > 0}
+                                    disabled={raffleState.participants.length > 0 || raffleState.isDetailsConfirmed}
                                 >
                                     2 Cifras
                                 </DropdownMenuCheckboxItem>
                                 <DropdownMenuCheckboxItem
                                     checked={raffleMode === 'three-digit'}
                                     onSelect={() => changeRaffleMode('three-digit')}
-                                    disabled={raffleState.participants.length > 0}
+                                    disabled={raffleState.participants.length > 0 || raffleState.isDetailsConfirmed}
                                 >
                                     3 Cifras
                                 </DropdownMenuCheckboxItem>
@@ -1161,3 +1161,5 @@ const App = () => {
 };
 
 export default App;
+
+    
