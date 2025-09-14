@@ -483,7 +483,7 @@ const App = () => {
                                 Activar Rifa de 2 Cifras ($10.000)
                             </Button>
                             <Button onClick={() => handleActivateBoard('three-digit')} size="lg" className="bg-blue-500 hover:bg-blue-600 text-white font-bold">
-                                Activar Rifa de 3 Cifras ($10.000)
+                                Activar Rifa de 3 Cifras ($15.000)
                             </Button>
                         </div>
                     </div>
