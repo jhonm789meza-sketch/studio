@@ -456,40 +456,7 @@ const App = () => {
     const isRegisterFormValidForSubmit = raffleState?.name && raffleState?.phoneNumber && raffleState?.raffleNumber && !drawnNumbersSet.has(parseInt(raffleState.raffleNumber)) && isPaymentConfirmed;
 
     const renderBoardContent = () => {
-        if (!raffleState) {
-            return (
-                <div className="relative text-center bg-gray-50 rounded-lg border-2 border-dashed overflow-hidden">
-                    <div className="absolute inset-0">
-                        <Image
-                            src="https://picsum.photos/seed/rafflecard/800/400"
-                            alt="Cartón de Rifa"
-                            fill
-                            style={{ objectFit: 'cover' }}
-                            className="opacity-20"
-                            data-ai-hint="carton rifa"
-                        />
-                    </div>
-                    <div className="relative p-10">
-                        <Lock className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                        <h2 className="text-2xl font-bold text-gray-800 mb-2">Tablero Bloqueado</h2>
-                        <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                           Busca una rifa por su referencia o crea la tuya para empezar.
-                        </p>
-                        <div className="flex flex-col sm:flex-row justify-center gap-4">
-                             <Button onClick={() => setIsAdminLoginOpen(true)} size="lg">
-                                Buscar por Referencia
-                            </Button>
-                            <Button onClick={() => handleActivateBoard('two-digit')} size="lg" className="bg-green-500 hover:bg-green-600 text-white font-bold">
-                                Activar Rifa de 2 Cifras ($10.000)
-                            </Button>
-                            <Button onClick={() => handleActivateBoard('three-digit')} size="lg" className="bg-blue-500 hover:bg-blue-600 text-white font-bold">
-                                Activar Rifa de 3 Cifras ($15.000)
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-            );
-        }
+       if (!raffleState) return null;
         
         return (
             <>
@@ -794,180 +761,217 @@ const App = () => {
                     <div></div>
                 </div>
 
-                <div className="flex border-b border-gray-200">
-                    <button 
-                        className={`px-6 py-3 font-medium text-lg ${activeTab === 'board' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
-                        onClick={() => handleTabClick('board')}
-                    >
-                        Tablero
-                    </button>
-                    <button 
-                        className={`px-6 py-3 font-medium text-lg ${activeTab === 'register' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
-                        onClick={() => handleTabClick('register')}
-                        disabled={!raffleState}
-                    >
-                        Registrar
-                    </button>
-                    <button 
-                        className={`px-6 py-3 font-medium text-lg ${activeTab === 'participants' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
-                        onClick={() => handleTabClick('participants')}
-                        disabled={!raffleState}
-                    >
-                        Participantes
-                    </button>
-                </div>
-
-                <div className="p-6">
-                    <div className={activeTab === 'board' ? 'tab-content active' : 'tab-content'}>
-                        {renderBoardContent()}
+                {!raffleState ? (
+                    <div className="p-6">
+                        <div className="relative text-center bg-gray-50 rounded-lg border-2 border-dashed overflow-hidden">
+                            <div className="absolute inset-0">
+                                <Image
+                                    src="https://picsum.photos/seed/rafflecard/800/400"
+                                    alt="Cartón de Rifa"
+                                    fill
+                                    style={{ objectFit: 'cover' }}
+                                    className="opacity-20"
+                                    data-ai-hint="carton rifa"
+                                />
+                            </div>
+                            <div className="relative p-10">
+                                <Lock className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                                <h2 className="text-2xl font-bold text-gray-800 mb-2">Tablero Bloqueado</h2>
+                                <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                                   Busca una rifa por su referencia o crea la tuya para empezar.
+                                </p>
+                                <div className="flex flex-col sm:flex-row justify-center gap-4">
+                                     <Button onClick={() => setIsAdminLoginOpen(true)} size="lg">
+                                        Buscar por Referencia
+                                    </Button>
+                                    <Button onClick={() => handleActivateBoard('two-digit')} size="lg" className="bg-green-500 hover:bg-green-600 text-white font-bold">
+                                        Activar Rifa de 2 Cifras ($10.000)
+                                    </Button>
+                                    <Button onClick={() => handleActivateBoard('three-digit')} size="lg" className="bg-blue-500 hover:bg-blue-600 text-white font-bold">
+                                        Activar Rifa de 3 Cifras ($15.000)
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div className={activeTab === 'register' ? 'tab-content active' : 'tab-content'}>
-                        <h2 className="text-2xl font-bold text-gray-800 mb-4">Registrar Participante</h2>
-                        <fieldset disabled={!raffleState || isCurrentUserAdmin || raffleState?.isWinnerConfirmed || !raffleState?.isDetailsConfirmed} className="disabled:opacity-50 space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div>
-                                    <Label htmlFor="name-input">Nombre completo:</Label>
-                                    <Input
-                                        id="name-input"
-                                        type="text"
-                                        value={raffleState?.name || ''}
-                                        onChange={(e) => handleLocalFieldChange('name', e.target.value)}
-                                        placeholder="Ej: Juan Pérez"
-                                        className="w-full mt-1"
-                                    />
-                                </div>
-                                <div>
-                                    <Label htmlFor="phone-input">Celular:</Label>
-                                    <Input
-                                        id="phone-input"
-                                        type="tel"
-                                        value={raffleState?.phoneNumber || ''}
-                                        onChange={(e) => handleLocalFieldChange('phoneNumber', e.target.value.replace(/\D/g, ''))}
-                                        placeholder="Ej: 3001234567"
-                                        className="w-full mt-1"
-                                    />
-                                </div>
-                                <div>
-                                    <Label htmlFor="raffle-number-input">Número de rifa ({raffleMode === 'two-digit' ? '00-99' : '100-999'}):</Label>
-                                    <Input
-                                        id="raffle-number-input"
-                                        type="text"
-                                        value={raffleState?.raffleNumber || ''}
-                                        onChange={handleRaffleNumberChange}
-                                        placeholder={`Ej: ${raffleMode === 'two-digit' ? '05' : '142'}`}
-                                        className="w-full mt-1"
-                                        maxLength={numberLength}
-                                    />
-                                    {raffleState?.raffleNumber && drawnNumbersSet.has(parseInt(raffleState.raffleNumber)) && (
-                                        <p className="text-red-500 text-sm mt-1">Este número ya está asignado</p>
-                                    )}
-                                </div>
-                            </div>
-
-                            <div className="flex items-center space-x-2">
-                                <Checkbox id="payment-confirmed" checked={isPaymentConfirmed} onCheckedChange={(checked) => setIsPaymentConfirmed(!!checked)} />
-                                <label
-                                    htmlFor="payment-confirmed"
-                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                                >
-                                    Pago Recibido
-                                </label>
-                            </div>
-                            
-                            <div className="flex flex-col gap-4">
-                                <Button
-                                    variant="outline"
-                                    className="w-full"
-                                    onClick={handleNequiPayment}
-                                >
-                                    Pagar con Nequi
-                                </Button>
-                                <Button
-                                    onClick={handleTicketConfirmation}
-                                    disabled={!isRegisterFormValidForSubmit || raffleState?.isWinnerConfirmed}
-                                    className="w-full px-4 py-2 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-                                >
-                                    Generar Tiquete
-                                </Button>
-                            </div>
-
-                        </fieldset>
-
-                        {isCurrentUserAdmin && (
-                            <div className="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mt-6" role="alert">
-                                <p className="font-bold">Modo Administrador</p>
-                                <p>Como administrador, no puedes registrar participantes. Esta tarea deben realizarla los propios jugadores.</p>
-                            </div>
-                        )}
-                        
-                        {(!raffleState || !raffleState.isDetailsConfirmed) && (
-                                <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-6" role="alert">
-                                <p className="font-bold">Aviso</p>
-                                <p>Debes activar o buscar una rifa y confirmar los detalles del premio en la pestaña "Tablero" para poder registrar participantes.</p>
-                            </div>
-                        )}
-
-                        {raffleState?.isWinnerConfirmed && (
-                            <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-6" role="alert">
-                                <p className="font-bold">Juego terminado</p>
-                                <p>El registro de nuevos participantes está deshabilitado porque ya se ha confirmado un ganador. Reinicia el tablero para comenzar una nueva rifa.</p>
-                            </div>
-                        )}
-                    </div>
-                    <div className={activeTab === 'participants' ? 'tab-content active' : 'tab-content'}>
-                        <div className="flex justify-between items-center mb-4">
-                                <h2 className="text-2xl font-bold text-gray-800">Participantes Registrados</h2>
+                ) : (
+                    <>
+                        <div className="flex border-b border-gray-200">
+                            <button 
+                                className={`px-6 py-3 font-medium text-lg ${activeTab === 'board' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
+                                onClick={() => handleTabClick('board')}
+                            >
+                                Tablero
+                            </button>
+                            <button 
+                                className={`px-6 py-3 font-medium text-lg ${activeTab === 'register' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
+                                onClick={() => handleTabClick('register')}
+                                disabled={!raffleState}
+                            >
+                                Registrar
+                            </button>
+                            <button 
+                                className={`px-6 py-3 font-medium text-lg ${activeTab === 'participants' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
+                                onClick={() => handleTabClick('participants')}
+                                disabled={!raffleState}
+                            >
+                                Participantes
+                            </button>
                         </div>
 
-                        {!raffleState ? (
-                            <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-6" role="alert">
-                                <p className="font-bold">Aviso</p>
-                                <p>Debes activar o buscar una rifa en la pestaña "Tablero" para poder ver los participantes.</p>
+                        <div className="p-6">
+                            <div className={activeTab === 'board' ? 'tab-content active' : 'tab-content'}>
+                                {renderBoardContent()}
                             </div>
-                        ) : raffleState.participants.length > 0 ? (
-                            <div className="overflow-x-auto">
-                                <table className="min-w-full divide-y divide-gray-200">
-                                    <thead className="bg-gray-50">
-                                        <tr>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                #
-                                            </th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Nombre
-                                            </th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Celular
-                                            </th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Número
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="bg-white divide-y divide-gray-200">
-                                        {raffleState.participants.map((p: any, index: number) => (
-                                            <tr key={p.id}>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                    {index + 1}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                    {p.name}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                    {p.phoneNumber}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-purple-600">
-                                                    {p.raffleNumber}
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                            <div className={activeTab === 'register' ? 'tab-content active' : 'tab-content'}>
+                                <h2 className="text-2xl font-bold text-gray-800 mb-4">Registrar Participante</h2>
+                                <fieldset disabled={!raffleState || isCurrentUserAdmin || raffleState?.isWinnerConfirmed || !raffleState?.isDetailsConfirmed} className="disabled:opacity-50 space-y-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <div>
+                                            <Label htmlFor="name-input">Nombre completo:</Label>
+                                            <Input
+                                                id="name-input"
+                                                type="text"
+                                                value={raffleState?.name || ''}
+                                                onChange={(e) => handleLocalFieldChange('name', e.target.value)}
+                                                placeholder="Ej: Juan Pérez"
+                                                className="w-full mt-1"
+                                            />
+                                        </div>
+                                        <div>
+                                            <Label htmlFor="phone-input">Celular:</Label>
+                                            <Input
+                                                id="phone-input"
+                                                type="tel"
+                                                value={raffleState?.phoneNumber || ''}
+                                                onChange={(e) => handleLocalFieldChange('phoneNumber', e.target.value.replace(/\D/g, ''))}
+                                                placeholder="Ej: 3001234567"
+                                                className="w-full mt-1"
+                                            />
+                                        </div>
+                                        <div>
+                                            <Label htmlFor="raffle-number-input">Número de rifa ({raffleMode === 'two-digit' ? '00-99' : '100-999'}):</Label>
+                                            <Input
+                                                id="raffle-number-input"
+                                                type="text"
+                                                value={raffleState?.raffleNumber || ''}
+                                                onChange={handleRaffleNumberChange}
+                                                placeholder={`Ej: ${raffleMode === 'two-digit' ? '05' : '142'}`}
+                                                className="w-full mt-1"
+                                                maxLength={numberLength}
+                                            />
+                                            {raffleState?.raffleNumber && drawnNumbersSet.has(parseInt(raffleState.raffleNumber)) && (
+                                                <p className="text-red-500 text-sm mt-1">Este número ya está asignado</p>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center space-x-2">
+                                        <Checkbox id="payment-confirmed" checked={isPaymentConfirmed} onCheckedChange={(checked) => setIsPaymentConfirmed(!!checked)} />
+                                        <label
+                                            htmlFor="payment-confirmed"
+                                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                        >
+                                            Pago Recibido
+                                        </label>
+                                    </div>
+                                    
+                                    <div className="flex flex-col gap-4">
+                                        <Button
+                                            variant="outline"
+                                            className="w-full"
+                                            onClick={handleNequiPayment}
+                                        >
+                                            Pagar con Nequi
+                                        </Button>
+                                        <Button
+                                            onClick={handleTicketConfirmation}
+                                            disabled={!isRegisterFormValidForSubmit || raffleState?.isWinnerConfirmed}
+                                            className="w-full px-4 py-2 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                                        >
+                                            Generar Tiquete
+                                        </Button>
+                                    </div>
+
+                                </fieldset>
+
+                                {isCurrentUserAdmin && (
+                                    <div className="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mt-6" role="alert">
+                                        <p className="font-bold">Modo Administrador</p>
+                                        <p>Como administrador, no puedes registrar participantes. Esta tarea deben realizarla los propios jugadores.</p>
+                                    </div>
+                                )}
+                                
+                                {(!raffleState || !raffleState.isDetailsConfirmed) && (
+                                        <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-6" role="alert">
+                                        <p className="font-bold">Aviso</p>
+                                        <p>Debes activar o buscar una rifa y confirmar los detalles del premio en la pestaña "Tablero" para poder registrar participantes.</p>
+                                    </div>
+                                )}
+
+                                {raffleState?.isWinnerConfirmed && (
+                                    <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-6" role="alert">
+                                        <p className="font-bold">Juego terminado</p>
+                                        <p>El registro de nuevos participantes está deshabilitado porque ya se ha confirmado un ganador. Reinicia el tablero para comenzar una nueva rifa.</p>
+                                    </div>
+                                )}
                             </div>
-                        ) : (
-                            <p className="text-gray-500">No hay participantes registrados.</p>
-                        )}
-                    </div>
-                </div>
+                            <div className={activeTab === 'participants' ? 'tab-content active' : 'tab-content'}>
+                                <div className="flex justify-between items-center mb-4">
+                                        <h2 className="text-2xl font-bold text-gray-800">Participantes Registrados</h2>
+                                </div>
+
+                                {!raffleState ? (
+                                    <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-6" role="alert">
+                                        <p className="font-bold">Aviso</p>
+                                        <p>Debes activar o buscar una rifa en la pestaña "Tablero" para poder ver los participantes.</p>
+                                    </div>
+                                ) : raffleState.participants.length > 0 ? (
+                                    <div className="overflow-x-auto">
+                                        <table className="min-w-full divide-y divide-gray-200">
+                                            <thead className="bg-gray-50">
+                                                <tr>
+                                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                        #
+                                                    </th>
+                                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                        Nombre
+                                                    </th>
+                                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                        Celular
+                                                    </th>
+                                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                        Número
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="bg-white divide-y divide-gray-200">
+                                                {raffleState.participants.map((p: any, index: number) => (
+                                                    <tr key={p.id}>
+                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                            {index + 1}
+                                                        </td>
+                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                            {p.name}
+                                                        </td>
+                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                            {p.phoneNumber}
+                                                        </td>
+                                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-purple-600">
+                                                            {p.raffleNumber}
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                ) : (
+                                    <p className="text-gray-500">No hay participantes registrados.</p>
+                                )}
+                            </div>
+                        </div>
+                    </>
+                )}
 
                 {notification.show && (
                     <div className={`fixed top-4 right-4 z-[100] px-4 py-3 rounded-lg shadow-lg transition-opacity duration-300 ${
