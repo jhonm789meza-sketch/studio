@@ -423,8 +423,8 @@ const App = () => {
     };
 
     const handleShare = (platform: 'whatsapp' | 'facebook' | 'copy') => {
-        const shareText = '¡Crea y gestiona tus rifas fácilmente con esta increíble aplicación!';
-        const shareUrl = window.location.origin;
+        const shareText = "¡Participa en esta increíble rifa!";
+        const shareUrl = '';
 
         let url = '';
 
@@ -1149,5 +1149,3 @@ const App = () => {
 };
 
 export default App;
-
-    
