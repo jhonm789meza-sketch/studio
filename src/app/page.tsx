@@ -424,7 +424,7 @@ const App = () => {
 
     const handleShare = (platform: 'whatsapp' | 'facebook' | 'copy') => {
         const shareText = "¡Participa en esta increíble rifa!";
-        const shareUrl = '';
+        const shareUrl = window.location.pathname;
 
         let url = '';
 
