@@ -424,7 +424,7 @@ const App = () => {
 
     const handleShare = (platform: 'whatsapp' | 'facebook' | 'copy') => {
         const shareText = "¡Participa en esta increíble rifa!";
-        const shareUrl = window.location.pathname;
+        const shareUrl = "https://turifasspress.com";
 
         let url = '';
 
