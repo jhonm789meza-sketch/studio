@@ -80,19 +80,21 @@ const App = () => {
     };
     
     useEffect(() => {
-        let adminId = localStorage.getItem('rifaAdminId');
-        if (!adminId) {
-            adminId = `admin_${Date.now()}_${Math.random()}`;
-            localStorage.setItem('rifaAdminId', adminId);
-        }
-        setCurrentAdminId(adminId);
+        const initialize = async () => {
+            let adminId = localStorage.getItem('rifaAdminId');
+            if (!adminId) {
+                adminId = `admin_${Date.now()}_${Math.random()}`;
+                localStorage.setItem('rifaAdminId', adminId);
+            }
+            setCurrentAdminId(adminId);
 
-        const handleUrlRef = async () => {
             if (persistenceEnabled) {
                 await persistenceEnabled;
             }
+
             const urlParams = new URLSearchParams(window.location.search);
             const refFromUrl = urlParams.get('ref');
+
             if (refFromUrl) {
                 handleAdminSearch(refFromUrl);
             } else {
@@ -101,12 +103,25 @@ const App = () => {
             }
         };
 
-        handleUrlRef(); // Initial check
+        initialize();
 
-        window.addEventListener('popstate', handleUrlRef);
+        const handlePopState = () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const refFromUrl = urlParams.get('ref');
+            if (refFromUrl) {
+                handleAdminSearch(refFromUrl);
+            } else {
+                setLoading(true);
+                raffleSubscription.current?.();
+                setRaffleState(null);
+                setLoading(false);
+            }
+        };
+        
+        window.addEventListener('popstate', handlePopState);
 
         return () => {
-            window.removeEventListener('popstate', handleUrlRef);
+            window.removeEventListener('popstate', handlePopState);
             raffleSubscription.current?.();
         };
     }, []);
@@ -312,6 +327,7 @@ const App = () => {
         const aRef = (refToSearch || adminRefSearch).trim().toUpperCase();
         if (!aRef) {
             showNotification('Por favor, ingresa una referencia.', 'warning');
+            setLoading(false);
             return;
         }
 
@@ -324,7 +340,7 @@ const App = () => {
         raffleSubscription.current = onSnapshot(raffleDocRef, (docSnapshot) => {
             if (docSnapshot.exists()) {
                 setRaffleState(docSnapshot.data());
-                if (loading) { // Only show notification on initial load
+                if (loading) { 
                     showNotification(`Cargando rifa con referencia: ${aRef}`, 'success');
                 }
                 setIsAdminLoginOpen(false);
@@ -1133,3 +1149,5 @@ const App = () => {
 };
 
 export default App;
+
+    
