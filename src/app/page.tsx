@@ -92,26 +92,22 @@ const App = () => {
                 await persistenceEnabled;
             }
 
-            const handleUrlRef = () => {
-                const urlParams = new URLSearchParams(window.location.search);
-                const refFromUrl = urlParams.get('ref');
-                if (refFromUrl) {
-                    handleAdminSearch(refFromUrl, true);
-                } else {
-                    setRaffleState(null);
-                    setLoading(false);
-                }
-            };
-            
-            handleUrlRef();
+            const urlParams = new URLSearchParams(window.location.search);
+            const refFromUrl = urlParams.get('ref');
+
+            if (refFromUrl) {
+                handleAdminSearch(refFromUrl, true);
+            } else {
+                setRaffleState(null);
+                setLoading(false);
+            }
 
             const handlePopState = () => {
-                const urlParams = new URLSearchParams(window.location.search);
-                const refFromUrl = urlParams.get('ref');
-                if (refFromUrl) {
-                    handleAdminSearch(refFromUrl, true);
-                } else {
-                    setLoading(true);
+                const newUrlParams = new URLSearchParams(window.location.search);
+                const newRefFromUrl = newUrlParams.get('ref');
+                if (newRefFromUrl && newRefFromUrl !== (raffleState?.raffleRef || '')) {
+                    handleAdminSearch(newRefFromUrl, true);
+                } else if (!newRefFromUrl) {
                     raffleSubscription.current?.();
                     setRaffleState(null);
                     setLoading(false);
@@ -343,7 +339,7 @@ const App = () => {
         raffleSubscription.current = onSnapshot(raffleDocRef, (docSnapshot) => {
             if (docSnapshot.exists()) {
                 setRaffleState(docSnapshot.data());
-                if (loading) { 
+                if (loading || isInitialLoad) { 
                     showNotification(`Cargando rifa con referencia: ${aRef}`, 'success');
                 }
                 setIsAdminLoginOpen(false);
@@ -427,7 +423,7 @@ const App = () => {
 
     const handleShare = (platform: 'whatsapp' | 'facebook' | 'copy') => {
         const shareText = "¡Participa en esta increíble rifa!";
-        const shareUrl = "https://turifasspress.com";
+        const shareUrl = "https://9000-firebase-studio-1755886670506.cluster-zhw3w37rxzgkutusbbhib6qhra.cloudworkstations.dev/";
 
         let url = '';
 
