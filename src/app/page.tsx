@@ -92,38 +92,41 @@ const App = () => {
                 await persistenceEnabled;
             }
 
-            const urlParams = new URLSearchParams(window.location.search);
-            const refFromUrl = urlParams.get('ref');
+            const handleUrlRef = () => {
+                const urlParams = new URLSearchParams(window.location.search);
+                const refFromUrl = urlParams.get('ref');
+                if (refFromUrl) {
+                    handleAdminSearch(refFromUrl, true);
+                } else {
+                    setRaffleState(null);
+                    setLoading(false);
+                }
+            };
+            
+            handleUrlRef();
 
-            if (refFromUrl) {
-                handleAdminSearch(refFromUrl);
-            } else {
-                setRaffleState(null);
-                setLoading(false);
-            }
+            const handlePopState = () => {
+                const urlParams = new URLSearchParams(window.location.search);
+                const refFromUrl = urlParams.get('ref');
+                if (refFromUrl) {
+                    handleAdminSearch(refFromUrl, true);
+                } else {
+                    setLoading(true);
+                    raffleSubscription.current?.();
+                    setRaffleState(null);
+                    setLoading(false);
+                }
+            };
+            
+            window.addEventListener('popstate', handlePopState);
+
+            return () => {
+                window.removeEventListener('popstate', handlePopState);
+                raffleSubscription.current?.();
+            };
         };
 
         initialize();
-
-        const handlePopState = () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const refFromUrl = urlParams.get('ref');
-            if (refFromUrl) {
-                handleAdminSearch(refFromUrl);
-            } else {
-                setLoading(true);
-                raffleSubscription.current?.();
-                setRaffleState(null);
-                setLoading(false);
-            }
-        };
-        
-        window.addEventListener('popstate', handlePopState);
-
-        return () => {
-            window.removeEventListener('popstate', handlePopState);
-            raffleSubscription.current?.();
-        };
     }, []);
 
     const showNotification = (message: string, type = 'info') => {
@@ -323,11 +326,11 @@ const App = () => {
         });
     };
     
-    const handleAdminSearch = (refToSearch?: string) => {
+    const handleAdminSearch = (refToSearch?: string, isInitialLoad = false) => {
         const aRef = (refToSearch || adminRefSearch).trim().toUpperCase();
         if (!aRef) {
             showNotification('Por favor, ingresa una referencia.', 'warning');
-            setLoading(false);
+            if(!isInitialLoad) setLoading(false);
             return;
         }
 
