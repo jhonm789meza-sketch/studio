@@ -92,15 +92,19 @@ const App = () => {
                 await persistenceEnabled;
             }
 
-            const urlParams = new URLSearchParams(window.location.search);
-            const refFromUrl = urlParams.get('ref');
+            const handleUrlRef = () => {
+                const urlParams = new URLSearchParams(window.location.search);
+                const refFromUrl = urlParams.get('ref');
 
-            if (refFromUrl) {
-                handleAdminSearch(refFromUrl, true);
-            } else {
-                setRaffleState(null);
-                setLoading(false);
-            }
+                if (refFromUrl) {
+                    handleAdminSearch(refFromUrl, true);
+                } else {
+                    setRaffleState(null);
+                    setLoading(false);
+                }
+            };
+            
+            handleUrlRef();
 
             const handlePopState = () => {
                 const newUrlParams = new URLSearchParams(window.location.search);
@@ -423,7 +427,7 @@ const App = () => {
 
     const handleShare = (platform: 'whatsapp' | 'facebook' | 'copy') => {
         const shareText = "¡Participa en esta increíble rifa!";
-        const shareUrl = "https://9000-firebase-studio-1755886670506.cluster-zhw3w37rxzgkutusbbhib6qhra.cloudworkstations.dev/";
+        const shareUrl = window.location.origin;
 
         let url = '';
 
