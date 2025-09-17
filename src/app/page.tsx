@@ -87,15 +87,15 @@ const App = () => {
                 localStorage.setItem('rifaAdminId', adminId);
             }
             setCurrentAdminId(adminId);
-
+    
             if (persistenceEnabled) {
                 await persistenceEnabled;
             }
-
+    
             const handleUrlRef = () => {
                 const urlParams = new URLSearchParams(window.location.search);
                 const refFromUrl = urlParams.get('ref');
-
+    
                 if (refFromUrl) {
                     handleAdminSearch(refFromUrl, true);
                 } else {
@@ -105,7 +105,7 @@ const App = () => {
             };
             
             handleUrlRef();
-
+    
             const handlePopState = () => {
                 const newUrlParams = new URLSearchParams(window.location.search);
                 const newRefFromUrl = newUrlParams.get('ref');
@@ -119,13 +119,13 @@ const App = () => {
             };
             
             window.addEventListener('popstate', handlePopState);
-
+    
             return () => {
                 window.removeEventListener('popstate', handlePopState);
                 raffleSubscription.current?.();
             };
         };
-
+    
         initialize();
     }, []);
 
@@ -428,9 +428,9 @@ const App = () => {
     const handleShare = (platform: 'whatsapp' | 'facebook' | 'copy') => {
         const shareText = "¡Participa en esta increíble rifa!";
         const shareUrl = window.location.origin;
-
+    
         let url = '';
-
+    
         switch (platform) {
             case 'whatsapp':
                 url = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText + ' ' + shareUrl)}`;
@@ -443,7 +443,7 @@ const App = () => {
                 showNotification('Enlace copiado al portapapeles', 'success');
                 return;
         }
-
+    
         window.open(url, '_blank');
         setIsShareDialogOpen(false);
     };
