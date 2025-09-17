@@ -486,7 +486,10 @@ const App = () => {
                             )}
                             <p><strong>Número:</strong> {raffleState.winner.raffleNumber}</p>
                             {!raffleState.winner.isHouse && (
-                             <p><strong>Nombre:</strong> {raffleState.winner.name}</p>
+                            <>
+                                <p><strong>Nombre:</strong> {raffleState.winner.name}</p>
+                                <p><strong>Teléfono:</strong> {raffleState.winner.phoneNumber}</p>
+                            </>
                             )}
                         </div>
                     )}
