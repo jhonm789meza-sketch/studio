@@ -87,26 +87,23 @@ const App = () => {
                 localStorage.setItem('rifaAdminId', adminId);
             }
             setCurrentAdminId(adminId);
-    
+
             if (persistenceEnabled) {
                 await persistenceEnabled;
             }
-    
-            const handleUrlRef = () => {
-                const urlParams = new URLSearchParams(window.location.search);
-                const refFromUrl = urlParams.get('ref');
-    
-                if (refFromUrl) {
-                    handleAdminSearch(refFromUrl, true);
-                } else {
-                    setRaffleState(null);
-                    setLoading(false);
-                }
-            };
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const refFromUrl = urlParams.get('ref');
+
+            if (refFromUrl) {
+                await handleAdminSearch(refFromUrl, true);
+            } else {
+                setRaffleState(null);
+            }
             
-            handleUrlRef();
+            setLoading(false);
     
-            const handlePopState = () => {
+            const handlePopState = (event: PopStateEvent) => {
                 const newUrlParams = new URLSearchParams(window.location.search);
                 const newRefFromUrl = newUrlParams.get('ref');
                 if (newRefFromUrl && newRefFromUrl !== (raffleState?.raffleRef || '')) {
@@ -327,41 +324,50 @@ const App = () => {
     };
     
     const handleAdminSearch = (refToSearch?: string, isInitialLoad = false) => {
-        const aRef = (refToSearch || adminRefSearch).trim().toUpperCase();
-        if (!aRef) {
-            showNotification('Por favor, ingresa una referencia.', 'warning');
-            if(!isInitialLoad) setLoading(false);
-            return;
-        }
-
-        raffleSubscription.current?.();
-        setLoading(true);
-        setRaffleState(null);
-        
-        const raffleDocRef = doc(db, 'raffles', aRef);
-
-        raffleSubscription.current = onSnapshot(raffleDocRef, (docSnapshot) => {
-            if (docSnapshot.exists()) {
-                setRaffleState(docSnapshot.data());
-                if (loading || isInitialLoad) { 
-                    showNotification(`Cargando rifa con referencia: ${aRef}`, 'success');
-                }
-                setIsAdminLoginOpen(false);
-                setAdminRefSearch('');
-                handleTabClick('board');
-                if (window.location.search !== `?ref=${aRef}`) {
-                    window.history.pushState({}, '', `?ref=${aRef}`);
-                }
-            } else {
-                showNotification('No se encontró ninguna rifa con esa referencia.', 'error');
-                setRaffleState(null);
-                window.history.pushState({}, '', window.location.pathname);
+        return new Promise<void>(async (resolve) => {
+            const aRef = (refToSearch || adminRefSearch).trim().toUpperCase();
+            if (!aRef) {
+                showNotification('Por favor, ingresa una referencia.', 'warning');
+                if(!isInitialLoad) setLoading(false);
+                resolve();
+                return;
             }
-            setLoading(false);
-        }, (error) => {
-            console.error("Error subscribing to raffle:", error);
-            showNotification('Error al cargar la rifa.', 'error');
-            setLoading(false);
+
+            raffleSubscription.current?.();
+            setLoading(true);
+            setRaffleState(null);
+            
+            const raffleDocRef = doc(db, 'raffles', aRef);
+
+            if (persistenceEnabled) {
+                await persistenceEnabled;
+            }
+
+            raffleSubscription.current = onSnapshot(raffleDocRef, (docSnapshot) => {
+                if (docSnapshot.exists()) {
+                    setRaffleState(docSnapshot.data());
+                    if (isInitialLoad) { 
+                        showNotification(`Cargando rifa con referencia: ${aRef}`, 'success');
+                    }
+                    setIsAdminLoginOpen(false);
+                    setAdminRefSearch('');
+                    handleTabClick('board');
+                    if (window.location.search !== `?ref=${aRef}`) {
+                        window.history.pushState({}, '', `?ref=${aRef}`);
+                    }
+                } else {
+                    showNotification('No se encontró ninguna rifa con esa referencia.', 'error');
+                    setRaffleState(null);
+                    window.history.pushState({}, '', window.location.pathname);
+                }
+                setLoading(false);
+                resolve();
+            }, (error) => {
+                console.error("Error subscribing to raffle:", error);
+                showNotification('Error al cargar la rifa.', 'error');
+                setLoading(false);
+                resolve();
+            });
         });
     };
     
@@ -414,7 +420,7 @@ const App = () => {
             
             await setDoc(doc(db, "raffles", newRef), newRaffleData);
             
-            handleAdminSearch(newRef);
+            await handleAdminSearch(newRef);
             
             showNotification('¡Nueva rifa activada! Ahora eres el administrador y puedes configurar los detalles del premio.', 'success');
         } catch (error) {
@@ -670,7 +676,7 @@ const App = () => {
                        <h2 className="text-2xl font-bold text-gray-800 flex items-center">
                            Tablero de Números
                        </h2>
-                       {isCurrentUserAdmin && (
+                       {raffleState.raffleRef && (
                             <div className="font-semibold text-gray-700">
                                 Modo: {raffleMode === 'two-digit' ? '2 Cifras' : '3 Cifras'}
                             </div>
