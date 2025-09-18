@@ -99,9 +99,9 @@ const App = () => {
                 await handleAdminSearch(refFromUrl, true);
             } else {
                 setRaffleState(null);
+                setLoading(false);
             }
             
-            setLoading(false);
     
             const handlePopState = (event: PopStateEvent) => {
                 const newUrlParams = new URLSearchParams(window.location.search);
@@ -864,16 +864,6 @@ const App = () => {
                                                 <p className="text-red-500 text-sm mt-1">Este número ya está asignado</p>
                                             )}
                                         </div>
-                                    </div>
-
-                                    <div className="flex items-center space-x-2">
-                                        <Checkbox id="payment-confirmed" checked={isPaymentConfirmed} onCheckedChange={(checked) => setIsPaymentConfirmed(!!checked)} />
-                                        <label
-                                            htmlFor="payment-confirmed"
-                                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                                        >
-                                            Pago Recibido
-                                        </label>
                                     </div>
                                     
                                     <div className="flex flex-col gap-4">
