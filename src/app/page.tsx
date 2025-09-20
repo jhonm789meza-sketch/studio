@@ -297,11 +297,9 @@ const App = () => {
             raffleNumber: '',
         }));
 
-        if (isCurrentUserAdmin) {
-            showNotification(`¡Nuevo pago recibido! Se ha registrado el tiquete para ${participantName}.`, 'success');
-        } else {
-            showNotification('Tiquete generado correctamente', 'success');
-        }
+        
+        showNotification(`¡Nuevo tiquete registrado para ${participantName}!`, 'success');
+        
     };
 
     const handleDownloadTicket = () => {
@@ -1223,3 +1221,5 @@ const App = () => {
 };
 
 export default App;
+
+    
