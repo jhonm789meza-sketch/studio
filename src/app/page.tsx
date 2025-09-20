@@ -20,7 +20,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 type RaffleMode = 'two-digit' | 'three-digit';
-type Tab = 'board' | 'register' | 'participants' | 'pending';
+type Tab = 'board' | 'register' | 'participants';
 
 const initialRaffleData = {
     drawnNumbers: [],
@@ -160,7 +160,7 @@ const App = () => {
         handleLocalFieldChange('raffleNumber', inputValue);
 
         if (inputValue.length === numberLength && allAssignedNumbers.has(parseInt(inputValue))) {
-             showNotification('Este número ya ha sido asignado o está pendiente de pago', 'warning');
+             showNotification('Este número ya ha sido asignado.', 'warning');
         }
     };
     
@@ -183,7 +183,7 @@ const App = () => {
             return;
         }
         if (allAssignedNumbers.has(number)) {
-            showNotification('Este número ya está asignado o pendiente de pago.', 'warning');
+            showNotification('Este número ya está asignado.', 'warning');
             return;
         }
         setRaffleState((s:any) => ({ ...s, raffleNumber: String(number).padStart(numberLength, '0')}));
@@ -257,7 +257,7 @@ const App = () => {
         }
 
         if (allAssignedNumbers.has(num)) {
-            showNotification('Este número ya está asignado o pendiente de pago', 'warning');
+            showNotification('Este número ya está asignado', 'warning');
             return;
         }
         
@@ -270,7 +270,7 @@ const App = () => {
             phoneNumber: raffleState.phoneNumber,
             raffleNumber: formattedRaffleNumber,
             timestamp: new Date(),
-            paymentStatus: 'pending'
+            paymentStatus: 'confirmed' // Always confirmed now
         };
         
         const updatedParticipants = [...raffleState.participants, newParticipant];
@@ -279,40 +279,12 @@ const App = () => {
             participants: updatedParticipants,
         }, { merge: true });
         
-        setRaffleState((s:any) => ({
-            ...s,
-            name: '',
-            phoneNumber: '',
-            raffleNumber: '',
-        }));
-
-        showNotification(`¡Número ${formattedRaffleNumber} registrado para ${participantName}! Pendiente de confirmación de pago.`, 'success');
-        handleTabClick('board');
-    };
-
-    const handleConfirmPayment = async (participantId: number) => {
-        if (!raffleState || !raffleState.raffleRef) return;
-
-        const updatedParticipants = raffleState.participants.map((p: Participant) => {
-            if (p.id === participantId) {
-                return { ...p, paymentStatus: 'confirmed' };
-            }
-            return p;
-        });
-
-        const participant = raffleState.participants.find((p: Participant) => p.id === participantId);
-        if (!participant) return;
-
-        await setDoc(doc(db, "raffles", raffleState.raffleRef), {
-            participants: updatedParticipants
-        }, { merge: true });
-
         const ticketData = {
             prize: raffleState.prize,
             value: formatValue(raffleState.value),
-            name: participant.name,
-            phoneNumber: participant.phoneNumber,
-            raffleNumber: participant.raffleNumber,
+            name: newParticipant.name,
+            phoneNumber: newParticipant.phoneNumber,
+            raffleNumber: newParticipant.raffleNumber,
             date: new Date().toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' }),
             time: new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }),
             gameDate: raffleState.gameDate,
@@ -324,9 +296,17 @@ const App = () => {
         setTicketInfo(ticketData);
         setIsTicketModalOpen(true);
         
-        showNotification(`Pago confirmado para ${participant.name}. ¡Tiquete generado!`, 'success');
-    };
+        setRaffleState((s:any) => ({
+            ...s,
+            name: '',
+            phoneNumber: '',
+            raffleNumber: '',
+        }));
 
+        showNotification(`¡Número ${formattedRaffleNumber} registrado y confirmado para ${participantName}!`, 'success');
+        handleTabClick('board');
+    };
+    
     const handleDownloadTicket = () => {
         if (!ticketModalRef.current || !ticketInfo) return;
 
@@ -413,7 +393,7 @@ const App = () => {
                 isHouse: true,
             };
             await setDoc(doc(db, "raffles", raffleState.raffleRef), { winner: houseWinner }, { merge: true });
-            showNotification(`El número ${winningNumberStr} no fue vendido o su pago no fue confirmado. El premio queda en casa.`, 'info');
+            showNotification(`El número ${winningNumberStr} no fue vendido. El premio queda en casa.`, 'info');
         }
     };
 
@@ -520,7 +500,6 @@ const App = () => {
         ? Array.from({ length: 100 }, (_, i) => i)
         : Array.from({ length: 900 }, (_, i) => i + 100);
 
-    const pendingNumbers = new Set(raffleState?.participants.filter((p: Participant) => p.paymentStatus === 'pending').map((p: Participant) => parseInt(p.raffleNumber, 10)) || []);
     const confirmedNumbers = new Set(raffleState?.participants.filter((p: Participant) => p.paymentStatus === 'confirmed').map((p: Participant) => parseInt(p.raffleNumber, 10)) || []);
     
     const pendingRaffleRef = typeof window !== 'undefined' ? localStorage.getItem('pendingRaffleRef') : null;
@@ -784,8 +763,6 @@ const App = () => {
                                    ${raffleState.isWinnerConfirmed || !raffleState.isDetailsConfirmed || !!raffleState.winner ? 'cursor-not-allowed' : 'cursor-pointer'}
                                    ${confirmedNumbers.has(number)
                                        ? 'bg-red-600 text-white shadow-lg transform scale-105 cursor-not-allowed'
-                                       : pendingNumbers.has(number)
-                                       ? 'bg-yellow-400 text-white shadow-lg transform scale-105 cursor-not-allowed'
                                        : !raffleState.isDetailsConfirmed || !!raffleState.winner
                                        ? 'bg-gray-200 text-gray-500'
                                        : 'bg-green-200 text-green-800 hover:bg-green-300 hover:shadow-md'
@@ -801,10 +778,6 @@ const App = () => {
                         <div className="flex items-center gap-2">
                             <div className="w-4 h-4 rounded-full bg-green-200"></div>
                             <span>Disponible</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <div className="w-4 h-4 rounded-full bg-yellow-400"></div>
-                            <span>Pendiente de Pago</span>
                         </div>
                         <div className="flex items-center gap-2">
                             <div className="w-4 h-4 rounded-full bg-red-600"></div>
@@ -931,19 +904,6 @@ const App = () => {
                             >
                                 Registrar
                             </button>
-                             {isCurrentUserAdmin && (
-                                <button 
-                                    className={`px-6 py-3 font-medium text-lg relative ${activeTab === 'pending' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
-                                    onClick={() => handleTabClick('pending')}
-                                >
-                                    Pendientes
-                                    {raffleState.participants.filter((p: Participant) => p.paymentStatus === 'pending').length > 0 && (
-                                        <span className="absolute top-2 right-2 flex h-5 w-5 items-center justify-center rounded-full bg-yellow-500 text-xs font-bold text-white">
-                                            {raffleState.participants.filter((p: Participant) => p.paymentStatus === 'pending').length}
-                                        </span>
-                                    )}
-                                </button>
-                            )}
                             <button 
                                 className={`px-6 py-3 font-medium text-lg ${activeTab === 'participants' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
                                 onClick={() => handleTabClick('participants')}
@@ -995,7 +955,7 @@ const App = () => {
                                                 maxLength={numberLength}
                                             />
                                             {raffleState?.raffleNumber && allAssignedNumbers.has(parseInt(raffleState.raffleNumber)) && (
-                                                <p className="text-red-500 text-sm mt-1">Este número ya está asignado o pendiente.</p>
+                                                <p className="text-red-500 text-sm mt-1">Este número ya está asignado.</p>
                                             )}
                                         </div>
                                     </div>
@@ -1019,7 +979,7 @@ const App = () => {
                                             disabled={!isRegisterFormValidForSubmit || raffleState?.isWinnerConfirmed}
                                             className="w-full px-4 py-2 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
                                         >
-                                            Registrar Número
+                                            Generar Tiquete
                                         </Button>
                                     </div>
 
@@ -1038,57 +998,6 @@ const App = () => {
                                         <p className="font-bold">Juego terminado</p>
                                         <p>El registro de nuevos participantes está deshabilitado porque ya se ha confirmado un ganador. Reinicia el tablero para comenzar una nueva rifa.</p>
                                     </div>
-                                )}
-                            </div>
-                             <div className={activeTab === 'pending' ? 'tab-content active' : 'tab-content'}>
-                                {isCurrentUserAdmin ? (
-                                    <>
-                                        <h2 className="text-2xl font-bold text-gray-800 mb-4">Pagos Pendientes</h2>
-                                        {raffleState.participants.filter((p: Participant) => p.paymentStatus === 'pending').length > 0 ? (
-                                            <div className="overflow-x-auto">
-                                                <table className="min-w-full divide-y divide-gray-200">
-                                                    <thead className="bg-gray-50">
-                                                        <tr>
-                                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
-                                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Celular</th>
-                                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Número</th>
-                                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha Registro</th>
-                                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acción</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody className="bg-white divide-y divide-gray-200">
-                                                        {raffleState.participants
-                                                          .filter((p: Participant) => p.paymentStatus === 'pending')
-                                                          .sort((a: Participant, b: Participant) => {
-                                                              const timeA = a.timestamp instanceof Timestamp ? a.timestamp.toMillis() : new Date(a.timestamp).getTime();
-                                                              const timeB = b.timestamp instanceof Timestamp ? b.timestamp.toMillis() : new Date(b.timestamp).getTime();
-                                                              return timeB - timeA;
-                                                          })
-                                                          .map((p: any) => {
-                                                              const timestampDate = p.timestamp instanceof Timestamp ? p.timestamp.toDate() : new Date(p.timestamp);
-                                                              return (
-                                                                <tr key={p.id}>
-                                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{p.name}</td>
-                                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{p.phoneNumber}</td>
-                                                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-purple-600">{p.raffleNumber}</td>
-                                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{format(timestampDate, 'Pp', { locale: es })}</td>
-                                                                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                                                        <Button onClick={() => handleConfirmPayment(p.id)} size="sm" className="bg-green-500 hover:bg-green-600">
-                                                                            Confirmar Pago
-                                                                        </Button>
-                                                                    </td>
-                                                                </tr>
-                                                              )
-                                                          })}
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        ) : (
-                                            <p className="text-gray-500">No hay pagos pendientes de confirmación.</p>
-                                        )}
-                                    </>
-                                ) : (
-                                   <p className="text-gray-500">Esta sección es solo para administradores.</p>
                                 )}
                             </div>
                             <div className={activeTab === 'participants' ? 'tab-content active' : 'tab-content'}>
