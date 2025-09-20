@@ -4,7 +4,7 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { RaffleManager } from '@/lib/RaffleManager';
 import { db, persistenceEnabled } from '@/lib/firebase';
-import { doc, onSnapshot, setDoc, getDoc, deleteDoc, Unsubscribe } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc, getDoc, deleteDoc, Unsubscribe, Timestamp } from 'firebase/firestore';
 import Image from 'next/image';
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
@@ -1059,20 +1059,27 @@ const App = () => {
                                                     <tbody className="bg-white divide-y divide-gray-200">
                                                         {raffleState.participants
                                                           .filter((p: Participant) => p.paymentStatus === 'pending')
-                                                          .sort((a: Participant, b: Participant) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-                                                          .map((p: any) => (
-                                                            <tr key={p.id}>
-                                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{p.name}</td>
-                                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{p.phoneNumber}</td>
-                                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-purple-600">{p.raffleNumber}</td>
-                                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{format(new Date(p.timestamp), 'Pp', { locale: es })}</td>
-                                                                <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                                                    <Button onClick={() => handleConfirmPayment(p.id)} size="sm" className="bg-green-500 hover:bg-green-600">
-                                                                        Confirmar Pago
-                                                                    </Button>
-                                                                </td>
-                                                            </tr>
-                                                        ))}
+                                                          .sort((a: Participant, b: Participant) => {
+                                                              const timeA = a.timestamp instanceof Timestamp ? a.timestamp.toMillis() : new Date(a.timestamp).getTime();
+                                                              const timeB = b.timestamp instanceof Timestamp ? b.timestamp.toMillis() : new Date(b.timestamp).getTime();
+                                                              return timeB - timeA;
+                                                          })
+                                                          .map((p: any) => {
+                                                              const timestampDate = p.timestamp instanceof Timestamp ? p.timestamp.toDate() : new Date(p.timestamp);
+                                                              return (
+                                                                <tr key={p.id}>
+                                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{p.name}</td>
+                                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{p.phoneNumber}</td>
+                                                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-purple-600">{p.raffleNumber}</td>
+                                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{format(timestampDate, 'Pp', { locale: es })}</td>
+                                                                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                                                        <Button onClick={() => handleConfirmPayment(p.id)} size="sm" className="bg-green-500 hover:bg-green-600">
+                                                                            Confirmar Pago
+                                                                        </Button>
+                                                                    </td>
+                                                                </tr>
+                                                              )
+                                                          })}
                                                     </tbody>
                                                 </table>
                                             </div>
