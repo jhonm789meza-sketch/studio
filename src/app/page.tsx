@@ -511,8 +511,8 @@ const App = () => {
     
     const isRegisterFormValidForSubmit = raffleState?.name && raffleState?.phoneNumber && raffleState?.raffleNumber && !allAssignedNumbers.has(parseInt(raffleState.raffleNumber));
     
-    const nequiUrl = raffleState?.nequiAccountNumber && raffleState?.value 
-        ? `nequi://app/transfer?phoneNumber=${raffleState.nequiAccountNumber}&value=${raffleState.value.replace(/[^\d]/g, '')}`
+    const nequiUrl = raffleState?.nequiAccountNumber && raffleState?.value
+        ? `nequi://app/transfer?phoneNumber=${raffleState.nequiAccountNumber}&value=${String(raffleState.value).replace(/[^\d]/g, '')}`
         : '#';
 
 
