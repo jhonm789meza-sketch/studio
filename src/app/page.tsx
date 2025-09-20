@@ -9,15 +9,18 @@ import Image from 'next/image';
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House, Share2, Copy, Upload } from 'lucide-react';
+import { Menu, Award, Lock, House, Share2, Copy, Upload, Clock } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Confetti } from '@/components/confetti';
 import { Checkbox } from '@/components/ui/checkbox';
+import type { Participant } from '@/lib/types';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 type RaffleMode = 'two-digit' | 'three-digit';
-type Tab = 'board' | 'register' | 'participants';
+type Tab = 'board' | 'register' | 'participants' | 'pending';
 
 const initialRaffleData = {
     drawnNumbers: [],
@@ -35,7 +38,7 @@ const initialRaffleData = {
     lottery: '',
     customLottery: '',
     organizerName: '',
-    participants: [],
+    participants: [] as Participant[],
     raffleRef: '',
     winner: null,
     manualWinnerNumber: '',
@@ -97,7 +100,12 @@ const App = () => {
             if (refFromUrl) {
                 await handleAdminSearch(refFromUrl, true);
             } else {
-                setRaffleState(null);
+                const pendingRef = localStorage.getItem('pendingRaffleRef');
+                if (pendingRef) {
+                    // There is a pending activation, keep the state to show confirmation
+                } else {
+                    setRaffleState(null);
+                }
                 setLoading(false);
             }
             
@@ -151,8 +159,8 @@ const App = () => {
         const inputValue = e.target.value.replace(/\D/g, '');
         handleLocalFieldChange('raffleNumber', inputValue);
 
-        if (inputValue.length === numberLength && new Set(raffleState.drawnNumbers).has(parseInt(inputValue))) {
-             showNotification('Este número ya ha sido asignado', 'warning');
+        if (inputValue.length === numberLength && allAssignedNumbers.has(parseInt(inputValue))) {
+             showNotification('Este número ya ha sido asignado o está pendiente de pago', 'warning');
         }
     };
     
@@ -161,12 +169,11 @@ const App = () => {
     };
 
     const isCurrentUserAdmin = !!raffleState?.adminId && raffleState.adminId === currentAdminId;
+    
+    const allAssignedNumbers = new Set(raffleState?.participants.map((p: Participant) => parseInt(p.raffleNumber, 10)) || []);
 
     const toggleNumber = (number: number) => {
         if (!raffleState) return;
-        if (isCurrentUserAdmin) {
-            // Admin can now select numbers to register participants
-        }
         if (!raffleState.isDetailsConfirmed) {
             showNotification('Primero debes confirmar los detalles del premio para seleccionar un número.', 'info');
             return;
@@ -175,8 +182,8 @@ const App = () => {
             showNotification('El juego ha terminado. Reinicia el tablero para comenzar de nuevo.', 'info');
             return;
         }
-        if (new Set(raffleState.drawnNumbers).has(number)) {
-            showNotification('Este número ya está asignado', 'warning');
+        if (allAssignedNumbers.has(number)) {
+            showNotification('Este número ya está asignado o pendiente de pago.', 'warning');
             return;
         }
         setRaffleState((s:any) => ({ ...s, raffleNumber: String(number).padStart(numberLength, '0')}));
@@ -220,7 +227,7 @@ const App = () => {
         );
     };
 
-    const handleTicketConfirmation = async () => {
+    const handleRegisterParticipant = async () => {
         if (!raffleState || !raffleState.raffleRef) return;
         if (!raffleState.name.trim()) {
             showNotification('Por favor ingresa el nombre', 'warning');
@@ -243,42 +250,69 @@ const App = () => {
         }
 
         if (raffleMode === 'three-digit' && (num < 100 || num > 999)) {
-            if (String(num).length === 3) { // Only show if the user has typed a 3 digit number.
+            if (String(num).length === 3) { 
                 showNotification('El número para esta modalidad debe estar entre 100 y 999', 'warning');
             }
             return;
         }
 
-        if (new Set(raffleState.drawnNumbers).has(num)) {
-            showNotification('Este número ya está asignado', 'warning');
+        if (allAssignedNumbers.has(num)) {
+            showNotification('Este número ya está asignado o pendiente de pago', 'warning');
             return;
         }
         
         const participantName = raffleState.name;
         const formattedRaffleNumber = String(num).padStart(numberLength, '0');
 
-        const newParticipant = {
+        const newParticipant: Participant = {
             id: Date.now(),
             name: raffleState.name,
             phoneNumber: raffleState.phoneNumber,
             raffleNumber: formattedRaffleNumber,
-            timestamp: new Date()
+            timestamp: new Date(),
+            paymentStatus: 'pending'
         };
         
         const updatedParticipants = [...raffleState.participants, newParticipant];
-        const updatedDrawnNumbers = [...raffleState.drawnNumbers, num];
 
         await setDoc(doc(db, "raffles", raffleState.raffleRef), {
             participants: updatedParticipants,
-            drawnNumbers: updatedDrawnNumbers
+        }, { merge: true });
+        
+        setRaffleState((s:any) => ({
+            ...s,
+            name: '',
+            phoneNumber: '',
+            raffleNumber: '',
+        }));
+
+        showNotification(`¡Número ${formattedRaffleNumber} registrado para ${participantName}! Pendiente de confirmación de pago.`, 'success');
+        handleTabClick('board');
+    };
+
+    const handleConfirmPayment = async (participantId: number) => {
+        if (!raffleState || !raffleState.raffleRef) return;
+
+        const updatedParticipants = raffleState.participants.map((p: Participant) => {
+            if (p.id === participantId) {
+                return { ...p, paymentStatus: 'confirmed' };
+            }
+            return p;
+        });
+
+        const participant = raffleState.participants.find((p: Participant) => p.id === participantId);
+        if (!participant) return;
+
+        await setDoc(doc(db, "raffles", raffleState.raffleRef), {
+            participants: updatedParticipants
         }, { merge: true });
 
         const ticketData = {
             prize: raffleState.prize,
             value: formatValue(raffleState.value),
-            name: raffleState.name,
-            phoneNumber: raffleState.phoneNumber,
-            raffleNumber: formattedRaffleNumber,
+            name: participant.name,
+            phoneNumber: participant.phoneNumber,
+            raffleNumber: participant.raffleNumber,
             date: new Date().toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' }),
             time: new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }),
             gameDate: raffleState.gameDate,
@@ -290,16 +324,7 @@ const App = () => {
         setTicketInfo(ticketData);
         setIsTicketModalOpen(true);
         
-        setRaffleState((s:any) => ({
-            ...s,
-            name: '',
-            phoneNumber: '',
-            raffleNumber: '',
-        }));
-
-        
-        showNotification(`¡Nuevo tiquete registrado para ${participantName}!`, 'success');
-        
+        showNotification(`Pago confirmado para ${participant.name}. ¡Tiquete generado!`, 'success');
     };
 
     const handleDownloadTicket = () => {
@@ -374,7 +399,7 @@ const App = () => {
             return;
         }
 
-        const winner = raffleState.participants.find((p: any) => p.raffleNumber === winningNumberStr);
+        const winner = raffleState.participants.find((p: Participant) => p.raffleNumber === winningNumberStr && p.paymentStatus === 'confirmed');
 
         if (winner) {
             await setDoc(doc(db, "raffles", raffleState.raffleRef), { winner }, { merge: true });
@@ -388,7 +413,7 @@ const App = () => {
                 isHouse: true,
             };
             await setDoc(doc(db, "raffles", raffleState.raffleRef), { winner: houseWinner }, { merge: true });
-            showNotification(`El número ${winningNumberStr} no fue vendido. El premio queda en casa.`, 'info');
+            showNotification(`El número ${winningNumberStr} no fue vendido o su pago no fue confirmado. El premio queda en casa.`, 'info');
         }
     };
 
@@ -435,6 +460,7 @@ const App = () => {
                 adminId: currentAdminId,
                 isPaid: true,
                 raffleRef: pendingRef,
+                participants: [],
             };
             
             await setDoc(doc(db, "raffles", pendingRef), newRaffleData);
@@ -494,7 +520,9 @@ const App = () => {
         ? Array.from({ length: 100 }, (_, i) => i)
         : Array.from({ length: 900 }, (_, i) => i + 100);
 
-    const drawnNumbersSet = new Set(raffleState?.drawnNumbers || []);
+    const pendingNumbers = new Set(raffleState?.participants.filter((p: Participant) => p.paymentStatus === 'pending').map((p: Participant) => parseInt(p.raffleNumber, 10)) || []);
+    const confirmedNumbers = new Set(raffleState?.participants.filter((p: Participant) => p.paymentStatus === 'confirmed').map((p: Participant) => parseInt(p.raffleNumber, 10)) || []);
+    
     const pendingRaffleRef = typeof window !== 'undefined' ? localStorage.getItem('pendingRaffleRef') : null;
 
 
@@ -502,7 +530,7 @@ const App = () => {
         return <div className="flex justify-center items-center h-screen text-xl font-semibold">Cargando...</div>;
     }
     
-    const isRegisterFormValidForSubmit = raffleState?.name && raffleState?.phoneNumber && raffleState?.raffleNumber && !drawnNumbersSet.has(parseInt(raffleState.raffleNumber));
+    const isRegisterFormValidForSubmit = raffleState?.name && raffleState?.phoneNumber && raffleState?.raffleNumber && !allAssignedNumbers.has(parseInt(raffleState.raffleNumber));
     
     const nequiUrl = raffleState?.nequiAccountNumber && raffleState?.value 
         ? `nequi://app/transfer?phoneNumber=${raffleState.nequiAccountNumber}&value=${raffleState.value.replace(/[^\d]/g, '')}`
@@ -754,8 +782,10 @@ const App = () => {
                                className={`
                                    number-cell text-center py-2 rounded-lg transition-all text-sm
                                    ${raffleState.isWinnerConfirmed || !raffleState.isDetailsConfirmed || !!raffleState.winner ? 'cursor-not-allowed' : 'cursor-pointer'}
-                                   ${drawnNumbersSet.has(number)
+                                   ${confirmedNumbers.has(number)
                                        ? 'bg-red-600 text-white shadow-lg transform scale-105 cursor-not-allowed'
+                                       : pendingNumbers.has(number)
+                                       ? 'bg-yellow-400 text-white shadow-lg transform scale-105 cursor-not-allowed'
                                        : !raffleState.isDetailsConfirmed || !!raffleState.winner
                                        ? 'bg-gray-200 text-gray-500'
                                        : 'bg-green-200 text-green-800 hover:bg-green-300 hover:shadow-md'
@@ -767,6 +797,20 @@ const App = () => {
                            </div>
                        ))}
                    </div>
+                    <div className="flex flex-wrap gap-4 mt-4 text-sm">
+                        <div className="flex items-center gap-2">
+                            <div className="w-4 h-4 rounded-full bg-green-200"></div>
+                            <span>Disponible</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <div className="w-4 h-4 rounded-full bg-yellow-400"></div>
+                            <span>Pendiente de Pago</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <div className="w-4 h-4 rounded-full bg-red-600"></div>
+                            <span>Vendido</span>
+                        </div>
+                    </div>
                    {!!raffleState.winner && !raffleState.isWinnerConfirmed && (
                         <div className="mt-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4" role="alert">
                             <p className="font-bold">Tablero Bloqueado</p>
@@ -812,10 +856,10 @@ const App = () => {
                                 <DropdownMenuItem onSelect={() => setIsAdminLoginOpen(true)}>
                                     Buscar por Referencia
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onSelect={() => setIsShareDialogOpen(true)}>
+                                {raffleState && <DropdownMenuItem onSelect={() => setIsShareDialogOpen(true)}>
                                     <Share2 className="mr-2 h-4 w-4" />
                                     <span>Compartir</span>
-                                </DropdownMenuItem>
+                                </DropdownMenuItem>}
                             </DropdownMenuContent>
                         </DropdownMenu>
                     </div>
@@ -887,6 +931,19 @@ const App = () => {
                             >
                                 Registrar
                             </button>
+                             {isCurrentUserAdmin && (
+                                <button 
+                                    className={`px-6 py-3 font-medium text-lg relative ${activeTab === 'pending' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
+                                    onClick={() => handleTabClick('pending')}
+                                >
+                                    Pendientes
+                                    {raffleState.participants.filter((p: Participant) => p.paymentStatus === 'pending').length > 0 && (
+                                        <span className="absolute top-2 right-2 flex h-5 w-5 items-center justify-center rounded-full bg-yellow-500 text-xs font-bold text-white">
+                                            {raffleState.participants.filter((p: Participant) => p.paymentStatus === 'pending').length}
+                                        </span>
+                                    )}
+                                </button>
+                            )}
                             <button 
                                 className={`px-6 py-3 font-medium text-lg ${activeTab === 'participants' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
                                 onClick={() => handleTabClick('participants')}
@@ -901,7 +958,7 @@ const App = () => {
                                 {renderBoardContent()}
                             </div>
                             <div className={activeTab === 'register' ? 'tab-content active' : 'tab-content'}>
-                                <h2 className="text-2xl font-bold text-gray-800 mb-4">Registrar Participante</h2>
+                                <h2 className="text-2xl font-bold text-gray-800 mb-4">Registrar Número</h2>
                                 <fieldset disabled={!raffleState || raffleState?.isWinnerConfirmed || !raffleState?.isDetailsConfirmed} className="disabled:opacity-50 space-y-4">
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                         <div>
@@ -937,8 +994,8 @@ const App = () => {
                                                 className="w-full mt-1"
                                                 maxLength={numberLength}
                                             />
-                                            {raffleState?.raffleNumber && drawnNumbersSet.has(parseInt(raffleState.raffleNumber)) && (
-                                                <p className="text-red-500 text-sm mt-1">Este número ya está asignado</p>
+                                            {raffleState?.raffleNumber && allAssignedNumbers.has(parseInt(raffleState.raffleNumber)) && (
+                                                <p className="text-red-500 text-sm mt-1">Este número ya está asignado o pendiente.</p>
                                             )}
                                         </div>
                                     </div>
@@ -958,11 +1015,11 @@ const App = () => {
                                         )}
                                         
                                         <Button
-                                            onClick={handleTicketConfirmation}
+                                            onClick={handleRegisterParticipant}
                                             disabled={!isRegisterFormValidForSubmit || raffleState?.isWinnerConfirmed}
                                             className="w-full px-4 py-2 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
                                         >
-                                            Generar Tiquete
+                                            Registrar Número
                                         </Button>
                                     </div>
 
@@ -983,9 +1040,53 @@ const App = () => {
                                     </div>
                                 )}
                             </div>
+                             <div className={activeTab === 'pending' ? 'tab-content active' : 'tab-content'}>
+                                {isCurrentUserAdmin ? (
+                                    <>
+                                        <h2 className="text-2xl font-bold text-gray-800 mb-4">Pagos Pendientes</h2>
+                                        {raffleState.participants.filter((p: Participant) => p.paymentStatus === 'pending').length > 0 ? (
+                                            <div className="overflow-x-auto">
+                                                <table className="min-w-full divide-y divide-gray-200">
+                                                    <thead className="bg-gray-50">
+                                                        <tr>
+                                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
+                                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Celular</th>
+                                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Número</th>
+                                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha Registro</th>
+                                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acción</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="bg-white divide-y divide-gray-200">
+                                                        {raffleState.participants
+                                                          .filter((p: Participant) => p.paymentStatus === 'pending')
+                                                          .sort((a: Participant, b: Participant) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+                                                          .map((p: any) => (
+                                                            <tr key={p.id}>
+                                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{p.name}</td>
+                                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{p.phoneNumber}</td>
+                                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-purple-600">{p.raffleNumber}</td>
+                                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{format(new Date(p.timestamp), 'Pp', { locale: es })}</td>
+                                                                <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                                                    <Button onClick={() => handleConfirmPayment(p.id)} size="sm" className="bg-green-500 hover:bg-green-600">
+                                                                        Confirmar Pago
+                                                                    </Button>
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        ) : (
+                                            <p className="text-gray-500">No hay pagos pendientes de confirmación.</p>
+                                        )}
+                                    </>
+                                ) : (
+                                   <p className="text-gray-500">Esta sección es solo para administradores.</p>
+                                )}
+                            </div>
                             <div className={activeTab === 'participants' ? 'tab-content active' : 'tab-content'}>
                                 <div className="flex justify-between items-center mb-4">
-                                        <h2 className="text-2xl font-bold text-gray-800">Participantes Registrados</h2>
+                                        <h2 className="text-2xl font-bold text-gray-800">Participantes Confirmados</h2>
                                 </div>
 
                                 {!raffleState ? (
@@ -993,47 +1094,34 @@ const App = () => {
                                         <p className="font-bold">Aviso</p>
                                         <p>Debes activar o buscar una rifa en la pestaña "Tablero" para poder ver los participantes.</p>
                                     </div>
-                                ) : raffleState.participants.length > 0 ? (
+                                ) : raffleState.participants.filter((p: Participant) => p.paymentStatus === 'confirmed').length > 0 ? (
                                     <div className="overflow-x-auto">
                                         <table className="min-w-full divide-y divide-gray-200">
                                             <thead className="bg-gray-50">
                                                 <tr>
-                                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                        #
-                                                    </th>
-                                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                        Nombre
-                                                    </th>
-                                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                        Celular
-                                                    </th>
-                                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                        Número
-                                                    </th>
+                                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
+                                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
+                                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Celular</th>
+                                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Número</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="bg-white divide-y divide-gray-200">
-                                                {raffleState.participants.map((p: any, index: number) => (
+                                                {raffleState.participants
+                                                    .filter((p: Participant) => p.paymentStatus === 'confirmed')
+                                                    .sort((a: Participant, b: Participant) => a.raffleNumber.localeCompare(b.raffleNumber))
+                                                    .map((p: any, index: number) => (
                                                     <tr key={p.id}>
-                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                            {index + 1}
-                                                        </td>
-                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                            {p.name}
-                                                        </td>
-                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                            {p.phoneNumber}
-                                                        </td>
-                                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-purple-600">
-                                                            {p.raffleNumber}
-                                                        </td>
+                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{index + 1}</td>
+                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{p.name}</td>
+                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{p.phoneNumber}</td>
+                                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-purple-600">{p.raffleNumber}</td>
                                                     </tr>
                                                 ))}
                                             </tbody>
                                         </table>
                                     </div>
                                 ) : (
-                                    <p className="text-gray-500">No hay participantes registrados.</p>
+                                    <p className="text-gray-500">No hay participantes con pago confirmado.</p>
                                 )}
                             </div>
                         </div>
