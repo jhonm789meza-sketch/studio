@@ -165,8 +165,7 @@ const App = () => {
     const toggleNumber = (number: number) => {
         if (!raffleState) return;
         if (isCurrentUserAdmin) {
-            showNotification('El administrador no puede seleccionar números.', 'info');
-            return;
+            // Admin can now select numbers to register participants
         }
         if (!raffleState.isDetailsConfirmed) {
             showNotification('Primero debes confirmar los detalles del premio para seleccionar un número.', 'info');
@@ -900,7 +899,7 @@ const App = () => {
                             </div>
                             <div className={activeTab === 'register' ? 'tab-content active' : 'tab-content'}>
                                 <h2 className="text-2xl font-bold text-gray-800 mb-4">Registrar Participante</h2>
-                                <fieldset disabled={!raffleState || isCurrentUserAdmin || raffleState?.isWinnerConfirmed || !raffleState?.isDetailsConfirmed} className="disabled:opacity-50 space-y-4">
+                                <fieldset disabled={!raffleState || raffleState?.isWinnerConfirmed || !raffleState?.isDetailsConfirmed} className="disabled:opacity-50 space-y-4">
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                         <div>
                                             <Label htmlFor="name-input">Nombre completo:</Label>
@@ -964,12 +963,6 @@ const App = () => {
 
                                 </fieldset>
 
-                                {isCurrentUserAdmin && (
-                                    <div className="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mt-6" role="alert">
-                                        <p className="font-bold">Modo Administrador</p>
-                                        <p>Como administrador, no puedes registrar participantes. Esta tarea deben realizarla los propios jugadores.</p>
-                                    </div>
-                                )}
                                 
                                 {(!raffleState || !raffleState.isDetailsConfirmed) && (
                                         <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-6" role="alert">
