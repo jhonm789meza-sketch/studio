@@ -9,7 +9,7 @@ import Image from 'next/image';
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House, Share2, Copy } from 'lucide-react';
+import { Menu, Award, Lock, House, Share2, Copy, Upload } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -403,7 +403,7 @@ const App = () => {
 
     const handleActivateBoard = async (mode: RaffleMode) => {
         setLoading(true);
-        const price = mode === 'two-digit' ? 150000 : 15000; // 1500.00 COP in cents
+        const price = mode === 'two-digit' ? 150000 : 15000;
         const wompiUrl = `https://checkout.nequi.wompi.co/l/VPOS_SEBIV5?amountInCents=${price}`;
         
         try {
@@ -479,6 +479,19 @@ const App = () => {
         window.open(url, '_blank');
         setIsShareDialogOpen(false);
     };
+
+    const handleQrCodeUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                const dataUrl = reader.result as string;
+                handleFieldChange('qrCodeImageUrl', dataUrl);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
 
     const allNumbers = raffleMode === 'two-digit'
         ? Array.from({ length: 100 }, (_, i) => i)
@@ -630,6 +643,33 @@ const App = () => {
                                     disabled={raffleState.isDetailsConfirmed || !isCurrentUserAdmin}
                                     className="w-full mt-1"
                                 />
+                            </div>
+                        )}
+                         {isCurrentUserAdmin && !raffleState.isDetailsConfirmed && (
+                            <div className="md:col-span-2">
+                                <Label htmlFor="qr-code-upload">Subir QR de Pago:</Label>
+                                <div className="flex items-center gap-2 mt-1">
+                                    <Button asChild variant="outline">
+                                        <label htmlFor="qr-code-upload-input" className="cursor-pointer">
+                                            <Upload className="mr-2 h-4 w-4" />
+                                            Subir Imagen
+                                        </label>
+                                    </Button>
+                                    <Input
+                                        id="qr-code-upload-input"
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handleQrCodeUpload}
+                                        className="hidden"
+                                        disabled={raffleState.isDetailsConfirmed || !isCurrentUserAdmin}
+                                    />
+                                    {raffleState.qrCodeImageUrl && (
+                                        <div className="flex items-center gap-2 text-sm text-green-600">
+                                            <Image src={raffleState.qrCodeImageUrl} alt="Preview" width={40} height={40} className="rounded-md"/>
+                                            <span>QR Cargado</span>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         )}
                        {isCurrentUserAdmin && !raffleState.isDetailsConfirmed && (
@@ -902,6 +942,16 @@ const App = () => {
                                     </div>
                                     
                                     <div className="flex flex-col gap-4">
+                                         {raffleState?.qrCodeImageUrl && (
+                                            <div className="bg-gray-50 p-4 rounded-lg border">
+                                                <h3 className="font-bold text-center text-lg mb-2">Escanea para Pagar</h3>
+                                                <div className="flex flex-col items-center gap-2">
+                                                    <Image src={raffleState.qrCodeImageUrl} alt="QR de Pago" width={200} height={200} className="rounded-lg shadow-md" />
+                                                    <p className="font-semibold">Nequi: {raffleState.nequiAccountNumber}</p>
+                                                    <p className="font-bold text-xl">Valor: {formatValue(raffleState.value)}</p>
+                                                </div>
+                                            </div>
+                                        )}
                                         
                                         <Button
                                             onClick={handleTicketConfirmation}
