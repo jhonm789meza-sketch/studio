@@ -66,7 +66,6 @@ const App = () => {
     const [isShareDialogOpen, setIsShareDialogOpen]    = useState(false);
     const [adminRefSearch, setAdminRefSearch] = useState('');
     const [showConfetti, setShowConfetti] = useState(false);
-    const [isPaymentConfirmed, setIsPaymentConfirmed] = useState(false);
     const [currentAdminId, setCurrentAdminId] = useState<string | null>(null);
 
     const raffleManager = new RaffleManager(db);
@@ -298,7 +297,6 @@ const App = () => {
             phoneNumber: '',
             raffleNumber: '',
         }));
-        setIsPaymentConfirmed(false);
 
         if (isCurrentUserAdmin) {
             showNotification(`¡Nuevo pago recibido! Se ha registrado el tiquete para ${participantName}.`, 'success');
@@ -405,22 +403,49 @@ const App = () => {
 
     const handleActivateBoard = async (mode: RaffleMode) => {
         setLoading(true);
+        const price = mode === 'two-digit' ? 150000 : 15000; // 1500.00 COP in cents
+        const wompiUrl = `https://checkout.nequi.wompi.co/l/VPOS_SEBIV5?amountInCents=${price}`;
+        
         try {
-            // Simulate payment first
-            window.open('nequi://', '_blank');
-
             const newRef = await raffleManager.createNewRaffleRef();
+            localStorage.setItem('pendingRaffleRef', newRef);
+            localStorage.setItem('pendingRaffleMode', mode);
+
+            window.open(wompiUrl, '_self');
+
+        } catch (error) {
+            console.error("Error preparing for board activation:", error);
+            showNotification("Error al preparar la activación del tablero.", "error");
+            setLoading(false);
+        }
+    };
+
+    const confirmActivation = async () => {
+        setLoading(true);
+        const pendingRef = localStorage.getItem('pendingRaffleRef');
+        const pendingMode = localStorage.getItem('pendingRaffleMode') as RaffleMode | null;
+
+        if (!pendingRef || !pendingMode) {
+            showNotification('No se encontró una activación pendiente.', 'error');
+            setLoading(false);
+            return;
+        }
+
+        try {
             const newRaffleData = {
                 ...initialRaffleData,
-                raffleMode: mode,
+                raffleMode: pendingMode,
                 adminId: currentAdminId,
                 isPaid: true,
-                raffleRef: newRef,
+                raffleRef: pendingRef,
             };
             
-            await setDoc(doc(db, "raffles", newRef), newRaffleData);
+            await setDoc(doc(db, "raffles", pendingRef), newRaffleData);
             
-            await handleAdminSearch(newRef);
+            localStorage.removeItem('pendingRaffleRef');
+            localStorage.removeItem('pendingRaffleMode');
+
+            await handleAdminSearch(pendingRef, true);
             
             showNotification('¡Nueva rifa activada! Ahora eres el administrador y puedes configurar los detalles del premio.', 'success');
         } catch (error) {
@@ -431,9 +456,10 @@ const App = () => {
         }
     };
 
+
     const handleShare = (platform: 'whatsapp' | 'facebook' | 'copy') => {
         const shareText = "¡Participa en esta increíble rifa!";
-        const shareUrl = window.location.origin;
+        const shareUrl = window.location.href;
     
         let url = '';
     
@@ -454,23 +480,19 @@ const App = () => {
         setIsShareDialogOpen(false);
     };
 
-
-    const handleNequiPayment = () => {
-        window.open('nequi://', '_blank');
-        setIsPaymentConfirmed(true);
-    }
-
     const allNumbers = raffleMode === 'two-digit'
         ? Array.from({ length: 100 }, (_, i) => i)
         : Array.from({ length: 900 }, (_, i) => i + 100);
 
     const drawnNumbersSet = new Set(raffleState?.drawnNumbers || []);
+    const pendingRaffleRef = typeof window !== 'undefined' ? localStorage.getItem('pendingRaffleRef') : null;
+
 
     if (loading) {
         return <div className="flex justify-center items-center h-screen text-xl font-semibold">Cargando...</div>;
     }
     
-    const isRegisterFormValidForSubmit = raffleState?.name && raffleState?.phoneNumber && raffleState?.raffleNumber && !drawnNumbersSet.has(parseInt(raffleState.raffleNumber)) && isPaymentConfirmed;
+    const isRegisterFormValidForSubmit = raffleState?.name && raffleState?.phoneNumber && raffleState?.raffleNumber && !drawnNumbersSet.has(parseInt(raffleState.raffleNumber));
 
     const renderBoardContent = () => {
        if (!raffleState) return null;
@@ -763,36 +785,49 @@ const App = () => {
 
                 {!raffleState ? (
                     <div className="p-6">
-                        <div className="relative text-center bg-gray-50 rounded-lg border-2 border-dashed overflow-hidden">
-                            <div className="absolute inset-0">
-                                <Image
-                                    src="https://picsum.photos/seed/rafflecard/800/400"
-                                    alt="Cartón de Rifa"
-                                    fill
-                                    style={{ objectFit: 'cover' }}
-                                    className="opacity-20"
-                                    data-ai-hint="carton rifa"
-                                />
-                            </div>
-                            <div className="relative p-10">
-                                <Lock className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                                <h2 className="text-2xl font-bold text-gray-800 mb-2">Tablero Bloqueado</h2>
-                                <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                                   Busca una rifa por su referencia o crea la tuya para empezar.
+                         {pendingRaffleRef ? (
+                            <div className="text-center p-8 bg-yellow-50 rounded-lg border-2 border-dashed border-yellow-400">
+                                <h2 className="text-2xl font-bold text-yellow-800 mb-2">Activación Pendiente</h2>
+                                <p className="text-yellow-700 mb-4">
+                                    Hay un pago pendiente para la referencia <span className="font-bold">{pendingRaffleRef}</span>.
+                                    Una vez completado el pago en Wompi, confirma la activación.
                                 </p>
-                                <div className="flex flex-col sm:flex-row justify-center gap-4">
-                                     <Button onClick={() => setIsAdminLoginOpen(true)} size="lg">
-                                        Buscar por Referencia
-                                    </Button>
-                                    <Button onClick={() => handleActivateBoard('two-digit')} size="lg" className="bg-green-500 hover:bg-green-600 text-white font-bold">
-                                        Activar Rifa de 2 Cifras ($10.000)
-                                    </Button>
-                                    <Button onClick={() => handleActivateBoard('three-digit')} size="lg" className="bg-blue-500 hover:bg-blue-600 text-white font-bold">
-                                        Activar Rifa de 3 Cifras ($15.000)
-                                    </Button>
+                                <Button onClick={confirmActivation} size="lg" className="bg-green-500 hover:bg-green-600 text-white font-bold">
+                                    Confirmar Activación para {pendingRaffleRef}
+                                </Button>
+                            </div>
+                        ) : (
+                            <div className="relative text-center bg-gray-50 rounded-lg border-2 border-dashed overflow-hidden">
+                                <div className="absolute inset-0">
+                                    <Image
+                                        src="https://picsum.photos/seed/rafflecard/800/400"
+                                        alt="Cartón de Rifa"
+                                        fill
+                                        style={{ objectFit: 'cover' }}
+                                        className="opacity-20"
+                                        data-ai-hint="carton rifa"
+                                    />
+                                </div>
+                                <div className="relative p-10">
+                                    <Lock className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                                    <h2 className="text-2xl font-bold text-gray-800 mb-2">Tablero Bloqueado</h2>
+                                    <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                                    Busca una rifa por su referencia o crea la tuya para empezar.
+                                    </p>
+                                    <div className="flex flex-col sm:flex-row justify-center gap-4">
+                                        <Button onClick={() => setIsAdminLoginOpen(true)} size="lg">
+                                            Buscar por Referencia
+                                        </Button>
+                                        <Button onClick={() => handleActivateBoard('two-digit')} size="lg" className="bg-green-500 hover:bg-green-600 text-white font-bold">
+                                            Activar Rifa de 2 Cifras ($1.500)
+                                        </Button>
+                                        <Button onClick={() => handleActivateBoard('three-digit')} size="lg" className="bg-blue-500 hover:bg-blue-600 text-white font-bold">
+                                            Activar Rifa de 3 Cifras ($15.000)
+                                        </Button>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        )}
                     </div>
                 ) : (
                     <>
@@ -867,13 +902,7 @@ const App = () => {
                                     </div>
                                     
                                     <div className="flex flex-col gap-4">
-                                        <Button
-                                            variant="outline"
-                                            className="w-full"
-                                            onClick={handleNequiPayment}
-                                        >
-                                            Pagar con Nequi
-                                        </Button>
+                                        
                                         <Button
                                             onClick={handleTicketConfirmation}
                                             disabled={!isRegisterFormValidForSubmit || raffleState?.isWinnerConfirmed}
