@@ -503,6 +503,11 @@ const App = () => {
     }
     
     const isRegisterFormValidForSubmit = raffleState?.name && raffleState?.phoneNumber && raffleState?.raffleNumber && !drawnNumbersSet.has(parseInt(raffleState.raffleNumber));
+    
+    const nequiUrl = raffleState?.nequiAccountNumber && raffleState?.value 
+        ? `nequi://app/transfer?phoneNumber=${raffleState.nequiAccountNumber}&value=${raffleState.value.replace(/[^\d]/g, '')}`
+        : '#';
+
 
     const renderBoardContent = () => {
        if (!raffleState) return null;
@@ -943,7 +948,9 @@ const App = () => {
                                             <div className="bg-gray-50 p-4 rounded-lg border">
                                                 <h3 className="font-bold text-center text-lg mb-2">Escanea para Pagar</h3>
                                                 <div className="flex flex-col items-center gap-2">
-                                                    <Image src={raffleState.qrCodeImageUrl} alt="QR de Pago" width={200} height={200} className="rounded-lg shadow-md" />
+                                                    <a href={nequiUrl}>
+                                                        <Image src={raffleState.qrCodeImageUrl} alt="QR de Pago" width={200} height={200} className="rounded-lg shadow-md" />
+                                                    </a>
                                                     <p className="font-semibold">Nequi: {raffleState.nequiAccountNumber}</p>
                                                     <p className="font-bold text-xl">Valor: {formatValue(raffleState.value)}</p>
                                                 </div>
@@ -1221,5 +1228,3 @@ const App = () => {
 };
 
 export default App;
-
-    
