@@ -642,7 +642,7 @@ const App = () => {
                                 />
                             </div>
                         )}
-                         {isCurrentUserAdmin && !raffleState.isDetailsConfirmed && (
+                        {isCurrentUserAdmin && !raffleState.isDetailsConfirmed && (
                             <div className="md:col-span-2">
                                 <Label htmlFor="qr-code-upload">Subir QR de Pago:</Label>
                                 <div className="flex items-center gap-2 mt-1">
