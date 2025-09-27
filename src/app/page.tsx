@@ -498,7 +498,7 @@ const App = () => {
             try {
                 await uploadBytes(storageRef, file);
                 const downloadURL = await getDownloadURL(storageRef);
-                await handleFieldChange('qrCodeImageUrl', downloadURL);
+                await setDoc(doc(db, "raffles", raffleState.raffleRef), { qrCodeImageUrl: downloadURL }, { merge: true });
                 handleLocalFieldChange('qrCodeImageUrl', downloadURL);
                 showNotification('Imagen QR actualizada.', 'success');
             } catch (error) {
@@ -917,49 +917,6 @@ const App = () => {
                                         </div>
                                     ) : (
                                         <>
-                                            <div className="text-center mb-4">
-                                                <h3 className="font-bold text-lg text-blue-800">Paso 2: Dirígete al código QR</h3>
-                                            </div>
-                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                                <div>
-                                                    <Label htmlFor="name-input">Nombre completo:</Label>
-                                                    <Input
-                                                        id="name-input"
-                                                        type="text"
-                                                        value={raffleState?.name || ''}
-                                                        onChange={(e) => handleLocalFieldChange('name', e.target.value)}
-                                                        placeholder="Ej: Juan Pérez"
-                                                        className="w-full mt-1"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <Label htmlFor="phone-input">Celular:</Label>
-                                                    <Input
-                                                        id="phone-input"
-                                                        type="tel"
-                                                        value={raffleState?.phoneNumber || ''}
-                                                        onChange={(e) => handleLocalFieldChange('phoneNumber', e.target.value.replace(/\D/g, ''))}
-                                                        placeholder="Ej: 3001234567"
-                                                        className="w-full mt-1"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <Label htmlFor="raffle-number-input">Número de rifa ({raffleMode === 'two-digit' ? '00-99' : '100-999'}):</Label>
-                                                    <Input
-                                                        id="raffle-number-input"
-                                                        type="text"
-                                                        value={raffleState?.raffleNumber || ''}
-                                                        onChange={handleRaffleNumberChange}
-                                                        placeholder={`Ej: ${raffleMode === 'two-digit' ? '05' : '142'}`}
-                                                        className="w-full mt-1"
-                                                        maxLength={numberLength}
-                                                    />
-                                                    {raffleState?.raffleNumber && allAssignedNumbers.has(parseInt(raffleState.raffleNumber)) && (
-                                                        <p className="text-red-500 text-sm mt-1">Este número ya está asignado.</p>
-                                                    )}
-                                                </div>
-                                            </div>
-                                            
                                             <div className="flex flex-col gap-4">
                                                 <div className="bg-blue-50 border-2 border-dashed border-blue-200 p-4 rounded-lg">
                                                     <h3 className="font-bold text-center text-lg mb-2 text-blue-800">Escanea para Pagar</h3>
@@ -994,6 +951,46 @@ const App = () => {
                                                             <p>El administrador aún no ha cargado el código QR para el pago.</p>
                                                         </div>
                                                     )}
+                                                </div>
+                                                
+                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                    <div>
+                                                        <Label htmlFor="name-input">Nombre completo:</Label>
+                                                        <Input
+                                                            id="name-input"
+                                                            type="text"
+                                                            value={raffleState?.name || ''}
+                                                            onChange={(e) => handleLocalFieldChange('name', e.target.value)}
+                                                            placeholder="Ej: Juan Pérez"
+                                                            className="w-full mt-1"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <Label htmlFor="phone-input">Celular:</Label>
+                                                        <Input
+                                                            id="phone-input"
+                                                            type="tel"
+                                                            value={raffleState?.phoneNumber || ''}
+                                                            onChange={(e) => handleLocalFieldChange('phoneNumber', e.target.value.replace(/\D/g, ''))}
+                                                            placeholder="Ej: 3001234567"
+                                                            className="w-full mt-1"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <Label htmlFor="raffle-number-input">Número de rifa ({raffleMode === 'two-digit' ? '00-99' : '100-999'}):</Label>
+                                                        <Input
+                                                            id="raffle-number-input"
+                                                            type="text"
+                                                            value={raffleState?.raffleNumber || ''}
+                                                            onChange={handleRaffleNumberChange}
+                                                            placeholder={`Ej: ${raffleMode === 'two-digit' ? '05' : '142'}`}
+                                                            className="w-full mt-1"
+                                                            maxLength={numberLength}
+                                                        />
+                                                        {raffleState?.raffleNumber && allAssignedNumbers.has(parseInt(raffleState.raffleNumber)) && (
+                                                            <p className="text-red-500 text-sm mt-1">Este número ya está asignado.</p>
+                                                        )}
+                                                    </div>
                                                 </div>
                                                 
                                                 <Button
