@@ -6,6 +6,8 @@ import { RaffleManager } from '@/lib/RaffleManager';
 import { db, persistenceEnabled } from '@/lib/firebase';
 import { doc, onSnapshot, setDoc, getDoc, deleteDoc, Unsubscribe, Timestamp } from 'firebase/firestore';
 import Image from 'next/image';
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
@@ -52,6 +54,8 @@ const App = () => {
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<Tab>('board');
     const [currencySymbol] = useState('$');
+    const [nequiRedirectInitiated, setNequiRedirectInitiated] = useState(false);
+
 
     const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
     const [ticketInfo, setTicketInfo] = useState<any>(null);
@@ -325,6 +329,7 @@ const App = () => {
     
     const handleAdminSearch = (refToSearch?: string, isInitialLoad = false) => {
         return new Promise<void>(async (resolve) => {
+            setLoading(true);
             const aRef = (refToSearch || adminRefSearch).trim().toUpperCase();
             if (!aRef) {
                 showNotification('Por favor, ingresa una referencia.', 'warning');
@@ -334,7 +339,6 @@ const App = () => {
             }
 
             raffleSubscription.current?.();
-            setLoading(true);
             setRaffleState(null);
             
             const raffleDocRef = doc(db, 'raffles', aRef);
@@ -346,9 +350,8 @@ const App = () => {
             raffleSubscription.current = onSnapshot(raffleDocRef, (docSnapshot) => {
                 if (docSnapshot.exists()) {
                     const data = docSnapshot.data();
-                    handleLocalFieldChange('qrCodeImageUrl', data.qrCodeImageUrl || '');
                     setRaffleState(data);
-                    if (isInitialLoad) { 
+                    if (!isInitialLoad) { 
                         showNotification(`Cargando rifa con referencia: ${aRef}`, 'success');
                     }
                     setIsAdminLoginOpen(false);
@@ -407,8 +410,8 @@ const App = () => {
 
     const handleActivateBoard = async (mode: RaffleMode) => {
         setLoading(true);
-        const price = mode === 'two-digit' ? 150000 : 1500000; // 1.500 COP is 150000 cents, 15.000 is 1500000 cents
-        const wompiUrl = `https://checkout.nequi.wompi.co/l/VPOS_SEBIV5?amountInCents=${price}`;
+        const price = mode === 'two-digit' ? 1500 : 15000;
+        const wompiUrl = `https://checkout.wompi.co/l/VPOS_SEBIV5?amount-in-cents=${price * 100}`;
         
         try {
             const newRef = await raffleManager.createNewRaffleRef();
@@ -485,18 +488,25 @@ const App = () => {
         setIsShareDialogOpen(false);
     };
 
-    const handleQrCodeUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const handleQrCodeUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         if (!raffleState?.raffleRef) return;
         const file = event.target.files?.[0];
         if (file) {
-            const reader = new FileReader();
-            reader.onloadend = async () => {
-                const dataUrl = reader.result as string;
-                // For simplicity, directly using dataURL. For production, upload to a service.
-                await handleFieldChange('qrCodeImageUrl', dataUrl);
-                handleLocalFieldChange('qrCodeImageUrl', dataUrl);
-            };
-            reader.readAsDataURL(file);
+            setLoading(true);
+            const storage = getStorage();
+            const storageRef = ref(storage, `qrcodes/${raffleState.raffleRef}/${file.name}`);
+            try {
+                await uploadBytes(storageRef, file);
+                const downloadURL = await getDownloadURL(storageRef);
+                await handleFieldChange('qrCodeImageUrl', downloadURL);
+                handleLocalFieldChange('qrCodeImageUrl', downloadURL);
+                showNotification('Imagen QR actualizada.', 'success');
+            } catch (error) {
+                console.error("Error uploading QR code:", error);
+                showNotification('Error al subir la imagen QR.', 'error');
+            } finally {
+                setLoading(false);
+            }
         }
     };
 
@@ -894,95 +904,103 @@ const App = () => {
                             <div className={activeTab === 'register' ? 'tab-content active' : 'tab-content'}>
                                 <h2 className="text-2xl font-bold text-gray-800 mb-4">Registrar Número</h2>
                                 <fieldset disabled={!raffleState || raffleState?.isWinnerConfirmed || !raffleState?.isDetailsConfirmed} className="disabled:opacity-50 space-y-4">
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                        <div>
-                                            <Label htmlFor="name-input">Nombre completo:</Label>
-                                            <Input
-                                                id="name-input"
-                                                type="text"
-                                                value={raffleState?.name || ''}
-                                                onChange={(e) => handleLocalFieldChange('name', e.target.value)}
-                                                placeholder="Ej: Juan Pérez"
-                                                className="w-full mt-1"
-                                            />
-                                        </div>
-                                        <div>
-                                            <Label htmlFor="phone-input">Celular:</Label>
-                                            <Input
-                                                id="phone-input"
-                                                type="tel"
-                                                value={raffleState?.phoneNumber || ''}
-                                                onChange={(e) => handleLocalFieldChange('phoneNumber', e.target.value.replace(/\D/g, ''))}
-                                                placeholder="Ej: 3001234567"
-                                                className="w-full mt-1"
-                                            />
-                                        </div>
-                                        <div>
-                                            <Label htmlFor="raffle-number-input">Número de rifa ({raffleMode === 'two-digit' ? '00-99' : '100-999'}):</Label>
-                                            <Input
-                                                id="raffle-number-input"
-                                                type="text"
-                                                value={raffleState?.raffleNumber || ''}
-                                                onChange={handleRaffleNumberChange}
-                                                placeholder={`Ej: ${raffleMode === 'two-digit' ? '05' : '142'}`}
-                                                className="w-full mt-1"
-                                                maxLength={numberLength}
-                                            />
-                                            {raffleState?.raffleNumber && allAssignedNumbers.has(parseInt(raffleState.raffleNumber)) && (
-                                                <p className="text-red-500 text-sm mt-1">Este número ya está asignado.</p>
-                                            )}
-                                        </div>
-                                    </div>
                                     
-                                    <div className="flex flex-col gap-4">
-                                        <div className="bg-blue-50 border-2 border-dashed border-blue-200 p-4 rounded-lg">
-                                            <h3 className="font-bold text-center text-lg mb-2 text-blue-800">Paga tu Rifa Aquí</h3>
-                                            <p className="text-center text-sm text-gray-600 mb-4">Para reservar tu número, por favor realiza primero el pago.</p>
-                                            
-                                            {isCurrentUserAdmin && (
-                                                <div className="flex justify-center mb-4">
-                                                    <Button asChild variant="outline" size="sm">
-                                                        <label htmlFor="qr-code-upload-input" className="cursor-pointer">
-                                                            <Upload className="mr-2 h-4 w-4" />
-                                                            Cambiar Imagen QR
-                                                        </label>
-                                                    </Button>
+                                    {!nequiRedirectInitiated ? (
+                                        <div className="bg-blue-50 border-2 border-dashed border-blue-200 p-8 rounded-lg text-center">
+                                            <h3 className="font-bold text-lg mb-2 text-blue-800">Paso 1: Realizar el Pago</h3>
+                                            <p className="text-gray-600 mb-4">Haz clic en el botón para abrir Nequi y realizar el pago de forma segura.</p>
+                                            <a href={nequiUrl} target="_blank" rel="noopener noreferrer" onClick={() => setNequiRedirectInitiated(true)}>
+                                                <Button className="w-full max-w-xs mx-auto bg-purple-700 hover:bg-purple-800 text-white font-bold py-3">
+                                                    Pagar por Nequi
+                                                </Button>
+                                            </a>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                <div>
+                                                    <Label htmlFor="name-input">Nombre completo:</Label>
                                                     <Input
-                                                        id="qr-code-upload-input"
-                                                        type="file"
-                                                        accept="image/*"
-                                                        onChange={handleQrCodeUpload}
-                                                        className="hidden"
+                                                        id="name-input"
+                                                        type="text"
+                                                        value={raffleState?.name || ''}
+                                                        onChange={(e) => handleLocalFieldChange('name', e.target.value)}
+                                                        placeholder="Ej: Juan Pérez"
+                                                        className="w-full mt-1"
                                                     />
                                                 </div>
-                                            )}
+                                                <div>
+                                                    <Label htmlFor="phone-input">Celular:</Label>
+                                                    <Input
+                                                        id="phone-input"
+                                                        type="tel"
+                                                        value={raffleState?.phoneNumber || ''}
+                                                        onChange={(e) => handleLocalFieldChange('phoneNumber', e.target.value.replace(/\D/g, ''))}
+                                                        placeholder="Ej: 3001234567"
+                                                        className="w-full mt-1"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <Label htmlFor="raffle-number-input">Número de rifa ({raffleMode === 'two-digit' ? '00-99' : '100-999'}):</Label>
+                                                    <Input
+                                                        id="raffle-number-input"
+                                                        type="text"
+                                                        value={raffleState?.raffleNumber || ''}
+                                                        onChange={handleRaffleNumberChange}
+                                                        placeholder={`Ej: ${raffleMode === 'two-digit' ? '05' : '142'}`}
+                                                        className="w-full mt-1"
+                                                        maxLength={numberLength}
+                                                    />
+                                                    {raffleState?.raffleNumber && allAssignedNumbers.has(parseInt(raffleState.raffleNumber)) && (
+                                                        <p className="text-red-500 text-sm mt-1">Este número ya está asignado.</p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="flex flex-col gap-4">
+                                                <div className="bg-blue-50 border-2 border-dashed border-blue-200 p-4 rounded-lg">
+                                                    <h3 className="font-bold text-center text-lg mb-2 text-blue-800">Escanea para Pagar</h3>
+                                                    {isCurrentUserAdmin && (
+                                                        <div className="flex justify-center mb-4">
+                                                            <Button asChild variant="outline" size="sm">
+                                                                <label htmlFor="qr-code-upload-input" className="cursor-pointer">
+                                                                    <Upload className="mr-2 h-4 w-4" />
+                                                                    Cambiar Imagen QR
+                                                                </label>
+                                                            </Button>
+                                                            <Input
+                                                                id="qr-code-upload-input"
+                                                                type="file"
+                                                                accept="image/*"
+                                                                onChange={handleQrCodeUpload}
+                                                                className="hidden"
+                                                            />
+                                                        </div>
+                                                    )}
 
-                                            {raffleState.qrCodeImageUrl && raffleState.qrCodeImageUrl.trim() !== '' ? (
-                                                <div className="flex flex-col items-center gap-4">
-                                                    <a href={nequiUrl} target="_blank" rel="noopener noreferrer">
-                                                        <Image src={raffleState.qrCodeImageUrl} alt="QR de Pago" width={200} height={200} className="rounded-lg shadow-md" />
-                                                        <Button className="w-full bg-purple-700 hover:bg-purple-800 text-white font-bold mt-2">
-                                                            Pagar por Nequi
-                                                        </Button>
-                                                    </a>
-                                                    <p className="font-semibold">Nequi: {raffleState.nequiAccountNumber}</p>
-                                                    <p className="font-bold text-xl">Valor: {formatValue(raffleState.value)}</p>
+                                                    {raffleState.qrCodeImageUrl && raffleState.qrCodeImageUrl.trim() !== '' ? (
+                                                        <div className="flex flex-col items-center gap-2">
+                                                                <Image src={raffleState.qrCodeImageUrl} alt="QR de Pago" width={200} height={200} className="rounded-lg shadow-md" />
+                                                            <p className="font-semibold">Nequi: {raffleState.nequiAccountNumber}</p>
+                                                            <p className="font-bold text-xl">Valor: {formatValue(raffleState.value)}</p>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="text-center text-gray-500 py-8">
+                                                            <p>El administrador aún no ha cargado el código QR para el pago.</p>
+                                                        </div>
+                                                    )}
                                                 </div>
-                                            ) : (
-                                                <div className="text-center text-gray-500 py-8">
-                                                    <p>El administrador aún no ha cargado el código QR para el pago.</p>
-                                                </div>
-                                            )}
-                                        </div>
-                                        
-                                        <Button
-                                            onClick={handleRegisterParticipant}
-                                            disabled={!isRegisterFormValidForSubmit || raffleState?.isWinnerConfirmed}
-                                            className="w-full px-4 py-2 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-                                        >
-                                            Generar Tiquete
-                                        </Button>
-                                    </div>
+                                                
+                                                <Button
+                                                    onClick={handleRegisterParticipant}
+                                                    disabled={!isRegisterFormValidForSubmit || raffleState?.isWinnerConfirmed}
+                                                    className="w-full px-4 py-2 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                                                >
+                                                    Generar Tiquete
+                                                </Button>
+                                            </div>
+                                        </>
+                                    )}
 
                                 </fieldset>
 
@@ -1233,3 +1251,5 @@ const App = () => {
 };
 
 export default App;
+
+    
