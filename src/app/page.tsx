@@ -917,6 +917,9 @@ const App = () => {
                                         </div>
                                     ) : (
                                         <>
+                                            <div className="text-center mb-4">
+                                                <h3 className="font-bold text-lg text-blue-800">Paso 2: Dirígete al código QR</h3>
+                                            </div>
                                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                                 <div>
                                                     <Label htmlFor="name-input">Nombre completo:</Label>
@@ -980,7 +983,9 @@ const App = () => {
 
                                                     {raffleState.qrCodeImageUrl && raffleState.qrCodeImageUrl.trim() !== '' ? (
                                                         <div className="flex flex-col items-center gap-2">
+                                                            <a href={nequiUrl} target="_blank" rel="noopener noreferrer">
                                                                 <Image src={raffleState.qrCodeImageUrl} alt="QR de Pago" width={200} height={200} className="rounded-lg shadow-md" />
+                                                            </a>
                                                             <p className="font-semibold">Nequi: {raffleState.nequiAccountNumber}</p>
                                                             <p className="font-bold text-xl">Valor: {formatValue(raffleState.value)}</p>
                                                         </div>
@@ -1251,5 +1256,3 @@ const App = () => {
 };
 
 export default App;
-
-    
