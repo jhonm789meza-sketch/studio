@@ -988,9 +988,7 @@ const App = () => {
                                                 <div className="flex flex-col items-center gap-4">
                                                     <a href={nequiUrl} target="_blank" rel="noopener noreferrer">
                                                         <Image src={raffleState.qrCodeImageUrl} alt="QR de Pago" width={200} height={200} className="rounded-lg shadow-md" />
-                                                    </a>
-                                                     <a href={nequiUrl} target="_blank" rel="noopener noreferrer" className="w-full max-w-[200px]">
-                                                        <Button className="w-full bg-purple-700 hover:bg-purple-800 text-white font-bold">
+                                                        <Button className="w-full bg-purple-700 hover:bg-purple-800 text-white font-bold mt-2">
                                                             Pagar por Nequi
                                                         </Button>
                                                     </a>
