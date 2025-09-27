@@ -9,7 +9,7 @@ import Image from 'next/image';
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House, Share2, Copy, Upload, Clock } from 'lucide-react';
+import { Menu, Award, Lock, House, Share2, Copy, Upload, Clock, Ticket, Users } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -345,7 +345,9 @@ const App = () => {
 
             raffleSubscription.current = onSnapshot(raffleDocRef, (docSnapshot) => {
                 if (docSnapshot.exists()) {
-                    setRaffleState(docSnapshot.data());
+                    const data = docSnapshot.data();
+                    handleLocalFieldChange('qrCodeImageUrl', data.qrCodeImageUrl || '');
+                    setRaffleState(data);
                     if (isInitialLoad) { 
                         showNotification(`Cargando rifa con referencia: ${aRef}`, 'success');
                     }
@@ -405,7 +407,7 @@ const App = () => {
 
     const handleActivateBoard = async (mode: RaffleMode) => {
         setLoading(true);
-        const price = mode === 'two-digit' ? 150000 : 15000;
+        const price = mode === 'two-digit' ? 150000 : 1500000; // 1.500 COP is 150000 cents, 15.000 is 1500000 cents
         const wompiUrl = `https://checkout.nequi.wompi.co/l/VPOS_SEBIV5?amountInCents=${price}`;
         
         try {
@@ -484,12 +486,15 @@ const App = () => {
     };
 
     const handleQrCodeUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+        if (!raffleState?.raffleRef) return;
         const file = event.target.files?.[0];
         if (file) {
             const reader = new FileReader();
-            reader.onloadend = () => {
+            reader.onloadend = async () => {
                 const dataUrl = reader.result as string;
-                handleFieldChange('qrCodeImageUrl', dataUrl);
+                // For simplicity, directly using dataURL. For production, upload to a service.
+                await handleFieldChange('qrCodeImageUrl', dataUrl);
+                handleLocalFieldChange('qrCodeImageUrl', dataUrl);
             };
             reader.readAsDataURL(file);
         }
@@ -661,7 +666,7 @@ const App = () => {
                                     <Button asChild variant="outline">
                                         <label htmlFor="qr-code-upload-input" className="cursor-pointer">
                                             <Upload className="mr-2 h-4 w-4" />
-                                            Subir Imagen
+                                            Seleccionar Imagen
                                         </label>
                                     </Button>
                                     <Input
@@ -670,7 +675,7 @@ const App = () => {
                                         accept="image/*"
                                         onChange={handleQrCodeUpload}
                                         className="hidden"
-                                        disabled={raffleState.isDetailsConfirmed || !isCurrentUserAdmin}
+                                        disabled={!isCurrentUserAdmin}
                                     />
                                     {raffleState.qrCodeImageUrl && (
                                         <div className="flex items-center gap-2 text-sm text-green-600">
@@ -843,7 +848,7 @@ const App = () => {
                 </div>
 
                 {!raffleState ? (
-                    <div className="p-6">
+                    <div className="p-8">
                          {pendingRaffleRef ? (
                             <div className="text-center p-8 bg-yellow-50 rounded-lg border-2 border-dashed border-yellow-400">
                                 <h2 className="text-2xl font-bold text-yellow-800 mb-2">Activación Pendiente</h2>
@@ -856,35 +861,31 @@ const App = () => {
                                 </Button>
                             </div>
                         ) : (
-                            <div className="relative text-center bg-gray-50 rounded-lg border-2 border-dashed overflow-hidden">
-                                <div className="absolute inset-0">
-                                    <Image
-                                        src="https://picsum.photos/seed/rafflecard/800/400"
-                                        alt="Cartón de Rifa"
-                                        fill
-                                        style={{ objectFit: 'cover' }}
-                                        className="opacity-20"
-                                        data-ai-hint="carton rifa"
-                                    />
+                            <div className="text-center">
+                                <Lock className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                                <h2 className="text-2xl font-bold text-gray-800 mb-2">Tablero Bloqueado</h2>
+                                <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                                    Busca una rifa por su referencia o crea una nueva para empezar.
+                                </p>
+                                <div className="flex flex-col md:flex-row justify-center items-center gap-6 mb-6">
+                                     <div className="flex-1 max-w-sm p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100">
+                                         <h5 className="mb-2 text-2xl font-bold tracking-tight text-gray-900">Rifa de 2 Cifras</h5>
+                                         <p className="font-normal text-gray-700 mb-4">Para números del 00 al 99.</p>
+                                         <Button onClick={() => handleActivateBoard('two-digit')} size="lg" className="w-full bg-green-500 hover:bg-green-600 text-white font-bold">
+                                             Activar Rifa ($1.500 COP)
+                                         </Button>
+                                     </div>
+                                     <div className="flex-1 max-w-sm p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100">
+                                         <h5 className="mb-2 text-2xl font-bold tracking-tight text-gray-900">Rifa de 3 Cifras</h5>
+                                         <p className="font-normal text-gray-700 mb-4">Para números del 100 al 999.</p>
+                                         <Button onClick={() => handleActivateBoard('three-digit')} size="lg" className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold">
+                                             Activar Rifa ($15.000 COP)
+                                         </Button>
+                                     </div>
                                 </div>
-                                <div className="relative p-10">
-                                    <Lock className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                                    <h2 className="text-2xl font-bold text-gray-800 mb-2">Tablero Bloqueado</h2>
-                                    <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                                    Busca una rifa por su referencia o crea la tuya para empezar.
-                                    </p>
-                                    <div className="flex flex-col sm:flex-row justify-center gap-4">
-                                        <Button onClick={() => setIsAdminLoginOpen(true)} size="lg">
-                                            Buscar por Referencia
-                                        </Button>
-                                        <Button onClick={() => handleActivateBoard('two-digit')} size="lg" className="bg-green-500 hover:bg-green-600 text-white font-bold">
-                                            Activar Rifa de 2 Cifras ($1.500)
-                                        </Button>
-                                        <Button onClick={() => handleActivateBoard('three-digit')} size="lg" className="bg-blue-500 hover:bg-blue-600 text-white font-bold">
-                                            Activar Rifa de 3 Cifras ($15.000)
-                                        </Button>
-                                    </div>
-                                </div>
+                                 <Button onClick={() => setIsAdminLoginOpen(true)} size="lg" variant="outline">
+                                    o Buscar por Referencia
+                                </Button>
                             </div>
                         )}
                     </div>
@@ -892,24 +893,24 @@ const App = () => {
                     <>
                         <div className="flex border-b border-gray-200">
                             <button 
-                                className={`px-6 py-3 font-medium text-lg ${activeTab === 'board' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
+                                className={`flex items-center gap-2 px-6 py-3 font-medium text-lg ${activeTab === 'board' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
                                 onClick={() => handleTabClick('board')}
                             >
-                                Tablero
+                                <Ticket className="h-5 w-5"/> Tablero
                             </button>
                             <button 
-                                className={`px-6 py-3 font-medium text-lg ${activeTab === 'register' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
+                                className={`flex items-center gap-2 px-6 py-3 font-medium text-lg ${activeTab === 'register' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
                                 onClick={() => handleTabClick('register')}
                                 disabled={!raffleState}
                             >
                                 Registrar
                             </button>
                             <button 
-                                className={`px-6 py-3 font-medium text-lg ${activeTab === 'participants' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
+                                className={`flex items-center gap-2 px-6 py-3 font-medium text-lg ${activeTab === 'participants' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
                                 onClick={() => handleTabClick('participants')}
                                 disabled={!raffleState}
                             >
-                                Participantes
+                                <Users className="h-5 w-5"/> Participantes
                             </button>
                         </div>
 
@@ -961,18 +962,42 @@ const App = () => {
                                     </div>
                                     
                                     <div className="flex flex-col gap-4">
-                                         {raffleState?.qrCodeImageUrl && (
-                                            <div className="bg-gray-50 p-4 rounded-lg border">
-                                                <h3 className="font-bold text-center text-lg mb-2">Escanea para Pagar</h3>
+                                        <div className="bg-blue-50 border-2 border-dashed border-blue-200 p-4 rounded-lg">
+                                            <h3 className="font-bold text-center text-lg mb-2 text-blue-800">Paga tu Rifa Aquí</h3>
+                                            <p className="text-center text-sm text-gray-600 mb-4">Para reservar tu número, por favor realiza primero el pago.</p>
+                                            
+                                            {isCurrentUserAdmin && (
+                                                <div className="flex justify-center mb-4">
+                                                    <Button asChild variant="outline" size="sm">
+                                                        <label htmlFor="qr-code-upload-input" className="cursor-pointer">
+                                                            <Upload className="mr-2 h-4 w-4" />
+                                                            Cambiar Imagen QR
+                                                        </label>
+                                                    </Button>
+                                                    <Input
+                                                        id="qr-code-upload-input"
+                                                        type="file"
+                                                        accept="image/*"
+                                                        onChange={handleQrCodeUpload}
+                                                        className="hidden"
+                                                    />
+                                                </div>
+                                            )}
+
+                                            {raffleState.qrCodeImageUrl && raffleState.qrCodeImageUrl.trim() !== '' ? (
                                                 <div className="flex flex-col items-center gap-2">
-                                                    <a href={nequiUrl}>
+                                                    <a href={nequiUrl} target="_blank" rel="noopener noreferrer">
                                                         <Image src={raffleState.qrCodeImageUrl} alt="QR de Pago" width={200} height={200} className="rounded-lg shadow-md" />
                                                     </a>
                                                     <p className="font-semibold">Nequi: {raffleState.nequiAccountNumber}</p>
                                                     <p className="font-bold text-xl">Valor: {formatValue(raffleState.value)}</p>
                                                 </div>
-                                            </div>
-                                        )}
+                                            ) : (
+                                                <div className="text-center text-gray-500 py-8">
+                                                    <p>El administrador aún no ha cargado el código QR para el pago.</p>
+                                                </div>
+                                            )}
+                                        </div>
                                         
                                         <Button
                                             onClick={handleRegisterParticipant}
