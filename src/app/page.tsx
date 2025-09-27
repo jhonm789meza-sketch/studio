@@ -660,33 +660,6 @@ const App = () => {
                             </div>
                         )}
                         {isCurrentUserAdmin && !raffleState.isDetailsConfirmed && (
-                            <div className="md:col-span-2">
-                                <Label htmlFor="qr-code-upload">Subir QR de Pago:</Label>
-                                <div className="flex items-center gap-2 mt-1">
-                                    <Button asChild variant="outline">
-                                        <label htmlFor="qr-code-upload-input" className="cursor-pointer">
-                                            <Upload className="mr-2 h-4 w-4" />
-                                            Seleccionar Imagen
-                                        </label>
-                                    </Button>
-                                    <Input
-                                        id="qr-code-upload-input"
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={handleQrCodeUpload}
-                                        className="hidden"
-                                        disabled={!isCurrentUserAdmin}
-                                    />
-                                    {raffleState.qrCodeImageUrl && (
-                                        <div className="flex items-center gap-2 text-sm text-green-600">
-                                            <Image src={raffleState.qrCodeImageUrl} alt="Preview" width={40} height={40} className="rounded-md"/>
-                                            <span>QR Cargado</span>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        )}
-                       {isCurrentUserAdmin && !raffleState.isDetailsConfirmed && (
                            <div className="md:col-span-2">
                                <Button
                                    onClick={handleConfirmDetails}
