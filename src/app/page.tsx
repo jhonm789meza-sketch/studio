@@ -799,7 +799,7 @@ const App = () => {
     );
     
     const FacebookIcon = () => (
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0-0 24 24" fill="currentColor">
             <path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878V14.89h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z"/>
         </svg>
     );
@@ -935,7 +935,7 @@ const App = () => {
                             <div className={activeTab === 'register' ? 'tab-content active' : 'tab-content'}>
                                 <h2 className="text-2xl font-bold text-gray-800 mb-4">Registrar Número</h2>
                                 
-                                <fieldset disabled={!raffleState || raffleState?.isWinnerConfirmed || !raffleState?.isDetailsConfirmed || isCurrentUserAdmin} className="disabled:opacity-50 space-y-4">
+                                <fieldset disabled={!raffleState || raffleState?.isWinnerConfirmed || !raffleState?.isDetailsConfirmed} className="disabled:opacity-50 space-y-4">
                                     <div className="flex flex-col gap-4">
                                         <div className="bg-blue-50 border-2 border-dashed border-blue-200 p-4 rounded-lg">
                                             <h3 className="font-bold text-center text-lg mb-2 text-blue-800">Escanea para Pagar</h3>
@@ -982,6 +982,7 @@ const App = () => {
                                                     onChange={(e) => handleLocalFieldChange('name', e.target.value)}
                                                     placeholder="Ej: Juan Pérez"
                                                     className="w-full mt-1"
+                                                    disabled={!isCurrentUserAdmin}
                                                 />
                                             </div>
                                             <div>
@@ -993,6 +994,7 @@ const App = () => {
                                                     onChange={(e) => handleLocalFieldChange('phoneNumber', e.target.value.replace(/\D/g, ''))}
                                                     placeholder="Ej: 3001234567"
                                                     className="w-full mt-1"
+                                                    disabled={!isCurrentUserAdmin}
                                                 />
                                             </div>
                                         </div>
@@ -1021,6 +1023,7 @@ const App = () => {
                                                 placeholder={`Ej: ${raffleMode === 'two-digit' ? '05' : '142'}`}
                                                 className="w-full mt-1"
                                                 maxLength={numberLength}
+                                                disabled={!isCurrentUserAdmin || !isPaymentConfirmed}
                                             />
                                             {raffleState?.raffleNumber && allAssignedNumbers.has(parseInt(raffleState.raffleNumber)) && (
                                                 <p className="text-red-500 text-sm mt-1">Este número ya está asignado.</p>
