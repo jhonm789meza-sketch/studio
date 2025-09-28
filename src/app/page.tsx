@@ -917,7 +917,7 @@ const App = () => {
                                 onClick={() => handleTabClick('register')}
                                 disabled={!raffleState}
                             >
-                                {isCurrentUserAdmin ? 'Registrar' : 'Cómo Participar'}
+                                Registrar
                             </button>
                             <button 
                                 className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'participants' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
@@ -933,109 +933,28 @@ const App = () => {
                                 {renderBoardContent()}
                             </div>
                             <div className={activeTab === 'register' ? 'tab-content active' : 'tab-content'}>
-                                <h2 className="text-2xl font-bold text-gray-800 mb-4">{isCurrentUserAdmin ? 'Registrar Número' : 'Cómo Participar'}</h2>
+                                <h2 className="text-2xl font-bold text-gray-800 mb-4">Registrar Número</h2>
                                 
-                                {isCurrentUserAdmin ? (
-                                    <fieldset disabled={!raffleState || raffleState?.isWinnerConfirmed || !raffleState?.isDetailsConfirmed} className="disabled:opacity-50 space-y-4">
-                                        <div className="flex flex-col gap-4">
-                                            <div className="bg-blue-50 border-2 border-dashed border-blue-200 p-4 rounded-lg">
-                                                <h3 className="font-bold text-center text-lg mb-2 text-blue-800">Escanea para Pagar</h3>
-                                                <div className="flex justify-center mb-4">
-                                                    <Button asChild variant="outline" size="sm">
-                                                        <label htmlFor="qr-code-upload-input" className="cursor-pointer">
-                                                            <Upload className="mr-2 h-4 w-4" />
-                                                            Cambiar Imagen QR
-                                                        </label>
-                                                    </Button>
-                                                    <Input
-                                                        id="qr-code-upload-input"
-                                                        type="file"
-                                                        accept="image/*"
-                                                        onChange={handleQrCodeUpload}
-                                                        className="hidden"
-                                                    />
-                                                </div>
-
-                                                {raffleState.qrCodeImageUrl && raffleState.qrCodeImageUrl.trim() !== '' && raffleState.value > 0 ? (
-                                                    <div className="flex flex-col items-center gap-2">
-                                                        <Image src={raffleState.qrCodeImageUrl} alt="QR de Pago" width={200} height={200} className="rounded-lg shadow-md" />
-                                                        <p className="font-semibold">Nequi: {raffleState.nequiAccountNumber}</p>
-                                                        <p className="font-bold text-xl">Valor: {formatValue(raffleState.value)}</p>
-                                                    </div>
-                                                ) : (
-                                                    <div className="text-center text-gray-500 py-8">
-                                                        <p>El administrador aún no ha cargado el código QR para el pago.</p>
-                                                    </div>
-                                                )}
-                                            </div>
-                                            
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div>
-                                                    <Label htmlFor="name-input">Nombre completo:</Label>
-                                                    <Input
-                                                        id="name-input"
-                                                        type="text"
-                                                        value={raffleState?.name || ''}
-                                                        onChange={(e) => handleLocalFieldChange('name', e.target.value)}
-                                                        placeholder="Ej: Juan Pérez"
-                                                        className="w-full mt-1"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <Label htmlFor="phone-input">Celular:</Label>
-                                                    <Input
-                                                        id="phone-input"
-                                                        type="tel"
-                                                        value={raffleState?.phoneNumber || ''}
-                                                        onChange={(e) => handleLocalFieldChange('phoneNumber', e.target.value.replace(/\D/g, ''))}
-                                                        placeholder="Ej: 3001234567"
-                                                        className="w-full mt-1"
-                                                    />
-                                                </div>
-                                            </div>
-                                            
-                                            <div className="items-top flex space-x-2">
-                                                <Checkbox id="payment-confirmation" checked={isPaymentConfirmed} onCheckedChange={(checked) => setIsPaymentConfirmed(checked as boolean)} />
-                                                <div className="grid gap-1.5 leading-none">
-                                                    <label
-                                                        htmlFor="payment-confirmation"
-                                                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                                                    >
-                                                        He realizado el pago
-                                                    </label>
-                                                </div>
-                                            </div>
-
-                                            <div>
-                                                <Label htmlFor="raffle-number-input">Número de rifa ({raffleMode === 'two-digit' ? '00-99' : '100-999'}):</Label>
-                                                <Input
-                                                    id="raffle-number-input"
-                                                    type="text"
-                                                    value={raffleState?.raffleNumber || ''}
-                                                    onChange={handleRaffleNumberChange}
-                                                    placeholder={`Ej: ${raffleMode === 'two-digit' ? '05' : '142'}`}
-                                                    className="w-full mt-1"
-                                                    maxLength={numberLength}
-                                                    disabled={!isPaymentConfirmed}
-                                                />
-                                                {raffleState?.raffleNumber && allAssignedNumbers.has(parseInt(raffleState.raffleNumber)) && (
-                                                    <p className="text-red-500 text-sm mt-1">Este número ya está asignado.</p>
-                                                )}
-                                            </div>
-                                            
-                                            <Button
-                                                onClick={handleRegisterParticipant}
-                                                disabled={!isRegisterFormValidForSubmit}
-                                                className="w-full px-4 py-2 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-                                            >
-                                                Generar Tiquete
-                                            </Button>
-                                        </div>
-                                    </fieldset>
-                                ) : (
-                                    <div className="space-y-6">
+                                <fieldset disabled={!raffleState || raffleState?.isWinnerConfirmed || !raffleState?.isDetailsConfirmed} className="disabled:opacity-50 space-y-4">
+                                    <div className="flex flex-col gap-4">
                                         <div className="bg-blue-50 border-2 border-dashed border-blue-200 p-4 rounded-lg">
-                                            <h3 className="font-bold text-center text-lg mb-2 text-blue-800">1. Escanea para Pagar</h3>
+                                            <h3 className="font-bold text-center text-lg mb-2 text-blue-800">Escanea para Pagar</h3>
+                                            <div className="flex justify-center mb-4">
+                                                <Button asChild variant="outline" size="sm">
+                                                    <label htmlFor="qr-code-upload-input" className="cursor-pointer">
+                                                        <Upload className="mr-2 h-4 w-4" />
+                                                        Cambiar Imagen QR
+                                                    </label>
+                                                </Button>
+                                                <Input
+                                                    id="qr-code-upload-input"
+                                                    type="file"
+                                                    accept="image/*"
+                                                    onChange={handleQrCodeUpload}
+                                                    className="hidden"
+                                                />
+                                            </div>
+
                                             {raffleState.qrCodeImageUrl && raffleState.qrCodeImageUrl.trim() !== '' && raffleState.value > 0 ? (
                                                 <div className="flex flex-col items-center gap-2">
                                                     <Image src={raffleState.qrCodeImageUrl} alt="QR de Pago" width={200} height={200} className="rounded-lg shadow-md" />
@@ -1048,14 +967,72 @@ const App = () => {
                                                 </div>
                                             )}
                                         </div>
-                                        <div className="bg-green-50 border-2 border-dashed border-green-200 p-4 rounded-lg">
-                                            <h3 className="font-bold text-center text-lg mb-2 text-green-800">2. Confirma tu Número</h3>
-                                            <p className="text-center text-gray-700">
-                                                Una vez realizado el pago, contacta a <strong className="text-green-800">{raffleState.organizerName || 'el organizador'}</strong> para que registre tu número y te envíe el comprobante.
-                                            </p>
+                                        
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <Label htmlFor="name-input">Nombre completo:</Label>
+                                                <Input
+                                                    id="name-input"
+                                                    type="text"
+                                                    value={raffleState?.name || ''}
+                                                    onChange={(e) => handleLocalFieldChange('name', e.target.value)}
+                                                    placeholder="Ej: Juan Pérez"
+                                                    className="w-full mt-1"
+                                                />
+                                            </div>
+                                            <div>
+                                                <Label htmlFor="phone-input">Celular:</Label>
+                                                <Input
+                                                    id="phone-input"
+                                                    type="tel"
+                                                    value={raffleState?.phoneNumber || ''}
+                                                    onChange={(e) => handleLocalFieldChange('phoneNumber', e.target.value.replace(/\D/g, ''))}
+                                                    placeholder="Ej: 3001234567"
+                                                    className="w-full mt-1"
+                                                />
+                                            </div>
                                         </div>
+                                        
+                                        {isCurrentUserAdmin && (
+                                            <div className="items-top flex space-x-2">
+                                                <Checkbox id="payment-confirmation" checked={isPaymentConfirmed} onCheckedChange={(checked) => setIsPaymentConfirmed(checked as boolean)} />
+                                                <div className="grid gap-1.5 leading-none">
+                                                    <label
+                                                        htmlFor="payment-confirmation"
+                                                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                                    >
+                                                        He realizado el pago
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        <div>
+                                            <Label htmlFor="raffle-number-input">Número de rifa ({raffleMode === 'two-digit' ? '00-99' : '100-999'}):</Label>
+                                            <Input
+                                                id="raffle-number-input"
+                                                type="text"
+                                                value={raffleState?.raffleNumber || ''}
+                                                onChange={handleRaffleNumberChange}
+                                                placeholder={`Ej: ${raffleMode === 'two-digit' ? '05' : '142'}`}
+                                                className="w-full mt-1"
+                                                maxLength={numberLength}
+                                                disabled={isCurrentUserAdmin ? !isPaymentConfirmed : true}
+                                            />
+                                            {raffleState?.raffleNumber && allAssignedNumbers.has(parseInt(raffleState.raffleNumber)) && (
+                                                <p className="text-red-500 text-sm mt-1">Este número ya está asignado.</p>
+                                            )}
+                                        </div>
+                                        
+                                        <Button
+                                            onClick={handleRegisterParticipant}
+                                            disabled={!isRegisterFormValidForSubmit}
+                                            className="w-full px-4 py-2 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                                        >
+                                            Generar Tiquete
+                                        </Button>
                                     </div>
-                                )}
+                                </fieldset>
                                 
                                 {(!raffleState || !raffleState.isDetailsConfirmed) && (
                                     <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-6" role="alert">
