@@ -233,6 +233,10 @@ const App = () => {
 
     const handleRegisterParticipant = async () => {
         if (!raffleState || !raffleState.raffleRef) return;
+        if (!isCurrentUserAdmin) {
+            showNotification('Solo el administrador puede registrar participantes.', 'error');
+            return;
+        }
         if (!raffleState.name.trim()) {
             showNotification('Por favor ingresa el nombre', 'warning');
             return;
@@ -274,7 +278,7 @@ const App = () => {
             phoneNumber: raffleState.phoneNumber,
             raffleNumber: formattedRaffleNumber,
             timestamp: new Date(),
-            paymentStatus: 'confirmed' // Always confirmed now
+            paymentStatus: 'confirmed'
         };
         
         const updatedParticipants = [...raffleState.participants, newParticipant];
@@ -500,10 +504,8 @@ const App = () => {
                 const uploadTask = await uploadBytes(storageRef, file);
                 const downloadURL = await getDownloadURL(uploadTask.ref);
                 
-                // Update Firestore first
                 await setDoc(doc(db, "raffles", raffleState.raffleRef), { qrCodeImageUrl: downloadURL }, { merge: true });
                 
-                // Then update local state to trigger re-render
                 handleLocalFieldChange('qrCodeImageUrl', downloadURL);
 
                 showNotification('Imagen QR actualizada.', 'success');
@@ -530,10 +532,7 @@ const App = () => {
         return <div className="flex justify-center items-center h-screen text-xl font-semibold">Cargando...</div>;
     }
     
-    const isRegisterFormValidForSubmit = raffleState?.name && raffleState?.phoneNumber && raffleState?.raffleNumber && !allAssignedNumbers.has(parseInt(raffleState.raffleNumber)) && (!isCurrentUserAdmin || isPaymentConfirmed);
-    
-    const nequiUrl = `nequi://app`;
-
+    const isRegisterFormValidForSubmit = isCurrentUserAdmin && raffleState?.name && raffleState?.phoneNumber && raffleState?.raffleNumber && !allAssignedNumbers.has(parseInt(raffleState.raffleNumber)) && isPaymentConfirmed;
 
     const renderBoardContent = () => {
        if (!raffleState) return null;
@@ -804,6 +803,15 @@ const App = () => {
             <path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878V14.89h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z"/>
         </svg>
     );
+    
+    const TicketIcon = ({ className }: { className?: string }) => (
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+            <path d="M2 9a3 3 0 0 1 0 6v1a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-1a3 3 0 0 1 0-6V8a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/>
+            <path d="M13 5v2"/>
+            <path d="M13 17v2"/>
+            <path d="M13 11v2"/>
+        </svg>
+    );
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-purple-100 to-blue-100 p-4 font-sans">
@@ -835,7 +843,7 @@ const App = () => {
                 </div>
 
                 {!raffleState ? (
-                    <div className="p-8">
+                     <div className="p-8">
                          {pendingRaffleRef ? (
                             <div className="text-center p-8 bg-yellow-50 rounded-lg border-2 border-dashed border-yellow-400">
                                 <h2 className="text-2xl font-bold text-yellow-800 mb-2">Activación Pendiente</h2>
@@ -854,21 +862,40 @@ const App = () => {
                                 <p className="text-gray-600 mb-6 max-w-md mx-auto">
                                     Busca una rifa por su referencia o crea una nueva para empezar.
                                 </p>
-                                <div className="flex flex-col md:flex-row justify-center items-center gap-6 mb-6">
-                                     <div className="flex-1 max-w-sm p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100">
-                                         <h5 className="mb-2 text-2xl font-bold tracking-tight text-gray-900">Rifa de 2 Cifras</h5>
-                                         <p className="font-normal text-gray-700 mb-4">Para números del 00 al 99.</p>
-                                         <Button onClick={() => handleActivateBoard('two-digit')} size="lg" className="w-full bg-green-500 hover:bg-green-600 text-white font-bold">
-                                             Activar Rifa ($1.500 COP)
-                                         </Button>
-                                     </div>
-                                     <div className="flex-1 max-w-sm p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100">
-                                         <h5 className="mb-2 text-2xl font-bold tracking-tight text-gray-900">Rifa de 3 Cifras</h5>
-                                         <p className="font-normal text-gray-700 mb-4">Para números del 100 al 999.</p>
-                                         <Button onClick={() => handleActivateBoard('three-digit')} size="lg" className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold">
-                                             Activar Rifa ($15.000 COP)
-                                         </Button>
-                                     </div>
+                                <div className="flex flex-col justify-center items-center gap-8 mb-6">
+                                    
+                                    {/* Ticket for 2 digits */}
+                                    <div className="bg-white rounded-2xl shadow-lg flex max-w-md w-full">
+                                        <div className="bg-purple-100 p-4 flex flex-col items-center justify-center rounded-l-2xl border-r-2 border-dashed border-purple-300">
+                                            <TicketIcon className="h-10 w-10 text-purple-600 mb-2" />
+                                            <span className="text-purple-800 font-bold text-lg">2</span>
+                                            <span className="text-purple-600 text-xs">CIFRAS</span>
+                                        </div>
+                                        <div className="p-6 flex-grow">
+                                            <h5 className="mb-1 text-xl font-bold tracking-tight text-gray-900">Rifa de 2 Cifras</h5>
+                                            <p className="font-normal text-gray-600 mb-4 text-sm">Para números del 00 al 99.</p>
+                                            <Button onClick={() => handleActivateBoard('two-digit')} size="lg" className="w-full bg-green-500 hover:bg-green-600 text-white font-bold">
+                                                Activar ($1.500 COP)
+                                            </Button>
+                                        </div>
+                                    </div>
+
+                                    {/* Ticket for 3 digits */}
+                                    <div className="bg-white rounded-2xl shadow-lg flex max-w-md w-full">
+                                        <div className="bg-blue-100 p-4 flex flex-col items-center justify-center rounded-l-2xl border-r-2 border-dashed border-blue-300">
+                                            <TicketIcon className="h-10 w-10 text-blue-600 mb-2" />
+                                            <span className="text-blue-800 font-bold text-lg">3</span>
+                                            <span className="text-blue-600 text-xs">CIFRAS</span>
+                                        </div>
+                                        <div className="p-6 flex-grow">
+                                            <h5 className="mb-1 text-xl font-bold tracking-tight text-gray-900">Rifa de 3 Cifras</h5>
+                                            <p className="font-normal text-gray-600 mb-4 text-sm">Para números del 100 al 999.</p>
+                                            <Button onClick={() => handleActivateBoard('three-digit')} size="lg" className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold">
+                                                Activar ($15.000 COP)
+                                            </Button>
+                                        </div>
+                                    </div>
+                                    
                                 </div>
                                  <Button onClick={() => setIsAdminLoginOpen(true)} size="lg" variant="outline">
                                     o Buscar por Referencia
@@ -890,7 +917,7 @@ const App = () => {
                                 onClick={() => handleTabClick('register')}
                                 disabled={!raffleState}
                             >
-                                Registrar
+                                {isCurrentUserAdmin ? 'Registrar' : 'Cómo Participar'}
                             </button>
                             <button 
                                 className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'participants' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
@@ -906,13 +933,13 @@ const App = () => {
                                 {renderBoardContent()}
                             </div>
                             <div className={activeTab === 'register' ? 'tab-content active' : 'tab-content'}>
-                                <h2 className="text-2xl font-bold text-gray-800 mb-4">Registrar Número</h2>
-                                <fieldset disabled={!raffleState || raffleState?.isWinnerConfirmed || !raffleState?.isDetailsConfirmed} className="disabled:opacity-50 space-y-4">
-                                    
-                                    <div className="flex flex-col gap-4">
-                                        <div className="bg-blue-50 border-2 border-dashed border-blue-200 p-4 rounded-lg">
-                                            <h3 className="font-bold text-center text-lg mb-2 text-blue-800">Escanea para Pagar</h3>
-                                            {isCurrentUserAdmin && (
+                                <h2 className="text-2xl font-bold text-gray-800 mb-4">{isCurrentUserAdmin ? 'Registrar Número' : 'Cómo Participar'}</h2>
+                                
+                                {isCurrentUserAdmin ? (
+                                    <fieldset disabled={!raffleState || raffleState?.isWinnerConfirmed || !raffleState?.isDetailsConfirmed} className="disabled:opacity-50 space-y-4">
+                                        <div className="flex flex-col gap-4">
+                                            <div className="bg-blue-50 border-2 border-dashed border-blue-200 p-4 rounded-lg">
+                                                <h3 className="font-bold text-center text-lg mb-2 text-blue-800">Escanea para Pagar</h3>
                                                 <div className="flex justify-center mb-4">
                                                     <Button asChild variant="outline" size="sm">
                                                         <label htmlFor="qr-code-upload-input" className="cursor-pointer">
@@ -928,8 +955,87 @@ const App = () => {
                                                         className="hidden"
                                                     />
                                                 </div>
-                                            )}
 
+                                                {raffleState.qrCodeImageUrl && raffleState.qrCodeImageUrl.trim() !== '' && raffleState.value > 0 ? (
+                                                    <div className="flex flex-col items-center gap-2">
+                                                        <Image src={raffleState.qrCodeImageUrl} alt="QR de Pago" width={200} height={200} className="rounded-lg shadow-md" />
+                                                        <p className="font-semibold">Nequi: {raffleState.nequiAccountNumber}</p>
+                                                        <p className="font-bold text-xl">Valor: {formatValue(raffleState.value)}</p>
+                                                    </div>
+                                                ) : (
+                                                    <div className="text-center text-gray-500 py-8">
+                                                        <p>El administrador aún no ha cargado el código QR para el pago.</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div>
+                                                    <Label htmlFor="name-input">Nombre completo:</Label>
+                                                    <Input
+                                                        id="name-input"
+                                                        type="text"
+                                                        value={raffleState?.name || ''}
+                                                        onChange={(e) => handleLocalFieldChange('name', e.target.value)}
+                                                        placeholder="Ej: Juan Pérez"
+                                                        className="w-full mt-1"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <Label htmlFor="phone-input">Celular:</Label>
+                                                    <Input
+                                                        id="phone-input"
+                                                        type="tel"
+                                                        value={raffleState?.phoneNumber || ''}
+                                                        onChange={(e) => handleLocalFieldChange('phoneNumber', e.target.value.replace(/\D/g, ''))}
+                                                        placeholder="Ej: 3001234567"
+                                                        className="w-full mt-1"
+                                                    />
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="items-top flex space-x-2">
+                                                <Checkbox id="payment-confirmation" checked={isPaymentConfirmed} onCheckedChange={(checked) => setIsPaymentConfirmed(checked as boolean)} />
+                                                <div className="grid gap-1.5 leading-none">
+                                                    <label
+                                                        htmlFor="payment-confirmation"
+                                                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                                    >
+                                                        He realizado el pago
+                                                    </label>
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <Label htmlFor="raffle-number-input">Número de rifa ({raffleMode === 'two-digit' ? '00-99' : '100-999'}):</Label>
+                                                <Input
+                                                    id="raffle-number-input"
+                                                    type="text"
+                                                    value={raffleState?.raffleNumber || ''}
+                                                    onChange={handleRaffleNumberChange}
+                                                    placeholder={`Ej: ${raffleMode === 'two-digit' ? '05' : '142'}`}
+                                                    className="w-full mt-1"
+                                                    maxLength={numberLength}
+                                                    disabled={!isPaymentConfirmed}
+                                                />
+                                                {raffleState?.raffleNumber && allAssignedNumbers.has(parseInt(raffleState.raffleNumber)) && (
+                                                    <p className="text-red-500 text-sm mt-1">Este número ya está asignado.</p>
+                                                )}
+                                            </div>
+                                            
+                                            <Button
+                                                onClick={handleRegisterParticipant}
+                                                disabled={!isRegisterFormValidForSubmit}
+                                                className="w-full px-4 py-2 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                                            >
+                                                Generar Tiquete
+                                            </Button>
+                                        </div>
+                                    </fieldset>
+                                ) : (
+                                    <div className="space-y-6">
+                                        <div className="bg-blue-50 border-2 border-dashed border-blue-200 p-4 rounded-lg">
+                                            <h3 className="font-bold text-center text-lg mb-2 text-blue-800">1. Escanea para Pagar</h3>
                                             {raffleState.qrCodeImageUrl && raffleState.qrCodeImageUrl.trim() !== '' && raffleState.value > 0 ? (
                                                 <div className="flex flex-col items-center gap-2">
                                                     <Image src={raffleState.qrCodeImageUrl} alt="QR de Pago" width={200} height={200} className="rounded-lg shadow-md" />
@@ -942,81 +1048,21 @@ const App = () => {
                                                 </div>
                                             )}
                                         </div>
-                                        
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>
-                                                <Label htmlFor="name-input">Nombre completo:</Label>
-                                                <Input
-                                                    id="name-input"
-                                                    type="text"
-                                                    value={raffleState?.name || ''}
-                                                    onChange={(e) => handleLocalFieldChange('name', e.target.value)}
-                                                    placeholder="Ej: Juan Pérez"
-                                                    className="w-full mt-1"
-                                                />
-                                            </div>
-                                            <div>
-                                                <Label htmlFor="phone-input">Celular:</Label>
-                                                <Input
-                                                    id="phone-input"
-                                                    type="tel"
-                                                    value={raffleState?.phoneNumber || ''}
-                                                    onChange={(e) => handleLocalFieldChange('phoneNumber', e.target.value.replace(/\D/g, ''))}
-                                                    placeholder="Ej: 3001234567"
-                                                    className="w-full mt-1"
-                                                />
-                                            </div>
+                                        <div className="bg-green-50 border-2 border-dashed border-green-200 p-4 rounded-lg">
+                                            <h3 className="font-bold text-center text-lg mb-2 text-green-800">2. Confirma tu Número</h3>
+                                            <p className="text-center text-gray-700">
+                                                Una vez realizado el pago, contacta a <strong className="text-green-800">{raffleState.organizerName || 'el organizador'}</strong> para que registre tu número y te envíe el comprobante.
+                                            </p>
                                         </div>
-                                        {isCurrentUserAdmin && (
-                                            <div className="items-top flex space-x-2">
-                                                <Checkbox id="payment-confirmation" checked={isPaymentConfirmed} onCheckedChange={(checked) => setIsPaymentConfirmed(checked as boolean)} />
-                                                <div className="grid gap-1.5 leading-none">
-                                                    <label
-                                                        htmlFor="payment-confirmation"
-                                                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                                                    >
-                                                        He realizado el pago
-                                                    </label>
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        <div>
-                                            <Label htmlFor="raffle-number-input">Número de rifa ({raffleMode === 'two-digit' ? '00-99' : '100-999'}):</Label>
-                                            <Input
-                                                id="raffle-number-input"
-                                                type="text"
-                                                value={raffleState?.raffleNumber || ''}
-                                                onChange={handleRaffleNumberChange}
-                                                placeholder={`Ej: ${raffleMode === 'two-digit' ? '05' : '142'}`}
-                                                className="w-full mt-1"
-                                                maxLength={numberLength}
-                                                disabled={isCurrentUserAdmin && !isPaymentConfirmed}
-                                            />
-                                            {raffleState?.raffleNumber && allAssignedNumbers.has(parseInt(raffleState.raffleNumber)) && (
-                                                <p className="text-red-500 text-sm mt-1">Este número ya está asignado.</p>
-                                            )}
-                                        </div>
-                                        
-                                        <Button
-                                            onClick={handleRegisterParticipant}
-                                            disabled={!isRegisterFormValidForSubmit || raffleState?.isWinnerConfirmed}
-                                            className="w-full px-4 py-2 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-                                        >
-                                            Generar Tiquete
-                                        </Button>
-                                    </div>
-
-                                </fieldset>
-
-                                
-                                {(!raffleState || !raffleState.isDetailsConfirmed) && (
-                                        <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-6" role="alert">
-                                        <p className="font-bold">Aviso</p>
-                                        <p>Debes activar o buscar una rifa y confirmar los detalles del premio en la pestaña "Tablero" para poder registrar participantes.</p>
                                     </div>
                                 )}
-
+                                
+                                {(!raffleState || !raffleState.isDetailsConfirmed) && (
+                                    <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-6" role="alert">
+                                        <p className="font-bold">Aviso</p>
+                                        <p>Debes activar o buscar una rifa y confirmar los detalles del premio en la pestaña "Tablero" para poder participar.</p>
+                                    </div>
+                                )}
                                 {raffleState?.isWinnerConfirmed && (
                                     <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-6" role="alert">
                                         <p className="font-bold">Juego terminado</p>
