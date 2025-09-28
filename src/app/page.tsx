@@ -35,7 +35,6 @@ const initialRaffleData = {
     phoneNumber: '',
     raffleNumber: '',
     nequiAccountNumber: '3145696687',
-    qrCodeImageUrl: '',
     gameDate: '',
     lottery: '',
     customLottery: '',
@@ -493,32 +492,6 @@ const App = () => {
         setIsShareDialogOpen(false);
     };
 
-    const handleQrCodeUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-        if (!raffleState?.raffleRef) return;
-        const file = event.target.files?.[0];
-        if (file) {
-            setLoading(true);
-            const storage = getStorage();
-            const storageRef = ref(storage, `qrcodes/${raffleState.raffleRef}/${file.name}`);
-            try {
-                const uploadTask = await uploadBytes(storageRef, file);
-                const downloadURL = await getDownloadURL(uploadTask.ref);
-                
-                await setDoc(doc(db, "raffles", raffleState.raffleRef), { qrCodeImageUrl: downloadURL }, { merge: true });
-                
-                handleLocalFieldChange('qrCodeImageUrl', downloadURL);
-
-                showNotification('Imagen QR actualizada.', 'success');
-            } catch (error) {
-                console.error("Error uploading QR code:", error);
-                showNotification('Error al subir la imagen QR.', 'error');
-            } finally {
-                setLoading(false);
-            }
-        }
-    };
-
-
     const allNumbers = raffleMode === 'two-digit'
         ? Array.from({ length: 100 }, (_, i) => i)
         : Array.from({ length: 900 }, (_, i) => i + 100);
@@ -935,42 +908,8 @@ const App = () => {
                             <div className={activeTab === 'register' ? 'tab-content active' : 'tab-content'}>
                                 <h2 className="text-2xl font-bold text-gray-800 mb-4">Registrar Número</h2>
                                 
-                                <fieldset disabled={!raffleState || raffleState?.isWinnerConfirmed || !raffleState?.isDetailsConfirmed} className="disabled:opacity-50 space-y-4">
+                                <fieldset disabled={!raffleState || raffleState?.isWinnerConfirmed || !raffleState?.isDetailsConfirmed || !isCurrentUserAdmin} className="disabled:opacity-50 space-y-4">
                                     <div className="flex flex-col gap-4">
-                                        <div className="bg-blue-50 border-2 border-dashed border-blue-200 p-4 rounded-lg">
-                                            <h3 className="font-bold text-center text-lg mb-2 text-blue-800">Escanea para Pagar</h3>
-                                            {isCurrentUserAdmin && (
-                                                <div className="flex justify-center mb-4">
-                                                    <Button asChild variant="outline" size="sm">
-                                                        <label htmlFor="qr-code-upload-input" className="cursor-pointer">
-                                                            <Upload className="mr-2 h-4 w-4" />
-                                                            Cambiar Imagen QR
-                                                        </label>
-                                                    </Button>
-                                                    <Input
-                                                        id="qr-code-upload-input"
-                                                        type="file"
-                                                        accept="image/*"
-                                                        onChange={handleQrCodeUpload}
-                                                        className="hidden"
-                                                    />
-                                                </div>
-                                            )}
-
-                                            {raffleState.qrCodeImageUrl && raffleState.qrCodeImageUrl.trim() !== '' && raffleState.value > 0 ? (
-                                                <div className="flex flex-col items-center gap-2">
-                                                    <div className="relative w-[200px] h-[200px]">
-                                                        <Image src={raffleState.qrCodeImageUrl} alt="QR de Pago" layout="fill" objectFit="contain" className="rounded-lg shadow-md" />
-                                                    </div>
-                                                    <p className="font-semibold">Nequi: {raffleState.nequiAccountNumber}</p>
-                                                    <p className="font-bold text-xl">Valor: {formatValue(raffleState.value)}</p>
-                                                </div>
-                                            ) : (
-                                                <div className="text-center text-gray-500 py-8">
-                                                    <p>El administrador aún no ha cargado el código QR para el pago.</p>
-                                                </div>
-                                            )}
-                                        </div>
                                         
                                         {isCurrentUserAdmin && (
                                             <div className="items-top flex space-x-2">
