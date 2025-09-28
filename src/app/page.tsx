@@ -54,7 +54,7 @@ const App = () => {
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<Tab>('board');
     const [currencySymbol] = useState('$');
-    
+    const [isPaymentConfirmed, setIsPaymentConfirmed] = useState(false);
 
 
     const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
@@ -306,6 +306,7 @@ const App = () => {
             phoneNumber: '',
             raffleNumber: '',
         }));
+        setIsPaymentConfirmed(false);
 
         showNotification(`¡Número ${formattedRaffleNumber} registrado y confirmado para ${participantName}!`, 'success');
         handleTabClick('board');
@@ -529,7 +530,7 @@ const App = () => {
         return <div className="flex justify-center items-center h-screen text-xl font-semibold">Cargando...</div>;
     }
     
-    const isRegisterFormValidForSubmit = raffleState?.name && raffleState?.phoneNumber && raffleState?.raffleNumber && !allAssignedNumbers.has(parseInt(raffleState.raffleNumber));
+    const isRegisterFormValidForSubmit = raffleState?.name && raffleState?.phoneNumber && raffleState?.raffleNumber && !allAssignedNumbers.has(parseInt(raffleState.raffleNumber)) && isPaymentConfirmed;
     
     const nequiUrl = `nequi://app`;
 
@@ -942,7 +943,7 @@ const App = () => {
                                             )}
                                         </div>
                                         
-                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <div>
                                                 <Label htmlFor="name-input">Nombre completo:</Label>
                                                 <Input
@@ -965,21 +966,34 @@ const App = () => {
                                                     className="w-full mt-1"
                                                 />
                                             </div>
-                                            <div>
-                                                <Label htmlFor="raffle-number-input">Número de rifa ({raffleMode === 'two-digit' ? '00-99' : '100-999'}):</Label>
-                                                <Input
-                                                    id="raffle-number-input"
-                                                    type="text"
-                                                    value={raffleState?.raffleNumber || ''}
-                                                    onChange={handleRaffleNumberChange}
-                                                    placeholder={`Ej: ${raffleMode === 'two-digit' ? '05' : '142'}`}
-                                                    className="w-full mt-1"
-                                                    maxLength={numberLength}
-                                                />
-                                                {raffleState?.raffleNumber && allAssignedNumbers.has(parseInt(raffleState.raffleNumber)) && (
-                                                    <p className="text-red-500 text-sm mt-1">Este número ya está asignado.</p>
-                                                )}
+                                        </div>
+                                         <div className="items-top flex space-x-2">
+                                            <Checkbox id="payment-confirmation" checked={isPaymentConfirmed} onCheckedChange={(checked) => setIsPaymentConfirmed(checked as boolean)} />
+                                            <div className="grid gap-1.5 leading-none">
+                                                <label
+                                                htmlFor="payment-confirmation"
+                                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                                >
+                                                He realizado el pago
+                                                </label>
                                             </div>
+                                        </div>
+
+                                        <div>
+                                            <Label htmlFor="raffle-number-input">Número de rifa ({raffleMode === 'two-digit' ? '00-99' : '100-999'}):</Label>
+                                            <Input
+                                                id="raffle-number-input"
+                                                type="text"
+                                                value={raffleState?.raffleNumber || ''}
+                                                onChange={handleRaffleNumberChange}
+                                                placeholder={`Ej: ${raffleMode === 'two-digit' ? '05' : '142'}`}
+                                                className="w-full mt-1"
+                                                maxLength={numberLength}
+                                                disabled={!isPaymentConfirmed}
+                                            />
+                                            {raffleState?.raffleNumber && allAssignedNumbers.has(parseInt(raffleState.raffleNumber)) && (
+                                                <p className="text-red-500 text-sm mt-1">Este número ya está asignado.</p>
+                                            )}
                                         </div>
                                         
                                         <Button
