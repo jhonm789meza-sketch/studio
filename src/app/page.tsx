@@ -496,10 +496,15 @@ const App = () => {
             const storage = getStorage();
             const storageRef = ref(storage, `qrcodes/${raffleState.raffleRef}/${file.name}`);
             try {
-                await uploadBytes(storageRef, file);
-                const downloadURL = await getDownloadURL(storageRef);
+                const uploadTask = await uploadBytes(storageRef, file);
+                const downloadURL = await getDownloadURL(uploadTask.ref);
+                
+                // Update Firestore first
                 await setDoc(doc(db, "raffles", raffleState.raffleRef), { qrCodeImageUrl: downloadURL }, { merge: true });
+                
+                // Then update local state to trigger re-render
                 handleLocalFieldChange('qrCodeImageUrl', downloadURL);
+
                 showNotification('Imagen QR actualizada.', 'success');
             } catch (error) {
                 console.error("Error uploading QR code:", error);
@@ -526,7 +531,7 @@ const App = () => {
     
     const isRegisterFormValidForSubmit = raffleState?.name && raffleState?.phoneNumber && raffleState?.raffleNumber && !allAssignedNumbers.has(parseInt(raffleState.raffleNumber));
     
-    const nequiUrl = 'nequi://app';
+    const nequiUrl = `nequi://app`;
 
 
     const renderBoardContent = () => {
@@ -924,7 +929,7 @@ const App = () => {
                                                 </div>
                                             )}
 
-                                            {raffleState.qrCodeImageUrl && raffleState.qrCodeImageUrl.trim() !== '' ? (
+                                            {raffleState.qrCodeImageUrl && raffleState.qrCodeImageUrl.trim() !== '' && raffleState.value > 0 ? (
                                                 <div className="flex flex-col items-center gap-2">
                                                     <a href={nequiUrl} target="_blank" rel="noopener noreferrer">
                                                         <Image src={raffleState.qrCodeImageUrl} alt="QR de Pago" width={200} height={200} className="rounded-lg shadow-md" />
