@@ -878,26 +878,26 @@ const App = () => {
                     </div>
                 ) : (
                     <>
-                        <div className="flex border-b border-gray-200">
+                        <div className="flex border-b border-gray-200 overflow-x-auto">
                             <button 
-                                className={`flex items-center gap-2 px-6 py-3 font-medium text-lg ${activeTab === 'board' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
+                                className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'board' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
                                 onClick={() => handleTabClick('board')}
                             >
-                                <Ticket className="h-5 w-5"/> Tablero
+                                <Ticket className="h-5 w-5 hidden md:inline"/> Tablero
                             </button>
                             <button 
-                                className={`flex items-center gap-2 px-6 py-3 font-medium text-lg ${activeTab === 'register' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
+                                className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'register' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
                                 onClick={() => handleTabClick('register')}
                                 disabled={!raffleState}
                             >
                                 Registrar
                             </button>
                             <button 
-                                className={`flex items-center gap-2 px-6 py-3 font-medium text-lg ${activeTab === 'participants' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
+                                className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'participants' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
                                 onClick={() => handleTabClick('participants')}
                                 disabled={!raffleState}
                             >
-                                <Users className="h-5 w-5"/> Participantes
+                                <Users className="h-5 w-5 hidden md:inline"/> Participantes
                             </button>
                         </div>
 
@@ -1246,8 +1246,7 @@ const App = () => {
                         </Button>
                     </div>
                      <DialogFooter>
-                        <Button type="button" variant="outline" onClick={() => setIsShareDialogOpen(false)}>Cerrar</Button>
-                    </DialogFooter>
+                        <Button type="button" variant="outline" onClick={() => setIsShareDialogOpen(false)}>Cerrar</Button>                    </DialogFooter>
                 </DialogContent>
             </Dialog>
 
