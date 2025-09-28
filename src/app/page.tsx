@@ -11,7 +11,7 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House, Share2, Copy, Upload, Clock, Ticket, Users } from 'lucide-react';
+import { Menu, Award, Lock, House, Share2, Copy, Upload, Clock, Ticket, Users, Link } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -35,6 +35,7 @@ const initialRaffleData = {
     phoneNumber: '',
     raffleNumber: '',
     nequiAccountNumber: '3145696687',
+    paymentLink: '',
     gameDate: '',
     lottery: '',
     customLottery: '',
@@ -205,7 +206,7 @@ const App = () => {
 
     const handleConfirmDetails = async () => {
         if (!raffleState || !raffleState.raffleRef) return;
-        if (!raffleState.organizerName.trim() || !raffleState.prize.trim() || !raffleState.value.trim() || !raffleState.gameDate || !raffleState.lottery || !raffleState.nequiAccountNumber.trim() || (raffleState.lottery === 'Otro' && !raffleState.customLottery.trim())) {
+        if (!raffleState.organizerName.trim() || !raffleState.prize.trim() || !raffleState.value.trim() || !raffleState.gameDate || !raffleState.lottery || (raffleState.lottery === 'Otro' && !raffleState.customLottery.trim())) {
             showNotification('Por favor, completa todos los campos de configuración del premio.', 'warning');
             return;
         }
@@ -645,6 +646,19 @@ const App = () => {
                                 />
                             </div>
                         )}
+                         <div>
+                            <Label htmlFor="payment-link-input">Enlace de Pago:</Label>
+                            <Input
+                                id="payment-link-input"
+                                type="text"
+                                value={raffleState.paymentLink || ''}
+                                onChange={(e) => handleLocalFieldChange('paymentLink', e.target.value)}
+                                onBlur={(e) => handleFieldChange('paymentLink', e.target.value)}
+                                placeholder="https://ejemplo.com/pago"
+                                disabled={raffleState.isDetailsConfirmed || !isCurrentUserAdmin}
+                                className="w-full mt-1"
+                            />
+                        </div>
                         {isCurrentUserAdmin && !raffleState.isDetailsConfirmed && (
                            <div className="md:col-span-2">
                                <Button
@@ -908,11 +922,20 @@ const App = () => {
                             <div className={activeTab === 'register' ? 'tab-content active' : 'tab-content'}>
                                 <h2 className="text-2xl font-bold text-gray-800 mb-4">Registrar Número</h2>
                                 
-                                <fieldset disabled={!raffleState || raffleState?.isWinnerConfirmed || !raffleState?.isDetailsConfirmed || !isCurrentUserAdmin} className="disabled:opacity-50 space-y-4">
+                                <fieldset disabled={!raffleState || raffleState?.isWinnerConfirmed || !raffleState?.isDetailsConfirmed} className="disabled:opacity-50 space-y-4">
                                     <div className="flex flex-col gap-4">
                                         
+                                        {raffleState?.paymentLink && (
+                                            <a href={raffleState.paymentLink} target="_blank" rel="noopener noreferrer">
+                                                <Button className="w-full bg-blue-500 hover:bg-blue-600 text-white">
+                                                    <Link className="mr-2 h-4 w-4" />
+                                                    Ir a Pagar
+                                                </Button>
+                                            </a>
+                                        )}
+
                                         {isCurrentUserAdmin && (
-                                            <div className="items-top flex space-x-2">
+                                            <div className="items-top flex space-x-2 pt-4">
                                                 <Checkbox id="payment-confirmation" checked={isPaymentConfirmed} onCheckedChange={(checked) => setIsPaymentConfirmed(checked as boolean)} />
                                                 <div className="grid gap-1.5 leading-none">
                                                     <label
