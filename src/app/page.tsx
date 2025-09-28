@@ -530,7 +530,7 @@ const App = () => {
         return <div className="flex justify-center items-center h-screen text-xl font-semibold">Cargando...</div>;
     }
     
-    const isRegisterFormValidForSubmit = raffleState?.name && raffleState?.phoneNumber && raffleState?.raffleNumber && !allAssignedNumbers.has(parseInt(raffleState.raffleNumber)) && isPaymentConfirmed;
+    const isRegisterFormValidForSubmit = raffleState?.name && raffleState?.phoneNumber && raffleState?.raffleNumber && !allAssignedNumbers.has(parseInt(raffleState.raffleNumber)) && (!isCurrentUserAdmin || isPaymentConfirmed);
     
     const nequiUrl = `nequi://app`;
 
@@ -967,17 +967,19 @@ const App = () => {
                                                 />
                                             </div>
                                         </div>
-                                         <div className="items-top flex space-x-2">
-                                            <Checkbox id="payment-confirmation" checked={isPaymentConfirmed} onCheckedChange={(checked) => setIsPaymentConfirmed(checked as boolean)} />
-                                            <div className="grid gap-1.5 leading-none">
-                                                <label
-                                                htmlFor="payment-confirmation"
-                                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                                                >
-                                                He realizado el pago
-                                                </label>
+                                        {isCurrentUserAdmin && (
+                                            <div className="items-top flex space-x-2">
+                                                <Checkbox id="payment-confirmation" checked={isPaymentConfirmed} onCheckedChange={(checked) => setIsPaymentConfirmed(checked as boolean)} />
+                                                <div className="grid gap-1.5 leading-none">
+                                                    <label
+                                                        htmlFor="payment-confirmation"
+                                                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                                    >
+                                                        He realizado el pago
+                                                    </label>
+                                                </div>
                                             </div>
-                                        </div>
+                                        )}
 
                                         <div>
                                             <Label htmlFor="raffle-number-input">Número de rifa ({raffleMode === 'two-digit' ? '00-99' : '100-999'}):</Label>
@@ -989,7 +991,7 @@ const App = () => {
                                                 placeholder={`Ej: ${raffleMode === 'two-digit' ? '05' : '142'}`}
                                                 className="w-full mt-1"
                                                 maxLength={numberLength}
-                                                disabled={!isPaymentConfirmed}
+                                                disabled={isCurrentUserAdmin && !isPaymentConfirmed}
                                             />
                                             {raffleState?.raffleNumber && allAssignedNumbers.has(parseInt(raffleState.raffleNumber)) && (
                                                 <p className="text-red-500 text-sm mt-1">Este número ya está asignado.</p>
