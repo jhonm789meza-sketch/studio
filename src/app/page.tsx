@@ -416,7 +416,7 @@ const App = () => {
     const handleActivateBoard = async (mode: RaffleMode) => {
         setLoading(true);
         const price = mode === 'two-digit' ? 1500 : 15000;
-        const wompiUrl = `https://checkout.wompi.co/l/VPOS_SEBIV5?amount-in-cents=${price * 100}`;
+        const wompiUrl = `https://checkout.nequi.wompi.co/l/VPOS_SEBIV5?amount-in-cents=${price * 100}`;
         
         try {
             const newRef = await raffleManager.createNewRaffleRef();
