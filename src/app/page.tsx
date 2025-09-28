@@ -935,7 +935,7 @@ const App = () => {
                             <div className={activeTab === 'register' ? 'tab-content active' : 'tab-content'}>
                                 <h2 className="text-2xl font-bold text-gray-800 mb-4">Registrar Número</h2>
                                 
-                                <fieldset disabled={!raffleState || raffleState?.isWinnerConfirmed || !raffleState?.isDetailsConfirmed} className="disabled:opacity-50 space-y-4">
+                                <fieldset disabled={!raffleState || raffleState?.isWinnerConfirmed || !raffleState?.isDetailsConfirmed || isCurrentUserAdmin} className="disabled:opacity-50 space-y-4">
                                     <div className="flex flex-col gap-4">
                                         <div className="bg-blue-50 border-2 border-dashed border-blue-200 p-4 rounded-lg">
                                             <h3 className="font-bold text-center text-lg mb-2 text-blue-800">Escanea para Pagar</h3>
@@ -982,7 +982,6 @@ const App = () => {
                                                     onChange={(e) => handleLocalFieldChange('name', e.target.value)}
                                                     placeholder="Ej: Juan Pérez"
                                                     className="w-full mt-1"
-                                                    disabled={!isCurrentUserAdmin}
                                                 />
                                             </div>
                                             <div>
@@ -994,7 +993,6 @@ const App = () => {
                                                     onChange={(e) => handleLocalFieldChange('phoneNumber', e.target.value.replace(/\D/g, ''))}
                                                     placeholder="Ej: 3001234567"
                                                     className="w-full mt-1"
-                                                    disabled={!isCurrentUserAdmin}
                                                 />
                                             </div>
                                         </div>
@@ -1023,7 +1021,6 @@ const App = () => {
                                                 placeholder={`Ej: ${raffleMode === 'two-digit' ? '05' : '142'}`}
                                                 className="w-full mt-1"
                                                 maxLength={numberLength}
-                                                disabled={!isCurrentUserAdmin || !isPaymentConfirmed}
                                             />
                                             {raffleState?.raffleNumber && allAssignedNumbers.has(parseInt(raffleState.raffleNumber)) && (
                                                 <p className="text-red-500 text-sm mt-1">Este número ya está asignado.</p>
