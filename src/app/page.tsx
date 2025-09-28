@@ -831,64 +831,51 @@ const App = () => {
 
                 {!raffleState ? (
                      <div className="p-8">
-                         {pendingRaffleRef ? (
-                            <div className="text-center p-8 bg-yellow-50 rounded-lg border-2 border-dashed border-yellow-400">
-                                <h2 className="text-2xl font-bold text-yellow-800 mb-2">Activación Pendiente</h2>
-                                <p className="text-yellow-700 mb-4">
-                                    Hay un pago pendiente para la referencia <span className="font-bold">{pendingRaffleRef}</span>.
-                                    Una vez completado el pago en Wompi, confirma la activación.
-                                </p>
-                                <Button onClick={confirmActivation} size="lg" className="bg-green-500 hover:bg-green-600 text-white font-bold">
-                                    Confirmar Activación para {pendingRaffleRef}
-                                </Button>
-                            </div>
-                        ) : (
-                            <div className="text-center">
-                                <Lock className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                                <h2 className="text-2xl font-bold text-gray-800 mb-2">Tablero Bloqueado</h2>
-                                <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                                    Busca una rifa por su referencia o crea una nueva para empezar.
-                                </p>
-                                <div className="flex flex-col justify-center items-center gap-8 mb-6">
-                                    
-                                    {/* Ticket for 2 digits */}
-                                    <div className="bg-white rounded-2xl shadow-lg flex max-w-md w-full">
-                                        <div className="bg-purple-100 p-4 flex flex-col items-center justify-center rounded-l-2xl border-r-2 border-dashed border-purple-300">
-                                            <TicketIcon className="h-10 w-10 text-purple-600 mb-2" />
-                                            <span className="text-purple-800 font-bold text-lg">2</span>
-                                            <span className="text-purple-600 text-xs">CIFRAS</span>
-                                        </div>
-                                        <div className="p-6 flex-grow">
-                                            <h5 className="mb-1 text-xl font-bold tracking-tight text-gray-900">Rifa de 2 Cifras</h5>
-                                            <p className="font-normal text-gray-600 mb-4 text-sm">Para números del 00 al 99.</p>
-                                            <Button onClick={() => handleActivateBoard('two-digit')} size="lg" className="w-full bg-green-500 hover:bg-green-600 text-white font-bold">
-                                                Activar ($1.500 COP)
-                                            </Button>
-                                        </div>
+                        <div className="text-center">
+                            <Lock className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                            <h2 className="text-2xl font-bold text-gray-800 mb-2">Tablero Bloqueado</h2>
+                            <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                                Busca una rifa por su referencia o crea una nueva para empezar.
+                            </p>
+                            <div className="flex flex-col justify-center items-center gap-8 mb-6">
+                                
+                                {/* Ticket for 2 digits */}
+                                <div className="bg-white rounded-2xl shadow-lg flex max-w-md w-full">
+                                    <div className="bg-purple-100 p-4 flex flex-col items-center justify-center rounded-l-2xl border-r-2 border-dashed border-purple-300">
+                                        <TicketIcon className="h-10 w-10 text-purple-600 mb-2" />
+                                        <span className="text-purple-800 font-bold text-lg">2</span>
+                                        <span className="text-purple-600 text-xs">CIFRAS</span>
                                     </div>
-
-                                    {/* Ticket for 3 digits */}
-                                    <div className="bg-white rounded-2xl shadow-lg flex max-w-md w-full">
-                                        <div className="bg-blue-100 p-4 flex flex-col items-center justify-center rounded-l-2xl border-r-2 border-dashed border-blue-300">
-                                            <TicketIcon className="h-10 w-10 text-blue-600 mb-2" />
-                                            <span className="text-blue-800 font-bold text-lg">3</span>
-                                            <span className="text-blue-600 text-xs">CIFRAS</span>
-                                        </div>
-                                        <div className="p-6 flex-grow">
-                                            <h5 className="mb-1 text-xl font-bold tracking-tight text-gray-900">Rifa de 3 Cifras</h5>
-                                            <p className="font-normal text-gray-600 mb-4 text-sm">Para números del 100 al 999.</p>
-                                            <Button onClick={() => handleActivateBoard('three-digit')} size="lg" className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold">
-                                                Activar ($15.000 COP)
-                                            </Button>
-                                        </div>
+                                    <div className="p-6 flex-grow">
+                                        <h5 className="mb-1 text-xl font-bold tracking-tight text-gray-900">Rifa de 2 Cifras</h5>
+                                        <p className="font-normal text-gray-600 mb-4 text-sm">Para números del 00 al 99.</p>
+                                        <Button onClick={() => handleActivateBoard('two-digit')} size="lg" className="w-full bg-green-500 hover:bg-green-600 text-white font-bold">
+                                            Activar ($1.500 COP)
+                                        </Button>
                                     </div>
-                                    
                                 </div>
-                                 <Button onClick={() => setIsAdminLoginOpen(true)} size="lg" variant="outline">
-                                    o Buscar por Referencia
-                                </Button>
+
+                                {/* Ticket for 3 digits */}
+                                <div className="bg-white rounded-2xl shadow-lg flex max-w-md w-full">
+                                    <div className="bg-blue-100 p-4 flex flex-col items-center justify-center rounded-l-2xl border-r-2 border-dashed border-blue-300">
+                                        <TicketIcon className="h-10 w-10 text-blue-600 mb-2" />
+                                        <span className="text-blue-800 font-bold text-lg">3</span>
+                                        <span className="text-blue-600 text-xs">CIFRAS</span>
+                                    </div>
+                                    <div className="p-6 flex-grow">
+                                        <h5 className="mb-1 text-xl font-bold tracking-tight text-gray-900">Rifa de 3 Cifras</h5>
+                                        <p className="font-normal text-gray-600 mb-4 text-sm">Para números del 100 al 999.</p>
+                                        <Button onClick={() => handleActivateBoard('three-digit')} size="lg" className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold">
+                                            Activar ($15.000 COP)
+                                        </Button>
+                                    </div>
+                                </div>
+                                
                             </div>
-                        )}
+                             <Button onClick={() => setIsAdminLoginOpen(true)} size="lg" variant="outline">
+                                o Buscar por Referencia
+                            </Button>
+                        </div>
                     </div>
                 ) : (
                     <>
@@ -922,7 +909,7 @@ const App = () => {
                             <div className={activeTab === 'register' ? 'tab-content active' : 'tab-content'}>
                                 <h2 className="text-2xl font-bold text-gray-800 mb-4">Registrar Número</h2>
                                 
-                                <fieldset disabled={!raffleState || raffleState?.isWinnerConfirmed || !raffleState?.isDetailsConfirmed} className="disabled:opacity-50 space-y-4">
+                                <fieldset disabled={!raffleState || raffleState?.isWinnerConfirmed || !raffleState?.isDetailsConfirmed || !isCurrentUserAdmin} className="disabled:opacity-50 space-y-4">
                                     <div className="flex flex-col gap-4">
                                         
                                         {raffleState?.paymentLink && (
