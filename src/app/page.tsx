@@ -931,9 +931,7 @@ const App = () => {
 
                                             {raffleState.qrCodeImageUrl && raffleState.qrCodeImageUrl.trim() !== '' && raffleState.value > 0 ? (
                                                 <div className="flex flex-col items-center gap-2">
-                                                    <a href={nequiUrl} target="_blank" rel="noopener noreferrer">
-                                                        <Image src={raffleState.qrCodeImageUrl} alt="QR de Pago" width={200} height={200} className="rounded-lg shadow-md" />
-                                                    </a>
+                                                    <Image src={raffleState.qrCodeImageUrl} alt="QR de Pago" width={200} height={200} className="rounded-lg shadow-md" />
                                                     <p className="font-semibold">Nequi: {raffleState.nequiAccountNumber}</p>
                                                     <p className="font-bold text-xl">Valor: {formatValue(raffleState.value)}</p>
                                                 </div>
