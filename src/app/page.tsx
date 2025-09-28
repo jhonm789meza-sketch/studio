@@ -423,7 +423,7 @@ const App = () => {
             localStorage.setItem('pendingRaffleRef', newRef);
             localStorage.setItem('pendingRaffleMode', mode);
 
-            window.open(wompiUrl, '_self');
+            window.location.href = wompiUrl;
 
         } catch (error) {
             console.error("Error preparing for board activation:", error);
