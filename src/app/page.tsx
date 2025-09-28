@@ -939,25 +939,29 @@ const App = () => {
                                     <div className="flex flex-col gap-4">
                                         <div className="bg-blue-50 border-2 border-dashed border-blue-200 p-4 rounded-lg">
                                             <h3 className="font-bold text-center text-lg mb-2 text-blue-800">Escanea para Pagar</h3>
-                                            <div className="flex justify-center mb-4">
-                                                <Button asChild variant="outline" size="sm">
-                                                    <label htmlFor="qr-code-upload-input" className="cursor-pointer">
-                                                        <Upload className="mr-2 h-4 w-4" />
-                                                        Cambiar Imagen QR
-                                                    </label>
-                                                </Button>
-                                                <Input
-                                                    id="qr-code-upload-input"
-                                                    type="file"
-                                                    accept="image/*"
-                                                    onChange={handleQrCodeUpload}
-                                                    className="hidden"
-                                                />
-                                            </div>
+                                            {isCurrentUserAdmin && (
+                                                <div className="flex justify-center mb-4">
+                                                    <Button asChild variant="outline" size="sm">
+                                                        <label htmlFor="qr-code-upload-input" className="cursor-pointer">
+                                                            <Upload className="mr-2 h-4 w-4" />
+                                                            Cambiar Imagen QR
+                                                        </label>
+                                                    </Button>
+                                                    <Input
+                                                        id="qr-code-upload-input"
+                                                        type="file"
+                                                        accept="image/*"
+                                                        onChange={handleQrCodeUpload}
+                                                        className="hidden"
+                                                    />
+                                                </div>
+                                            )}
 
                                             {raffleState.qrCodeImageUrl && raffleState.qrCodeImageUrl.trim() !== '' && raffleState.value > 0 ? (
                                                 <div className="flex flex-col items-center gap-2">
-                                                    <Image src={raffleState.qrCodeImageUrl} alt="QR de Pago" width={200} height={200} className="rounded-lg shadow-md" />
+                                                    <div className="relative w-[200px] h-[200px]">
+                                                        <Image src={raffleState.qrCodeImageUrl} alt="QR de Pago" layout="fill" objectFit="contain" className="rounded-lg shadow-md" />
+                                                    </div>
                                                     <p className="font-semibold">Nequi: {raffleState.nequiAccountNumber}</p>
                                                     <p className="font-bold text-xl">Valor: {formatValue(raffleState.value)}</p>
                                                 </div>
@@ -978,6 +982,7 @@ const App = () => {
                                                     onChange={(e) => handleLocalFieldChange('name', e.target.value)}
                                                     placeholder="Ej: Juan Pérez"
                                                     className="w-full mt-1"
+                                                    disabled={!isCurrentUserAdmin}
                                                 />
                                             </div>
                                             <div>
@@ -989,6 +994,7 @@ const App = () => {
                                                     onChange={(e) => handleLocalFieldChange('phoneNumber', e.target.value.replace(/\D/g, ''))}
                                                     placeholder="Ej: 3001234567"
                                                     className="w-full mt-1"
+                                                    disabled={!isCurrentUserAdmin}
                                                 />
                                             </div>
                                         </div>
@@ -1017,7 +1023,7 @@ const App = () => {
                                                 placeholder={`Ej: ${raffleMode === 'two-digit' ? '05' : '142'}`}
                                                 className="w-full mt-1"
                                                 maxLength={numberLength}
-                                                disabled={isCurrentUserAdmin ? !isPaymentConfirmed : true}
+                                                disabled={!isCurrentUserAdmin || !isPaymentConfirmed}
                                             />
                                             {raffleState?.raffleNumber && allAssignedNumbers.has(parseInt(raffleState.raffleNumber)) && (
                                                 <p className="text-red-500 text-sm mt-1">Este número ya está asignado.</p>
