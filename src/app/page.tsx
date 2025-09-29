@@ -64,6 +64,7 @@ const App = () => {
     const [confirmationAction, setConfirmationAction] = useState<(() => void) | null>(null);
     const [notification, setNotification] = useState({ show: false, message: '', type: '' });
     const [nequiPaymentClicked, setNequiPaymentClicked] = useState(false);
+    const [isPaymentConfirmed, setIsPaymentConfirmed] = useState(false);
     
     const ticketModalRef = useRef(null);
     const raffleSubscription = useRef<Unsubscribe | null>(null);
@@ -249,6 +250,11 @@ const App = () => {
             showNotification('Por favor ingresa el número de rifa', 'warning');
             return;
         }
+
+        if (!isPaymentConfirmed) {
+            showNotification('Por favor, confirma que has realizado el pago.', 'warning');
+            return;
+        }
         
         const num = parseInt(raffleState.raffleNumber, 10);
 
@@ -311,7 +317,7 @@ const App = () => {
             raffleNumber: '',
         }));
         
-
+        setIsPaymentConfirmed(false);
         showNotification(`¡Número ${formattedRaffleNumber} registrado y confirmado para ${participantName}!`, 'success');
         handleTabClick('board');
     };
@@ -503,7 +509,7 @@ const App = () => {
         return <div className="flex justify-center items-center h-screen text-xl font-semibold">Cargando...</div>;
     }
     
-    const isRegisterFormValidForSubmit = raffleState?.name && raffleState?.phoneNumber && raffleState?.raffleNumber && !allAssignedNumbers.has(parseInt(raffleState.raffleNumber));
+    const isRegisterFormValidForSubmit = raffleState?.name && raffleState?.phoneNumber && raffleState?.raffleNumber && !allAssignedNumbers.has(parseInt(raffleState.raffleNumber)) && isPaymentConfirmed;
 
     const renderBoardContent = () => {
        if (!raffleState) return null;
@@ -987,6 +993,16 @@ const App = () => {
                                             )}
                                         </div>
                                         
+                                        <div className="flex items-center space-x-2 my-4">
+                                            <Checkbox id="payment-confirmed" checked={isPaymentConfirmed} onCheckedChange={(checked) => setIsPaymentConfirmed(checked as boolean)} />
+                                            <label
+                                                htmlFor="payment-confirmed"
+                                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-50"
+                                            >
+                                                He realizado el pago
+                                            </label>
+                                        </div>
+
                                         <Button
                                             onClick={handleRegisterParticipant}
                                             disabled={!isRegisterFormValidForSubmit}
@@ -1241,3 +1257,5 @@ const App = () => {
 };
 
 export default App;
+
+    
