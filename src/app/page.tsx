@@ -797,6 +797,15 @@ const App = () => {
         </svg>
     );
 
+    const NequiIcon = () => (
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" >
+            <path d="M19.14 4.86H4.86V19.14H19.14V4.86Z" fill="#14234B" />
+            <path d="M13.2 7.02H10.8V16.98H13.2V7.02Z" fill="white" />
+            <path d="M9.66 16.98V14.58H7.14V12.18H9.66V9.78H7.14V7.38H9.66V4.86H5.94V19.14H9.66V16.98Z" fill="#A454C4" />
+            <path d="M14.34 16.98V14.58H16.86V12.18H14.34V9.78H16.86V7.38H14.34V4.86H18.06V19.14H14.34V16.98Z" fill="#A454C4" />
+        </svg>
+    );
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-purple-100 to-blue-100 p-4 font-sans">
             {showConfetti && <Confetti />}
@@ -909,14 +918,29 @@ const App = () => {
                                 <fieldset disabled={!raffleState || raffleState?.isWinnerConfirmed || !raffleState?.isDetailsConfirmed} className="disabled:opacity-50 space-y-4">
                                     <div className="flex flex-col gap-4">
                                         
-                                        {raffleState?.paymentLink && (
-                                            <a href={raffleState.paymentLink} target="_blank" rel="noopener noreferrer">
-                                                <Button className="w-full bg-blue-500 hover:bg-blue-600 text-white">
-                                                    <Link className="mr-2 h-4 w-4" />
-                                                    Ir a Pagar
-                                                </Button>
-                                            </a>
-                                        )}
+                                        <div className="flex flex-wrap gap-2">
+                                            {raffleState?.paymentLink && (
+                                                <a href={raffleState.paymentLink} target="_blank" rel="noopener noreferrer" className="flex-1">
+                                                    <Button className="w-full bg-blue-500 hover:bg-blue-600 text-white">
+                                                        <Link className="mr-2 h-4 w-4" />
+                                                        Ir a Pagar
+                                                    </Button>
+                                                </a>
+                                            )}
+                                            {raffleState?.nequiAccountNumber && raffleState?.value && (
+                                                <a 
+                                                    href={`https://recarga.nequi.com.co/banco?numero=${raffleState.nequiAccountNumber}&valor=${raffleState.value}&redirect=https://www.google.com`} 
+                                                    target="_blank" 
+                                                    rel="noopener noreferrer"
+                                                    className="flex-1"
+                                                >
+                                                    <Button className="w-full bg-[#A454C4] hover:bg-[#8e49a8] text-white">
+                                                        <NequiIcon />
+                                                        <span className="ml-2">Pagar con Nequi</span>
+                                                    </Button>
+                                                </a>
+                                            )}
+                                        </div>
 
                                         {isCurrentUserAdmin && (
                                             <div className="items-top flex space-x-2 pt-4">
