@@ -63,6 +63,7 @@ const App = () => {
     const [confirmationMessage, setConfirmationMessage] = useState('');
     const [confirmationAction, setConfirmationAction] = useState<(() => void) | null>(null);
     const [notification, setNotification] = useState({ show: false, message: '', type: '' });
+    const [nequiPaymentClicked, setNequiPaymentClicked] = useState(false);
     
     const ticketModalRef = useRef(null);
     const raffleSubscription = useRef<Unsubscribe | null>(null);
@@ -83,6 +84,9 @@ const App = () => {
 
     const handleTabClick = (tab: Tab) => {
         setActiveTab(tab);
+        if (tab === 'register') {
+            setNequiPaymentClicked(false); // Reset when navigating to the register tab
+        }
     };
     
     useEffect(() => {
@@ -933,10 +937,14 @@ const App = () => {
                                                     target="_blank" 
                                                     rel="noopener noreferrer"
                                                     className="flex-1"
+                                                    onClick={() => setNequiPaymentClicked(true)}
                                                 >
-                                                    <Button className="w-full bg-[#A454C4] hover:bg-[#8e49a8] text-white">
+                                                    <Button 
+                                                      className="w-full bg-[#A454C4] hover:bg-[#8e49a8] text-white"
+                                                      disabled={nequiPaymentClicked}
+                                                    >
                                                         <NequiIcon />
-                                                        <span className="ml-2">Pagar con Nequi</span>
+                                                        <span className="ml-2">{nequiPaymentClicked ? 'Redirigiendo a Nequi...' : 'Pagar con Nequi'}</span>
                                                     </Button>
                                                 </a>
                                             )}
