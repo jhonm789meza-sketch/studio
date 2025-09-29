@@ -929,7 +929,7 @@ const App = () => {
                                             )}
                                             {raffleState?.nequiAccountNumber && raffleState?.value && (
                                                 <a 
-                                                    href={`https://recarga.nequi.com.co/banco?numero=${raffleState.nequiAccountNumber}&valor=${raffleState.value}&redirect=https://www.google.com`} 
+                                                    href={`nequi://app/pay?phoneNumber=${raffleState.nequiAccountNumber}&value=${raffleState.value.replace(/\D/g, '')}&currency=COP&description=Pago Rifa`}
                                                     target="_blank" 
                                                     rel="noopener noreferrer"
                                                     className="flex-1"
@@ -1254,5 +1254,3 @@ const App = () => {
 };
 
 export default App;
-
-    
