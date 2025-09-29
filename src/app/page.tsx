@@ -237,10 +237,6 @@ const App = () => {
 
     const handleRegisterParticipant = async () => {
         if (!raffleState || !raffleState.raffleRef) return;
-        if (!isCurrentUserAdmin) {
-            showNotification('Solo el administrador puede registrar participantes.', 'error');
-            return;
-        }
         if (!raffleState.name.trim()) {
             showNotification('Por favor ingresa el nombre', 'warning');
             return;
@@ -507,7 +503,7 @@ const App = () => {
         return <div className="flex justify-center items-center h-screen text-xl font-semibold">Cargando...</div>;
     }
     
-    const isRegisterFormValidForSubmit = isCurrentUserAdmin && raffleState?.name && raffleState?.phoneNumber && raffleState?.raffleNumber && !allAssignedNumbers.has(parseInt(raffleState.raffleNumber));
+    const isRegisterFormValidForSubmit = raffleState?.name && raffleState?.phoneNumber && raffleState?.raffleNumber && !allAssignedNumbers.has(parseInt(raffleState.raffleNumber));
 
     const renderBoardContent = () => {
        if (!raffleState) return null;
@@ -960,7 +956,6 @@ const App = () => {
                                                     onChange={(e) => handleLocalFieldChange('name', e.target.value)}
                                                     placeholder="Ej: Juan Pérez"
                                                     className="w-full mt-1"
-                                                    disabled={!isCurrentUserAdmin}
                                                 />
                                             </div>
                                             <div>
@@ -972,7 +967,6 @@ const App = () => {
                                                     onChange={(e) => handleLocalFieldChange('phoneNumber', e.target.value.replace(/\D/g, ''))}
                                                     placeholder="Ej: 3001234567"
                                                     className="w-full mt-1"
-                                                    disabled={!isCurrentUserAdmin}
                                                 />
                                             </div>
                                         </div>
@@ -987,7 +981,6 @@ const App = () => {
                                                 placeholder={`Ej: ${raffleMode === 'two-digit' ? '05' : '142'}`}
                                                 className="w-full mt-1"
                                                 maxLength={numberLength}
-                                                disabled={!isCurrentUserAdmin}
                                             />
                                             {raffleState?.raffleNumber && allAssignedNumbers.has(parseInt(raffleState.raffleNumber)) && (
                                                 <p className="text-red-500 text-sm mt-1">Este número ya está asignado.</p>
