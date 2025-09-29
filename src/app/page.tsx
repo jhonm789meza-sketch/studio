@@ -100,16 +100,16 @@ const App = () => {
 
             const urlParams = new URLSearchParams(window.location.search);
             const refFromUrl = urlParams.get('ref');
+            const statusFromUrl = urlParams.get('status');
 
             if (refFromUrl) {
-                await handleAdminSearch(refFromUrl, true);
-            } else {
-                const pendingRef = localStorage.getItem('pendingRaffleRef');
-                if (pendingRef) {
-                    // There is a pending activation, keep the state to show confirmation
+                 if (statusFromUrl === 'APPROVED') {
+                    await confirmActivation(refFromUrl);
                 } else {
-                    setRaffleState(null);
+                    await handleAdminSearch(refFromUrl, true);
                 }
+            } else {
+                setRaffleState(null);
                 setLoading(false);
             }
             
@@ -416,12 +416,20 @@ const App = () => {
     const handleActivateBoard = async (mode: RaffleMode) => {
         setLoading(true);
         const price = mode === 'two-digit' ? 150000 : 1500000;
-        const wompiUrl = `https://checkout.nequi.wompi.co/l/VPOS_SEBIV5?amount-in-cents=${price}`;
         
         try {
             const newRef = await raffleManager.createNewRaffleRef();
-            localStorage.setItem('pendingRaffleRef', newRef);
-            localStorage.setItem('pendingRaffleMode', mode);
+            const redirectUrl = `${window.location.origin}/?ref=${newRef}&status=APPROVED`;
+            const wompiUrl = `https://checkout.nequi.wompi.co/l/VPOS_SEBIV5?amount-in-cents=${price}&redirect-url=${encodeURIComponent(redirectUrl)}`;
+
+            const newRaffleData = {
+                ...initialRaffleData,
+                raffleMode: mode,
+                adminId: currentAdminId,
+                isPaid: false,
+                raffleRef: newRef,
+            };
+            await setDoc(doc(db, "raffles", newRef), newRaffleData);
 
             window.location.href = wompiUrl;
 
@@ -432,35 +440,34 @@ const App = () => {
         }
     };
 
-    const confirmActivation = async () => {
+    const confirmActivation = async (raffleRef: string) => {
         setLoading(true);
-        const pendingRef = localStorage.getItem('pendingRaffleRef');
-        const pendingMode = localStorage.getItem('pendingRaffleMode') as RaffleMode | null;
-
-        if (!pendingRef || !pendingMode) {
-            showNotification('No se encontró una activación pendiente.', 'error');
+        
+        if (!raffleRef) {
+            showNotification('No se encontró una referencia de activación.', 'error');
             setLoading(false);
             return;
         }
 
         try {
-            const newRaffleData = {
-                ...initialRaffleData,
-                raffleMode: pendingMode,
-                adminId: currentAdminId,
-                isPaid: true,
-                raffleRef: pendingRef,
-                participants: [],
-            };
-            
-            await setDoc(doc(db, "raffles", pendingRef), newRaffleData);
-            
-            localStorage.removeItem('pendingRaffleRef');
-            localStorage.removeItem('pendingRaffleMode');
+            if (persistenceEnabled) {
+                await persistenceEnabled;
+            }
+            const raffleDocRef = doc(db, "raffles", raffleRef);
+            const docSnap = await getDoc(raffleDocRef);
 
-            await handleAdminSearch(pendingRef, true);
-            
-            showNotification('¡Nueva rifa activada! Ahora eres el administrador y puedes configurar los detalles del premio.', 'success');
+            if(docSnap.exists()){
+                const raffleData = docSnap.data();
+                if(raffleData.isPaid){
+                    showNotification('Esta rifa ya ha sido activada.', 'info');
+                } else {
+                    await setDoc(raffleDocRef, { isPaid: true, adminId: currentAdminId }, { merge: true });
+                    showNotification('¡Nueva rifa activada! Ahora eres el administrador.', 'success');
+                }
+            }
+           
+            await handleAdminSearch(raffleRef, true);
+        
         } catch (error) {
             console.error("Error activating board:", error);
             showNotification("Error al activar el tablero.", "error");
@@ -499,9 +506,6 @@ const App = () => {
 
     const confirmedNumbers = new Set(raffleState?.participants.filter((p: Participant) => p.paymentStatus === 'confirmed').map((p: Participant) => parseInt(p.raffleNumber, 10)) || []);
     
-    const pendingRaffleRef = typeof window !== 'undefined' ? localStorage.getItem('pendingRaffleRef') : null;
-
-
     if (loading) {
         return <div className="flex justify-center items-center h-screen text-xl font-semibold">Cargando...</div>;
     }
@@ -816,10 +820,10 @@ const App = () => {
                                 <DropdownMenuItem onSelect={() => setIsAdminLoginOpen(true)}>
                                     Buscar por Referencia
                                 </DropdownMenuItem>
-                                {raffleState && <DropdownMenuItem onSelect={() => setIsShareDialogOpen(true)}>
+                                <DropdownMenuItem onSelect={() => setIsShareDialogOpen(true)}>
                                     <Share2 className="mr-2 h-4 w-4" />
                                     <span>Compartir</span>
-                                </DropdownMenuItem>}
+                                </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
                     </div>
@@ -909,7 +913,7 @@ const App = () => {
                             <div className={activeTab === 'register' ? 'tab-content active' : 'tab-content'}>
                                 <h2 className="text-2xl font-bold text-gray-800 mb-4">Registrar Número</h2>
                                 
-                                <fieldset disabled={!raffleState || raffleState?.isWinnerConfirmed || !raffleState?.isDetailsConfirmed || !isCurrentUserAdmin} className="disabled:opacity-50 space-y-4">
+                                <fieldset disabled={!raffleState || raffleState?.isWinnerConfirmed || !raffleState?.isDetailsConfirmed} className="disabled:opacity-50 space-y-4">
                                     <div className="flex flex-col gap-4">
                                         
                                         {raffleState?.paymentLink && (
@@ -1233,3 +1237,5 @@ const App = () => {
 };
 
 export default App;
+
+    
