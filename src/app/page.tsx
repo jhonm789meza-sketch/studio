@@ -415,27 +415,20 @@ const App = () => {
 
     const handleActivateBoard = async (mode: RaffleMode) => {
         setLoading(true);
-        const price = mode === 'two-digit' ? 150000 : 1500000;
-        
         try {
             const newRef = await raffleManager.createNewRaffleRef();
-            const redirectUrl = `${window.location.origin}/?ref=${newRef}&status=APPROVED`;
-            const wompiUrl = `https://checkout.nequi.wompi.co/l/VPOS_SEBIV5?amount-in-cents=${price}&redirect-url=${encodeURIComponent(redirectUrl)}`;
-
             const newRaffleData = {
                 ...initialRaffleData,
                 raffleMode: mode,
                 adminId: currentAdminId,
-                isPaid: false,
+                isPaid: true, // Activate immediately
                 raffleRef: newRef,
             };
             await setDoc(doc(db, "raffles", newRef), newRaffleData);
-
-            window.location.href = wompiUrl;
-
+            await handleAdminSearch(newRef, true);
         } catch (error) {
-            console.error("Error preparing for board activation:", error);
-            showNotification("Error al preparar la activación del tablero.", "error");
+            console.error("Error activating board:", error);
+            showNotification("Error al activar el tablero.", "error");
             setLoading(false);
         }
     };
