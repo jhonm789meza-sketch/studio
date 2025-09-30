@@ -89,6 +89,39 @@ const App = () => {
         }
     };
     
+    const confirmParticipantPayment = async (raffleRef: string, participantId: string) => {
+        if (!raffleRef || !participantId) return;
+        
+        setLoading(true);
+        try {
+            if (persistenceEnabled) await persistenceEnabled;
+            
+            const raffleDocRef = doc(db, "raffles", raffleRef);
+            const docSnap = await getDoc(raffleDocRef);
+
+            if (docSnap.exists()) {
+                const raffleData = docSnap.data();
+                const numericParticipantId = parseInt(participantId, 10);
+                const participant = raffleData.participants.find((p: Participant) => p.id === numericParticipantId);
+                
+                if (participant && participant.paymentStatus === 'pending') {
+                    const updatedParticipants = raffleData.participants.map((p: Participant) => 
+                        p.id === numericParticipantId ? { ...p, paymentStatus: 'confirmed' } : p
+                    );
+                    await setDoc(raffleDocRef, { participants: updatedParticipants }, { merge: true });
+                    showNotification(`Pago para ${participant.name} (${participant.raffleNumber}) confirmado automáticamente.`, 'success');
+                }
+            }
+        } catch (error) {
+            console.error("Error confirming participant payment automatically:", error);
+            showNotification('Error al confirmar el pago del participante.', 'error');
+        } finally {
+            // Reload the raffle to show the changes
+            await handleAdminSearch(raffleRef, true);
+        }
+    };
+
+
     useEffect(() => {
         const initialize = async () => {
             let adminId = localStorage.getItem('rifaAdminId');
@@ -105,9 +138,13 @@ const App = () => {
             const urlParams = new URLSearchParams(window.location.search);
             const refFromUrl = urlParams.get('ref');
             const statusFromUrl = urlParams.get('status');
+            const participantIdFromUrl = urlParams.get('participantId');
+
 
             if (refFromUrl) {
-                 if (statusFromUrl === 'APPROVED') {
+                 if (statusFromUrl === 'APPROVED' && participantIdFromUrl) {
+                    await confirmParticipantPayment(refFromUrl, participantIdFromUrl);
+                 } else if (statusFromUrl === 'APPROVED') {
                     await confirmActivation(refFromUrl);
                 } else {
                     await handleAdminSearch(refFromUrl, true);
@@ -272,9 +309,10 @@ const App = () => {
         
         const participantName = raffleState.name;
         const formattedRaffleNumber = String(num).padStart(numberLength, '0');
+        const participantId = Date.now();
 
         const newParticipant: Participant = {
-            id: Date.now(),
+            id: participantId,
             name: raffleState.name,
             phoneNumber: raffleState.phoneNumber,
             raffleNumber: formattedRaffleNumber,
@@ -296,7 +334,22 @@ const App = () => {
         }));
         
         showNotification(`¡Número ${formattedRaffleNumber} registrado para ${participantName}! Tu pago está pendiente de confirmación por el administrador.`, 'success');
-        handleTabClick('board');
+        
+        // If a payment link is used, redirect the user to it.
+        if (raffleState.paymentLink) {
+            // Append participantId to the return URL for auto-confirmation
+            const confirmationUrl = new URL(window.location.href);
+            confirmationUrl.searchParams.set('status', 'APPROVED');
+            confirmationUrl.searchParams.set('participantId', String(participantId));
+
+            const paymentUrl = new URL(raffleState.paymentLink);
+            // Assuming Wompi uses 'redirectUrl'
+            paymentUrl.searchParams.set('redirectUrl', confirmationUrl.toString());
+
+            window.location.href = paymentUrl.toString();
+        } else {
+             handleTabClick('board');
+        }
     };
 
     const handleConfirmPayment = async (participantId: number) => {
@@ -834,12 +887,10 @@ const App = () => {
                                 <DropdownMenuItem onSelect={() => setIsAdminLoginOpen(true)}>
                                     Buscar por Referencia
                                 </DropdownMenuItem>
-                                {raffleState && (
                                 <DropdownMenuItem onSelect={() => setIsShareDialogOpen(true)}>
                                     <Share2 className="mr-2 h-4 w-4" />
                                     <span>Compartir</span>
                                 </DropdownMenuItem>
-                                )}
                             </DropdownMenuContent>
                         </DropdownMenu>
                     </div>
@@ -948,12 +999,10 @@ const App = () => {
                                             
                                             <div className="flex flex-wrap gap-2">
                                                 {raffleState?.paymentLink && (
-                                                    <a href={raffleState.paymentLink} target="_blank" rel="noopener noreferrer" className="flex-1">
-                                                        <Button className="w-full bg-blue-500 hover:bg-blue-600 text-white">
-                                                            <Link className="mr-2 h-4 w-4" />
-                                                            Ir a Pagar
-                                                        </Button>
-                                                    </a>
+                                                     <Button onClick={handleRegisterParticipant} className="w-full bg-blue-500 hover:bg-blue-600 text-white" disabled={!isRegisterFormValidForSubmit}>
+                                                         <Link className="mr-2 h-4 w-4" />
+                                                         Pagar con Link y Registrar
+                                                     </Button>
                                                 )}
                                                 {raffleState?.nequiAccountNumber && raffleState?.value && (
                                                     <a 
@@ -1015,13 +1064,15 @@ const App = () => {
                                                 )}
                                             </div>
                                             
-                                            <Button
-                                                onClick={handleRegisterParticipant}
-                                                disabled={!isRegisterFormValidForSubmit}
-                                                className="w-full px-4 py-2 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-                                            >
-                                                Registrar Número
-                                            </Button>
+                                             {!raffleState.paymentLink && (
+                                                <Button
+                                                    onClick={handleRegisterParticipant}
+                                                    disabled={!isRegisterFormValidForSubmit}
+                                                    className="w-full px-4 py-2 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                                                >
+                                                    Registrar Número (pago manual)
+                                                </Button>
+                                            )}
                                         </div>
                                     </fieldset>
                                 )}
@@ -1309,3 +1360,5 @@ const App = () => {
 };
 
 export default App;
+
+    
