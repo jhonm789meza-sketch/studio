@@ -22,7 +22,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 type RaffleMode = 'two-digit' | 'three-digit';
-type Tab = 'board' | 'register' | 'participants';
+type Tab = 'board' | 'register' | 'participants' | 'pending';
 
 const initialRaffleData = {
     drawnNumbers: [],
@@ -179,6 +179,7 @@ const App = () => {
     const isCurrentUserAdmin = !!raffleState?.adminId && raffleState.adminId === currentAdminId;
     
     const allAssignedNumbers = new Set(raffleState?.participants.map((p: Participant) => parseInt(p.raffleNumber, 10)) || []);
+    const pendingParticipants = raffleState?.participants.filter((p: Participant) => p.paymentStatus === 'pending') || [];
 
     const toggleNumber = (number: number) => {
         if (!raffleState) return;
@@ -278,7 +279,7 @@ const App = () => {
             phoneNumber: raffleState.phoneNumber,
             raffleNumber: formattedRaffleNumber,
             timestamp: new Date(),
-            paymentStatus: 'pending' // Payment is pending until admin confirms
+            paymentStatus: 'pending'
         };
         
         const updatedParticipants = [...raffleState.participants, newParticipant];
@@ -286,24 +287,7 @@ const App = () => {
         await setDoc(doc(db, "raffles", raffleState.raffleRef), {
             participants: updatedParticipants,
         }, { merge: true });
-        
-        const ticketData = {
-            prize: raffleState.prize,
-            value: formatValue(raffleState.value),
-            name: newParticipant.name,
-            phoneNumber: newParticipant.phoneNumber,
-            raffleNumber: newParticipant.raffleNumber,
-            date: new Date().toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' }),
-            time: new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }),
-            gameDate: raffleState.gameDate,
-            lottery: raffleState.lottery === 'Otro' ? raffleState.customLottery : raffleState.lottery,
-            raffleRef: raffleState.raffleRef,
-            organizerName: raffleState.organizerName,
-        };
-        
-        setTicketInfo(ticketData);
-        setIsTicketModalOpen(true);
-        
+                
         setRaffleState((s:any) => ({
             ...s,
             name: '',
@@ -311,8 +295,24 @@ const App = () => {
             raffleNumber: '',
         }));
         
-        showNotification(`¡Número ${formattedRaffleNumber} registrado para ${participantName}! El pago está pendiente de confirmación.`, 'success');
+        showNotification(`¡Número ${formattedRaffleNumber} registrado para ${participantName}! Tu pago está pendiente de confirmación por el administrador.`, 'success');
         handleTabClick('board');
+    };
+
+    const handleConfirmPayment = async (participantId: number) => {
+        if (!raffleState || !raffleState.raffleRef || !isCurrentUserAdmin) return;
+    
+        const updatedParticipants = raffleState.participants.map((p: Participant) => 
+            p.id === participantId ? { ...p, paymentStatus: 'confirmed' } : p
+        );
+    
+        try {
+            await setDoc(doc(db, "raffles", raffleState.raffleRef), { participants: updatedParticipants }, { merge: true });
+            showNotification('Pago confirmado exitosamente.', 'success');
+        } catch (error) {
+            console.error("Error confirming payment:", error);
+            showNotification('Error al confirmar el pago.', 'error');
+        }
     };
     
     const handleDownloadTicket = () => {
@@ -728,30 +728,43 @@ const App = () => {
                        )}
                    </div>
                    <div className={`grid gap-2 ${raffleMode === 'two-digit' ? 'grid-cols-10' : 'grid-cols-10 md:grid-cols-20 lg:grid-cols-25'}`}>
-                       {allNumbers.map((number) => (
-                           <div
-                               key={number}
-                               onClick={() => toggleNumber(number)}
-                               className={`
-                                   number-cell text-center py-2 rounded-lg transition-all text-sm
-                                   ${raffleState.isWinnerConfirmed || !raffleState.isDetailsConfirmed || !!raffleState.winner ? 'cursor-not-allowed' : 'cursor-pointer'}
-                                   ${confirmedNumbers.has(number)
-                                       ? 'bg-red-600 text-white shadow-lg transform scale-105 cursor-not-allowed'
-                                       : !raffleState.isDetailsConfirmed || !!raffleState.winner
-                                       ? 'bg-gray-200 text-gray-500'
-                                       : 'bg-green-200 text-green-800 hover:bg-green-300 hover:shadow-md'
-                                   }
-                                   ${raffleState.winner?.raffleNumber === String(number).padStart(numberLength, '0') ? 'ring-4 ring-yellow-400 animate-pulse' : ''}
-                               `}
-                           >
-                               {String(number).padStart(numberLength, '0')}
-                           </div>
-                       ))}
+                       {allNumbers.map((number) => {
+                           const formattedNumber = String(number).padStart(numberLength, '0');
+                           const participant = raffleState.participants.find((p: Participant) => p.raffleNumber === formattedNumber);
+                           const isConfirmed = participant && participant.paymentStatus === 'confirmed';
+                           const isPending = participant && participant.paymentStatus === 'pending';
+
+                           return (
+                               <div
+                                   key={number}
+                                   onClick={() => toggleNumber(number)}
+                                   className={`
+                                       number-cell text-center py-2 rounded-lg transition-all text-sm
+                                       ${raffleState.isWinnerConfirmed || !raffleState.isDetailsConfirmed || !!raffleState.winner || isConfirmed || isPending ? 'cursor-not-allowed' : 'cursor-pointer'}
+                                       ${isConfirmed
+                                           ? 'bg-red-600 text-white shadow-lg'
+                                           : isPending
+                                           ? 'bg-yellow-400 text-yellow-900 shadow-md'
+                                           : !raffleState.isDetailsConfirmed || !!raffleState.winner
+                                           ? 'bg-gray-200 text-gray-500'
+                                           : 'bg-green-200 text-green-800 hover:bg-green-300 hover:shadow-md'
+                                       }
+                                       ${raffleState.winner?.raffleNumber === formattedNumber ? 'ring-4 ring-yellow-400 animate-pulse' : ''}
+                                   `}
+                               >
+                                   {formattedNumber}
+                               </div>
+                           );
+                       })}
                    </div>
                     <div className="flex flex-wrap gap-4 mt-4 text-sm">
                         <div className="flex items-center gap-2">
                             <div className="w-4 h-4 rounded-full bg-green-200"></div>
                             <span>Disponible</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <div className="w-4 h-4 rounded-full bg-yellow-400"></div>
+                            <span>Pendiente</span>
                         </div>
                         <div className="flex items-center gap-2">
                             <div className="w-4 h-4 rounded-full bg-red-600"></div>
@@ -821,10 +834,12 @@ const App = () => {
                                 <DropdownMenuItem onSelect={() => setIsAdminLoginOpen(true)}>
                                     Buscar por Referencia
                                 </DropdownMenuItem>
+                                {raffleState && (
                                 <DropdownMenuItem onSelect={() => setIsShareDialogOpen(true)}>
                                     <Share2 className="mr-2 h-4 w-4" />
                                     <span>Compartir</span>
                                 </DropdownMenuItem>
+                                )}
                             </DropdownMenuContent>
                         </DropdownMenu>
                     </div>
@@ -898,6 +913,14 @@ const App = () => {
                             >
                                 Registrar
                             </button>
+                            {isCurrentUserAdmin && (
+                               <button 
+                                   className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'pending' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
+                                   onClick={() => handleTabClick('pending')}
+                               >
+                                   <Clock className="h-5 w-5 hidden md:inline"/> Pendientes ({pendingParticipants.length})
+                               </button>
+                            )}
                             <button 
                                 className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'participants' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
                                 onClick={() => handleTabClick('participants')}
@@ -997,7 +1020,7 @@ const App = () => {
                                                 disabled={!isRegisterFormValidForSubmit}
                                                 className="w-full px-4 py-2 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
                                             >
-                                                Generar Tiquete
+                                                Registrar Número
                                             </Button>
                                         </div>
                                     </fieldset>
@@ -1016,6 +1039,45 @@ const App = () => {
                                     </div>
                                 )}
                             </div>
+                            {isCurrentUserAdmin && (
+                               <div className={activeTab === 'pending' ? 'tab-content active' : 'tab-content'}>
+                                   <h2 className="text-2xl font-bold text-gray-800 mb-4">Pagos Pendientes</h2>
+                                   {pendingParticipants.length > 0 ? (
+                                       <div className="overflow-x-auto">
+                                           <table className="min-w-full divide-y divide-gray-200">
+                                               <thead className="bg-gray-50">
+                                                   <tr>
+                                                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Número</th>
+                                                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
+                                                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Celular</th>
+                                                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha Registro</th>
+                                                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acción</th>
+                                                   </tr>
+                                               </thead>
+                                               <tbody className="bg-white divide-y divide-gray-200">
+                                                   {pendingParticipants.sort((a: Participant, b: Participant) => a.raffleNumber.localeCompare(b.raffleNumber)).map((p: Participant) => (
+                                                       <tr key={p.id}>
+                                                           <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-purple-600">{p.raffleNumber}</td>
+                                                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{p.name}</td>
+                                                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{p.phoneNumber}</td>
+                                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                                {p.timestamp && p.timestamp.toDate ? format(p.timestamp.toDate(), 'PPpp', { locale: es }) : 'N/A'}
+                                                            </td>
+                                                           <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                                               <Button onClick={() => handleConfirmPayment(p.id)} size="sm" className="bg-green-500 hover:bg-green-600 text-white">
+                                                                   Confirmar Pago
+                                                               </Button>
+                                                           </td>
+                                                       </tr>
+                                                   ))}
+                                               </tbody>
+                                           </table>
+                                       </div>
+                                   ) : (
+                                       <p className="text-gray-500">No hay pagos pendientes de confirmación.</p>
+                                   )}
+                               </div>
+                            )}
                             <div className={activeTab === 'participants' ? 'tab-content active' : 'tab-content'}>
                                 <div className="flex justify-between items-center mb-4">
                                         <h2 className="text-2xl font-bold text-gray-800">Participantes Confirmados</h2>
@@ -1247,5 +1309,3 @@ const App = () => {
 };
 
 export default App;
-
-    

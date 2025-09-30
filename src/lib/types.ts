@@ -6,4 +6,5 @@ export interface Participant {
     raffleNumber: string;
     timestamp: Date | any; // Allow for Firebase Timestamp
     paymentStatus: 'pending' | 'confirmed';
+    isHouse?: boolean;
 }
