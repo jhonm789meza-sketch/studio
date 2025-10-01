@@ -175,7 +175,9 @@ const App = () => {
                      setLoading(false);
                 }
             } else {
-                setLoading(false);
+                 if (activeTab !== 'pending') {
+                   setLoading(false);
+                 }
             }
         }
     };
@@ -441,6 +443,13 @@ const App = () => {
             pdf.save(`tiquete_${ticketInfo.raffleNumber}.pdf`);
             showNotification('Tiquete descargado', 'success');
         });
+    };
+
+    const handleShareTicket = () => {
+        if (!ticketInfo || !ticketInfo.phoneNumber) return;
+        const message = encodeURIComponent(`¡Hola! Aquí tienes tu tiquete para la rifa.`);
+        const whatsappUrl = `https://wa.me/${ticketInfo.phoneNumber}?text=${message}`;
+        window.open(whatsappUrl, '_blank');
     };
     
     const handleAdminSearch = (refToSearch?: string, isInitialLoad = false) => {
@@ -1352,22 +1361,27 @@ const App = () => {
                             </div>
                         </div>
                         
-                        <div className="p-4 bg-gray-50 rounded-b-lg flex flex-col items-center mt-auto border-t">
-                             <div className="flex justify-center space-x-3 w-full">
-                                <Button
-                                    onClick={handleDownloadTicket}
-                                    className="flex-1 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors font-semibold shadow-md"
-                                >
-                                    Descargar PDF
-                                </Button>
-                                <Button
-                                    onClick={() => setIsTicketModalOpen(false)}
-                                    variant="outline"
-                                    className="flex-1"
-                                >
-                                    Cerrar
-                                </Button>
-                            </div>
+                        <div className="p-4 bg-gray-50 rounded-b-lg flex flex-col sm:flex-row items-center justify-center gap-2 mt-auto border-t">
+                            <Button
+                                onClick={handleDownloadTicket}
+                                className="w-full sm:w-auto bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors font-semibold shadow-md"
+                            >
+                                Descargar PDF
+                            </Button>
+                            <Button
+                                onClick={handleShareTicket}
+                                className="w-full sm:w-auto bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-semibold shadow-md flex items-center gap-2"
+                            >
+                                <WhatsappIcon/>
+                                Compartir
+                            </Button>
+                            <Button
+                                onClick={() => setIsTicketModalOpen(false)}
+                                variant="outline"
+                                className="w-full sm:w-auto"
+                            >
+                                Cerrar
+                            </Button>
                         </div>
                     </div>
                 </div>
