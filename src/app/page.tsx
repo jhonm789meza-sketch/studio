@@ -402,7 +402,8 @@ const App = () => {
         );
     
         try {
-            await setDoc(doc(db, "raffles", raffleState.raffleRef), { participants: updatedParticipants }, { merge: true });
+            // No need to await here, onSnapshot will handle the update
+            setDoc(doc(db, "raffles", raffleState.raffleRef), { participants: updatedParticipants }, { merge: true });
             showNotification('Pago confirmado exitosamente.', 'success');
         } catch (error) {
             console.error("Error confirming payment:", error);
@@ -1404,5 +1405,3 @@ const App = () => {
 };
 
 export default App;
-
-    
