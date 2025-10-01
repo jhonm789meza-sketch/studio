@@ -136,18 +136,6 @@ const App = () => {
                     await setDoc(raffleDocRef, { participants: updatedParticipants }, { merge: true });
                     participant = newParticipant;
 
-                    const now = new Date();
-                    const ticketData = {
-                        ...raffleData,
-                        name: newParticipant.name,
-                        phoneNumber: newParticipant.phoneNumber,
-                        raffleNumber: newParticipant.raffleNumber,
-                        date: format(now, 'PPP', { locale: es }),
-                        time: format(now, 'p', { locale: es }),
-                    };
-                    setGeneratedTicketData(ticketData);
-                    setActiveTab('register');
-
 
                 } else if (participantId) { 
                     // This handles manual confirmation by admin
@@ -184,6 +172,7 @@ const App = () => {
 
                 if (participantData) {
                     await handleAdminSearch(raffleRef, true);
+                    showNotification('¡Pago exitoso! Tu número ha sido registrado. Puedes generar tu tiquete en la pestaña "Participantes".', 'success');
                 } else {
                      setLoading(false);
                 }
