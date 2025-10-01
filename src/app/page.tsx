@@ -89,6 +89,20 @@ const App = () => {
             setNequiPaymentClicked(false); // Reset when navigating to the register tab
         }
     };
+
+    const handleGenerateTicket = (participant: Participant) => {
+        const now = new Date();
+        const ticketData = {
+            ...raffleState,
+            name: participant.name,
+            phoneNumber: participant.phoneNumber,
+            raffleNumber: participant.raffleNumber,
+            date: format(now, 'PPP', { locale: es }),
+            time: format(now, 'p', { locale: es }),
+        };
+        setTicketInfo(ticketData);
+        setIsTicketModalOpen(true);
+    };
     
     const confirmParticipantPayment = async (raffleRef: string, participantId: string, participantData?: any) => {
         if (!raffleRef) return;
@@ -119,16 +133,23 @@ const App = () => {
                     await setDoc(raffleDocRef, { participants: updatedParticipants }, { merge: true });
                     participant = newParticipant;
                     isNew = true;
+
+                    // Generate ticket for the new participant
+                    handleGenerateTicket(newParticipant);
+
                 } else if (participantId) { 
                     // This handles manual confirmation by admin or legacy payment link returns
                     const numericParticipantId = parseInt(participantId, 10);
-                    participant = raffleData.participants.find((p: Participant) => p.id === numericParticipantId);
+                    const currentParticipant = raffleData.participants.find((p: Participant) => p.id === numericParticipantId);
                     
-                    if (participant && participant.paymentStatus === 'pending') {
+                    if (currentParticipant && currentParticipant.paymentStatus === 'pending') {
                         const updatedParticipants = raffleData.participants.map((p: Participant) => 
                             p.id === numericParticipantId ? { ...p, paymentStatus: 'confirmed' } : p
                         );
                         await setDoc(raffleDocRef, { participants: updatedParticipants }, { merge: true });
+                        participant = { ...currentParticipant, paymentStatus: 'confirmed' };
+                    } else {
+                        participant = currentParticipant;
                     }
                 }
                 
@@ -141,7 +162,7 @@ const App = () => {
             showNotification('Error al confirmar el pago del participante.', 'error');
         } finally {
             // Clean URL but don't reload if it's a manual confirmation from admin view
-            if (participantData) {
+            if (participantData || participantId) { // Also clean for legacy flow
                 const url = new URL(window.location.href);
                 url.searchParams.delete('status');
                 url.searchParams.delete('participantId');
@@ -149,7 +170,13 @@ const App = () => {
                 url.searchParams.delete('pPhone');
                 url.searchParams.delete('pNum');
                 window.history.replaceState({}, '', url.toString());
-                 await handleAdminSearch(raffleRef, true);
+
+                // If it was a redirect from payment, load the raffle
+                if (participantData) {
+                    await handleAdminSearch(raffleRef, true);
+                } else {
+                    setLoading(false);
+                }
             } else {
                 setLoading(false);
             }
