@@ -450,6 +450,7 @@ const App = () => {
         const message = encodeURIComponent(`¡Hola! Aquí tienes tu tiquete para la rifa.`);
         const whatsappUrl = `https://wa.me/${ticketInfo.phoneNumber}?text=${message}`;
         window.open(whatsappUrl, '_blank');
+        setIsTicketModalOpen(false);
     };
     
     const handleAdminSearch = (refToSearch?: string, isInitialLoad = false) => {
