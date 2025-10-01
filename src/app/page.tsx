@@ -61,6 +61,7 @@ const App = () => {
 
     const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
     const [ticketInfo, setTicketInfo] = useState<any>(null);
+    const [generatedTicketData, setGeneratedTicketData] = useState<any>(null);
     const [showConfirmation, setShowConfirmation] = useState(false);
     const [confirmationMessage, setConfirmationMessage] = useState('');
     const [confirmationAction, setConfirmationAction] = useState<(() => void) | null>(null);
@@ -88,6 +89,8 @@ const App = () => {
         setActiveTab(tab);
         if (tab === 'register') {
             setNequiPaymentClicked(false); // Reset when navigating to the register tab
+        } else {
+            setGeneratedTicketData(null);
         }
     };
 
@@ -133,8 +136,18 @@ const App = () => {
                     await setDoc(raffleDocRef, { participants: updatedParticipants }, { merge: true });
                     participant = newParticipant;
 
-                    // Generate ticket for the new participant
-                    handleGenerateTicket(newParticipant);
+                    const now = new Date();
+                    const ticketData = {
+                        ...raffleData,
+                        name: newParticipant.name,
+                        phoneNumber: newParticipant.phoneNumber,
+                        raffleNumber: newParticipant.raffleNumber,
+                        date: format(now, 'PPP', { locale: es }),
+                        time: format(now, 'p', { locale: es }),
+                    };
+                    setGeneratedTicketData(ticketData);
+                    setActiveTab('register');
+
 
                 } else if (participantId) { 
                     // This handles manual confirmation by admin
@@ -430,9 +443,11 @@ const App = () => {
     };
     
     const handleDownloadTicket = () => {
-        if (!ticketModalRef.current || !ticketInfo) return;
+        const ticketRef = ticketModalRef.current;
+        const targetInfo = generatedTicketData || ticketInfo;
+        if (!ticketRef || !targetInfo) return;
 
-        html2canvas(ticketModalRef.current, { scale: 2 }).then((canvas) => {
+        html2canvas(ticketRef, { scale: 2 }).then((canvas) => {
             const imgData = canvas.toDataURL('image/png');
             const pdf = new jsPDF({
                 orientation: 'portrait',
@@ -440,17 +455,25 @@ const App = () => {
                 format: [canvas.width, canvas.height]
             });
             pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-            pdf.save(`tiquete_${ticketInfo.raffleNumber}.pdf`);
+            pdf.save(`tiquete_${targetInfo.raffleNumber}.pdf`);
             showNotification('Tiquete descargado', 'success');
         });
     };
 
     const handleShareTicket = () => {
-        if (!ticketInfo || !ticketInfo.phoneNumber) return;
+        const targetInfo = generatedTicketData || ticketInfo;
+        if (!targetInfo || !targetInfo.phoneNumber) return;
+
         const message = encodeURIComponent(`¡Hola! Aquí tienes tu tiquete para la rifa.`);
-        const whatsappUrl = `https://wa.me/${ticketInfo.phoneNumber}?text=${message}`;
+        const whatsappUrl = `https://wa.me/${targetInfo.phoneNumber}?text=${message}`;
         window.open(whatsappUrl, '_blank');
-        setIsTicketModalOpen(false);
+        
+        if (isTicketModalOpen) {
+            setIsTicketModalOpen(false);
+        }
+        if (generatedTicketData) {
+            setGeneratedTicketData(null);
+        }
     };
     
     const handleAdminSearch = (refToSearch?: string, isInitialLoad = false) => {
@@ -940,6 +963,111 @@ const App = () => {
         </svg>
     );
 
+    const InlineTicket = ({ ticketData }: { ticketData: any }) => {
+        if (!ticketData) return null;
+        return (
+            <div className="mt-8">
+                <h3 className="text-xl font-bold text-gray-800 mb-4 text-center">¡Tu Tiquete!</h3>
+                <div className="max-w-sm mx-auto bg-white rounded-lg shadow-xl flex flex-col font-mono">
+                    <div ref={ticketModalRef} className="bg-white rounded-t-lg p-6 relative overflow-hidden">
+                       <div className="absolute inset-0 flex items-center justify-center z-0">
+                           <p className="text-gray-200 text-7xl font-black transform -rotate-45 opacity-40 select-none">
+                               RIFAEXPRESS
+                           </p>
+                       </div>
+                       <div className="relative z-10">
+                           <div className="border-b border-dashed border-gray-400 pb-4 text-center">
+                               <h2 className="text-2xl font-bold mb-1">RIFA EXPRESS</h2>
+                               {ticketData.raffleRef && (
+                                   <p className="text-xs font-semibold text-gray-600 mb-2">
+                                       Ref: {ticketData.raffleRef}
+                                   </p>
+                               )}
+                               <p className="text-sm text-gray-500">COMPROBANTE DE COMPRA</p>
+                           </div>
+
+                           <div className="py-4 space-y-3 text-sm">
+                               <div className="flex justify-between">
+                                   <span className="text-gray-500">FECHA:</span>
+                                   <span className="font-semibold text-right">{ticketData.date}</span>
+                               </div>
+                               <div className="flex justify-between">
+                                   <span className="text-gray-500">HORA:</span>
+                                   <span className="font-semibold text-right">{ticketData.time}</span>
+                               </div>
+                               <div className="flex justify-between">
+                                   <span className="text-gray-500">CLIENTE:</span>
+                                   <span className="font-semibold text-right">{ticketData.name}</span>
+                               </div>
+                               <div className="flex justify-between">
+                                   <span className="text-gray-500">CELULAR:</span>
+                                   <span className="font-semibold">{ticketData.phoneNumber}</span>
+                               </div>
+                           </div>
+                           
+                           <div className="border-t border-b border-dashed border-gray-400 my-2 py-4 space-y-2 text-sm">
+                               <p className="text-center font-bold text-base uppercase">Detalles de la Rifa</p>
+                               <div className="flex justify-between">
+                                   <span className="text-gray-500">PREMIO:</span>
+                                   <span className="font-semibold text-right">{ticketData.prize}</span>
+                               </div>
+                               <div className="flex justify-between">
+                                   <span className="text-gray-500">VALOR BOLETA:</span>
+                                   <span className="font-semibold">{formatValue(ticketData.value)}</span>
+                               </div>
+                               <div className="flex justify-between">
+                                   <span className="text-gray-500">FECHA SORTEO:</span>
+                                   <span className="font-semibold">{new Date(ticketData.gameDate + 'T00:00:00-05:00').toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                               </div>
+                               <div className="flex justify-between">
+                                   <span className="text-gray-500">JUEGA CON:</span>
+                                   <span className="font-semibold">{ticketData.lottery === 'Otro' ? ticketData.customLottery : ticketData.lottery}</span>
+                               </div>
+                               <div className="flex justify-between">
+                                   <span className="text-gray-500">ORGANIZA:</span>
+                                   <span className="font-semibold text-right">{ticketData.organizerName}</span>
+                               </div>
+                           </div>
+                           
+                           <div className="text-center pt-4">
+                               <p className="text-gray-500 uppercase text-sm">Número Asignado</p>
+                               <p className="text-6xl font-bold text-purple-600 tracking-wider">{ticketData.raffleNumber}</p>
+                           </div>
+
+                           <p className="text-center text-xs text-gray-500 mt-4 pt-4 border-t border-dashed">
+                               ¡Gracias por participar y mucha suerte!
+                           </p>
+                       </div>
+                   </div>
+                   
+                   <div className="p-4 bg-gray-50 rounded-b-lg flex flex-col sm:flex-row items-center justify-center gap-2 mt-auto border-t">
+                       <Button
+                           onClick={handleDownloadTicket}
+                           className="w-full sm:w-auto bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors font-semibold shadow-md"
+                       >
+                           Descargar PDF
+                       </Button>
+                       <Button
+                           onClick={handleShareTicket}
+                           className="w-full sm:w-auto bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-semibold shadow-md flex items-center gap-2"
+                       >
+                           <WhatsappIcon/>
+                           Compartir
+                       </Button>
+                       <Button
+                           onClick={() => setGeneratedTicketData(null)}
+                           variant="outline"
+                           className="w-full sm:w-auto"
+                       >
+                           Cerrar
+                       </Button>
+                   </div>
+               </div>
+            </div>
+        );
+    };
+
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-purple-100 to-blue-100 p-4 font-sans">
             {showConfetti && <Confetti />}
@@ -956,7 +1084,7 @@ const App = () => {
                                 <DropdownMenuItem onSelect={() => setIsAdminLoginOpen(true)}>
                                     Buscar por Referencia
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onSelect={() => setIsShareDialogOpen(true)}>
+                                <DropdownMenuItem onSelect={() => setIsShareDialogOpen(true)} disabled={!raffleState}>
                                     <Share2 className="mr-2 h-4 w-4" />
                                     <span>Compartir</span>
                                 </DropdownMenuItem>
@@ -1055,110 +1183,116 @@ const App = () => {
                                 {renderBoardContent()}
                             </div>
                             <div className={activeTab === 'register' ? 'tab-content active' : 'tab-content'}>
-                                <h2 className="text-2xl font-bold text-gray-800 mb-4">Registrar Número</h2>
-                                
-                                {isCurrentUserAdmin ? (
-                                    <div className="bg-blue-50 border-l-4 border-blue-500 text-blue-800 p-4 mt-6" role="alert">
-                                        <p className="font-bold">Función de Administrador</p>
-                                        <p>Como administrador, no puedes registrar participantes. Esta sección es solo para que los jugadores registren sus propios números.</p>
-                                    </div>
+                                {generatedTicketData ? (
+                                    <InlineTicket ticketData={generatedTicketData} />
                                 ) : (
-                                    <fieldset disabled={!raffleState || raffleState?.isWinnerConfirmed || !raffleState?.isDetailsConfirmed} className="disabled:opacity-50 space-y-4">
-                                        <div className="flex flex-col gap-4">
-
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div>
-                                                    <Label htmlFor="name-input">Nombre completo:</Label>
-                                                    <Input
-                                                        id="name-input"
-                                                        type="text"
-                                                        value={raffleState?.name || ''}
-                                                        onChange={(e) => handleLocalFieldChange('name', e.target.value)}
-                                                        placeholder="Ej: Juan Pérez"
-                                                        className="w-full mt-1"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <Label htmlFor="phone-input">Celular:</Label>
-                                                    <Input
-                                                        id="phone-input"
-                                                        type="tel"
-                                                        value={raffleState?.phoneNumber || ''}
-                                                        onChange={(e) => handleLocalFieldChange('phoneNumber', e.target.value.replace(/\D/g, ''))}
-                                                        placeholder="Ej: 3001234567"
-                                                        className="w-full mt-1"
-                                                    />
-                                                </div>
+                                    <>
+                                        <h2 className="text-2xl font-bold text-gray-800 mb-4">Registrar Número</h2>
+                                        
+                                        {isCurrentUserAdmin ? (
+                                            <div className="bg-blue-50 border-l-4 border-blue-500 text-blue-800 p-4 mt-6" role="alert">
+                                                <p className="font-bold">Función de Administrador</p>
+                                                <p>Como administrador, no puedes registrar participantes. Esta sección es solo para que los jugadores registren sus propios números.</p>
                                             </div>
+                                        ) : (
+                                            <fieldset disabled={!raffleState || raffleState?.isWinnerConfirmed || !raffleState?.isDetailsConfirmed} className="disabled:opacity-50 space-y-4">
+                                                <div className="flex flex-col gap-4">
 
-                                            <div>
-                                                <Label htmlFor="raffle-number-input">Número de rifa ({raffleMode === 'two-digit' ? '00-99' : '100-999'}):</Label>
-                                                <Input
-                                                    id="raffle-number-input"
-                                                    type="text"
-                                                    value={raffleState?.raffleNumber || ''}
-                                                    onChange={handleRaffleNumberChange}
-                                                    placeholder={`Ej: ${raffleMode === 'two-digit' ? '05' : '142'}`}
-                                                    className="w-full mt-1"
-                                                    maxLength={numberLength}
-                                                />
-                                                {raffleState?.raffleNumber && allAssignedNumbers.has(parseInt(raffleState.raffleNumber)) && (
-                                                    <p className="text-red-500 text-sm mt-1">Este número ya está asignado.</p>
-                                                )}
-                                            </div>
-                                            
-                                            <div className="flex flex-wrap gap-2">
-                                                {raffleState?.paymentLink && (
-                                                     <Button onClick={() => handleRegisterParticipant('link')} className="w-full bg-blue-500 hover:bg-blue-600 text-white" disabled={!isRegisterFormValidForSubmit}>
-                                                         <Link className="mr-2 h-4 w-4" />
-                                                         Pagar con Link y Registrar
-                                                     </Button>
-                                                )}
-                                                {raffleState?.nequiAccountNumber && raffleState?.value && (
-                                                    <a 
-                                                        href={`nequi://app/pay?phoneNumber=${raffleState.nequiAccountNumber}&value=${String(raffleState.value).replace(/\D/g, '')}&currency=COP&description=Pago Rifa`}
-                                                        target="_blank" 
-                                                        rel="noopener noreferrer"
-                                                        className="flex-1"
-                                                        onClick={() => {
-                                                            setNequiPaymentClicked(true);
-                                                            handleRegisterParticipant('manual');
-                                                        }}
-                                                    >
-                                                        <Button 
-                                                          className="w-full bg-[#A454C4] hover:bg-[#8e49a8] text-white"
-                                                          disabled={nequiPaymentClicked || !isRegisterFormValidForSubmit}
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                        <div>
+                                                            <Label htmlFor="name-input">Nombre completo:</Label>
+                                                            <Input
+                                                                id="name-input"
+                                                                type="text"
+                                                                value={raffleState?.name || ''}
+                                                                onChange={(e) => handleLocalFieldChange('name', e.target.value)}
+                                                                placeholder="Ej: Juan Pérez"
+                                                                className="w-full mt-1"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <Label htmlFor="phone-input">Celular:</Label>
+                                                            <Input
+                                                                id="phone-input"
+                                                                type="tel"
+                                                                value={raffleState?.phoneNumber || ''}
+                                                                onChange={(e) => handleLocalFieldChange('phoneNumber', e.target.value.replace(/\D/g, ''))}
+                                                                placeholder="Ej: 3001234567"
+                                                                className="w-full mt-1"
+                                                            />
+                                                        </div>
+                                                    </div>
+
+                                                    <div>
+                                                        <Label htmlFor="raffle-number-input">Número de rifa ({raffleMode === 'two-digit' ? '00-99' : '100-999'}):</Label>
+                                                        <Input
+                                                            id="raffle-number-input"
+                                                            type="text"
+                                                            value={raffleState?.raffleNumber || ''}
+                                                            onChange={handleRaffleNumberChange}
+                                                            placeholder={`Ej: ${raffleMode === 'two-digit' ? '05' : '142'}`}
+                                                            className="w-full mt-1"
+                                                            maxLength={numberLength}
+                                                        />
+                                                        {raffleState?.raffleNumber && allAssignedNumbers.has(parseInt(raffleState.raffleNumber)) && (
+                                                            <p className="text-red-500 text-sm mt-1">Este número ya está asignado.</p>
+                                                        )}
+                                                    </div>
+                                                    
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {raffleState?.paymentLink && (
+                                                             <Button onClick={() => handleRegisterParticipant('link')} className="w-full bg-blue-500 hover:bg-blue-600 text-white" disabled={!isRegisterFormValidForSubmit}>
+                                                                 <Link className="mr-2 h-4 w-4" />
+                                                                 Pagar con Link y Registrar
+                                                             </Button>
+                                                        )}
+                                                        {raffleState?.nequiAccountNumber && raffleState?.value && (
+                                                            <a 
+                                                                href={`nequi://app/pay?phoneNumber=${raffleState.nequiAccountNumber}&value=${String(raffleState.value).replace(/\D/g, '')}&currency=COP&description=Pago Rifa`}
+                                                                target="_blank" 
+                                                                rel="noopener noreferrer"
+                                                                className="flex-1"
+                                                                onClick={() => {
+                                                                    setNequiPaymentClicked(true);
+                                                                    handleRegisterParticipant('manual');
+                                                                }}
+                                                            >
+                                                                <Button 
+                                                                  className="w-full bg-[#A454C4] hover:bg-[#8e49a8] text-white"
+                                                                  disabled={nequiPaymentClicked || !isRegisterFormValidForSubmit}
+                                                                >
+                                                                    <NequiIcon />
+                                                                    <span className="ml-2">{nequiPaymentClicked ? 'Redirigiendo a Nequi...' : 'Pagar con Nequi'}</span>
+                                                                </Button>
+                                                            </a>
+                                                        )}
+                                                    </div>
+                                                     {!raffleState.paymentLink && !raffleState.nequiAccountNumber && (
+                                                        <Button
+                                                            onClick={() => handleRegisterParticipant('manual')}
+                                                            disabled={!isRegisterFormValidForSubmit}
+                                                            className="w-full px-4 py-2 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
                                                         >
-                                                            <NequiIcon />
-                                                            <span className="ml-2">{nequiPaymentClicked ? 'Redirigiendo a Nequi...' : 'Pagar con Nequi'}</span>
+                                                            Registrar Número (pago manual)
                                                         </Button>
-                                                    </a>
-                                                )}
+                                                    )}
+                                                </div>
+                                            </fieldset>
+                                        )}
+                                        
+                                        {(!raffleState || !raffleState.isDetailsConfirmed) && (
+                                            <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-6" role="alert">
+                                                <p className="font-bold">Aviso</p>
+                                                <p>Debes activar o buscar una rifa y confirmar los detalles del premio en la pestaña "Tablero" para poder participar.</p>
                                             </div>
-                                             {!raffleState.paymentLink && !raffleState.nequiAccountNumber && (
-                                                <Button
-                                                    onClick={() => handleRegisterParticipant('manual')}
-                                                    disabled={!isRegisterFormValidForSubmit}
-                                                    className="w-full px-4 py-2 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-                                                >
-                                                    Registrar Número (pago manual)
-                                                </Button>
-                                            )}
-                                        </div>
-                                    </fieldset>
-                                )}
-                                
-                                {(!raffleState || !raffleState.isDetailsConfirmed) && (
-                                    <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-6" role="alert">
-                                        <p className="font-bold">Aviso</p>
-                                        <p>Debes activar o buscar una rifa y confirmar los detalles del premio en la pestaña "Tablero" para poder participar.</p>
-                                    </div>
-                                )}
-                                {raffleState?.isWinnerConfirmed && (
-                                    <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-6" role="alert">
-                                        <p className="font-bold">Juego terminado</p>
-                                        <p>El registro de nuevos participantes está deshabilitado porque ya se ha confirmado un ganador. Reinicia el tablero para comenzar una nueva rifa.</p>
-                                    </div>
+                                        )}
+                                        {raffleState?.isWinnerConfirmed && (
+                                            <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-6" role="alert">
+                                                <p className="font-bold">Juego terminado</p>
+                                                <p>El registro de nuevos participantes está deshabilitado porque ya se ha confirmado un ganador. Reinicia el tablero para comenzar una nueva rifa.</p>
+                                            </div>
+                                        )}
+                                    </>
                                 )}
                             </div>
                             {isCurrentUserAdmin && (
