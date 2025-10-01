@@ -162,7 +162,7 @@ const App = () => {
             showNotification('Error al confirmar el pago del participante.', 'error');
         } finally {
             // Clean URL but don't reload if it's a manual confirmation from admin view
-            if (participantData || participantId) { // Also clean for legacy flow
+            if (window.location.search.includes('status=APPROVED')) {
                 const url = new URL(window.location.href);
                 url.searchParams.delete('status');
                 url.searchParams.delete('participantId');
@@ -171,11 +171,10 @@ const App = () => {
                 url.searchParams.delete('pNum');
                 window.history.replaceState({}, '', url.toString());
 
-                // If it was a redirect from payment, load the raffle
                 if (participantData) {
                     await handleAdminSearch(raffleRef, true);
                 } else {
-                    setLoading(false);
+                     setLoading(false);
                 }
             } else {
                 setLoading(false);
@@ -1109,7 +1108,7 @@ const App = () => {
                                                 )}
                                                 {raffleState?.nequiAccountNumber && raffleState?.value && (
                                                     <a 
-                                                        href={`nequi://app/pay?phoneNumber=${raffleState.nequiAccountNumber}&value=${raffleState.value.replace(/\D/g, '')}&currency=COP&description=Pago Rifa`}
+                                                        href={`nequi://app/pay?phoneNumber=${raffleState.nequiAccountNumber}&value=${String(raffleState.value).replace(/\D/g, '')}&currency=COP&description=Pago Rifa`}
                                                         target="_blank" 
                                                         rel="noopener noreferrer"
                                                         className="flex-1"
@@ -1424,5 +1423,3 @@ const App = () => {
 };
 
 export default App;
-
-    
