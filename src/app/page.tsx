@@ -1,4 +1,5 @@
 
+
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import jsPDF from 'jspdf';
@@ -117,7 +118,6 @@ const App = () => {
             if (docSnap.exists()) {
                 const raffleData = docSnap.data();
                 let participant: Participant | undefined;
-                let isNew = false;
     
                 // If participantData is provided, it's a new registration post-payment
                 if (participantData && participantData.raffleNumber) {
@@ -132,13 +132,12 @@ const App = () => {
                     const updatedParticipants = [...raffleData.participants, newParticipant];
                     await setDoc(raffleDocRef, { participants: updatedParticipants }, { merge: true });
                     participant = newParticipant;
-                    isNew = true;
 
                     // Generate ticket for the new participant
                     handleGenerateTicket(newParticipant);
 
                 } else if (participantId) { 
-                    // This handles manual confirmation by admin or legacy payment link returns
+                    // This handles manual confirmation by admin
                     const numericParticipantId = parseInt(participantId, 10);
                     const currentParticipant = raffleData.participants.find((p: Participant) => p.id === numericParticipantId);
                     
@@ -161,7 +160,6 @@ const App = () => {
             console.error("Error confirming participant payment:", error);
             showNotification('Error al confirmar el pago del participante.', 'error');
         } finally {
-            // Clean URL but don't reload if it's a manual confirmation from admin view
             if (window.location.search.includes('status=APPROVED')) {
                 const url = new URL(window.location.href);
                 url.searchParams.delete('status');
@@ -1211,6 +1209,7 @@ const App = () => {
                                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
                                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Celular</th>
                                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Número</th>
+                                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acción</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="bg-white divide-y divide-gray-200">
@@ -1223,6 +1222,11 @@ const App = () => {
                                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{p.name}</td>
                                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{p.phoneNumber}</td>
                                                         <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-purple-600">{p.raffleNumber}</td>
+                                                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                                            <Button onClick={() => handleGenerateTicket(p)} size="sm" variant="outline">
+                                                                Generar Tiquete
+                                                            </Button>
+                                                        </td>
                                                     </tr>
                                                 ))}
                                             </tbody>
