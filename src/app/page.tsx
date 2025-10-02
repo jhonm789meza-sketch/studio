@@ -671,7 +671,10 @@ const App = () => {
                             {!raffleState.winner.isHouse && (
                             <>
                                 <p><strong>Nombre:</strong> {raffleState.winner.name}</p>
-                                <p><strong>Teléfono:</strong> <a href={`https://wa.me/${raffleState.winner.phoneNumber}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{raffleState.winner.phoneNumber}</a></p>
+                                <p><strong>Teléfono:</strong> {isCurrentUserAdmin ? 
+                                    <a href={`https://wa.me/${raffleState.winner.phoneNumber}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{raffleState.winner.phoneNumber}</a>
+                                    : <span>{raffleState.winner.phoneNumber}</span>
+                                }</p>
                             </>
                             )}
                         </div>
@@ -1097,7 +1100,7 @@ const App = () => {
                                 <DropdownMenuItem onSelect={() => setIsAdminLoginOpen(true)}>
                                     Buscar por Referencia
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onSelect={handleTalkToAdmin}>
+                                <DropdownMenuItem onSelect={handleTalkToAdmin} >
                                     <MessageCircle className="mr-2 h-4 w-4" />
                                     <span>Hablar con Administrador</span>
                                 </DropdownMenuItem>
