@@ -13,7 +13,7 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House, Share2, Copy, Upload, Clock, Ticket, Users, Link } from 'lucide-react';
+import { Menu, Award, Lock, House, Share2, Copy, Upload, Clock, Ticket, Users, Link, MessageCircle } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -42,6 +42,7 @@ const initialRaffleData = {
     lottery: '',
     customLottery: '',
     organizerName: '',
+    organizerPhoneNumber: '',
     participants: [] as Participant[],
     raffleRef: '',
     winner: null,
@@ -626,6 +627,13 @@ const App = () => {
         setIsShareDialogOpen(false);
     };
 
+    const handleTalkToAdmin = () => {
+        if (!raffleState || !raffleState.organizerPhoneNumber) return;
+        const message = encodeURIComponent('Hola, te contacto sobre la rifa. Aquí está mi comprobante de pago.');
+        const whatsappUrl = `https://wa.me/${raffleState.organizerPhoneNumber}?text=${message}`;
+        window.open(whatsappUrl, '_blank');
+    };
+
     const allNumbers = raffleMode === 'two-digit'
         ? Array.from({ length: 100 }, (_, i) => i)
         : Array.from({ length: 900 }, (_, i) => i + 100);
@@ -687,6 +695,19 @@ const App = () => {
                                className="w-full mt-1"
                            />
                        </div>
+                       <div>
+                            <Label htmlFor="organizer-phone-input">Teléfono del Organizador:</Label>
+                            <Input
+                                id="organizer-phone-input"
+                                type="tel"
+                                value={raffleState.organizerPhoneNumber}
+                                onChange={(e) => handleLocalFieldChange('organizerPhoneNumber', e.target.value.replace(/\D/g, ''))}
+                                onBlur={(e) => handleFieldChange('organizerPhoneNumber', e.target.value.replace(/\D/g, ''))}
+                                placeholder="Ej: 573001234567"
+                                disabled={raffleState.isDetailsConfirmed || !isCurrentUserAdmin}
+                                className="w-full mt-1"
+                            />
+                        </div>
                        <div>
                            <Label htmlFor="prize-input">Premio:</Label>
                            <Input
@@ -1072,6 +1093,10 @@ const App = () => {
                             <DropdownMenuContent>
                                 <DropdownMenuItem onSelect={() => setIsAdminLoginOpen(true)}>
                                     Buscar por Referencia
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onSelect={handleTalkToAdmin} disabled={!raffleState || !raffleState.organizerPhoneNumber}>
+                                    <MessageCircle className="mr-2 h-4 w-4" />
+                                    <span>Hablar con Administrador</span>
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onSelect={() => setIsShareDialogOpen(true)} disabled={!raffleState}>
                                     <Share2 className="mr-2 h-4 w-4" />
