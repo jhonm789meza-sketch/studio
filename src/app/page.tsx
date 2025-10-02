@@ -628,7 +628,10 @@ const App = () => {
     };
 
     const handleTalkToAdmin = () => {
-        if (!raffleState || !raffleState.organizerPhoneNumber) return;
+        if (!raffleState || !raffleState.organizerPhoneNumber) {
+            showNotification('El número del administrador no está configurado.', 'warning');
+            return;
+        }
         const message = encodeURIComponent('Hola, te contacto sobre la rifa. Aquí está mi comprobante de pago.');
         const whatsappUrl = `https://wa.me/${raffleState.organizerPhoneNumber}?text=${message}`;
         window.open(whatsappUrl, '_blank');
@@ -1094,7 +1097,7 @@ const App = () => {
                                 <DropdownMenuItem onSelect={() => setIsAdminLoginOpen(true)}>
                                     Buscar por Referencia
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onSelect={handleTalkToAdmin} disabled={!raffleState || !raffleState.organizerPhoneNumber}>
+                                <DropdownMenuItem onSelect={handleTalkToAdmin}>
                                     <MessageCircle className="mr-2 h-4 w-4" />
                                     <span>Hablar con Administrador</span>
                                 </DropdownMenuItem>
