@@ -1115,11 +1115,7 @@ const App = () => {
                         <h1 className="text-4xl font-bold">Tablero de Rifa</h1>
                     </div>
                     <div>
-                         {raffleState && (
-                            <Button onClick={handleTalkToAdmin} variant="ghost" size="icon" className="text-white hover:bg-white/20">
-                                <WhatsappIcon />
-                            </Button>
-                        )}
+                        {/* The WhatsApp icon was here */}
                     </div>
                 </div>
 
@@ -1201,6 +1197,13 @@ const App = () => {
                                 disabled={!raffleState}
                             >
                                 <Users className="h-5 w-5 hidden md:inline"/> Participantes
+                            </button>
+                            <button 
+                                className="flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap text-gray-500 hover:text-gray-700"
+                                onClick={handleTalkToAdmin}
+                                disabled={!raffleState?.organizerPhoneNumber}
+                            >
+                                <MessageCircle className="h-5 w-5 hidden md:inline"/> Hablar con Admin
                             </button>
                         </div>
 
