@@ -1100,7 +1100,7 @@ const App = () => {
                                 <DropdownMenuItem onSelect={() => setIsAdminLoginOpen(true)}>
                                     Buscar por Referencia
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onSelect={handleTalkToAdmin} >
+                                <DropdownMenuItem onSelect={handleTalkToAdmin}>
                                     <MessageCircle className="mr-2 h-4 w-4" />
                                     <span>Hablar con Administrador</span>
                                 </DropdownMenuItem>
@@ -1201,12 +1201,6 @@ const App = () => {
                                 disabled={!raffleState}
                             >
                                 <Users className="h-5 w-5 hidden md:inline"/> Participantes
-                            </button>
-                            <button 
-                                className="flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap text-gray-500 hover:text-gray-700"
-                                onClick={handleTalkToAdmin}
-                            >
-                                <WhatsappIcon /> Hablar con Admin
                             </button>
                         </div>
 
