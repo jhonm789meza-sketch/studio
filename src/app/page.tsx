@@ -1100,10 +1100,6 @@ const App = () => {
                                 <DropdownMenuItem onSelect={() => setIsAdminLoginOpen(true)}>
                                     Buscar por Referencia
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onSelect={handleTalkToAdmin} >
-                                    <MessageCircle className="mr-2 h-4 w-4" />
-                                    <span>Hablar con Administrador</span>
-                                </DropdownMenuItem>
                                 <DropdownMenuItem onSelect={() => setIsShareDialogOpen(true)} disabled={!raffleState}>
                                     <Share2 className="mr-2 h-4 w-4" />
                                     <span>Compartir</span>
