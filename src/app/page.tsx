@@ -684,7 +684,12 @@ const App = () => {
                     {raffleState.isDetailsConfirmed && raffleState.raffleRef && (
                         <div className="mb-4">
                             <p className="text-sm text-gray-500">Referencia del Juego</p>
-                            <p className="text-2xl font-bold text-gray-800 tracking-wider">{raffleState.raffleRef}</p>
+                            <div className="flex items-center gap-4">
+                                <p className="text-2xl font-bold text-gray-800 tracking-wider">{raffleState.raffleRef}</p>
+                                <button onClick={handleTalkToAdmin} className="p-2 rounded-full hover:bg-gray-100">
+                                    <WhatsappIcon />
+                                </button>
+                            </div>
                         </div>
                     )}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
@@ -1165,27 +1170,27 @@ const App = () => {
                     </div>
                 ) : (
                     <>
-                        <div className="relative border-b border-gray-200">
+                        <div className="border-b border-gray-200">
                             <div className="flex overflow-x-auto">
                                 <button 
                                     className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'board' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
                                     onClick={() => handleTabClick('board')}
                                 >
-                                    <Ticket className="h-5 w-5 hidden md:inline"/> Tablero
+                                    <Ticket className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">Tablero</span>
                                 </button>
                                 <button 
                                     className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'register' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
                                     onClick={() => handleTabClick('register')}
                                     disabled={!raffleState}
                                 >
-                                    Registrar
+                                    <span className="md:hidden">✏️</span> <span className="hidden md:inline">Registrar</span>
                                 </button>
                                 {isCurrentUserAdmin && (
                                    <button 
                                        className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'pending' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
                                        onClick={() => handleTabClick('pending')}
                                    >
-                                       <Clock className="h-5 w-5 hidden md:inline"/> Pendientes ({pendingParticipants.length})
+                                       <Clock className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">Pendientes ({pendingParticipants.length})</span>
                                    </button>
                                 )}
                                 <button 
@@ -1193,14 +1198,9 @@ const App = () => {
                                     onClick={() => handleTabClick('participants')}
                                     disabled={!raffleState}
                                 >
-                                    <Users className="h-5 w-5 hidden md:inline"/> Participantes
+                                    <Users className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">Participantes</span>
                                 </button>
                             </div>
-                             {raffleState && (
-                                <button onClick={handleTalkToAdmin} className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full hover:bg-gray-100">
-                                    <WhatsappIcon />
-                                </button>
-                            )}
                         </div>
 
                         <div className="p-6">
