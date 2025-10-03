@@ -707,7 +707,7 @@ const App = () => {
                                 id="organizer-phone-input"
                                 type="tel"
                                 value={raffleState.organizerPhoneNumber}
-                                onChange={(e) => handleLocalFieldChange('organizerPhoneNumber', e.target.value.replace(/\D/g, ''))}
+                               onChange={(e) => handleLocalFieldChange('organizerPhoneNumber', e.target.value.replace(/\D/g, ''))}
                                 onBlur={(e) => handleFieldChange('organizerPhoneNumber', e.target.value.replace(/\D/g, ''))}
                                 placeholder="Ej: 573001234567"
                                 disabled={raffleState.isDetailsConfirmed || !isCurrentUserAdmin}
@@ -1100,7 +1100,7 @@ const App = () => {
                                 <DropdownMenuItem onSelect={() => setIsAdminLoginOpen(true)}>
                                     Buscar por Referencia
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onSelect={handleTalkToAdmin} >
+                                <DropdownMenuItem onSelect={handleTalkToAdmin}>
                                     <MessageCircle className="mr-2 h-4 w-4" />
                                     <span>Hablar con Administrador</span>
                                 </DropdownMenuItem>
@@ -1114,12 +1114,8 @@ const App = () => {
                     <div className="text-center">
                         <h1 className="text-4xl font-bold">Tablero de Rifa</h1>
                     </div>
-                    <div>
-                        {raffleState && (
-                            <Button variant="ghost" size="icon" className="text-white hover:bg-white/20" onClick={handleTalkToAdmin}>
-                                <WhatsappIcon />
-                            </Button>
-                        )}
+                    <div className="w-10">
+                        {/* Placeholder for symmetry */}
                     </div>
                 </div>
 
