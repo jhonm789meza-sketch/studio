@@ -1114,7 +1114,13 @@ const App = () => {
                     <div className="text-center">
                         <h1 className="text-4xl font-bold">Tablero de Rifa</h1>
                     </div>
-                    <div></div>
+                    <div>
+                         {raffleState && (
+                            <Button onClick={handleTalkToAdmin} variant="ghost" size="icon" className="text-white hover:bg-white/20">
+                                <WhatsappIcon />
+                            </Button>
+                        )}
+                    </div>
                 </div>
 
                 {!raffleState ? (
