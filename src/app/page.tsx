@@ -392,6 +392,11 @@ const App = () => {
     
             const paymentUrl = new URL(raffleState.paymentLink);
             paymentUrl.searchParams.set('redirectUrl', confirmationUrl.toString());
+
+            const ticketValue = raffleState.value.replace(/[^\d]/g, '');
+            if (ticketValue) {
+                paymentUrl.searchParams.set('value', ticketValue);
+            }
     
             window.location.href = paymentUrl.toString();
         } else {
@@ -554,12 +559,29 @@ const App = () => {
             const newRaffleData = {
                 ...initialRaffleData,
                 raffleMode: mode,
-                adminId: currentAdminId,
-                isPaid: true, // Activate immediately
                 raffleRef: newRef,
+                adminId: currentAdminId,
+                // isPaid is set on confirmation from payment link or if no link is provided.
+                isPaid: false, 
             };
             await setDoc(doc(db, "raffles", newRef), newRaffleData);
-            await handleAdminSearch(newRef, true);
+
+            if (raffleState?.paymentLink) {
+                 const activationUrl = new URL(window.location.origin + window.location.pathname);
+                 activationUrl.searchParams.set('ref', newRef);
+                 activationUrl.searchParams.set('status', 'APPROVED');
+
+                 const paymentUrl = new URL(raffleState.paymentLink);
+                 paymentUrl.searchParams.set('redirectUrl', activationUrl.toString());
+                 const activationCost = mode === 'two-digit' ? '1500' : '15000';
+                 paymentUrl.searchParams.set('value', activationCost);
+                 
+                 window.location.href = paymentUrl.toString();
+            } else {
+                 await setDoc(doc(db, "raffles", newRef), { isPaid: true }, { merge: true });
+                 await handleAdminSearch(newRef, true);
+            }
+
         } catch (error) {
             console.error("Error activating board:", error);
             showNotification("Error al activar el tablero.", "error");
