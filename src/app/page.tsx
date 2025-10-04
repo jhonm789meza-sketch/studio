@@ -13,7 +13,7 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House, Share2, Copy, Upload, Clock, Ticket, Users, Link, MessageCircle } from 'lucide-react';
+import { Menu, Award, Lock, House, Share2, Copy, Upload, Clock, Ticket, Users, Link, MessageCircle, DollarSign } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -77,6 +77,7 @@ const App = () => {
     const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
     const [isShareDialogOpen, setIsShareDialogOpen]    = useState(false);
     const [isPrizeModalOpen, setIsPrizeModalOpen] = useState(false);
+    const [isSalesModalOpen, setIsSalesModalOpen] = useState(false);
     const [adminRefSearch, setAdminRefSearch] = useState('');
     const [showConfetti, setShowConfetti] = useState(false);
     const [currentAdminId, setCurrentAdminId] = useState<string | null>(null);
@@ -266,7 +267,7 @@ const App = () => {
         setShowConfirmation(true);
     };
     
-    const formatValue = (rawValue: string) => {
+    const formatValue = (rawValue: string | number) => {
         if (!rawValue) return '';
         const numericValue = rawValue.toString().replace(/[^\d]/g, '');
         if (numericValue === '') return '';
@@ -294,6 +295,7 @@ const App = () => {
     
     const allAssignedNumbers = new Set(raffleState?.participants.map((p: Participant) => parseInt(p.raffleNumber, 10)) || []);
     const pendingParticipants = raffleState?.participants.filter((p: Participant) => p.paymentStatus === 'pending') || [];
+    const confirmedParticipants = raffleState?.participants.filter((p: Participant) => p.paymentStatus === 'confirmed') || [];
 
     const toggleNumber = (number: number) => {
         if (!raffleState) return;
@@ -394,7 +396,7 @@ const App = () => {
             const paymentUrl = new URL(raffleState.paymentLink);
             paymentUrl.searchParams.set('redirectUrl', confirmationUrl.toString());
 
-            const ticketValue = raffleState.value.replace(/[^\d]/g, '');
+            const ticketValue = String(raffleState.value).replace(/[^\d]/g, '');
             if (ticketValue) {
                 paymentUrl.searchParams.set('value', ticketValue);
             }
@@ -562,7 +564,6 @@ const App = () => {
                 raffleMode: mode,
                 raffleRef: newRef,
                 adminId: currentAdminId,
-                // isPaid is set on confirmation from payment link or if no link is provided.
                 isPaid: false, 
             };
             await setDoc(doc(db, "raffles", newRef), newRaffleData);
@@ -655,7 +656,7 @@ const App = () => {
             showNotification('El número del administrador no está configurado.', 'warning');
             return;
         }
-        const message = encodeURIComponent('Hola, te contacto sobre la rifa. Aquí está mi comprobante de pago.');
+        const message = encodeURIComponent('Hola, te contacto sobre la rifa.');
         const whatsappUrl = `https://wa.me/${raffleState.organizerPhoneNumber}?text=${message}`;
         window.open(whatsappUrl, '_blank');
     };
@@ -666,6 +667,8 @@ const App = () => {
 
     const confirmedNumbers = new Set(raffleState?.participants.filter((p: Participant) => p.paymentStatus === 'confirmed').map((p: Participant) => parseInt(p.raffleNumber, 10)) || []);
     
+    const totalCollected = (confirmedParticipants.length * (parseInt(String(raffleState?.value).replace(/[^\d]/g, ''), 10) || 0));
+
     if (loading) {
         return <div className="flex justify-center items-center h-screen text-xl font-semibold">Cargando...</div>;
     }
@@ -707,7 +710,7 @@ const App = () => {
                     {raffleState.isDetailsConfirmed && raffleState.raffleRef && (
                         <div className="mb-4">
                             <p className="text-sm text-gray-500">Referencia del Juego</p>
-                            <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-2">
                                 <p className="text-2xl font-bold text-gray-800 tracking-wider">{raffleState.raffleRef}</p>
                                 <button onClick={handleTalkToAdmin} className="p-2 rounded-full hover:bg-gray-100">
                                     <WhatsappIcon />
@@ -1224,9 +1227,16 @@ const App = () => {
                                     <Users className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">Participantes</span>
                                 </button>
                                 {raffleState && (
-                                <button onClick={() => setIsPrizeModalOpen(true)} className="p-2 ml-2 my-auto rounded-full hover:bg-gray-100">
-                                    <Award className="h-5 w-5 text-yellow-500" />
-                                </button>
+                                    <>
+                                        <button onClick={() => setIsPrizeModalOpen(true)} className="p-2 ml-2 my-auto rounded-full hover:bg-gray-100">
+                                            <Award className="h-5 w-5 text-yellow-500" />
+                                        </button>
+                                        {isCurrentUserAdmin && (
+                                            <button onClick={() => setIsSalesModalOpen(true)} className="p-2 ml-1 my-auto rounded-full hover:bg-gray-100">
+                                                <DollarSign className="h-5 w-5 text-green-500" />
+                                            </button>
+                                        )}
+                                    </>
                                 )}
                             </div>
                         </div>
@@ -1396,7 +1406,7 @@ const App = () => {
                                         <p className="font-bold">Aviso</p>
                                         <p>Debes activar o buscar una rifa en la pestaña "Tablero" para poder ver los participantes.</p>
                                     </div>
-                                ) : raffleState.participants.filter((p: Participant) => p.paymentStatus === 'confirmed').length > 0 ? (
+                                ) : confirmedParticipants.length > 0 ? (
                                     <div className="overflow-x-auto">
                                         <table className="min-w-full divide-y divide-gray-200">
                                             <thead className="bg-gray-50">
@@ -1409,8 +1419,7 @@ const App = () => {
                                                 </tr>
                                             </thead>
                                             <tbody className="bg-white divide-y divide-gray-200">
-                                                {raffleState.participants
-                                                    .filter((p: Participant) => p.paymentStatus === 'confirmed')
+                                                {confirmedParticipants
                                                     .sort((a: Participant, b: Participant) => a.raffleNumber.localeCompare(b.raffleNumber))
                                                     .map((p: any, index: number) => (
                                                     <tr key={p.id}>
@@ -1645,6 +1654,25 @@ const App = () => {
                     )}
                     <DialogFooter>
                         <Button type="button" onClick={() => setIsPrizeModalOpen(false)}>Cerrar</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+             <Dialog open={isSalesModalOpen} onOpenChange={setIsSalesModalOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Recaudo de Ventas</DialogTitle>
+                        <DialogDescription>
+                           Total recaudado hasta el momento.
+                        </DialogDescription>
+                    </DialogHeader>
+                    {raffleState && (
+                    <div className="py-4">
+                        <p><strong>Boletas Vendidas:</strong> {confirmedParticipants.length}</p>
+                        <p><strong>Total Recaudado:</strong> {formatValue(totalCollected)}</p>
+                    </div>
+                    )}
+                    <DialogFooter>
+                        <Button type="button" onClick={() => setIsSalesModalOpen(false)}>Cerrar</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
