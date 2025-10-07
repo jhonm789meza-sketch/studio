@@ -76,7 +76,6 @@ const App = () => {
     
     const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
     const [isShareDialogOpen, setIsShareDialogOpen]    = useState(false);
-    const [isSalesModalOpen, setIsSalesModalOpen] = useState(false);
     const [adminRefSearch, setAdminRefSearch] = useState('');
     const [showConfetti, setShowConfetti] = useState(false);
     const [currentAdminId, setCurrentAdminId] = useState<string | null>(null);
@@ -666,7 +665,6 @@ const App = () => {
 
     const confirmedNumbers = new Set(raffleState?.participants.filter((p: Participant) => p.paymentStatus === 'confirmed').map((p: Participant) => parseInt(p.raffleNumber, 10)) || []);
     
-    const totalCollected = (confirmedParticipants.length * (parseInt(String(raffleState?.value).replace(/[^\d]/g, ''), 10) || 0));
 
     if (loading) {
         return <div className="flex justify-center items-center h-screen text-xl font-semibold">Cargando...</div>;
@@ -1225,15 +1223,6 @@ const App = () => {
                                 >
                                     <Users className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">Participantes</span>
                                 </button>
-                                {raffleState && (
-                                    <>
-                                        {isCurrentUserAdmin && (
-                                            <button onClick={() => setIsSalesModalOpen(true)} className="p-2 ml-1 my-auto rounded-full hover:bg-gray-100">
-                                                <DollarSign className="h-5 w-5 text-green-500" />
-                                            </button>
-                                        )}
-                                    </>
-                                )}
                             </div>
                         </div>
                         <div className="p-6">
@@ -1632,25 +1621,6 @@ const App = () => {
                     </div>
                      <DialogFooter>
                         <Button type="button" variant="outline" onClick={() => setIsShareDialogOpen(false)}>Cerrar</Button>                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-             <Dialog open={isSalesModalOpen} onOpenChange={setIsSalesModalOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Recaudo de Ventas</DialogTitle>
-                        <DialogDescription>
-                           Total recaudado hasta el momento.
-                        </DialogDescription>
-                    </DialogHeader>
-                    {raffleState && (
-                    <div className="py-4">
-                        <p><strong>Boletas Vendidas:</strong> {confirmedParticipants.length}</p>
-                        <p><strong>Total Recaudado:</strong> {formatValue(totalCollected)}</p>
-                    </div>
-                    )}
-                    <DialogFooter>
-                        <Button type="button" onClick={() => setIsSalesModalOpen(false)}>Cerrar</Button>
-                    </DialogFooter>
                 </DialogContent>
             </Dialog>
         </div>
