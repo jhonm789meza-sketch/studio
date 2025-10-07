@@ -76,7 +76,6 @@ const App = () => {
     
     const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
     const [isShareDialogOpen, setIsShareDialogOpen]    = useState(false);
-    const [isPrizeModalOpen, setIsPrizeModalOpen] = useState(false);
     const [isSalesModalOpen, setIsSalesModalOpen] = useState(false);
     const [adminRefSearch, setAdminRefSearch] = useState('');
     const [showConfetti, setShowConfetti] = useState(false);
@@ -1228,9 +1227,6 @@ const App = () => {
                                 </button>
                                 {raffleState && (
                                     <>
-                                        <button onClick={() => setIsPrizeModalOpen(true)} className="p-2 ml-2 my-auto rounded-full hover:bg-gray-100">
-                                            <Award className="h-5 w-5 text-yellow-500" />
-                                        </button>
                                         {isCurrentUserAdmin && (
                                             <button onClick={() => setIsSalesModalOpen(true)} className="p-2 ml-1 my-auto rounded-full hover:bg-gray-100">
                                                 <DollarSign className="h-5 w-5 text-green-500" />
@@ -1636,25 +1632,6 @@ const App = () => {
                     </div>
                      <DialogFooter>
                         <Button type="button" variant="outline" onClick={() => setIsShareDialogOpen(false)}>Cerrar</Button>                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-            <Dialog open={isPrizeModalOpen} onOpenChange={setIsPrizeModalOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Premio de la Rifa</DialogTitle>
-                        <DialogDescription>
-                           Detalles del premio que se está sorteando actualmente.
-                        </DialogDescription>
-                    </DialogHeader>
-                    {raffleState && (
-                    <div className="py-4">
-                        <p><strong>Premio:</strong> {raffleState.prize}</p>
-                        <p><strong>Valor:</strong> {formatValue(raffleState.value)}</p>
-                    </div>
-                    )}
-                    <DialogFooter>
-                        <Button type="button" onClick={() => setIsPrizeModalOpen(false)}>Cerrar</Button>
-                    </DialogFooter>
                 </DialogContent>
             </Dialog>
              <Dialog open={isSalesModalOpen} onOpenChange={setIsSalesModalOpen}>
