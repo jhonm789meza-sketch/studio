@@ -76,6 +76,7 @@ const App = () => {
     
     const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
     const [isShareDialogOpen, setIsShareDialogOpen]    = useState(false);
+    const [isSalesModalOpen, setIsSalesModalOpen] = useState(false);
     const [adminRefSearch, setAdminRefSearch] = useState('');
     const [showConfetti, setShowConfetti] = useState(false);
     const [currentAdminId, setCurrentAdminId] = useState<string | null>(null);
@@ -294,6 +295,8 @@ const App = () => {
     const allAssignedNumbers = new Set(raffleState?.participants.map((p: Participant) => parseInt(p.raffleNumber, 10)) || []);
     const pendingParticipants = raffleState?.participants.filter((p: Participant) => p.paymentStatus === 'pending') || [];
     const confirmedParticipants = raffleState?.participants.filter((p: Participant) => p.paymentStatus === 'confirmed') || [];
+
+    const totalCollected = confirmedParticipants.length * (raffleState?.value ? parseFloat(String(raffleState.value).replace(/[^\d]/g, '')) : 0);
 
     const toggleNumber = (number: number) => {
         if (!raffleState) return;
@@ -1223,6 +1226,14 @@ const App = () => {
                                 >
                                     <Users className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">Participantes</span>
                                 </button>
+                                {isCurrentUserAdmin && (
+                                   <button 
+                                       className="flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap text-gray-500 hover:text-gray-700"
+                                       onClick={() => setIsSalesModalOpen(true)}
+                                   >
+                                       <DollarSign className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">Recaudado</span>
+                                   </button>
+                                )}
                             </div>
                         </div>
                         <div className="p-6">
@@ -1621,6 +1632,30 @@ const App = () => {
                     </div>
                      <DialogFooter>
                         <Button type="button" variant="outline" onClick={() => setIsShareDialogOpen(false)}>Cerrar</Button>                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+             <Dialog open={isSalesModalOpen} onOpenChange={setIsSalesModalOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Recaudo de Ventas</DialogTitle>
+                        <DialogDescription>
+                            Aquí puedes ver el total recaudado hasta ahora.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4">
+                        <div className="flex justify-between items-center bg-gray-100 p-4 rounded-lg">
+                            <p className="font-semibold text-gray-600">Boletas Vendidas:</p>
+                            <p className="font-bold text-xl text-gray-800">{confirmedParticipants.length}</p>
+                        </div>
+                        <div className="flex justify-between items-center bg-green-100 p-4 rounded-lg mt-4">
+                            <p className="font-semibold text-green-800">Total Recaudado:</p>
+                            <p className="font-bold text-2xl text-green-800">{formatValue(totalCollected)}</p>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button type="button" variant="outline" onClick={() => setIsSalesModalOpen(false)}>Cerrar</Button>
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
         </div>
