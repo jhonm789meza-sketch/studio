@@ -36,7 +36,7 @@ const initialRaffleData = {
     name: '',
     phoneNumber: '',
     raffleNumber: '',
-    nequiAccountNumber: '3145696687',
+    nequiAccountNumber: '',
     paymentLink: '',
     gameDate: '',
     lottery: '',
@@ -173,10 +173,18 @@ const App = () => {
                 window.history.replaceState({}, '', url.toString());
 
                 if (participantData) {
+                     const now = new Date();
+                    const ticketData = {
+                        ...raffleState,
+                        name: participantData.name,
+                        phoneNumber: participantData.phoneNumber,
+                        raffleNumber: participantData.raffleNumber,
+                        date: format(now, 'PPP', { locale: es }),
+                        time: format(now, 'p', { locale: es }),
+                    };
+                    setGeneratedTicketData(ticketData);
                     await handleAdminSearch(raffleRef, true);
                     showNotification('¡Pago exitoso! Tu número ha sido registrado. Puedes generar tu tiquete en la pestaña "Participantes".', 'success');
-                } else {
-                     setLoading(false);
                 }
             } else {
                  if (activeTab !== 'pending') {
@@ -662,9 +670,7 @@ const App = () => {
         window.open(whatsappUrl, '_blank');
     };
 
-    const allNumbers = raffleMode === 'two-digit'
-        ? Array.from({ length: 100 }, (_, i) => i)
-        : Array.from({ length: 900 }, (_, i) => i + 100);
+    const allNumbers = Array.from({ length: totalNumbers }, (_, i) => i);
 
     const confirmedNumbers = new Set(raffleState?.participants.filter((p: Participant) => p.paymentStatus === 'confirmed').map((p: Participant) => parseInt(p.raffleNumber, 10)) || []);
     
@@ -1131,7 +1137,7 @@ const App = () => {
                                 <DropdownMenuItem onSelect={() => setIsAdminLoginOpen(true)}>
                                     Buscar por Referencia
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onSelect={() => setIsShareDialogOpen(true)} disabled={!raffleState}>
+                                <DropdownMenuItem onSelect={() => setIsShareDialogOpen(true)}>
                                     <Share2 className="mr-2 h-4 w-4" />
                                     <span>Compartir</span>
                                 </DropdownMenuItem>
@@ -1181,7 +1187,7 @@ const App = () => {
                                     </div>
                                     <div className="p-6 flex-grow">
                                         <h5 className="mb-1 text-xl font-bold tracking-tight text-gray-900">Rifa de 3 Cifras</h5>
-                                        <p className="font-normal text-gray-600 mb-4 text-sm">Para números del 100 al 999.</p>
+                                        <p className="font-normal text-gray-600 mb-4 text-sm">Para números del 000 al 999.</p>
                                         <Button onClick={() => handleActivateBoard('three-digit')} size="lg" className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold">
                                             Activar ($15.000 COP)
                                         </Button>
@@ -1228,7 +1234,7 @@ const App = () => {
                                 </button>
                                 {isCurrentUserAdmin && (
                                    <button 
-                                       className="flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap text-gray-500 hover:text-gray-700"
+                                       className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'recaudado' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
                                        onClick={() => setIsSalesModalOpen(true)}
                                    >
                                        <DollarSign className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">Recaudado</span>
@@ -1241,9 +1247,7 @@ const App = () => {
                                 {renderBoardContent()}
                             </div>
                             <div className={activeTab === 'register' ? 'tab-content active' : 'tab-content'}>
-                                {generatedTicketData ? (
-                                    <InlineTicket ticketData={generatedTicketData} />
-                                ) : (
+                               
                                     <>
                                         <h2 className="text-2xl font-bold text-gray-800 mb-4">Registrar Número</h2>
                                         
@@ -1282,7 +1286,7 @@ const App = () => {
                                                     </div>
 
                                                     <div>
-                                                        <Label htmlFor="raffle-number-input">Número de rifa ({raffleMode === 'two-digit' ? '00-99' : '100-999'}):</Label>
+                                                        <Label htmlFor="raffle-number-input">Número de rifa ({raffleMode === 'two-digit' ? '00-99' : '000-999'}):</Label>
                                                         <Input
                                                             id="raffle-number-input"
                                                             type="text"
@@ -1303,6 +1307,9 @@ const App = () => {
                                                                  <Link className="mr-2 h-4 w-4" />
                                                                  Pagar con Link y Registrar
                                                              </Button>
+                                                        )}
+                                                         {generatedTicketData && (
+                                                            <InlineTicket ticketData={generatedTicketData} />
                                                         )}
                                                         {raffleState?.nequiAccountNumber && raffleState?.value && (
                                                             <a 
@@ -1351,7 +1358,7 @@ const App = () => {
                                             </div>
                                         )}
                                     </>
-                                )}
+                                
                             </div>
                             {isCurrentUserAdmin && (
                                <div className={activeTab === 'pending' ? 'tab-content active' : 'tab-content'}>
@@ -1663,3 +1670,5 @@ const App = () => {
 };
 
 export default App;
+
+    
