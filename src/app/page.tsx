@@ -23,6 +23,7 @@ import { Switch } from '@/components/ui/switch';
 import type { Participant } from '@/lib/types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { Textarea } from '@/components/ui/textarea';
 
 type RaffleMode = 'two-digit' | 'three-digit';
 type Tab = 'board' | 'register' | 'participants' | 'pending';
@@ -83,6 +84,8 @@ const App = () => {
     const [adminRefSearch, setAdminRefSearch] = useState('');
     const [showConfetti, setShowConfetti] = useState(false);
     const [currentAdminId, setCurrentAdminId] = useState<string | null>(null);
+    const [isCollectiveMessageDialogOpen, setIsCollectiveMessageDialogOpen] = useState(false);
+    const [collectiveMessage, setCollectiveMessage] = useState('');
 
     const raffleManager = new RaffleManager(db);
     
@@ -396,7 +399,7 @@ const App = () => {
             return;
         }
     
-        if (paymentMethod === 'link' && raffleState.paymentLink) {
+        if (paymentMethod === 'link' && raffleState.paymentLink && raffleState.isPaymentLinkEnabled) {
             // Don't create participant yet. Redirect to payment and pass info in URL.
             const confirmationUrl = new URL(window.location.href);
             confirmationUrl.searchParams.set('status', 'APPROVED');
@@ -677,6 +680,21 @@ const App = () => {
         const message = encodeURIComponent('Hola, te contacto sobre la rifa.');
         const whatsappUrl = `https://wa.me/${raffleState.organizerPhoneNumber}?text=${message}`;
         window.open(whatsappUrl, '_blank');
+    };
+    
+    const handleSendCollectiveMessage = () => {
+        if (confirmedParticipants.length === 0) {
+            showNotification('No hay participantes confirmados para enviar un mensaje.', 'warning');
+            return;
+        }
+
+        const firstPhoneNumber = confirmedParticipants[0].phoneNumber;
+        const message = encodeURIComponent(collectiveMessage);
+        
+        const whatsappUrl = `https://wa.me/${firstPhoneNumber}?text=${message}`;
+        window.open(whatsappUrl, '_blank');
+        setIsCollectiveMessageDialogOpen(false);
+        setCollectiveMessage('');
     };
 
     const allNumbers = Array.from({ length: totalNumbers }, (_, i) => i);
@@ -1307,7 +1325,6 @@ const App = () => {
                                                                 onChange={(e) => handleLocalFieldChange('name', e.target.value)}
                                                                 placeholder="Ej: Juan Pérez"
                                                                 className="w-full mt-1"
-                                                                disabled={isCurrentUserAdmin}
                                                             />
                                                         </div>
                                                         <div>
@@ -1319,7 +1336,6 @@ const App = () => {
                                                                 onChange={(e) => handleLocalFieldChange('phoneNumber', e.target.value.replace(/\D/g, ''))}
                                                                 placeholder="Ej: 3001234567"
                                                                 className="w-full mt-1"
-                                                                disabled={isCurrentUserAdmin}
                                                             />
                                                         </div>
                                                     </div>
@@ -1334,7 +1350,6 @@ const App = () => {
                                                             placeholder={`Ej: ${raffleMode === 'two-digit' ? '05' : '142'}`}
                                                             className="w-full mt-1"
                                                             maxLength={numberLength}
-                                                            disabled={isCurrentUserAdmin}
                                                         />
                                                         {raffleState?.raffleNumber && allAssignedNumbers.has(parseInt(raffleState.raffleNumber)) && (
                                                             <p className="text-red-500 text-sm mt-1">Este número ya está asignado.</p>
@@ -1342,13 +1357,13 @@ const App = () => {
                                                     </div>
                                                     
                                                     <div className="flex flex-wrap gap-2">
-                                                        {raffleState?.paymentLink && raffleState?.isPaymentLinkEnabled && !isCurrentUserAdmin && (
+                                                        {raffleState?.paymentLink && raffleState?.isPaymentLinkEnabled && (
                                                              <Button onClick={() => handleRegisterParticipant('link')} className="w-full bg-blue-500 hover:bg-blue-600 text-white" disabled={!isRegisterFormValidForSubmit}>
                                                                  <Link className="mr-2 h-4 w-4" />
                                                                  Pagar con Link y Registrar
                                                              </Button>
                                                         )}
-                                                        {raffleState?.nequiAccountNumber && raffleState?.value && raffleState?.isNequiEnabled && !isCurrentUserAdmin && (
+                                                        {raffleState?.nequiAccountNumber && raffleState?.value && raffleState?.isNequiEnabled && (
                                                             <a 
                                                                 href={`nequi://app/pay?phoneNumber=${raffleState.nequiAccountNumber}&value=${String(raffleState.value).replace(/\D/g, '')}&currency=COP&description=Pago Rifa`}
                                                                 target="_blank" 
@@ -1369,7 +1384,7 @@ const App = () => {
                                                             </a>
                                                         )}
                                                     </div>
-                                                    {!isCurrentUserAdmin && (!raffleState?.isPaymentLinkEnabled && !raffleState?.isNequiEnabled) && (
+                                                    { (isCurrentUserAdmin || (!raffleState?.isPaymentLinkEnabled && !raffleState?.isNequiEnabled)) && (
                                                         <Button
                                                             onClick={() => handleRegisterParticipant('manual')}
                                                             disabled={!isRegisterFormValidForSubmit}
@@ -1378,15 +1393,6 @@ const App = () => {
                                                             Registrar Número (pago manual pendiente)
                                                         </Button>
                                                      )}
-                                                     {isCurrentUserAdmin && (
-                                                        <Button
-                                                            onClick={() => handleRegisterParticipant('manual')}
-                                                            disabled={!isRegisterFormValidForSubmit}
-                                                            className="w-full px-4 py-2 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-                                                        >
-                                                            Registrar Número (pago manual pendiente)
-                                                        </Button>
-                                                    )}
                                                 </div>
                                                 {generatedTicketData && (
                                                     <InlineTicket ticketData={generatedTicketData} />
@@ -1450,6 +1456,12 @@ const App = () => {
                             <div className={activeTab === 'participants' ? 'tab-content active' : 'tab-content'}>
                                 <div className="flex justify-between items-center mb-4">
                                         <h2 className="text-2xl font-bold text-gray-800">Participantes Confirmados</h2>
+                                        {isCurrentUserAdmin && confirmedParticipants.length > 0 && (
+                                            <Button onClick={() => setIsCollectiveMessageDialogOpen(true)} size="sm">
+                                                <MessageCircle className="mr-2 h-4 w-4" />
+                                                Enviar Mensaje Colectivo
+                                            </Button>
+                                        )}
                                 </div>
 
                                 {!raffleState ? (
@@ -1710,6 +1722,32 @@ const App = () => {
                     </div>
                     <DialogFooter>
                         <Button type="button" variant="outline" onClick={() => setIsSalesModalOpen(false)}>Cerrar</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={isCollectiveMessageDialogOpen} onOpenChange={setIsCollectiveMessageDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Enviar Mensaje Colectivo</DialogTitle>
+                        <DialogDescription>
+                            Escribe un mensaje para enviarlo a todos los participantes confirmados. Esto abrirá WhatsApp.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <Textarea
+                            placeholder="Tu mensaje aquí..."
+                            value={collectiveMessage}
+                            onChange={(e) => setCollectiveMessage(e.target.value)}
+                            rows={5}
+                        />
+                    </div>
+                    <DialogFooter>
+                        <Button type="button" variant="outline" onClick={() => setIsCollectiveMessageDialogOpen(false)}>Cancelar</Button>
+                        <Button type="button" onClick={handleSendCollectiveMessage} disabled={!collectiveMessage.trim()}>
+                            <WhatsappIcon />
+                            <span className="ml-2">Abrir WhatsApp con Mensaje</span>
+                        </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
