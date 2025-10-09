@@ -19,6 +19,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Confetti } from '@/components/confetti';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Switch } from '@/components/ui/switch';
 import type { Participant } from '@/lib/types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -38,6 +39,8 @@ const initialRaffleData = {
     raffleNumber: '',
     nequiAccountNumber: '',
     paymentLink: '',
+    isPaymentLinkEnabled: true,
+    isNequiEnabled: true,
     gameDate: '',
     lottery: '',
     customLottery: '',
@@ -560,6 +563,12 @@ const App = () => {
 
     const handleFieldChange = async (field: string, value: any) => {
         if (!raffleState || !raffleState.raffleRef || raffleState.isDetailsConfirmed) return;
+        handleLocalFieldChange(field, value);
+        await setDoc(doc(db, "raffles", raffleState.raffleRef), { [field]: value }, { merge: true });
+    };
+
+    const handlePaymentMethodToggle = async (field: string, value: boolean) => {
+        if (!raffleState || !raffleState.raffleRef || !isCurrentUserAdmin) return;
         handleLocalFieldChange(field, value);
         await setDoc(doc(db, "raffles", raffleState.raffleRef), { [field]: value }, { merge: true });
     };
@@ -1251,12 +1260,40 @@ const App = () => {
                                     <>
                                         <h2 className="text-2xl font-bold text-gray-800 mb-4">Registrar Número</h2>
                                         
-                                        {isCurrentUserAdmin ? (
-                                            <div className="bg-blue-50 border-l-4 border-blue-500 text-blue-800 p-4 mt-6" role="alert">
-                                                <p className="font-bold">Función de Administrador</p>
-                                                <p>Como administrador, no puedes registrar participantes. Esta sección es solo para que los jugadores registren sus propios números.</p>
+                                        {isCurrentUserAdmin && (
+                                            <div className="bg-gray-100 p-4 rounded-lg mb-6 space-y-4">
+                                                <h3 className="font-semibold text-lg text-gray-800">Controles de Administrador</h3>
+                                                <div className="flex items-center justify-between">
+                                                    <Label htmlFor="enable-payment-link" className="flex flex-col space-y-1">
+                                                        <span>Habilitar Pago con Link</span>
+                                                        <span className="font-normal leading-snug text-muted-foreground text-sm">
+                                                            Permite a los usuarios pagar usando el enlace de pago.
+                                                        </span>
+                                                    </Label>
+                                                    <Switch
+                                                        id="enable-payment-link"
+                                                        checked={raffleState?.isPaymentLinkEnabled ?? true}
+                                                        onCheckedChange={(checked) => handlePaymentMethodToggle('isPaymentLinkEnabled', checked)}
+                                                        disabled={!raffleState?.paymentLink}
+                                                    />
+                                                </div>
+                                                <div className="flex items-center justify-between">
+                                                    <Label htmlFor="enable-nequi" className="flex flex-col space-y-1">
+                                                        <span>Habilitar Pago con Nequi</span>
+                                                         <span className="font-normal leading-snug text-muted-foreground text-sm">
+                                                            Permite a los usuarios pagar usando el botón de Nequi.
+                                                        </span>
+                                                    </Label>
+                                                    <Switch
+                                                        id="enable-nequi"
+                                                        checked={raffleState?.isNequiEnabled ?? true}
+                                                        onCheckedChange={(checked) => handlePaymentMethodToggle('isNequiEnabled', checked)}
+                                                        disabled={!raffleState?.nequiAccountNumber}
+                                                    />
+                                                </div>
                                             </div>
-                                        ) : (
+                                        )}
+
                                             <fieldset disabled={!raffleState || raffleState?.isWinnerConfirmed || !raffleState?.isDetailsConfirmed} className="disabled:opacity-50 space-y-4">
                                                 <div className="flex flex-col gap-4">
 
@@ -1270,6 +1307,7 @@ const App = () => {
                                                                 onChange={(e) => handleLocalFieldChange('name', e.target.value)}
                                                                 placeholder="Ej: Juan Pérez"
                                                                 className="w-full mt-1"
+                                                                disabled={isCurrentUserAdmin}
                                                             />
                                                         </div>
                                                         <div>
@@ -1281,6 +1319,7 @@ const App = () => {
                                                                 onChange={(e) => handleLocalFieldChange('phoneNumber', e.target.value.replace(/\D/g, ''))}
                                                                 placeholder="Ej: 3001234567"
                                                                 className="w-full mt-1"
+                                                                disabled={isCurrentUserAdmin}
                                                             />
                                                         </div>
                                                     </div>
@@ -1295,6 +1334,7 @@ const App = () => {
                                                             placeholder={`Ej: ${raffleMode === 'two-digit' ? '05' : '142'}`}
                                                             className="w-full mt-1"
                                                             maxLength={numberLength}
+                                                            disabled={isCurrentUserAdmin}
                                                         />
                                                         {raffleState?.raffleNumber && allAssignedNumbers.has(parseInt(raffleState.raffleNumber)) && (
                                                             <p className="text-red-500 text-sm mt-1">Este número ya está asignado.</p>
@@ -1302,16 +1342,13 @@ const App = () => {
                                                     </div>
                                                     
                                                     <div className="flex flex-wrap gap-2">
-                                                        {raffleState?.paymentLink && (
+                                                        {raffleState?.paymentLink && raffleState?.isPaymentLinkEnabled && !isCurrentUserAdmin && (
                                                              <Button onClick={() => handleRegisterParticipant('link')} className="w-full bg-blue-500 hover:bg-blue-600 text-white" disabled={!isRegisterFormValidForSubmit}>
                                                                  <Link className="mr-2 h-4 w-4" />
                                                                  Pagar con Link y Registrar
                                                              </Button>
                                                         )}
-                                                         {generatedTicketData && (
-                                                            <InlineTicket ticketData={generatedTicketData} />
-                                                        )}
-                                                        {raffleState?.nequiAccountNumber && raffleState?.value && (
+                                                        {raffleState?.nequiAccountNumber && raffleState?.value && raffleState?.isNequiEnabled && !isCurrentUserAdmin && (
                                                             <a 
                                                                 href={`nequi://app/pay?phoneNumber=${raffleState.nequiAccountNumber}&value=${String(raffleState.value).replace(/\D/g, '')}&currency=COP&description=Pago Rifa`}
                                                                 target="_blank" 
@@ -1332,18 +1369,25 @@ const App = () => {
                                                             </a>
                                                         )}
                                                     </div>
-                                                     {!raffleState.paymentLink && !raffleState.nequiAccountNumber && (
+                                                    {!isCurrentUserAdmin && !raffleState.isPaymentLinkEnabled && !raffleState.isNequiEnabled && (
+                                                        <div className="text-center text-gray-500 p-4 bg-gray-50 rounded-md">
+                                                            Los métodos de pago online están desactivados por el administrador.
+                                                        </div>
+                                                     )}
+                                                     {!isCurrentUserAdmin && (
                                                         <Button
                                                             onClick={() => handleRegisterParticipant('manual')}
                                                             disabled={!isRegisterFormValidForSubmit}
                                                             className="w-full px-4 py-2 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
                                                         >
-                                                            Registrar Número (pago manual)
+                                                            Registrar Número (pago manual pendiente)
                                                         </Button>
                                                     )}
                                                 </div>
+                                                {generatedTicketData && (
+                                                    <InlineTicket ticketData={generatedTicketData} />
+                                                )}
                                             </fieldset>
-                                        )}
                                         
                                         {(!raffleState || !raffleState.isDetailsConfirmed) && (
                                             <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-6" role="alert">
