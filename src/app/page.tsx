@@ -1369,12 +1369,16 @@ const App = () => {
                                                             </a>
                                                         )}
                                                     </div>
-                                                    {!isCurrentUserAdmin && !raffleState.isPaymentLinkEnabled && !raffleState.isNequiEnabled && (
-                                                        <div className="text-center text-gray-500 p-4 bg-gray-50 rounded-md">
-                                                            Los métodos de pago online están desactivados por el administrador.
-                                                        </div>
+                                                    {!isCurrentUserAdmin && (!raffleState?.isPaymentLinkEnabled && !raffleState?.isNequiEnabled) && (
+                                                        <Button
+                                                            onClick={() => handleRegisterParticipant('manual')}
+                                                            disabled={!isRegisterFormValidForSubmit}
+                                                            className="w-full px-4 py-2 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                                                        >
+                                                            Registrar Número (pago manual pendiente)
+                                                        </Button>
                                                      )}
-                                                     {!isCurrentUserAdmin && (
+                                                     {isCurrentUserAdmin && (
                                                         <Button
                                                             onClick={() => handleRegisterParticipant('manual')}
                                                             disabled={!isRegisterFormValidForSubmit}
@@ -1714,5 +1718,3 @@ const App = () => {
 };
 
 export default App;
-
-    
