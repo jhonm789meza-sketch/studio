@@ -611,7 +611,7 @@ const App = () => {
     };
 
 
-    const handleShare = (platform: 'whatsapp' | 'facebook' | 'copy' | 'instagram') => {
+    const handleShare = (platform: 'whatsapp' | 'facebook' | 'copy') => {
         const shareText = "¡Participa en esta increíble rifa!";
         const shareUrl = window.location.href;
     
@@ -626,10 +626,6 @@ const App = () => {
                 url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
                 window.open(url, '_blank');
                 break;
-            case 'instagram':
-                 navigator.clipboard.writeText(shareUrl);
-                 showNotification('Enlace copiado. Pégalo en tu bio o historia de Instagram.', 'success');
-                 return;
             case 'copy':
                 navigator.clipboard.writeText(shareUrl);
                 showNotification('Enlace copiado al portapapeles', 'success');
@@ -978,14 +974,6 @@ const App = () => {
         </svg>
     );
 
-    const InstagramIcon = () => (
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-            <rect width="20" height="20" x="2" y="2" rx="5" ry="5"/>
-            <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
-            <line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/>
-        </svg>
-    );
-    
     const TicketIcon = ({ className }: { className?: string }) => (
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
             <path d="M2 9a3 3 0 0 1 0 6v1a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-1a3 3 0 0 1 0-6V8a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/>
@@ -1626,10 +1614,6 @@ const App = () => {
                             <FacebookIcon />
                             <span className="ml-2">Facebook</span>
                         </Button>
-                         <Button onClick={() => handleShare('instagram')} className="bg-pink-500 hover:bg-pink-600 text-white w-full sm:w-auto flex-1">
-                            <InstagramIcon />
-                            <span className="ml-2">Instagram</span>
-                        </Button>
                     </div>
                     <div className="flex gap-4 py-2 justify-center">
                         <Button onClick={() => handleShare('copy')} variant="outline" className="w-full">
@@ -1696,5 +1680,3 @@ const App = () => {
 };
 
 export default App;
-
-    
