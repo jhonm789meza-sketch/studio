@@ -1224,111 +1224,104 @@ const App = () => {
                                 {renderBoardContent()}
                             </div>
                             <div className={activeTab === 'register' ? 'tab-content active' : 'tab-content'}>
-                               
+                                {isCurrentUserAdmin ? (
+                                    <div className="bg-gray-100 p-4 rounded-lg mb-6 space-y-4">
+                                        <h3 className="font-semibold text-lg text-gray-800">Controles de Administrador</h3>
+                                        <div className="flex items-center justify-between">
+                                            <Label htmlFor="enable-nequi" className="flex flex-col space-y-1">
+                                                <span>Habilitar Pago con Nequi</span>
+                                                <span className="font-normal leading-snug text-muted-foreground text-sm">
+                                                    Permite a los usuarios pagar usando el botón de Nequi.
+                                                </span>
+                                            </Label>
+                                            <Switch
+                                                id="enable-nequi"
+                                                checked={raffleState?.isNequiEnabled ?? true}
+                                                onCheckedChange={(checked) => handlePaymentMethodToggle('isNequiEnabled', checked)}
+                                                disabled={!raffleState?.nequiAccountNumber}
+                                            />
+                                        </div>
+                                    </div>
+                                ) : (
                                     <>
                                         <h2 className="text-2xl font-bold text-gray-800 mb-4">Registrar Número</h2>
-                                        
-                                        {isCurrentUserAdmin && (
-                                            <div className="bg-gray-100 p-4 rounded-lg mb-6 space-y-4">
-                                                <h3 className="font-semibold text-lg text-gray-800">Controles de Administrador</h3>
-                                                <div className="flex items-center justify-between">
-                                                    <Label htmlFor="enable-nequi" className="flex flex-col space-y-1">
-                                                        <span>Habilitar Pago con Nequi</span>
-                                                         <span className="font-normal leading-snug text-muted-foreground text-sm">
-                                                            Permite a los usuarios pagar usando el botón de Nequi.
-                                                        </span>
-                                                    </Label>
-                                                    <Switch
-                                                        id="enable-nequi"
-                                                        checked={raffleState?.isNequiEnabled ?? true}
-                                                        onCheckedChange={(checked) => handlePaymentMethodToggle('isNequiEnabled', checked)}
-                                                        disabled={!raffleState?.nequiAccountNumber}
-                                                    />
-                                                </div>
-                                            </div>
-                                        )}
-
-                                            <fieldset disabled={!raffleState || raffleState?.isWinnerConfirmed || !raffleState?.isDetailsConfirmed} className="disabled:opacity-50 space-y-4">
-                                                <div className="flex flex-col gap-4">
-
-                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                        <div>
-                                                            <Label htmlFor="name-input">Nombre completo:</Label>
-                                                            <Input
-                                                                id="name-input"
-                                                                type="text"
-                                                                value={raffleState?.name || ''}
-                                                                onChange={(e) => handleLocalFieldChange('name', e.target.value)}
-                                                                placeholder="Ej: Juan Pérez"
-                                                                className="w-full mt-1"
-                                                            />
-                                                        </div>
-                                                        <div>
-                                                            <Label htmlFor="phone-input">Celular:</Label>
-                                                            <Input
-                                                                id="phone-input"
-                                                                type="tel"
-                                                                value={raffleState?.phoneNumber || ''}
-                                                                onChange={(e) => handleLocalFieldChange('phoneNumber', e.target.value.replace(/\D/g, ''))}
-                                                                placeholder="Ej: 3001234567"
-                                                                className="w-full mt-1"
-                                                            />
-                                                        </div>
-                                                    </div>
-
+                                        <fieldset disabled={!raffleState || raffleState?.isWinnerConfirmed || !raffleState?.isDetailsConfirmed} className="disabled:opacity-50 space-y-4">
+                                            <div className="flex flex-col gap-4">
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                     <div>
-                                                        <Label htmlFor="raffle-number-input">Número de rifa ({raffleMode === 'two-digit' ? '00-99' : '000-999'}):</Label>
+                                                        <Label htmlFor="name-input">Nombre completo:</Label>
                                                         <Input
-                                                            id="raffle-number-input"
+                                                            id="name-input"
                                                             type="text"
-                                                            value={raffleState?.raffleNumber || ''}
-                                                            onChange={handleRaffleNumberChange}
-                                                            placeholder={`Ej: ${raffleMode === 'two-digit' ? '05' : '142'}`}
+                                                            value={raffleState?.name || ''}
+                                                            onChange={(e) => handleLocalFieldChange('name', e.target.value)}
+                                                            placeholder="Ej: Juan Pérez"
                                                             className="w-full mt-1"
-                                                            maxLength={numberLength}
                                                         />
-                                                        {raffleState?.raffleNumber && allAssignedNumbers.has(parseInt(raffleState.raffleNumber)) && (
-                                                            <p className="text-red-500 text-sm mt-1">Este número ya está asignado.</p>
-                                                        )}
                                                     </div>
-                                                    
-                                                    <div className="flex flex-wrap gap-2">
-                                                        {raffleState?.nequiAccountNumber && raffleState?.value && raffleState?.isNequiEnabled && (
-                                                            <a 
-                                                                href={`nequi://app/pay?phoneNumber=${raffleState.nequiAccountNumber}&value=${String(raffleState.value).replace(/\D/g, '')}&currency=COP&description=Pago Rifa`}
-                                                                target="_blank" 
-                                                                rel="noopener noreferrer"
-                                                                className="flex-1"
-                                                                onClick={() => {
-                                                                    setNequiPaymentClicked(true);
-                                                                    handleRegisterParticipant();
-                                                                }}
-                                                            >
-                                                                <Button 
-                                                                  className="w-full bg-[#A454C4] hover:bg-[#8e49a8] text-white"
-                                                                  disabled={nequiPaymentClicked || !isRegisterFormValidForSubmit}
-                                                                >
-                                                                    <NequiIcon />
-                                                                    <span className="ml-2">{nequiPaymentClicked ? 'Redirigiendo a Nequi...' : 'Pagar con Nequi'}</span>
-                                                                </Button>
-                                                            </a>
-                                                        )}
+                                                    <div>
+                                                        <Label htmlFor="phone-input">Celular:</Label>
+                                                        <Input
+                                                            id="phone-input"
+                                                            type="tel"
+                                                            value={raffleState?.phoneNumber || ''}
+                                                            onChange={(e) => handleLocalFieldChange('phoneNumber', e.target.value.replace(/\D/g, ''))}
+                                                            placeholder="Ej: 3001234567"
+                                                            className="w-full mt-1"
+                                                        />
                                                     </div>
-                                                    { !isCurrentUserAdmin && !raffleState?.isNequiEnabled && (
-                                                        <Button
-                                                            onClick={() => handleRegisterParticipant()}
-                                                            disabled={!isRegisterFormValidForSubmit}
-                                                            className="w-full px-4 py-2 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-                                                        >
-                                                            Registrar Número (pago manual pendiente)
-                                                        </Button>
-                                                     )}
                                                 </div>
-                                                {generatedTicketData && (
-                                                    <InlineTicket ticketData={generatedTicketData} />
+                                                <div>
+                                                    <Label htmlFor="raffle-number-input">Número de rifa ({raffleMode === 'two-digit' ? '00-99' : '000-999'}):</Label>
+                                                    <Input
+                                                        id="raffle-number-input"
+                                                        type="text"
+                                                        value={raffleState?.raffleNumber || ''}
+                                                        onChange={handleRaffleNumberChange}
+                                                        placeholder={`Ej: ${raffleMode === 'two-digit' ? '05' : '142'}`}
+                                                        className="w-full mt-1"
+                                                        maxLength={numberLength}
+                                                    />
+                                                    {raffleState?.raffleNumber && allAssignedNumbers.has(parseInt(raffleState.raffleNumber)) && (
+                                                        <p className="text-red-500 text-sm mt-1">Este número ya está asignado.</p>
+                                                    )}
+                                                </div>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {raffleState?.nequiAccountNumber && raffleState?.value && raffleState?.isNequiEnabled && (
+                                                        <a
+                                                            href={`nequi://app/pay?phoneNumber=${raffleState.nequiAccountNumber}&value=${String(raffleState.value).replace(/\D/g, '')}&currency=COP&description=Pago Rifa`}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="flex-1"
+                                                            onClick={() => {
+                                                                setNequiPaymentClicked(true);
+                                                                handleRegisterParticipant();
+                                                            }}
+                                                        >
+                                                            <Button
+                                                                className="w-full bg-[#A454C4] hover:bg-[#8e49a8] text-white"
+                                                                disabled={nequiPaymentClicked || !isRegisterFormValidForSubmit}
+                                                            >
+                                                                <NequiIcon />
+                                                                <span className="ml-2">{nequiPaymentClicked ? 'Redirigiendo a Nequi...' : 'Pagar con Nequi'}</span>
+                                                            </Button>
+                                                        </a>
+                                                    )}
+                                                </div>
+                                                {!raffleState?.isNequiEnabled && (
+                                                    <Button
+                                                        onClick={() => handleRegisterParticipant()}
+                                                        disabled={!isRegisterFormValidForSubmit}
+                                                        className="w-full px-4 py-2 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                                                    >
+                                                        Registrar Número (pago manual pendiente)
+                                                    </Button>
                                                 )}
-                                            </fieldset>
-                                        
+                                            </div>
+                                            {generatedTicketData && (
+                                                <InlineTicket ticketData={generatedTicketData} />
+                                            )}
+                                        </fieldset>
                                         {(!raffleState || !raffleState.isDetailsConfirmed) && (
                                             <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-6" role="alert">
                                                 <p className="font-bold">Aviso</p>
@@ -1342,7 +1335,7 @@ const App = () => {
                                             </div>
                                         )}
                                     </>
-                                
+                                )}
                             </div>
                             {isCurrentUserAdmin && (
                                <div className={activeTab === 'pending' ? 'tab-content active' : 'tab-content'}>
