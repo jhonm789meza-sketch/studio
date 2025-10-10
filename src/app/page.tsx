@@ -1314,7 +1314,7 @@ const App = () => {
                                                             </a>
                                                         )}
                                                     </div>
-                                                    { (isCurrentUserAdmin || (!raffleState?.isNequiEnabled)) && (
+                                                    { (isCurrentUserAdmin || !raffleState?.isNequiEnabled) && (
                                                         <Button
                                                             onClick={() => handleRegisterParticipant()}
                                                             disabled={!isRegisterFormValidForSubmit}
