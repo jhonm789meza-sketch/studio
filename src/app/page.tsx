@@ -1,5 +1,4 @@
 
-
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import jsPDF from 'jspdf';
@@ -192,7 +191,7 @@ const App = () => {
                 }
             } else {
                  if (activeTab !== 'pending') {
-                   setLoading(false);
+                   //setLoading(false);
                  }
             }
         }
@@ -612,7 +611,7 @@ const App = () => {
     };
 
 
-    const handleShare = (platform: 'whatsapp' | 'facebook' | 'copy') => {
+    const handleShare = (platform: 'whatsapp' | 'facebook' | 'copy' | 'instagram') => {
         const shareText = "¡Participa en esta increíble rifa!";
         const shareUrl = window.location.href;
     
@@ -621,17 +620,21 @@ const App = () => {
         switch (platform) {
             case 'whatsapp':
                 url = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText + ' ' + shareUrl)}`;
+                window.open(url, '_blank');
                 break;
             case 'facebook':
                 url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
+                window.open(url, '_blank');
                 break;
+            case 'instagram':
+                 navigator.clipboard.writeText(shareUrl);
+                 showNotification('Enlace copiado. Pégalo en tu bio o historia de Instagram.', 'success');
+                 return;
             case 'copy':
                 navigator.clipboard.writeText(shareUrl);
                 showNotification('Enlace copiado al portapapeles', 'success');
                 return;
         }
-    
-        window.open(url, '_blank');
         setIsShareDialogOpen(false);
     };
 
@@ -974,6 +977,14 @@ const App = () => {
             <path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878V14.89h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z"/>
         </svg>
     );
+
+    const InstagramIcon = () => (
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+            <rect width="20" height="20" x="2" y="2" rx="5" ry="5"/>
+            <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+            <line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/>
+        </svg>
+    );
     
     const TicketIcon = ({ className }: { className?: string }) => (
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
@@ -1308,7 +1319,7 @@ const App = () => {
                                                         </a>
                                                     )}
                                                 </div>
-                                                {!raffleState?.isNequiEnabled && (
+                                                { !raffleState?.isNequiEnabled && (
                                                     <Button
                                                         onClick={() => handleRegisterParticipant()}
                                                         disabled={!isRegisterFormValidForSubmit}
@@ -1318,7 +1329,7 @@ const App = () => {
                                                     </Button>
                                                 )}
                                             </div>
-                                            {generatedTicketData && (
+                                            {generatedTicketData && !isCurrentUserAdmin && (
                                                 <InlineTicket ticketData={generatedTicketData} />
                                             )}
                                         </fieldset>
@@ -1606,18 +1617,24 @@ const App = () => {
                             Comparte esta rifa con tus amigos y familiares.
                         </DialogDescription>
                     </DialogHeader>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4">
-                        <Button onClick={() => handleShare('whatsapp')} className="bg-green-500 hover:bg-green-600 text-white w-full">
+                    <div className="flex flex-col sm:flex-row gap-4 py-4 justify-center">
+                        <Button onClick={() => handleShare('whatsapp')} className="bg-green-500 hover:bg-green-600 text-white w-full sm:w-auto flex-1">
                             <WhatsappIcon />
                             <span className="ml-2">WhatsApp</span>
                         </Button>
-                        <Button onClick={() => handleShare('facebook')} className="bg-blue-600 hover:bg-blue-700 text-white w-full">
+                        <Button onClick={() => handleShare('facebook')} className="bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto flex-1">
                             <FacebookIcon />
                             <span className="ml-2">Facebook</span>
                         </Button>
+                         <Button onClick={() => handleShare('instagram')} className="bg-pink-500 hover:bg-pink-600 text-white w-full sm:w-auto flex-1">
+                            <InstagramIcon />
+                            <span className="ml-2">Instagram</span>
+                        </Button>
+                    </div>
+                    <div className="flex gap-4 py-2 justify-center">
                         <Button onClick={() => handleShare('copy')} variant="outline" className="w-full">
-                            <Copy />
-                            <span className="ml-2">Copiar Enlace</span>
+                            <Copy className="mr-2 h-4 w-4" />
+                            Copiar Enlace
                         </Button>
                     </div>
                      <DialogFooter>
@@ -1679,3 +1696,5 @@ const App = () => {
 };
 
 export default App;
+
+    
