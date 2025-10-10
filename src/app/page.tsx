@@ -13,7 +13,7 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House, Share2, Copy, Upload, Clock, Ticket, Users, Link, MessageCircle, DollarSign } from 'lucide-react';
+import { Menu, Award, Lock, House, Share2, Copy, Upload, Clock, Ticket, Users, MessageCircle, DollarSign } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -39,8 +39,6 @@ const initialRaffleData = {
     phoneNumber: '',
     raffleNumber: '',
     nequiAccountNumber: '',
-    paymentLink: '',
-    isPaymentLinkEnabled: true,
     isNequiEnabled: true,
     gameDate: '',
     lottery: '',
@@ -367,7 +365,7 @@ const App = () => {
         );
     };
 
-    const handleRegisterParticipant = async (paymentMethod: 'link' | 'manual' = 'manual') => {
+    const handleRegisterParticipant = async () => {
         if (!raffleState || !raffleState.raffleRef) return;
     
         const name = raffleState.name?.trim();
@@ -399,55 +397,35 @@ const App = () => {
             return;
         }
     
-        if (paymentMethod === 'link' && raffleState.paymentLink && raffleState.isPaymentLinkEnabled) {
-            // Don't create participant yet. Redirect to payment and pass info in URL.
-            const confirmationUrl = new URL(window.location.href);
-            confirmationUrl.searchParams.set('status', 'APPROVED');
-            // Pass participant info to be registered upon successful return
-            confirmationUrl.searchParams.set('pName', name);
-            confirmationUrl.searchParams.set('pPhone', phoneNumber);
-            confirmationUrl.searchParams.set('pNum', raffleNumber);
-    
-            const paymentUrl = new URL(raffleState.paymentLink);
-            paymentUrl.searchParams.set('redirectUrl', confirmationUrl.toString());
+        // Manual payment flow (Nequi, etc.)
+        const participantName = name;
+        const formattedRaffleNumber = String(num).padStart(numberLength, '0');
+        const participantId = Date.now();
 
-            const ticketValue = String(raffleState.value).replace(/[^\d]/g, '');
-            if (ticketValue) {
-                paymentUrl.searchParams.set('value', ticketValue);
-            }
-    
-            window.location.href = paymentUrl.toString();
-        } else {
-            // Manual payment flow (Nequi, etc.)
-            const participantName = name;
-            const formattedRaffleNumber = String(num).padStart(numberLength, '0');
-            const participantId = Date.now();
-    
-            const newParticipant: Participant = {
-                id: participantId,
-                name: name,
-                phoneNumber: phoneNumber,
-                raffleNumber: formattedRaffleNumber,
-                timestamp: new Date(),
-                paymentStatus: 'pending'
-            };
-            
-            const updatedParticipants = [...raffleState.participants, newParticipant];
-    
-            await setDoc(doc(db, "raffles", raffleState.raffleRef), {
-                participants: updatedParticipants,
-            }, { merge: true });
-                    
-            setRaffleState((s:any) => ({
-                ...s,
-                name: '',
-                phoneNumber: '',
-                raffleNumber: '',
-            }));
-            
-            showNotification(`¡Número ${formattedRaffleNumber} registrado para ${participantName}! Tu pago está pendiente de confirmación por el administrador.`, 'success');
-            handleTabClick('board');
-        }
+        const newParticipant: Participant = {
+            id: participantId,
+            name: name,
+            phoneNumber: phoneNumber,
+            raffleNumber: formattedRaffleNumber,
+            timestamp: new Date(),
+            paymentStatus: 'pending'
+        };
+        
+        const updatedParticipants = [...raffleState.participants, newParticipant];
+
+        await setDoc(doc(db, "raffles", raffleState.raffleRef), {
+            participants: updatedParticipants,
+        }, { merge: true });
+                
+        setRaffleState((s:any) => ({
+            ...s,
+            name: '',
+            phoneNumber: '',
+            raffleNumber: '',
+        }));
+        
+        showNotification(`¡Número ${formattedRaffleNumber} registrado para ${participantName}! Tu pago está pendiente de confirmación por el administrador.`, 'success');
+        handleTabClick('board');
     };
 
     const handleConfirmPayment = async (participantId: number) => {
@@ -588,23 +566,8 @@ const App = () => {
                 isPaid: false, 
             };
             await setDoc(doc(db, "raffles", newRef), newRaffleData);
-
-            if (raffleState?.paymentLink) {
-                 const activationUrl = new URL(window.location.origin + window.location.pathname);
-                 activationUrl.searchParams.set('ref', newRef);
-                 activationUrl.searchParams.set('status', 'APPROVED');
-
-                 const paymentUrl = new URL(raffleState.paymentLink);
-                 paymentUrl.searchParams.set('redirectUrl', activationUrl.toString());
-                 const activationCost = mode === 'two-digit' ? '1500' : '15000';
-                 paymentUrl.searchParams.set('value', activationCost);
-                 
-                 window.location.href = paymentUrl.toString();
-            } else {
-                 await setDoc(doc(db, "raffles", newRef), { isPaid: true }, { merge: true });
-                 await handleAdminSearch(newRef, true);
-            }
-
+            await setDoc(doc(db, "raffles", newRef), { isPaid: true }, { merge: true });
+            await handleAdminSearch(newRef, true);
         } catch (error) {
             console.error("Error activating board:", error);
             showNotification("Error al activar el tablero.", "error");
@@ -867,19 +830,6 @@ const App = () => {
                                 />
                             </div>
                         )}
-                         <div>
-                            <Label htmlFor="payment-link-input">Enlace de Pago:</Label>
-                            <Input
-                                id="payment-link-input"
-                                type="text"
-                                value={raffleState.paymentLink || ''}
-                                onChange={(e) => handleLocalFieldChange('paymentLink', e.target.value)}
-                                onBlur={(e) => handleFieldChange('paymentLink', e.target.value)}
-                                placeholder="https://ejemplo.com/pago"
-                                disabled={raffleState.isDetailsConfirmed || !isCurrentUserAdmin}
-                                className="w-full mt-1"
-                            />
-                        </div>
                         {isCurrentUserAdmin && !raffleState.isDetailsConfirmed && (
                            <div className="md:col-span-2">
                                <Button
@@ -1282,20 +1232,6 @@ const App = () => {
                                             <div className="bg-gray-100 p-4 rounded-lg mb-6 space-y-4">
                                                 <h3 className="font-semibold text-lg text-gray-800">Controles de Administrador</h3>
                                                 <div className="flex items-center justify-between">
-                                                    <Label htmlFor="enable-payment-link" className="flex flex-col space-y-1">
-                                                        <span>Habilitar Pago con Link</span>
-                                                        <span className="font-normal leading-snug text-muted-foreground text-sm">
-                                                            Permite a los usuarios pagar usando el enlace de pago.
-                                                        </span>
-                                                    </Label>
-                                                    <Switch
-                                                        id="enable-payment-link"
-                                                        checked={raffleState?.isPaymentLinkEnabled ?? true}
-                                                        onCheckedChange={(checked) => handlePaymentMethodToggle('isPaymentLinkEnabled', checked)}
-                                                        disabled={!raffleState?.paymentLink}
-                                                    />
-                                                </div>
-                                                <div className="flex items-center justify-between">
                                                     <Label htmlFor="enable-nequi" className="flex flex-col space-y-1">
                                                         <span>Habilitar Pago con Nequi</span>
                                                          <span className="font-normal leading-snug text-muted-foreground text-sm">
@@ -1357,12 +1293,6 @@ const App = () => {
                                                     </div>
                                                     
                                                     <div className="flex flex-wrap gap-2">
-                                                        {raffleState?.paymentLink && raffleState?.isPaymentLinkEnabled && (
-                                                             <Button onClick={() => handleRegisterParticipant('link')} className="w-full bg-blue-500 hover:bg-blue-600 text-white" disabled={!isRegisterFormValidForSubmit}>
-                                                                 <Link className="mr-2 h-4 w-4" />
-                                                                 Pagar con Link y Registrar
-                                                             </Button>
-                                                        )}
                                                         {raffleState?.nequiAccountNumber && raffleState?.value && raffleState?.isNequiEnabled && (
                                                             <a 
                                                                 href={`nequi://app/pay?phoneNumber=${raffleState.nequiAccountNumber}&value=${String(raffleState.value).replace(/\D/g, '')}&currency=COP&description=Pago Rifa`}
@@ -1371,7 +1301,7 @@ const App = () => {
                                                                 className="flex-1"
                                                                 onClick={() => {
                                                                     setNequiPaymentClicked(true);
-                                                                    handleRegisterParticipant('manual');
+                                                                    handleRegisterParticipant();
                                                                 }}
                                                             >
                                                                 <Button 
@@ -1384,9 +1314,9 @@ const App = () => {
                                                             </a>
                                                         )}
                                                     </div>
-                                                    { (isCurrentUserAdmin || (!raffleState?.isPaymentLinkEnabled && !raffleState?.isNequiEnabled)) && (
+                                                    { (isCurrentUserAdmin || (!raffleState?.isNequiEnabled)) && (
                                                         <Button
-                                                            onClick={() => handleRegisterParticipant('manual')}
+                                                            onClick={() => handleRegisterParticipant()}
                                                             disabled={!isRegisterFormValidForSubmit}
                                                             className="w-full px-4 py-2 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
                                                         >
