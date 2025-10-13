@@ -12,7 +12,7 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House, Clock, Ticket, Users, MessageCircle, DollarSign, Share2 } from 'lucide-react';
+import { Menu, Award, Lock, House, Clock, Ticket, Users, MessageCircle, DollarSign, Share2, Link } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -39,6 +39,7 @@ const initialRaffleData = {
     raffleNumber: '',
     nequiAccountNumber: '',
     isNequiEnabled: true,
+    paymentLink: '',
     gameDate: '',
     lottery: '',
     customLottery: '',
@@ -552,7 +553,7 @@ const App = () => {
     };
 
     const handleFieldChange = async (field: string, value: any) => {
-        if (!raffleState || !raffleState.raffleRef || raffleState.isDetailsConfirmed) return;
+        if (!raffleState || !raffleState.raffleRef || !isCurrentUserAdmin) return;
         handleLocalFieldChange(field, value);
         await setDoc(doc(db, "raffles", raffleState.raffleRef), { [field]: value }, { merge: true });
     };
@@ -741,7 +742,7 @@ const App = () => {
                                onChange={(e) => handleLocalFieldChange('organizerName', e.target.value)}
                                onBlur={(e) => handleFieldChange('organizerName', e.target.value)}
                                placeholder="Nombre del organizador"
-                               disabled={raffleState.isDetailsConfirmed || !isCurrentUserAdmin}
+                               disabled={!isCurrentUserAdmin}
                                className="w-full mt-1"
                            />
                        </div>
@@ -754,7 +755,7 @@ const App = () => {
                                onChange={(e) => handleLocalFieldChange('organizerPhoneNumber', e.target.value.replace(/\D/g, ''))}
                                 onBlur={(e) => handleFieldChange('organizerPhoneNumber', e.target.value.replace(/\D/g, ''))}
                                 placeholder="Ej: 573001234567"
-                                disabled={raffleState.isDetailsConfirmed || !isCurrentUserAdmin}
+                                disabled={!isCurrentUserAdmin}
                                 className="w-full mt-1"
                             />
                         </div>
@@ -767,7 +768,7 @@ const App = () => {
                                onChange={(e) => handleLocalFieldChange('prize', e.target.value)}
                                onBlur={(e) => handleFieldChange('prize', e.target.value)}
                                placeholder="Ej: Carro o una bicicleta"
-                               disabled={raffleState.isDetailsConfirmed || !isCurrentUserAdmin}
+                               disabled={!isCurrentUserAdmin}
                                className="w-full mt-1"
                            />
                        </div>
@@ -780,7 +781,7 @@ const App = () => {
                                onChange={(e) => handleLocalFieldChange('value', e.target.value.replace(/[^\d]/g, ''))}
                                onBlur={(e) => handleFieldChange('value', e.target.value.replace(/[^\d]/g, ''))}
                                placeholder="Ej: 5000"
-                               disabled={raffleState.isDetailsConfirmed || !isCurrentUserAdmin}
+                               disabled={!isCurrentUserAdmin}
                                className="w-full mt-1"
                            />
                        </div>
@@ -792,7 +793,7 @@ const App = () => {
                                value={raffleState.gameDate}
                                onChange={(e) => handleLocalFieldChange('gameDate', e.target.value)}
                                onBlur={(e) => handleFieldChange('gameDate', e.target.value)}
-                               disabled={raffleState.isDetailsConfirmed || !isCurrentUserAdmin}
+                               disabled={!isCurrentUserAdmin}
                                className="w-full mt-1"
                            />
                        </div>
@@ -805,7 +806,7 @@ const App = () => {
                                    const value = e.target.value;
                                    handleFieldChange('lottery', value);
                                }}
-                               disabled={raffleState.isDetailsConfirmed || !isCurrentUserAdmin}
+                               disabled={!isCurrentUserAdmin}
                                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100 disabled:cursor-not-allowed mt-1"
                            >
                                <option value="">Selecciona una lotería</option>
@@ -827,9 +828,22 @@ const App = () => {
                                 onChange={(e) => handleLocalFieldChange('nequiAccountNumber', e.target.value)}
                                 onBlur={(e) => handleFieldChange('nequiAccountNumber', e.target.value)}
                                 placeholder="Ej: 3001234567"
-                                disabled={raffleState.isDetailsConfirmed || !isCurrentUserAdmin}
+                                disabled={!isCurrentUserAdmin}
                                 className="w-full mt-1"
                             />
+                        </div>
+                        <div>
+                           <Label htmlFor="payment-link-input">Link de Pagos:</Label>
+                           <Input
+                               id="payment-link-input"
+                               type="text"
+                               value={raffleState.paymentLink}
+                               onChange={(e) => handleLocalFieldChange('paymentLink', e.target.value)}
+                               onBlur={(e) => handleFieldChange('paymentLink', e.target.value)}
+                               placeholder="https://checkout.wompi.co/..."
+                               disabled={!isCurrentUserAdmin}
+                               className="w-full mt-1"
+                           />
                         </div>
 
                         {raffleState.lottery === 'Otro' && (
@@ -842,7 +856,7 @@ const App = () => {
                                     onChange={(e) => handleLocalFieldChange('customLottery', e.target.value)}
                                     onBlur={(e) => handleFieldChange('customLottery', e.target.value)}
                                     placeholder="Nombre de la lotería"
-                                    disabled={raffleState.isDetailsConfirmed || !isCurrentUserAdmin}
+                                    disabled={!isCurrentUserAdmin}
                                     className="w-full mt-1"
                                 />
                             </div>
@@ -1304,7 +1318,7 @@ const App = () => {
                                                     )}
                                                 </div>
                                                 <div className="flex flex-wrap gap-2">
-                                                    {raffleState?.nequiAccountNumber && raffleState?.value && raffleState?.isNequiEnabled && (
+                                                    {raffleState?.isNequiEnabled && raffleState?.nequiAccountNumber && raffleState?.value && (
                                                         <a
                                                             href={`nequi://app/pay?phoneNumber=${raffleState.nequiAccountNumber}&value=${String(raffleState.value).replace(/\D/g, '')}&currency=COP&description=Pago Rifa`}
                                                             target="_blank"
@@ -1324,16 +1338,32 @@ const App = () => {
                                                             </Button>
                                                         </a>
                                                     )}
+                                                     {raffleState?.paymentLink && (
+                                                        <a
+                                                            href={raffleState.paymentLink}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="flex-1"
+                                                            onClick={() => handleRegisterParticipant()}
+                                                        >
+                                                            <Button
+                                                                className="w-full bg-blue-500 hover:bg-blue-600 text-white"
+                                                                disabled={!isRegisterFormValidForSubmit}
+                                                            >
+                                                                <Link className="mr-2 h-4 w-4" />
+                                                                <span>Pagar con Link</span>
+                                                            </Button>
+                                                        </a>
+                                                    )}
                                                 </div>
-                                                { !raffleState?.isNequiEnabled && (
-                                                    <Button
-                                                        onClick={() => handleRegisterParticipant()}
-                                                        disabled={!isRegisterFormValidForSubmit}
-                                                        className="w-full px-4 py-2 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-                                                    >
-                                                        Registrar Número (pago manual pendiente)
-                                                    </Button>
-                                                )}
+
+                                                <Button
+                                                    onClick={() => handleRegisterParticipant()}
+                                                    disabled={!isRegisterFormValidForSubmit}
+                                                    className="w-full px-4 py-2 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                                                >
+                                                    Registrar (Pago Pendiente)
+                                                </Button>
                                             </div>
                                             {generatedTicketData && !isCurrentUserAdmin && (
                                                 <InlineTicket ticketData={generatedTicketData} />
@@ -1699,7 +1729,5 @@ const App = () => {
 };
 
 export default App;
-
-
 
     
