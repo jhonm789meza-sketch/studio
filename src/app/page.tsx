@@ -39,6 +39,7 @@ const initialRaffleData = {
     raffleNumber: '',
     nequiAccountNumber: '',
     isNequiEnabled: true,
+    isPaymentLinkEnabled: true,
     paymentLink: '',
     gameDate: '',
     lottery: '',
@@ -1272,6 +1273,20 @@ const App = () => {
                                                 disabled={!raffleState?.nequiAccountNumber}
                                             />
                                         </div>
+                                        <div className="flex items-center justify-between">
+                                            <Label htmlFor="enable-payment-link" className="flex flex-col space-y-1">
+                                                <span>Habilitar Pago con Link</span>
+                                                <span className="font-normal leading-snug text-muted-foreground text-sm">
+                                                    Permite a los usuarios pagar usando el link de pagos.
+                                                </span>
+                                            </Label>
+                                            <Switch
+                                                id="enable-payment-link"
+                                                checked={raffleState?.isPaymentLinkEnabled ?? true}
+                                                onCheckedChange={(checked) => handlePaymentMethodToggle('isPaymentLinkEnabled', checked)}
+                                                disabled={!raffleState?.paymentLink}
+                                            />
+                                        </div>
                                     </div>
                                 ) : (
                                     <>
@@ -1338,7 +1353,7 @@ const App = () => {
                                                             </Button>
                                                         </a>
                                                     )}
-                                                     {raffleState?.paymentLink && (
+                                                     {raffleState?.isPaymentLinkEnabled && raffleState?.paymentLink && (
                                                         <a
                                                             href={raffleState.paymentLink}
                                                             target="_blank"
@@ -1729,3 +1744,5 @@ const App = () => {
 };
 
 export default App;
+
+    
