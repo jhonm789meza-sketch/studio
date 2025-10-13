@@ -668,11 +668,7 @@ const App = () => {
         return (
             <>
                 <div className="mb-6">
-                    {isCurrentUserAdmin && (
-                      <div className="p-4 bg-blue-50 border-l-4 border-blue-500 text-blue-800 rounded-lg mb-6">
-                          <p className="font-bold">Eres el administrador de este tablero.</p>
-                      </div>
-                    )}
+                    
                     {raffleState.winner && (
                         <div className="mb-6 p-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 rounded-lg">
                             {raffleState.winner.isHouse ? (
@@ -1674,4 +1670,3 @@ const App = () => {
 
 export default App;
 
-    
