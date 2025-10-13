@@ -742,7 +742,7 @@ const App = () => {
                                onChange={(e) => handleLocalFieldChange('organizerName', e.target.value)}
                                onBlur={(e) => handleFieldChange('organizerName', e.target.value)}
                                placeholder="Nombre del organizador"
-                               disabled={!isCurrentUserAdmin}
+                               disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
                                className="w-full mt-1"
                            />
                        </div>
@@ -755,7 +755,7 @@ const App = () => {
                                onChange={(e) => handleLocalFieldChange('organizerPhoneNumber', e.target.value.replace(/\D/g, ''))}
                                 onBlur={(e) => handleFieldChange('organizerPhoneNumber', e.target.value.replace(/\D/g, ''))}
                                 placeholder="Ej: 573001234567"
-                                disabled={!isCurrentUserAdmin}
+                                disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
                                 className="w-full mt-1"
                             />
                         </div>
@@ -768,7 +768,7 @@ const App = () => {
                                onChange={(e) => handleLocalFieldChange('prize', e.target.value)}
                                onBlur={(e) => handleFieldChange('prize', e.target.value)}
                                placeholder="Ej: Carro o una bicicleta"
-                               disabled={!isCurrentUserAdmin}
+                               disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
                                className="w-full mt-1"
                            />
                        </div>
@@ -781,7 +781,7 @@ const App = () => {
                                onChange={(e) => handleLocalFieldChange('value', e.target.value.replace(/[^\d]/g, ''))}
                                onBlur={(e) => handleFieldChange('value', e.target.value.replace(/[^\d]/g, ''))}
                                placeholder="Ej: 5000"
-                               disabled={!isCurrentUserAdmin}
+                               disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
                                className="w-full mt-1"
                            />
                        </div>
@@ -793,7 +793,7 @@ const App = () => {
                                value={raffleState.gameDate}
                                onChange={(e) => handleLocalFieldChange('gameDate', e.target.value)}
                                onBlur={(e) => handleFieldChange('gameDate', e.target.value)}
-                               disabled={!isCurrentUserAdmin}
+                               disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
                                className="w-full mt-1"
                            />
                        </div>
@@ -806,7 +806,7 @@ const App = () => {
                                    const value = e.target.value;
                                    handleFieldChange('lottery', value);
                                }}
-                               disabled={!isCurrentUserAdmin}
+                               disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
                                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100 disabled:cursor-not-allowed mt-1"
                            >
                                <option value="">Selecciona una lotería</option>
@@ -828,7 +828,7 @@ const App = () => {
                                 onChange={(e) => handleLocalFieldChange('nequiAccountNumber', e.target.value)}
                                 onBlur={(e) => handleFieldChange('nequiAccountNumber', e.target.value)}
                                 placeholder="Ej: 3001234567"
-                                disabled={!isCurrentUserAdmin}
+                                disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
                                 className="w-full mt-1"
                             />
                         </div>
@@ -841,7 +841,7 @@ const App = () => {
                                onChange={(e) => handleLocalFieldChange('paymentLink', e.target.value)}
                                onBlur={(e) => handleFieldChange('paymentLink', e.target.value)}
                                placeholder="https://checkout.wompi.co/..."
-                               disabled={!isCurrentUserAdmin}
+                               disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
                                className="w-full mt-1"
                            />
                         </div>
@@ -856,22 +856,22 @@ const App = () => {
                                     onChange={(e) => handleLocalFieldChange('customLottery', e.target.value)}
                                     onBlur={(e) => handleFieldChange('customLottery', e.target.value)}
                                     placeholder="Nombre de la lotería"
-                                    disabled={!isCurrentUserAdmin}
+                                    disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
                                     className="w-full mt-1"
                                 />
                             </div>
                         )}
-                        {isCurrentUserAdmin && !raffleState.isDetailsConfirmed && (
-                           <div className="md:col-span-2">
-                               <Button
-                                   onClick={handleConfirmDetails}
-                                   className="w-full md:w-auto bg-purple-500 text-white font-medium rounded-lg hover:bg-purple-600 transition-colors"
-                               >
-                                   Confirmar Detalles del Premio
-                               </Button>
-                           </div>
-                       )}
                     </div>
+                    {isCurrentUserAdmin && !raffleState.isDetailsConfirmed && (
+                        <div className="mb-6">
+                            <Button
+                                onClick={handleConfirmDetails}
+                                className="w-full md:w-auto bg-purple-500 text-white font-medium rounded-lg hover:bg-purple-600 transition-colors"
+                            >
+                                Confirmar Detalles del Premio
+                            </Button>
+                        </div>
+                    )}
                 </div>
                {isCurrentUserAdmin && (
                  <div className="mb-6 p-4 border rounded-lg bg-gray-50">
