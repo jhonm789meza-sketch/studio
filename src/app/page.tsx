@@ -70,7 +70,6 @@ const App = () => {
     const [confirmationMessage, setConfirmationMessage] = useState('');
     const [confirmationAction, setConfirmationAction] = useState<(() => void) | null>(null);
     const [notification, setNotification] = useState({ show: false, message: '', type: '' });
-    const [nequiPaymentClicked, setNequiPaymentClicked] = useState(false);
     
     const ticketModalRef = useRef(null);
     const raffleSubscription = useRef<Unsubscribe | null>(null);
@@ -94,9 +93,7 @@ const App = () => {
 
     const handleTabClick = (tab: Tab) => {
         setActiveTab(tab);
-        if (tab === 'register') {
-            setNequiPaymentClicked(false); // Reset when navigating to the register tab
-        } else {
+        if (tab !== 'register') {
             setGeneratedTicketData(null);
         }
     };
@@ -202,8 +199,6 @@ const App = () => {
 
     useEffect(() => {
         const initialize = async () => {
-            // No longer sets currentAdminId on initial load to prevent race conditions.
-            // It will be set on-demand or after a search/activation.
             if (persistenceEnabled) {
                 await persistenceEnabled;
             }
@@ -211,7 +206,6 @@ const App = () => {
             const urlParams = new URLSearchParams(window.location.search);
             const refFromUrl = urlParams.get('ref');
             const statusFromUrl = urlParams.get('status');
-            const participantIdFromUrl = urlParams.get('participantId');
             const activationAdminId = urlParams.get('adminId');
 
             // For post-payment registration
@@ -225,9 +219,6 @@ const App = () => {
                     if (pName && pPhone && pNum) {
                         // New flow: Register participant after payment confirmation
                         await confirmParticipantPayment(refFromUrl, '', { name: pName, phoneNumber: pPhone, raffleNumber: pNum });
-                    } else if (participantIdFromUrl) {
-                        // Legacy flow: Confirm pending participant
-                        await confirmParticipantPayment(refFromUrl, participantIdFromUrl);
                     } else {
                         // Board activation confirmation
                         await confirmActivation(refFromUrl, activationAdminId);
@@ -364,7 +355,7 @@ const App = () => {
         );
     };
 
-    const handleRegisterParticipant = async () => {
+    const handleRegisterParticipant = async (isNequiPayment = false) => {
         if (!raffleState || !raffleState.raffleRef) return;
     
         const name = raffleState.name?.trim();
@@ -373,30 +364,29 @@ const App = () => {
     
         if (!name) {
             showNotification('Por favor ingresa el nombre', 'warning');
-            return;
+            return false;
         }
         if (!phoneNumber) {
             showNotification('Por favor ingresa el celular', 'warning');
-            return;
+            return false;
         }
         if (!raffleNumber) {
             showNotification('Por favor ingresa el número de rifa', 'warning');
-            return;
+            return false;
         }
     
         const num = parseInt(raffleNumber, 10);
     
         if (raffleNumber.length !== numberLength) {
              showNotification(`El número para esta modalidad debe ser de ${numberLength} cifras`, 'warning');
-             return;
+             return false;
         }
     
         if (allAssignedNumbers.has(num)) {
             showNotification('Este número ya está asignado', 'warning');
-            return;
+            return false;
         }
     
-        // Manual payment flow (Nequi, etc.)
         const participantName = name;
         const formattedRaffleNumber = String(num).padStart(numberLength, '0');
         const participantId = Date.now();
@@ -423,8 +413,11 @@ const App = () => {
             raffleNumber: '',
         }));
         
-        showNotification(`¡Número ${formattedRaffleNumber} registrado para ${participantName}! Tu pago está pendiente de confirmación por el administrador.`, 'success');
+        if (isNequiPayment) {
+            showNotification(`¡Número ${formattedRaffleNumber} registrado para ${participantName}! Tu pago está pendiente de confirmación por el administrador.`, 'success');
+        }
         handleTabClick('board');
+        return true;
     };
 
     const handleConfirmPayment = async (participantId: number) => {
@@ -470,7 +463,6 @@ const App = () => {
         return new Promise<void>(async (resolve) => {
             setLoading(true);
             
-            // Clean up admin state on every search
             setCurrentAdminId(null);
             
             const aRef = (refToSearch || adminRefSearch).trim().toUpperCase();
@@ -491,13 +483,12 @@ const App = () => {
             }
 
             raffleSubscription.current = onSnapshot(raffleDocRef, (docSnapshot) => {
-                // Get or create device-specific admin ID
                 let adminId = localStorage.getItem('rifaAdminId');
                 if (!adminId) {
                     adminId = `admin_${Date.now()}_${Math.random()}`;
                     localStorage.setItem('rifaAdminId', adminId);
                 }
-                setCurrentAdminId(adminId); // Set it in state for comparison
+                setCurrentAdminId(adminId);
 
                 if (docSnapshot.exists()) {
                     const data = docSnapshot.data();
@@ -568,13 +559,11 @@ const App = () => {
     const handleActivateBoard = async (mode: RaffleMode) => {
         setLoading(true);
         try {
-            // Get or create admin ID *before* creating the raffle.
             let adminId = localStorage.getItem('rifaAdminId');
             if (!adminId) {
                 adminId = `admin_${Date.now()}_${Math.random()}`;
                 localStorage.setItem('rifaAdminId', adminId);
             }
-            // Set it in state immediately.
             setCurrentAdminId(adminId);
 
             const newRef = await raffleManager.createNewRaffleRef();
@@ -582,13 +571,11 @@ const App = () => {
                 ...initialRaffleData,
                 raffleMode: mode,
                 raffleRef: newRef,
-                adminId: adminId, // Use the fresh adminId
-                isPaid: true, // Mark as paid immediately
+                adminId: adminId,
+                isPaid: true,
             };
             await setDoc(doc(db, "raffles", newRef), newRaffleData);
 
-            // Now, search for the newly created raffle to subscribe to it.
-            // This will also correctly set the URL and state.
             await handleAdminSearch(newRef, true);
         } catch (error) {
             console.error("Error activating board:", error);
@@ -619,7 +606,6 @@ const App = () => {
                 if(raffleData.isPaid){
                     showNotification('Esta rifa ya ha sido activada.', 'info');
                 } else {
-                    // Get or create the admin ID for the current device
                     let currentDeviceAdminId = localStorage.getItem('rifaAdminId');
                     if (!currentDeviceAdminId) {
                         currentDeviceAdminId = `admin_${Date.now()}_${Math.random()}`;
@@ -1339,17 +1325,21 @@ const App = () => {
                                                             target="_blank"
                                                             rel="noopener noreferrer"
                                                             className="flex-1"
-                                                            onClick={() => {
-                                                                setNequiPaymentClicked(true);
-                                                                handleRegisterParticipant();
+                                                            onClick={async (e) => {
+                                                                if (!isRegisterFormValidForSubmit) {
+                                                                    e.preventDefault();
+                                                                    handleRegisterParticipant(true); // This will show validation errors
+                                                                } else {
+                                                                    await handleRegisterParticipant(true);
+                                                                }
                                                             }}
                                                         >
                                                             <Button
                                                                 className="w-full bg-[#A454C4] hover:bg-[#8e49a8] text-white"
-                                                                disabled={nequiPaymentClicked || !isRegisterFormValidForSubmit}
+                                                                disabled={!isRegisterFormValidForSubmit}
                                                             >
                                                                 <NequiIcon />
-                                                                <span className="ml-2">{nequiPaymentClicked ? 'Redirigiendo a Nequi...' : 'Pagar con Nequi'}</span>
+                                                                <span className="ml-2">Pagar con Nequi</span>
                                                             </Button>
                                                         </a>
                                                     )}
@@ -1359,7 +1349,12 @@ const App = () => {
                                                             target="_blank"
                                                             rel="noopener noreferrer"
                                                             className="flex-1"
-                                                            onClick={() => handleRegisterParticipant()}
+                                                            onClick={(e) => {
+                                                                if (!isRegisterFormValidForSubmit) {
+                                                                    e.preventDefault();
+                                                                    handleRegisterParticipant();
+                                                                }
+                                                            }}
                                                         >
                                                             <Button
                                                                 className="w-full bg-blue-500 hover:bg-blue-600 text-white"
