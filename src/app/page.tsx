@@ -1355,7 +1355,7 @@ const App = () => {
                                                     )}
                                                      {raffleState?.isPaymentLinkEnabled && raffleState?.paymentLink && (
                                                         <a
-                                                            href={raffleState.paymentLink}
+                                                            href={`${raffleState.paymentLink}?pName=${encodeURIComponent(raffleState.name || '')}&pPhone=${encodeURIComponent(raffleState.phoneNumber || '')}&pNum=${encodeURIComponent(raffleState.raffleNumber || '')}`}
                                                             target="_blank"
                                                             rel="noopener noreferrer"
                                                             className="flex-1"
