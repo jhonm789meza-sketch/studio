@@ -721,7 +721,7 @@ const App = () => {
                     )}
                     
                     <h2 className="text-2xl font-bold text-gray-800 mb-4">Configuración del Premio</h2>
-                    {raffleState.isDetailsConfirmed && raffleState.raffleRef && (
+                    {raffleState.raffleRef && (
                         <div className="mb-4">
                             <p className="text-sm text-gray-500">Referencia del Juego</p>
                             <div className="flex items-center gap-2">
@@ -1729,5 +1729,3 @@ const App = () => {
 };
 
 export default App;
-
-    
