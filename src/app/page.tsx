@@ -1372,13 +1372,6 @@ const App = () => {
                                                     )}
                                                 </div>
 
-                                                <Button
-                                                    onClick={() => handleRegisterParticipant()}
-                                                    disabled={!isRegisterFormValidForSubmit}
-                                                    className="w-full px-4 py-2 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-                                                >
-                                                    Registrar (Pago Pendiente)
-                                                </Button>
                                             </div>
                                             {generatedTicketData && !isCurrentUserAdmin && (
                                                 <InlineTicket ticketData={generatedTicketData} />
