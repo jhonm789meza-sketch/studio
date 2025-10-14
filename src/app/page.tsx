@@ -685,6 +685,11 @@ const App = () => {
         
         return (
             <>
+                {isCurrentUserAdmin && (
+                    <div className="mb-4 p-3 bg-green-100 border border-green-300 text-green-800 rounded-lg text-center font-semibold">
+                        Eres el administrador de este juego
+                    </div>
+                )}
                 <div className="mb-6">
                     
                     {raffleState.winner && (
@@ -1733,4 +1738,3 @@ const App = () => {
 
 export default App;
 
-    
