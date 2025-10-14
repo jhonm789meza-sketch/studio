@@ -704,8 +704,8 @@ const App = () => {
                             <>
                                 <p><strong>Nombre:</strong> {raffleState.winner.name}</p>
                                 <p><strong>Teléfono:</strong> {isCurrentUserAdmin ? 
-                                    <a href={`https://wa.me/${raffleState.winner.phoneNumber}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{raffleState.winner.phoneNumber}</a>
-                                    : <span>{raffleState.winner.phoneNumber}</span>
+                                    <a href={`https://wa.me/${raffleState.winner.phoneNumber}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{`+57 ${raffleState.winner.phoneNumber}`}</a>
+                                    : <span>{`+57 ${raffleState.winner.phoneNumber}`}</span>
                                 }</p>
                             </>
                             )}
@@ -1743,4 +1743,3 @@ const App = () => {
 
 export default App;
 
-    
