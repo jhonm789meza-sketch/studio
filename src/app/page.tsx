@@ -25,7 +25,7 @@ import { es } from 'date-fns/locale';
 import { Textarea } from '@/components/ui/textarea';
 
 type RaffleMode = 'two-digit' | 'three-digit';
-type Tab = 'board' | 'register' | 'participants' | 'pending';
+type Tab = 'board' | 'register' | 'participants' | 'pending' | 'recaudado';
 
 const initialRaffleData = {
     drawnNumbers: [],
@@ -463,8 +463,6 @@ const App = () => {
         return new Promise<void>(async (resolve) => {
             setLoading(true);
             
-            setCurrentAdminId(null);
-            
             const aRef = (refToSearch || adminRefSearch).trim().toUpperCase();
             if (!aRef) {
                 showNotification('Por favor, ingresa una referencia.', 'warning');
@@ -505,6 +503,7 @@ const App = () => {
                 } else {
                     showNotification('No se encontró ninguna rifa con esa referencia.', 'error');
                     setRaffleState(null);
+                    setCurrentAdminId(null);
                     window.history.pushState({}, '', window.location.pathname);
                 }
                 setLoading(false);
@@ -704,7 +703,7 @@ const App = () => {
                             <>
                                 <p><strong>Nombre:</strong> {raffleState.winner.name}</p>
                                 <p><strong>Teléfono:</strong> {isCurrentUserAdmin ? 
-                                    <a href={`https://wa.me/${raffleState.winner.phoneNumber}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{`+57 ${raffleState.winner.phoneNumber}`}</a>
+                                    <a href={`https://wa.me/57${raffleState.winner.phoneNumber}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{`+57 ${raffleState.winner.phoneNumber}`}</a>
                                     : <span>{`+57 ${raffleState.winner.phoneNumber}`}</span>
                                 }</p>
                             </>
@@ -853,17 +852,17 @@ const App = () => {
                                 />
                             </div>
                         )}
+                        {isCurrentUserAdmin && !raffleState.isDetailsConfirmed && (
+                            <div className="md:col-span-2">
+                                <Button
+                                    onClick={handleConfirmDetails}
+                                    className="w-full md:w-auto bg-purple-500 text-white font-medium rounded-lg hover:bg-purple-600 transition-colors"
+                                >
+                                    Confirmar Detalles del Premio
+                                </Button>
+                            </div>
+                        )}
                     </div>
-                    {isCurrentUserAdmin && !raffleState.isDetailsConfirmed && (
-                        <div className="mb-6">
-                            <Button
-                                onClick={handleConfirmDetails}
-                                className="w-full md:w-auto bg-purple-500 text-white font-medium rounded-lg hover:bg-purple-600 transition-colors"
-                            >
-                                Confirmar Detalles del Premio
-                            </Button>
-                        </div>
-                    )}
                 </div>
                {isCurrentUserAdmin && (
                  <div className="mb-6 p-4 border rounded-lg bg-gray-50">
@@ -1137,6 +1136,7 @@ const App = () => {
                                 <DropdownMenuItem onSelect={() => setIsAdminLoginOpen(true)}>
                                     Buscar por Referencia
                                 </DropdownMenuItem>
+                                <DropdownMenuSeparator />
                                 <DropdownMenuItem onSelect={() => setIsShareDialogOpen(true)}>
                                     <Share2 className="mr-2 h-4 w-4" />
                                     <span>Compartir</span>
