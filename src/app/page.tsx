@@ -1300,15 +1300,15 @@ const App = () => {
                                                         <Label htmlFor="phone-input">Celular:</Label>
                                                         <div className="relative mt-1">
                                                             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                                                <span className="text-gray-500 sm:text-sm">+</span>
+                                                                <span className="text-gray-500 sm:text-sm">+57</span>
                                                             </div>
                                                             <Input
                                                                 id="phone-input"
                                                                 type="tel"
                                                                 value={raffleState?.phoneNumber || ''}
                                                                 onChange={(e) => handleLocalFieldChange('phoneNumber', e.target.value.replace(/\D/g, ''))}
-                                                                placeholder="Ej: 573001234567"
-                                                                className="w-full pl-6"
+                                                                placeholder="3001234567"
+                                                                className="w-full pl-12"
                                                             />
                                                         </div>
                                                     </div>
@@ -1742,3 +1742,5 @@ const App = () => {
 };
 
 export default App;
+
+    
