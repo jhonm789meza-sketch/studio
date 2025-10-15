@@ -634,7 +634,7 @@ const App = () => {
             return;
         }
         const message = encodeURIComponent('Hola, te contacto sobre la rifa.');
-        const whatsappUrl = `https://wa.me/${raffleState.organizerPhoneNumber}?text=${message}`;
+        const whatsappUrl = `https://wa.me/57${raffleState.organizerPhoneNumber}?text=${message}`;
         window.open(whatsappUrl, '_blank');
     };
     
