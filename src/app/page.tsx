@@ -739,16 +739,21 @@ const App = () => {
                        </div>
                        <div>
                             <Label htmlFor="organizer-phone-input">Teléfono del Organizador:</Label>
-                            <Input
-                                id="organizer-phone-input"
-                                type="tel"
-                                value={raffleState.organizerPhoneNumber}
-                               onChange={(e) => handleLocalFieldChange('organizerPhoneNumber', e.target.value.replace(/\D/g, ''))}
-                                onBlur={(e) => handleFieldChange('organizerPhoneNumber', e.target.value.replace(/\D/g, ''))}
-                                placeholder="Ej: 573001234567"
-                                disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
-                                className="w-full mt-1"
-                            />
+                            <div className="relative mt-1">
+                                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                                    <span className="text-gray-500 sm:text-sm">+57</span>
+                                </div>
+                                <Input
+                                    id="organizer-phone-input"
+                                    type="tel"
+                                    value={raffleState.organizerPhoneNumber}
+                                    onChange={(e) => handleLocalFieldChange('organizerPhoneNumber', e.target.value.replace(/\D/g, ''))}
+                                    onBlur={(e) => handleFieldChange('organizerPhoneNumber', e.target.value.replace(/\D/g, ''))}
+                                    placeholder="3001234567"
+                                    disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
+                                    className="w-full pl-12 mt-1"
+                                />
+                            </div>
                         </div>
                        <div>
                            <Label htmlFor="prize-input">Premio:</Label>
