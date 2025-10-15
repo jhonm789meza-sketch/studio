@@ -817,16 +817,21 @@ const App = () => {
                        </div>
                        <div>
                             <Label htmlFor="nequi-account-input">Cuenta Nequi:</Label>
-                            <Input
-                                id="nequi-account-input"
-                                type="tel"
-                                value={raffleState.nequiAccountNumber}
-                                onChange={(e) => handleLocalFieldChange('nequiAccountNumber', e.target.value)}
-                                onBlur={(e) => handleFieldChange('nequiAccountNumber', e.target.value)}
-                                placeholder="Ej: 3001234567"
-                                disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
-                                className="w-full mt-1"
-                            />
+                            <div className="relative mt-1">
+                                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                                    <span className="text-gray-500 sm:text-sm">+57</span>
+                                </div>
+                                <Input
+                                    id="nequi-account-input"
+                                    type="tel"
+                                    value={raffleState.nequiAccountNumber}
+                                    onChange={(e) => handleLocalFieldChange('nequiAccountNumber', e.target.value.replace(/\D/g, ''))}
+                                    onBlur={(e) => handleFieldChange('nequiAccountNumber', e.target.value.replace(/\D/g, ''))}
+                                    placeholder="3001234567"
+                                    disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
+                                    className="w-full pl-12 mt-1"
+                                />
+                            </div>
                         </div>
                         <div>
                            <Label htmlFor="payment-link-input">Link de Pagos:</Label>
