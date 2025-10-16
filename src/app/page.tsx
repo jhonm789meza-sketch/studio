@@ -52,7 +52,8 @@ const initialRaffleData = {
     manualWinnerNumber: '',
     isPaid: false,
     adminId: null,
-    raffleMode: 'two-digit'
+    raffleMode: 'two-digit',
+    prizeImageUrl: ''
 };
 
 
@@ -84,6 +85,9 @@ const App = () => {
     const [isCollectiveMessageDialogOpen, setIsCollectiveMessageDialogOpen] = useState(false);
     const [collectiveMessage, setCollectiveMessage] = useState('');
     const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
+
+    const [twoDigitImageUrl, setTwoDigitImageUrl] = useState('');
+    const [threeDigitImageUrl, setThreeDigitImageUrl] = useState('');
 
     const raffleManager = new RaffleManager(db);
     
@@ -571,7 +575,7 @@ const App = () => {
         await setDoc(doc(db, "raffles", raffleState.raffleRef), { [field]: value }, { merge: true });
     };
 
-    const handleActivateBoard = async (mode: RaffleMode) => {
+    const handleActivateBoard = async (mode: RaffleMode, imageUrl: string) => {
         setLoading(true);
         try {
             let adminId = localStorage.getItem('rifaAdminId');
@@ -588,6 +592,7 @@ const App = () => {
                 raffleRef: newRef,
                 adminId: adminId,
                 isPaid: true,
+                prizeImageUrl: imageUrl,
             };
             await setDoc(doc(db, "raffles", newRef), newRaffleData);
 
@@ -700,6 +705,11 @@ const App = () => {
         
         return (
             <>
+                {raffleState.prizeImageUrl && (
+                    <div className="mb-6 rounded-lg overflow-hidden relative aspect-video max-w-2xl mx-auto">
+                        <Image src={raffleState.prizeImageUrl} alt="Premio de la rifa" fill style={{ objectFit: 'cover' }} />
+                    </div>
+                )}
                 {isCurrentUserAdmin && (
                     <div className="mb-4 p-3 bg-green-100 border border-green-300 text-green-800 rounded-lg text-center font-semibold">
                         Eres el administrador de este juego
@@ -1189,32 +1199,52 @@ const App = () => {
                             <div className="flex flex-col justify-center items-center gap-8 mb-6">
                                 
                                 {/* Ticket for 2 digits */}
-                                <div className="bg-white rounded-2xl shadow-lg flex max-w-md w-full">
-                                    <div className="bg-purple-100 p-4 flex flex-col items-center justify-center rounded-l-2xl border-r-2 border-dashed border-purple-300">
-                                        <TicketIcon className="h-10 w-10 text-purple-600 mb-2" />
-                                        <span className="text-purple-800 font-bold text-lg">2</span>
-                                        <span className="text-purple-600 text-xs">CIFRAS</span>
+                                <div className="bg-white rounded-2xl shadow-lg flex flex-col max-w-md w-full">
+                                    <div className='flex'>
+                                        <div className="bg-purple-100 p-4 flex flex-col items-center justify-center rounded-l-2xl border-r-2 border-dashed border-purple-300">
+                                            <TicketIcon className="h-10 w-10 text-purple-600 mb-2" />
+                                            <span className="text-purple-800 font-bold text-lg">2</span>
+                                            <span className="text-purple-600 text-xs">CIFRAS</span>
+                                        </div>
+                                        <div className="p-6 flex-grow">
+                                            <h5 className="mb-1 text-xl font-bold tracking-tight text-gray-900">Rifa de 2 Cifras</h5>
+                                            <p className="font-normal text-gray-600 mb-4 text-sm">Para números del 00 al 99.</p>
+                                        </div>
                                     </div>
-                                    <div className="p-6 flex-grow">
-                                        <h5 className="mb-1 text-xl font-bold tracking-tight text-gray-900">Rifa de 2 Cifras</h5>
-                                        <p className="font-normal text-gray-600 mb-4 text-sm">Para números del 00 al 99.</p>
-                                        <Button onClick={() => handleActivateBoard('two-digit')} size="lg" className="w-full bg-green-500 hover:bg-green-600 text-white font-bold">
+                                    <div className="p-6 pt-0 space-y-2">
+                                        <Input
+                                            type="text"
+                                            placeholder="Link de Imagen (Opcional)"
+                                            value={twoDigitImageUrl}
+                                            onChange={(e) => setTwoDigitImageUrl(e.target.value)}
+                                        />
+                                        <Button onClick={() => handleActivateBoard('two-digit', twoDigitImageUrl)} size="lg" className="w-full bg-green-500 hover:bg-green-600 text-white font-bold">
                                             Activar ($1.500 COP)
                                         </Button>
                                     </div>
                                 </div>
 
                                 {/* Ticket for 3 digits */}
-                                <div className="bg-white rounded-2xl shadow-lg flex max-w-md w-full">
-                                    <div className="bg-blue-100 p-4 flex flex-col items-center justify-center rounded-l-2xl border-r-2 border-dashed border-blue-300">
-                                        <TicketIcon className="h-10 w-10 text-blue-600 mb-2" />
-                                        <span className="text-blue-800 font-bold text-lg">3</span>
-                                        <span className="text-blue-600 text-xs">CIFRAS</span>
+                                <div className="bg-white rounded-2xl shadow-lg flex flex-col max-w-md w-full">
+                                     <div className='flex'>
+                                        <div className="bg-blue-100 p-4 flex flex-col items-center justify-center rounded-l-2xl border-r-2 border-dashed border-blue-300">
+                                            <TicketIcon className="h-10 w-10 text-blue-600 mb-2" />
+                                            <span className="text-blue-800 font-bold text-lg">3</span>
+                                            <span className="text-blue-600 text-xs">CIFRAS</span>
+                                        </div>
+                                        <div className="p-6 flex-grow">
+                                            <h5 className="mb-1 text-xl font-bold tracking-tight text-gray-900">Rifa de 3 Cifras</h5>
+                                            <p className="font-normal text-gray-600 mb-4 text-sm">Para números del 000 al 999.</p>
+                                        </div>
                                     </div>
-                                    <div className="p-6 flex-grow">
-                                        <h5 className="mb-1 text-xl font-bold tracking-tight text-gray-900">Rifa de 3 Cifras</h5>
-                                        <p className="font-normal text-gray-600 mb-4 text-sm">Para números del 000 al 999.</p>
-                                        <Button onClick={() => handleActivateBoard('three-digit')} size="lg" className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold">
+                                    <div className="p-6 pt-0 space-y-2">
+                                        <Input
+                                            type="text"
+                                            placeholder="Link de Imagen (Opcional)"
+                                            value={threeDigitImageUrl}
+                                            onChange={(e) => setThreeDigitImageUrl(e.target.value)}
+                                        />
+                                        <Button onClick={() => handleActivateBoard('three-digit', threeDigitImageUrl)} size="lg" className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold">
                                             Activar ($15.000 COP)
                                         </Button>
                                     </div>

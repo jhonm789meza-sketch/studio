@@ -8,3 +8,32 @@ export interface Participant {
     paymentStatus: 'pending' | 'confirmed';
     isHouse?: boolean;
 }
+
+export interface Raffle {
+    drawnNumbers: any[];
+    lastDrawnNumber: null;
+    prize: string;
+    value: string;
+    isWinnerConfirmed: boolean;
+    isDetailsConfirmed: boolean;
+    name: string;
+    phoneNumber: string;
+    raffleNumber: string;
+    nequiAccountNumber: string;
+    isNequiEnabled: boolean;
+    isPaymentLinkEnabled: boolean;
+    paymentLink: string;
+    gameDate: string;
+    lottery: string;
+    customLottery: string;
+    organizerName: string;
+    organizerPhoneNumber: string;
+    participants: Participant[];
+    raffleRef: string;
+    winner: null | Participant;
+    manualWinnerNumber: string;
+    isPaid: boolean;
+    adminId: null | string;
+    raffleMode: 'two-digit' | 'three-digit';
+    prizeImageUrl: string;
+}
