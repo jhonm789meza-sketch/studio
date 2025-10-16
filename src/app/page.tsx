@@ -413,7 +413,7 @@ const App = () => {
             raffleNumber: '',
         }));
         
-        if (isNequiPayment) {
+        if (isNequiPayment && !confirmPayment) {
             showNotification(`¡Número ${formattedRaffleNumber} registrado para ${participantName}! Tu pago está pendiente de confirmación por el administrador.`, 'success');
         } else if (confirmPayment) {
             const now = new Date();
@@ -1363,43 +1363,35 @@ const App = () => {
                                                         rel="noopener noreferrer"
                                                         className="flex-1"
                                                         onClick={async (e) => {
-                                                            if (!isCurrentUserAdmin) {
-                                                                if (!isRegisterFormValidForSubmit) {
-                                                                    e.preventDefault();
-                                                                    handleRegisterParticipant(true);
-                                                                } else {
-                                                                    await handleRegisterParticipant(true);
-                                                                }
+                                                            if (!isRegisterFormValidForSubmit) {
+                                                                e.preventDefault();
+                                                                handleRegisterParticipant(); // Show validation errors
+                                                            } else {
+                                                                const success = await handleRegisterParticipant(true, isCurrentUserAdmin);
+                                                                if (!success) e.preventDefault();
                                                             }
                                                         }}
                                                     >
-                                                        <Button
-                                                            className="w-full bg-[#A454C4] hover:bg-[#8e49a8] text-white"
-                                                            disabled={!isRegisterFormValidForSubmit}
-                                                            onClick={isCurrentUserAdmin ? () => handleRegisterParticipant(true) : undefined}
-                                                        >
+                                                        <Button className="w-full bg-[#A454C4] hover:bg-[#8e49a8] text-white" disabled={!isRegisterFormValidForSubmit}>
                                                             <NequiIcon />
-                                                            <span className="ml-2">{isCurrentUserAdmin ? "Registrar (Nequi Pendiente)" : "Pagar con Nequi"}</span>
+                                                            <span className="ml-2">{isCurrentUserAdmin ? "Registrar (Nequi)" : "Pagar con Nequi"}</span>
                                                         </Button>
                                                     </a>
                                                 )}
                                                  {raffleState?.isPaymentLinkEnabled && raffleState?.paymentLink && (
                                                     <a
-                                                        href={`${raffleState.paymentLink}?pName=${encodeURIComponent(raffleState.name || '')}&pPhone=${encodeURIComponent(raffleState.phoneNumber || '')}&pNum=${encodeURIComponent(raffleState.raffleNumber || '')}`}
+                                                        href={`${raffleState.paymentLink}${raffleState.paymentLink.includes('?') ? '&' : '?'}pName=${encodeURIComponent(raffleState.name || '')}&pPhone=${encodeURIComponent(raffleState.phoneNumber || '')}&pNum=${encodeURIComponent(raffleState.raffleNumber || '')}`}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
                                                         className="flex-1"
                                                         onClick={(e) => {
-                                                            if (!isCurrentUserAdmin && !isRegisterFormValidForSubmit) {
+                                                            if (!isRegisterFormValidForSubmit) {
                                                                 e.preventDefault();
-                                                                handleRegisterParticipant();
+                                                                handleRegisterParticipant(); // show validation
                                                             }
                                                         }}
                                                     >
-                                                        <Button
-                                                            className="w-full bg-blue-500 hover:bg-blue-600 text-white"
-                                                            disabled={!isRegisterFormValidForSubmit}
-                                                        >
+                                                        <Button className="w-full bg-blue-500 hover:bg-blue-600 text-white" disabled={!isRegisterFormValidForSubmit}>
                                                             <Link className="mr-2 h-4 w-4" />
                                                             <span>Pagar con Link</span>
                                                         </Button>
@@ -1782,5 +1774,3 @@ const App = () => {
 };
 
 export default App;
-
-    
