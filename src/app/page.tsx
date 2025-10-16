@@ -1,6 +1,5 @@
-
 'use client';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useTransition } from 'react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { RaffleManager } from '@/lib/RaffleManager';
@@ -8,11 +7,12 @@ import { db, persistenceEnabled } from '@/lib/firebase';
 import { doc, onSnapshot, setDoc, getDoc, deleteDoc, Unsubscribe, Timestamp } from 'firebase/firestore';
 import Image from 'next/image';
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { extractImageColors } from '@/ai/flows/extract-image-colors';
 
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House, Clock, Ticket, Users, MessageCircle, DollarSign, Share2, Link } from 'lucide-react';
+import { Menu, Award, Lock, House, Clock, Ticket, Users, MessageCircle, DollarSign, Share2, Link, Loader2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -88,6 +88,7 @@ const App = () => {
 
     const [twoDigitImageUrl, setTwoDigitImageUrl] = useState('');
     const [threeDigitImageUrl, setThreeDigitImageUrl] = useState('');
+    const [isThemeGenerating, startThemeTransition] = useTransition();
 
     const raffleManager = new RaffleManager(db);
     
@@ -574,6 +575,35 @@ const App = () => {
         handleLocalFieldChange(field, value);
         await setDoc(doc(db, "raffles", raffleState.raffleRef), { [field]: value }, { merge: true });
     };
+
+    const handleImageUrlChange = (mode: 'two-digit' | 'three-digit', url: string) => {
+        if (mode === 'two-digit') {
+            setTwoDigitImageUrl(url);
+        } else {
+            setThreeDigitImageUrl(url);
+        }
+
+        if (url.match(/\.(jpeg|jpg|gif|png)$/) != null) {
+            startThemeTransition(async () => {
+                try {
+                    const result = await extractImageColors({ imageUrl: url });
+                    if (result && result.theme) {
+                        const { primary, background, accent } = result.theme;
+                        document.documentElement.style.setProperty('--primary', primary);
+                        document.documentElement.style.setProperty('--background', background);
+                        document.documentElement.style.setProperty('--accent', accent);
+                        showNotification('¡Tema de la aplicación actualizado con los colores de la imagen!', 'success');
+                    } else {
+                        showNotification('No se pudieron extraer los colores de la imagen.', 'warning');
+                    }
+                } catch (error) {
+                    console.error("Error extracting colors:", error);
+                    showNotification('Error al generar el tema desde la imagen.', 'error');
+                }
+            });
+        }
+    };
+
 
     const handleActivateBoard = async (mode: RaffleMode, imageUrl: string) => {
         setLoading(true);
@@ -1212,12 +1242,15 @@ const App = () => {
                                         </div>
                                     </div>
                                     <div className="p-6 pt-0 space-y-2">
-                                        <Input
-                                            type="text"
-                                            placeholder="Link de Imagen (Opcional)"
-                                            value={twoDigitImageUrl}
-                                            onChange={(e) => setTwoDigitImageUrl(e.target.value)}
-                                        />
+                                        <div className="relative">
+                                            <Input
+                                                type="text"
+                                                placeholder="Link de Imagen (Opcional)"
+                                                value={twoDigitImageUrl}
+                                                onChange={(e) => handleImageUrlChange('two-digit', e.target.value)}
+                                            />
+                                            {isThemeGenerating && <Loader2 className="animate-spin h-4 w-4 absolute right-2 top-1/2 -translate-y-1/2 text-gray-500" />}
+                                        </div>
                                         <Button onClick={() => handleActivateBoard('two-digit', twoDigitImageUrl)} size="lg" className="w-full bg-green-500 hover:bg-green-600 text-white font-bold">
                                             Activar ($1.500 COP)
                                         </Button>
@@ -1238,12 +1271,15 @@ const App = () => {
                                         </div>
                                     </div>
                                     <div className="p-6 pt-0 space-y-2">
-                                        <Input
-                                            type="text"
-                                            placeholder="Link de Imagen (Opcional)"
-                                            value={threeDigitImageUrl}
-                                            onChange={(e) => setThreeDigitImageUrl(e.target.value)}
-                                        />
+                                        <div className="relative">
+                                            <Input
+                                                type="text"
+                                                placeholder="Link de Imagen (Opcional)"
+                                                value={threeDigitImageUrl}
+                                                onChange={(e) => handleImageUrlChange('three-digit', e.target.value)}
+                                            />
+                                            {isThemeGenerating && <Loader2 className="animate-spin h-4 w-4 absolute right-2 top-1/2 -translate-y-1/2 text-gray-500" />}
+                                        </div>
                                         <Button onClick={() => handleActivateBoard('three-digit', threeDigitImageUrl)} size="lg" className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold">
                                             Activar ($15.000 COP)
                                         </Button>
