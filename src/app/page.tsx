@@ -1275,7 +1275,7 @@ const App = () => {
                             <div className={activeTab === 'register' ? 'tab-content active' : 'tab-content'}>
                                 <div className="mb-6">
                                     <h2 className="text-2xl font-bold text-gray-800 mb-4">Registrar Número</h2>
-                                    {isCurrentUserAdmin && (
+                                    {isCurrentUserAdmin ? (
                                         <div className="bg-gray-100 p-4 rounded-lg mb-6 space-y-4">
                                             <h3 className="font-semibold text-lg text-gray-800">Controles de Administrador</h3>
                                             <div className="flex items-center justify-between">
@@ -1307,8 +1307,7 @@ const App = () => {
                                                 />
                                             </div>
                                         </div>
-                                    )}
-
+                                    ) : (
                                     <fieldset disabled={!raffleState || raffleState?.isWinnerConfirmed || !raffleState?.isDetailsConfirmed} className="disabled:opacity-50 space-y-4">
                                         <div className="flex flex-col gap-4">
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1397,19 +1396,10 @@ const App = () => {
                                                         </Button>
                                                     </a>
                                                 )}
-                                                {isCurrentUserAdmin && (
-                                                     <Button
-                                                        className="w-full flex-1 bg-green-500 hover:bg-green-600 text-white"
-                                                        disabled={!isRegisterFormValidForSubmit}
-                                                        onClick={() => handleRegisterParticipant(false, true)}
-                                                    >
-                                                        <Ticket className="mr-2 h-4 w-4" />
-                                                        <span>Generar Tiquete (Pago Manual)</span>
-                                                    </Button>
-                                                )}
                                             </div>
                                         </div>
                                     </fieldset>
+                                    )}
                                 </div>
 
                                 {(generatedTicketData) && (
