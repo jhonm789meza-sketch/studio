@@ -1366,14 +1366,14 @@ const App = () => {
                                                                 e.preventDefault();
                                                                 handleRegisterParticipant(); // Show validation errors
                                                             } else {
-                                                                const success = await handleRegisterParticipant(true, isCurrentUserAdmin);
+                                                                const success = await handleRegisterParticipant(true);
                                                                 if (!success) e.preventDefault();
                                                             }
                                                         }}
                                                     >
                                                         <Button className="w-full bg-[#A454C4] hover:bg-[#8e49a8] text-white" disabled={!isRegisterFormValidForSubmit}>
                                                             <NequiIcon />
-                                                            <span className="ml-2">{isCurrentUserAdmin ? "Registrar (Nequi)" : "Pagar con Nequi"}</span>
+                                                            <span className="ml-2">Pagar con Nequi</span>
                                                         </Button>
                                                     </a>
                                                 )}
