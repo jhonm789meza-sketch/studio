@@ -1383,14 +1383,14 @@ const App = () => {
                                                         </Button>
                                                     </a>
                                                 )}
-                                                 {raffleState?.isPaymentLinkEnabled && raffleState?.paymentLink && !isCurrentUserAdmin && (
+                                                 {raffleState?.isPaymentLinkEnabled && raffleState?.paymentLink && (
                                                     <a
                                                         href={`${raffleState.paymentLink}?pName=${encodeURIComponent(raffleState.name || '')}&pPhone=${encodeURIComponent(raffleState.phoneNumber || '')}&pNum=${encodeURIComponent(raffleState.raffleNumber || '')}`}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
                                                         className="flex-1"
                                                         onClick={(e) => {
-                                                            if (!isRegisterFormValidForSubmit) {
+                                                            if (!isCurrentUserAdmin && !isRegisterFormValidForSubmit) {
                                                                 e.preventDefault();
                                                                 handleRegisterParticipant();
                                                             }
@@ -1405,7 +1405,7 @@ const App = () => {
                                                         </Button>
                                                     </a>
                                                 )}
-                                                {isCurrentUserAdmin && raffleState?.isPaymentLinkEnabled && (
+                                                {isCurrentUserAdmin && (
                                                      <Button
                                                         className="w-full flex-1 bg-green-500 hover:bg-green-600 text-white"
                                                         disabled={!isRegisterFormValidForSubmit}
