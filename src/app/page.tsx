@@ -723,6 +723,7 @@ const App = () => {
 
     const confirmedNumbers = new Set(raffleState?.participants.filter((p: Participant) => p.paymentStatus === 'confirmed').map((p: Participant) => parseInt(p.raffleNumber, 10)) || []);
     
+    const backgroundImage = raffleState?.prizeImageUrl || twoDigitImageUrl || threeDigitImageUrl;
 
     if (loading) {
         return <div className="flex justify-center items-center h-screen text-xl font-semibold">Cargando...</div>;
@@ -1188,9 +1189,9 @@ const App = () => {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-purple-100 to-blue-100 p-4 font-sans relative">
-            {raffleState?.prizeImageUrl && (
+            {backgroundImage && (
                 <div className="fixed inset-0 z-0">
-                    <Image src={raffleState.prizeImageUrl} alt="Fondo de la rifa" layout="fill" objectFit="cover" className="opacity-20 blur-sm" />
+                    <Image src={backgroundImage} alt="Fondo de la rifa" layout="fill" objectFit="cover" className="opacity-20 blur-sm" />
                     <div className="absolute inset-0 bg-background/80 backdrop-blur-sm"></div>
                 </div>
             )}
@@ -1847,5 +1848,3 @@ const App = () => {
 };
 
 export default App;
-
-    
