@@ -582,7 +582,9 @@ const App = () => {
         } else {
             setThreeDigitImageUrl(url);
         }
-
+    };
+    
+    const handleGenerateTheme = (url: string) => {
         if (url.match(/\.(jpeg|jpg|gif|png)$/) != null) {
             startThemeTransition(async () => {
                 try {
@@ -1256,6 +1258,7 @@ const App = () => {
                                                     placeholder="Link de Imagen (Opcional)"
                                                     value={twoDigitImageUrl}
                                                     onChange={(e) => handleImageUrlChange('two-digit', e.target.value)}
+                                                    onBlur={(e) => handleGenerateTheme(e.target.value)}
                                                 />
                                                 {isThemeGenerating && <Loader2 className="animate-spin h-4 w-4 absolute right-2 top-1/2 -translate-y-1/2 text-gray-500" />}
                                             </div>
@@ -1285,6 +1288,7 @@ const App = () => {
                                                     placeholder="Link de Imagen (Opcional)"
                                                     value={threeDigitImageUrl}
                                                     onChange={(e) => handleImageUrlChange('three-digit', e.target.value)}
+                                                    onBlur={(e) => handleGenerateTheme(e.target.value)}
                                                 />
                                                 {isThemeGenerating && <Loader2 className="animate-spin h-4 w-4 absolute right-2 top-1/2 -translate-y-1/2 text-gray-500" />}
                                             </div>
@@ -1470,7 +1474,7 @@ const App = () => {
                                                             </Button>
                                                         </a>
                                                     )}
-                                                    {isCurrentUserAdmin && (
+                                                     {isCurrentUserAdmin && (
                                                         <Button 
                                                             className="w-full bg-green-600 hover:bg-green-700" 
                                                             onClick={() => handleRegisterParticipant(false, true)}
