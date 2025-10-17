@@ -469,7 +469,7 @@ const App = () => {
         if (!targetInfo || !targetInfo.phoneNumber) return;
 
         const message = encodeURIComponent(`¡Hola! Aquí tienes tu tiquete para la rifa.`);
-        const whatsappUrl = `https://wa.me/${targetInfo.phoneNumber}?text=${message}`;
+        const whatsappUrl = `https://wa.me/57${targetInfo.phoneNumber}?text=${message}`;
         window.open(whatsappUrl, '_blank');
         
         if (isTicketModalOpen) {
@@ -585,25 +585,28 @@ const App = () => {
     };
     
     const handleGenerateTheme = (url: string) => {
-        if (url.match(/\.(jpeg|jpg|gif|png)$/) != null) {
-            startThemeTransition(async () => {
-                try {
-                    const result = await extractImageColors({ imageUrl: url });
-                    if (result && result.theme) {
-                        const { primary, background, accent } = result.theme;
-                        document.documentElement.style.setProperty('--primary', primary);
-                        document.documentElement.style.setProperty('--background', background);
-                        document.documentElement.style.setProperty('--accent', accent);
-                        showNotification('¡Tema de la aplicación actualizado con los colores de la imagen!', 'success');
-                    } else {
-                        showNotification('No se pudieron extraer los colores de la imagen.', 'warning');
-                    }
-                } catch (error) {
-                    console.error("Error extracting colors:", error);
-                    showNotification('Error al generar el tema desde la imagen.', 'error');
-                }
-            });
+        if (!url || url.match(/\.(jpeg|jpg|gif|png)$/) == null) {
+            return;
         }
+        
+        startThemeTransition(async () => {
+            try {
+                const result = await extractImageColors({ imageUrl: url });
+                if (result && result.theme) {
+                    const { primary, background, accent } = result.theme;
+                    const root = document.documentElement;
+                    root.style.setProperty('--primary', primary);
+                    root.style.setProperty('--background', background);
+                    root.style.setProperty('--accent', accent);
+                    showNotification('¡Tema de la aplicación actualizado con los colores de la imagen!', 'success');
+                } else {
+                    showNotification('No se pudieron extraer los colores de la imagen.', 'warning');
+                }
+            } catch (error) {
+                console.error("Error extracting colors:", error);
+                showNotification('Error al generar el tema desde la imagen.', 'error');
+            }
+        });
     };
 
 
@@ -626,6 +629,11 @@ const App = () => {
                 isPaid: true,
                 prizeImageUrl: imageUrl,
             };
+            
+            if (imageUrl) {
+                 handleGenerateTheme(imageUrl);
+            }
+
             await setDoc(doc(db, "raffles", newRef), newRaffleData);
 
             await handleAdminSearch(newRef, true);
@@ -700,7 +708,7 @@ const App = () => {
         const firstPhoneNumber = confirmedParticipants[0].phoneNumber;
         const message = encodeURIComponent(collectiveMessage);
         
-        const whatsappUrl = `https://wa.me/${firstPhoneNumber}?text=${message}`;
+        const whatsappUrl = `https://wa.me/57${firstPhoneNumber}?text=${message}`;
         window.open(whatsappUrl, '_blank');
         setIsCollectiveMessageDialogOpen(false);
         setCollectiveMessage('');
@@ -1852,3 +1860,5 @@ const App = () => {
 };
 
 export default App;
+
+    
