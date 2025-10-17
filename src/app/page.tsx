@@ -634,7 +634,7 @@ const App = () => {
                  handleGenerateTheme(imageUrl);
             }
 
-            await setDoc(doc(db, "raffles", newRef), newRffleData);
+            await setDoc(doc(db, "raffles", newRef), newRaffleData);
 
             await handleAdminSearch(newRef, true);
         } catch (error) {
