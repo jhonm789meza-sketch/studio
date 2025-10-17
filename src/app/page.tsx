@@ -1187,417 +1187,426 @@ const App = () => {
 
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-purple-100 to-blue-100 p-4 font-sans">
-            {showConfetti && <Confetti />}
-            <div className="max-w-6xl mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden">
-                <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-6 flex justify-between items-center">
-                    <div>
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="text-white hover:bg-white/20">
-                                    <Menu className="h-6 w-6" />
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent>
-                                <DropdownMenuItem onSelect={() => setIsAdminLoginOpen(true)}>
-                                    Buscar por Referencia
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem onSelect={() => setIsShareDialogOpen(true)}>
-                                    <Share2 className="mr-2 h-4 w-4" />
-                                    <span>Compartir</span>
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    </div>
-                    <div className="text-center">
-                        <h1 className="text-4xl font-bold">Tablero de Rifa</h1>
-                    </div>
-                    <div className="w-10">
-                        {/* Placeholder for symmetry */}
-                    </div>
+        <div className="min-h-screen bg-gradient-to-br from-purple-100 to-blue-100 p-4 font-sans relative">
+            {raffleState?.prizeImageUrl && (
+                <div className="fixed inset-0 z-0">
+                    <Image src={raffleState.prizeImageUrl} alt="Fondo de la rifa" layout="fill" objectFit="cover" className="opacity-20 blur-sm" />
+                    <div className="absolute inset-0 bg-background/80 backdrop-blur-sm"></div>
                 </div>
-
-                {!raffleState ? (
-                     <div className="p-8">
+            )}
+            <div className="relative z-10">
+                {showConfetti && <Confetti />}
+                <div className="max-w-6xl mx-auto bg-white/80 backdrop-blur-lg rounded-2xl shadow-2xl overflow-hidden border">
+                    <div className="bg-gradient-to-r from-purple-600/80 to-blue-600/80 text-white p-6 flex justify-between items-center">
+                        <div>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="text-white hover:bg-white/20">
+                                        <Menu className="h-6 w-6" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent>
+                                    <DropdownMenuItem onSelect={() => setIsAdminLoginOpen(true)}>
+                                        Buscar por Referencia
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem onSelect={() => setIsShareDialogOpen(true)}>
+                                        <Share2 className="mr-2 h-4 w-4" />
+                                        <span>Compartir</span>
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
                         <div className="text-center">
-                            <Lock className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                            <h2 className="text-2xl font-bold text-gray-800 mb-2">Tablero Bloqueado</h2>
-                            <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                                Busca una rifa por su referencia o crea una nueva para empezar.
-                            </p>
-                            <div className="flex flex-col justify-center items-center gap-8 mb-6">
-                                
-                                {/* Ticket for 2 digits */}
-                                <div className="bg-white rounded-2xl shadow-lg flex flex-col max-w-md w-full">
-                                    <div className='flex'>
-                                        <div className="bg-purple-100 p-4 flex flex-col items-center justify-center rounded-l-2xl border-r-2 border-dashed border-purple-300">
-                                            <TicketIcon className="h-10 w-10 text-purple-600 mb-2" />
-                                            <span className="text-purple-800 font-bold text-lg">2</span>
-                                            <span className="text-purple-600 text-xs">CIFRAS</span>
-                                        </div>
-                                        <div className="p-6 flex-grow">
-                                            <h5 className="mb-1 text-xl font-bold tracking-tight text-gray-900">Rifa de 2 Cifras</h5>
-                                            <p className="font-normal text-gray-600 mb-4 text-sm">Para números del 00 al 99.</p>
-                                        </div>
-                                    </div>
-                                    <div className="p-6 pt-0 space-y-2">
-                                        <div className="relative">
-                                            <Input
-                                                type="text"
-                                                placeholder="Link de Imagen (Opcional)"
-                                                value={twoDigitImageUrl}
-                                                onChange={(e) => handleImageUrlChange('two-digit', e.target.value)}
-                                            />
-                                            {isThemeGenerating && <Loader2 className="animate-spin h-4 w-4 absolute right-2 top-1/2 -translate-y-1/2 text-gray-500" />}
-                                        </div>
-                                        <Button onClick={() => handleActivateBoard('two-digit', twoDigitImageUrl)} size="lg" className="w-full bg-green-500 hover:bg-green-600 text-white font-bold">
-                                            Activar ($1.500 COP)
-                                        </Button>
-                                    </div>
-                                </div>
-
-                                {/* Ticket for 3 digits */}
-                                <div className="bg-white rounded-2xl shadow-lg flex flex-col max-w-md w-full">
-                                     <div className='flex'>
-                                        <div className="bg-blue-100 p-4 flex flex-col items-center justify-center rounded-l-2xl border-r-2 border-dashed border-blue-300">
-                                            <TicketIcon className="h-10 w-10 text-blue-600 mb-2" />
-                                            <span className="text-blue-800 font-bold text-lg">3</span>
-                                            <span className="text-blue-600 text-xs">CIFRAS</span>
-                                        </div>
-                                        <div className="p-6 flex-grow">
-                                            <h5 className="mb-1 text-xl font-bold tracking-tight text-gray-900">Rifa de 3 Cifras</h5>
-                                            <p className="font-normal text-gray-600 mb-4 text-sm">Para números del 000 al 999.</p>
-                                        </div>
-                                    </div>
-                                    <div className="p-6 pt-0 space-y-2">
-                                        <div className="relative">
-                                            <Input
-                                                type="text"
-                                                placeholder="Link de Imagen (Opcional)"
-                                                value={threeDigitImageUrl}
-                                                onChange={(e) => handleImageUrlChange('three-digit', e.target.value)}
-                                            />
-                                            {isThemeGenerating && <Loader2 className="animate-spin h-4 w-4 absolute right-2 top-1/2 -translate-y-1/2 text-gray-500" />}
-                                        </div>
-                                        <Button onClick={() => handleActivateBoard('three-digit', threeDigitImageUrl)} size="lg" className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold">
-                                            Activar ($15.000 COP)
-                                        </Button>
-                                    </div>
-                                </div>
-                                
-                            </div>
-                             <Button onClick={() => setIsAdminLoginOpen(true)} size="lg" variant="outline">
-                                o Buscar por Referencia
-                            </Button>
+                            <h1 className="text-4xl font-bold">Tablero de Rifa</h1>
+                        </div>
+                        <div className="w-10">
+                            {/* Placeholder for symmetry */}
                         </div>
                     </div>
-                ) : (
-                    <>
-                        <div className="border-b border-gray-200">
-                            <div className="relative flex overflow-x-auto">
-                                <button 
-                                    className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'board' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
-                                    onClick={() => handleTabClick('board')}
-                                >
-                                    <Ticket className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">Tablero</span>
-                                </button>
-                                <button 
-                                    className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'register' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
-                                    onClick={() => handleTabClick('register')}
-                                    disabled={!raffleState}
-                                >
-                                    <span className="md:hidden">✏️</span> <span className="hidden md:inline">Registrar</span>
-                                </button>
-                                {isCurrentUserAdmin && (
-                                   <button 
-                                       className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'pending' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
-                                       onClick={() => handleTabClick('pending')}
-                                   >
-                                       <Clock className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">Pendientes ({pendingParticipants.length})</span>
-                                   </button>
-                                )}
-                                <button 
-                                    className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'participants' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
-                                    onClick={() => handleTabClick('participants')}
-                                    disabled={!raffleState}
-                                >
-                                    <Users className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">Participantes</span>
-                                </button>
-                                {isCurrentUserAdmin && (
-                                   <button 
-                                       className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'recaudado' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
-                                       onClick={() => setIsSalesModalOpen(true)}
-                                   >
-                                       <DollarSign className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">Recaudado</span>
-                                   </button>
-                                )}
-                            </div>
-                        </div>
-                        <div className="p-6">
-                            <div className={activeTab === 'board' ? 'tab-content active' : 'tab-content'}>
-                                {renderBoardContent()}
-                            </div>
-                            <div className={activeTab === 'register' ? 'tab-content active' : 'tab-content'}>
-                                <div className="mb-6">
-                                    <h2 className="text-2xl font-bold text-gray-800 mb-4">Registrar Número</h2>
-                                    {isCurrentUserAdmin && (
-                                        <div className="bg-gray-100 p-4 rounded-lg mb-6 space-y-4">
-                                            <h3 className="font-semibold text-lg text-gray-800">Controles de Administrador</h3>
-                                            <div className="flex items-center justify-between">
-                                                <Label htmlFor="enable-nequi" className="flex flex-col space-y-1">
-                                                    <span>Habilitar Pago con Nequi</span>
-                                                    <span className="font-normal leading-snug text-muted-foreground text-sm">
-                                                        Permite a los usuarios pagar usando el botón de Nequi.
-                                                    </span>
-                                                </Label>
-                                                <Switch
-                                                    id="enable-nequi"
-                                                    checked={raffleState?.isNequiEnabled ?? true}
-                                                    onCheckedChange={(checked) => handlePaymentMethodToggle('isNequiEnabled', checked)}
-                                                    disabled={!raffleState?.nequiAccountNumber}
-                                                />
+
+                    {!raffleState ? (
+                        <div className="p-8">
+                            <div className="text-center">
+                                <Lock className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                                <h2 className="text-2xl font-bold text-gray-800 mb-2">Tablero Bloqueado</h2>
+                                <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                                    Busca una rifa por su referencia o crea una nueva para empezar.
+                                </p>
+                                <div className="flex flex-col justify-center items-center gap-8 mb-6">
+                                    
+                                    {/* Ticket for 2 digits */}
+                                    <div className="bg-white rounded-2xl shadow-lg flex flex-col max-w-md w-full">
+                                        <div className='flex'>
+                                            <div className="bg-purple-100 p-4 flex flex-col items-center justify-center rounded-l-2xl border-r-2 border-dashed border-purple-300">
+                                                <TicketIcon className="h-10 w-10 text-purple-600 mb-2" />
+                                                <span className="text-purple-800 font-bold text-lg">2</span>
+                                                <span className="text-purple-600 text-xs">CIFRAS</span>
                                             </div>
-                                            <div className="flex items-center justify-between">
-                                                <Label htmlFor="enable-payment-link" className="flex flex-col space-y-1">
-                                                    <span>Habilitar Pago con Link</span>
-                                                    <span className="font-normal leading-snug text-muted-foreground text-sm">
-                                                        Permite a los usuarios pagar usando el link de pagos.
-                                                    </span>
-                                                </Label>
-                                                <Switch
-                                                    id="enable-payment-link"
-                                                    checked={raffleState?.isPaymentLinkEnabled ?? true}
-                                                    onCheckedChange={(checked) => handlePaymentMethodToggle('isPaymentLinkEnabled', checked)}
-                                                    disabled={!raffleState?.paymentLink}
-                                                />
+                                            <div className="p-6 flex-grow">
+                                                <h5 className="mb-1 text-xl font-bold tracking-tight text-gray-900">Rifa de 2 Cifras</h5>
+                                                <p className="font-normal text-gray-600 mb-4 text-sm">Para números del 00 al 99.</p>
                                             </div>
                                         </div>
+                                        <div className="p-6 pt-0 space-y-2">
+                                            <div className="relative">
+                                                <Input
+                                                    type="text"
+                                                    placeholder="Link de Imagen (Opcional)"
+                                                    value={twoDigitImageUrl}
+                                                    onChange={(e) => handleImageUrlChange('two-digit', e.target.value)}
+                                                />
+                                                {isThemeGenerating && <Loader2 className="animate-spin h-4 w-4 absolute right-2 top-1/2 -translate-y-1/2 text-gray-500" />}
+                                            </div>
+                                            <Button onClick={() => handleActivateBoard('two-digit', twoDigitImageUrl)} size="lg" className="w-full bg-green-500 hover:bg-green-600 text-white font-bold">
+                                                Activar ($1.500 COP)
+                                            </Button>
+                                        </div>
+                                    </div>
+
+                                    {/* Ticket for 3 digits */}
+                                    <div className="bg-white rounded-2xl shadow-lg flex flex-col max-w-md w-full">
+                                        <div className='flex'>
+                                            <div className="bg-blue-100 p-4 flex flex-col items-center justify-center rounded-l-2xl border-r-2 border-dashed border-blue-300">
+                                                <TicketIcon className="h-10 w-10 text-blue-600 mb-2" />
+                                                <span className="text-blue-800 font-bold text-lg">3</span>
+                                                <span className="text-blue-600 text-xs">CIFRAS</span>
+                                            </div>
+                                            <div className="p-6 flex-grow">
+                                                <h5 className="mb-1 text-xl font-bold tracking-tight text-gray-900">Rifa de 3 Cifras</h5>
+                                                <p className="font-normal text-gray-600 mb-4 text-sm">Para números del 000 al 999.</p>
+                                            </div>
+                                        </div>
+                                        <div className="p-6 pt-0 space-y-2">
+                                            <div className="relative">
+                                                <Input
+                                                    type="text"
+                                                    placeholder="Link de Imagen (Opcional)"
+                                                    value={threeDigitImageUrl}
+                                                    onChange={(e) => handleImageUrlChange('three-digit', e.target.value)}
+                                                />
+                                                {isThemeGenerating && <Loader2 className="animate-spin h-4 w-4 absolute right-2 top-1/2 -translate-y-1/2 text-gray-500" />}
+                                            </div>
+                                            <Button onClick={() => handleActivateBoard('three-digit', threeDigitImageUrl)} size="lg" className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold">
+                                                Activar ($15.000 COP)
+                                            </Button>
+                                        </div>
+                                    </div>
+                                    
+                                </div>
+                                <Button onClick={() => setIsAdminLoginOpen(true)} size="lg" variant="outline">
+                                    o Buscar por Referencia
+                                </Button>
+                            </div>
+                        </div>
+                    ) : (
+                        <>
+                            <div className="border-b border-gray-200">
+                                <div className="relative flex overflow-x-auto">
+                                    <button 
+                                        className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'board' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
+                                        onClick={() => handleTabClick('board')}
+                                    >
+                                        <Ticket className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">Tablero</span>
+                                    </button>
+                                    <button 
+                                        className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'register' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
+                                        onClick={() => handleTabClick('register')}
+                                        disabled={!raffleState}
+                                    >
+                                        <span className="md:hidden">✏️</span> <span className="hidden md:inline">Registrar</span>
+                                    </button>
+                                    {isCurrentUserAdmin && (
+                                    <button 
+                                        className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'pending' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
+                                        onClick={() => handleTabClick('pending')}
+                                    >
+                                        <Clock className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">Pendientes ({pendingParticipants.length})</span>
+                                    </button>
                                     )}
-                                    <fieldset disabled={!raffleState || raffleState?.isWinnerConfirmed || !raffleState?.isDetailsConfirmed} className="disabled:opacity-50 space-y-4">
-                                        <div className="flex flex-col gap-4">
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div>
-                                                    <Label htmlFor="name-input">Nombre completo:</Label>
-                                                    <Input
-                                                        id="name-input"
-                                                        type="text"
-                                                        value={raffleState?.name || ''}
-                                                        onChange={(e) => handleLocalFieldChange('name', e.target.value)}
-                                                        placeholder="Ej: Juan Pérez"
-                                                        className="w-full mt-1"
+                                    <button 
+                                        className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'participants' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
+                                        onClick={() => handleTabClick('participants')}
+                                        disabled={!raffleState}
+                                    >
+                                        <Users className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">Participantes</span>
+                                    </button>
+                                    {isCurrentUserAdmin && (
+                                    <button 
+                                        className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'recaudado' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
+                                        onClick={() => setIsSalesModalOpen(true)}
+                                    >
+                                        <DollarSign className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">Recaudado</span>
+                                    </button>
+                                    )}
+                                </div>
+                            </div>
+                            <div className="p-6">
+                                <div className={activeTab === 'board' ? 'tab-content active' : 'tab-content'}>
+                                    {renderBoardContent()}
+                                </div>
+                                <div className={activeTab === 'register' ? 'tab-content active' : 'tab-content'}>
+                                    <div className="mb-6">
+                                        <h2 className="text-2xl font-bold text-gray-800 mb-4">Registrar Número</h2>
+                                        {isCurrentUserAdmin && (
+                                            <div className="bg-gray-100 p-4 rounded-lg mb-6 space-y-4">
+                                                <h3 className="font-semibold text-lg text-gray-800">Controles de Administrador</h3>
+                                                <div className="flex items-center justify-between">
+                                                    <Label htmlFor="enable-nequi" className="flex flex-col space-y-1">
+                                                        <span>Habilitar Pago con Nequi</span>
+                                                        <span className="font-normal leading-snug text-muted-foreground text-sm">
+                                                            Permite a los usuarios pagar usando el botón de Nequi.
+                                                        </span>
+                                                    </Label>
+                                                    <Switch
+                                                        id="enable-nequi"
+                                                        checked={raffleState?.isNequiEnabled ?? true}
+                                                        onCheckedChange={(checked) => handlePaymentMethodToggle('isNequiEnabled', checked)}
+                                                        disabled={!raffleState?.nequiAccountNumber}
                                                     />
                                                 </div>
-                                                <div>
-                                                    <Label htmlFor="phone-input">Celular:</Label>
-                                                    <div className="relative mt-1">
-                                                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                                            <span className="text-gray-500 sm:text-sm">+57</span>
-                                                        </div>
-                                                        <Input
-                                                            id="phone-input"
-                                                            type="tel"
-                                                            value={raffleState?.phoneNumber || ''}
-                                                            onChange={(e) => handleLocalFieldChange('phoneNumber', e.target.value.replace(/\D/g, ''))}
-                                                            placeholder="3001234567"
-                                                            className="w-full pl-12"
-                                                        />
-                                                    </div>
+                                                <div className="flex items-center justify-between">
+                                                    <Label htmlFor="enable-payment-link" className="flex flex-col space-y-1">
+                                                        <span>Habilitar Pago con Link</span>
+                                                        <span className="font-normal leading-snug text-muted-foreground text-sm">
+                                                            Permite a los usuarios pagar usando el link de pagos.
+                                                        </span>
+                                                    </Label>
+                                                    <Switch
+                                                        id="enable-payment-link"
+                                                        checked={raffleState?.isPaymentLinkEnabled ?? true}
+                                                        onCheckedChange={(checked) => handlePaymentMethodToggle('isPaymentLinkEnabled', checked)}
+                                                        disabled={!raffleState?.paymentLink}
+                                                    />
                                                 </div>
                                             </div>
-                                            <div>
-                                                <Label htmlFor="raffle-number-input">Número de rifa ({raffleMode === 'two-digit' ? '00-99' : '000-999'}):</Label>
-                                                <Input
-                                                    id="raffle-number-input"
-                                                    type="text"
-                                                    value={raffleState?.raffleNumber || ''}
-                                                    onChange={handleRaffleNumberChange}
-                                                    placeholder={`Ej: ${raffleMode === 'two-digit' ? '05' : '142'}`}
-                                                    className="w-full mt-1"
-                                                    maxLength={numberLength}
-                                                />
-                                                {raffleState?.raffleNumber && allAssignedNumbers.has(parseInt(raffleState.raffleNumber)) && (
-                                                    <p className="text-red-500 text-sm mt-1">Este número ya está asignado.</p>
-                                                )}
-                                            </div>
-                                            <div className="flex flex-wrap gap-2">
-                                                {!isCurrentUserAdmin && raffleState?.isNequiEnabled && raffleState?.nequiAccountNumber && raffleState?.value && (
-                                                    <a
-                                                        href={`nequi://app/pay?phoneNumber=${raffleState.nequiAccountNumber}&value=${String(raffleState.value).replace(/\D/g, '')}&currency=COP&description=Pago Rifa`}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="flex-1"
-                                                        onClick={async (e) => {
-                                                            if (!isRegisterFormValidForSubmit) {
-                                                                e.preventDefault();
-                                                                handleRegisterParticipant(); // Show validation errors
-                                                            } else {
-                                                                const success = await handleRegisterParticipant(true);
-                                                                if (!success) e.preventDefault();
-                                                            }
-                                                        }}
-                                                    >
-                                                        <Button className="w-full bg-[#A454C4] hover:bg-[#8e49a8] text-white" disabled={!isRegisterFormValidForSubmit}>
-                                                            <NequiIcon />
-                                                            <span className="ml-2">Pagar con Nequi</span>
-                                                        </Button>
-                                                    </a>
-                                                )}
-                                                 {!isCurrentUserAdmin && raffleState?.isPaymentLinkEnabled && raffleState?.paymentLink && (
-                                                    <a
-                                                        href={`${raffleState.paymentLink}${raffleState.paymentLink.includes('?') ? '&' : '?'}pName=${encodeURIComponent(raffleState.name || '')}&pPhone=${encodeURIComponent(raffleState.phoneNumber || '')}&pNum=${encodeURIComponent(raffleState.raffleNumber || '')}`}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="flex-1"
-                                                        onClick={(e) => {
-                                                            if (!isRegisterFormValidForSubmit) {
-                                                                e.preventDefault();
-                                                                handleRegisterParticipant(); // show validation
-                                                            }
-                                                        }}
-                                                    >
-                                                        <Button className="w-full bg-blue-500 hover:bg-blue-600 text-white" disabled={!isRegisterFormValidForSubmit}>
-                                                            <Link className="mr-2 h-4 w-4" />
-                                                            <span>Pagar con Link</span>
-                                                        </Button>
-                                                    </a>
-                                                )}
-                                                {isCurrentUserAdmin && (
-                                                    <Button 
-                                                        className="w-full bg-green-600 hover:bg-green-700" 
-                                                        onClick={() => handleRegisterParticipant(false, true)}
-                                                        disabled={!isRegisterFormValidForSubmit}
-                                                    >
-                                                        Registrar y Confirmar Pago
-                                                    </Button>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </fieldset>
-                                </div>
-
-                                {(generatedTicketData) && (
-                                    <InlineTicket ticketData={generatedTicketData} />
-                                )}
-
-                                {(!raffleState || !raffleState.isDetailsConfirmed) && (
-                                    <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-6" role="alert">
-                                        <p className="font-bold">Aviso</p>
-                                        <p>Debes activar o buscar una rifa y confirmar los detalles del premio en la pestaña "Tablero" para poder participar.</p>
-                                    </div>
-                                )}
-                                {raffleState?.isWinnerConfirmed && (
-                                    <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-6" role="alert">
-                                        <p className="font-bold">Juego terminado</p>
-                                        <p>El registro de nuevos participantes está deshabilitado porque ya se ha confirmado un ganador. Reinicia el tablero para comenzar una nueva rifa.</p>
-                                    </div>
-                                )}
-                            </div>
-                            {isCurrentUserAdmin && (
-                               <div className={activeTab === 'pending' ? 'tab-content active' : 'tab-content'}>
-                                   <h2 className="text-2xl font-bold text-gray-800 mb-4">Pagos Pendientes</h2>
-                                   {pendingParticipants.length > 0 ? (
-                                       <div className="overflow-x-auto">
-                                           <table className="min-w-full divide-y divide-gray-200">
-                                               <thead className="bg-gray-50">
-                                                   <tr>
-                                                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Número</th>
-                                                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
-                                                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Celular</th>
-                                                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha Registro</th>
-                                                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acción</th>
-                                                   </tr>
-                                               </thead>
-                                               <tbody className="bg-white divide-y divide-gray-200">
-                                                   {pendingParticipants.sort((a: Participant, b: Participant) => a.raffleNumber.localeCompare(b.raffleNumber)).map((p: Participant) => (
-                                                       <tr key={p.id}>
-                                                           <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-purple-600">{p.raffleNumber}</td>
-                                                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{p.name}</td>
-                                                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{p.phoneNumber}</td>
-                                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                                {p.timestamp && p.timestamp.toDate ? format(p.timestamp.toDate(), 'PPpp', { locale: es }) : 'N/A'}
-                                                            </td>
-                                                           <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                                               <Button onClick={() => handleConfirmPayment(p.id)} size="sm" className="bg-green-500 hover:bg-green-600 text-white">
-                                                                   Confirmar Pago
-                                                               </Button>
-                                                           </td>
-                                                       </tr>
-                                                   ))}
-                                               </tbody>
-                                           </table>
-                                       </div>
-                                   ) : (
-                                       <p className="text-gray-500">No hay pagos pendientes de confirmación.</p>
-                                   )}
-                               </div>
-                            )}
-                            <div className={activeTab === 'participants' ? 'tab-content active' : 'tab-content'}>
-                                <div className="flex justify-between items-center mb-4">
-                                        <h2 className="text-2xl font-bold text-gray-800">Participantes Confirmados</h2>
-                                        {isCurrentUserAdmin && confirmedParticipants.length > 0 && (
-                                            <Button onClick={() => setIsCollectiveMessageDialogOpen(true)} size="sm">
-                                                <MessageCircle className="mr-2 h-4 w-4" />
-                                                Enviar Mensaje Colectivo
-                                            </Button>
                                         )}
-                                </div>
-
-                                {!raffleState ? (
-                                    <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-6" role="alert">
-                                        <p className="font-bold">Aviso</p>
-                                        <p>Debes activar o buscar una rifa en la pestaña "Tablero" para poder ver los participantes.</p>
-                                    </div>
-                                ) : confirmedParticipants.length > 0 ? (
-                                    <div className="overflow-x-auto">
-                                        <table className="min-w-full divide-y divide-gray-200">
-                                            <thead className="bg-gray-50">
-                                                <tr>
-                                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
-                                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
-                                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Celular</th>
-                                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Número</th>
-                                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acción</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="bg-white divide-y divide-gray-200">
-                                                {confirmedParticipants
-                                                    .sort((a: Participant, b: Participant) => a.raffleNumber.localeCompare(b.raffleNumber))
-                                                    .map((p: any, index: number) => (
-                                                    <tr key={p.id}>
-                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{index + 1}</td>
-                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{p.name}</td>
-                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{p.phoneNumber}</td>
-                                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-purple-600">{p.raffleNumber}</td>
-                                                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                                            <Button onClick={() => handleGenerateTicket(p)} size="sm" variant="outline">
-                                                                Generar Tiquete
+                                        <fieldset disabled={!raffleState || raffleState?.isWinnerConfirmed || !raffleState?.isDetailsConfirmed} className="disabled:opacity-50 space-y-4">
+                                            <div className="flex flex-col gap-4">
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <div>
+                                                        <Label htmlFor="name-input">Nombre completo:</Label>
+                                                        <Input
+                                                            id="name-input"
+                                                            type="text"
+                                                            value={raffleState?.name || ''}
+                                                            onChange={(e) => handleLocalFieldChange('name', e.target.value)}
+                                                            placeholder="Ej: Juan Pérez"
+                                                            className="w-full mt-1"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <Label htmlFor="phone-input">Celular:</Label>
+                                                        <div className="relative mt-1">
+                                                            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                                                                <span className="text-gray-500 sm:text-sm">+57</span>
+                                                            </div>
+                                                            <Input
+                                                                id="phone-input"
+                                                                type="tel"
+                                                                value={raffleState?.phoneNumber || ''}
+                                                                onChange={(e) => handleLocalFieldChange('phoneNumber', e.target.value.replace(/\D/g, ''))}
+                                                                placeholder="3001234567"
+                                                                className="w-full pl-12"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <Label htmlFor="raffle-number-input">Número de rifa ({raffleMode === 'two-digit' ? '00-99' : '000-999'}):</Label>
+                                                    <Input
+                                                        id="raffle-number-input"
+                                                        type="text"
+                                                        value={raffleState?.raffleNumber || ''}
+                                                        onChange={handleRaffleNumberChange}
+                                                        placeholder={`Ej: ${raffleMode === 'two-digit' ? '05' : '142'}`}
+                                                        className="w-full mt-1"
+                                                        maxLength={numberLength}
+                                                    />
+                                                    {raffleState?.raffleNumber && allAssignedNumbers.has(parseInt(raffleState.raffleNumber)) && (
+                                                        <p className="text-red-500 text-sm mt-1">Este número ya está asignado.</p>
+                                                    )}
+                                                </div>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {!isCurrentUserAdmin && raffleState?.isNequiEnabled && raffleState?.nequiAccountNumber && raffleState?.value && (
+                                                        <a
+                                                            href={`nequi://app/pay?phoneNumber=${raffleState.nequiAccountNumber}&value=${String(raffleState.value).replace(/\D/g, '')}&currency=COP&description=Pago Rifa`}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="flex-1"
+                                                            onClick={async (e) => {
+                                                                if (!isRegisterFormValidForSubmit) {
+                                                                    e.preventDefault();
+                                                                    handleRegisterParticipant(); // Show validation errors
+                                                                } else {
+                                                                    const success = await handleRegisterParticipant(true);
+                                                                    if (!success) e.preventDefault();
+                                                                }
+                                                            }}
+                                                        >
+                                                            <Button className="w-full bg-[#A454C4] hover:bg-[#8e49a8] text-white" disabled={!isRegisterFormValidForSubmit}>
+                                                                <NequiIcon />
+                                                                <span className="ml-2">Pagar con Nequi</span>
                                                             </Button>
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
+                                                        </a>
+                                                    )}
+                                                    {!isCurrentUserAdmin && raffleState?.isPaymentLinkEnabled && raffleState?.paymentLink && (
+                                                        <a
+                                                            href={`${raffleState.paymentLink}${raffleState.paymentLink.includes('?') ? '&' : '?'}pName=${encodeURIComponent(raffleState.name || '')}&pPhone=${encodeURIComponent(raffleState.phoneNumber || '')}&pNum=${encodeURIComponent(raffleState.raffleNumber || '')}`}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="flex-1"
+                                                            onClick={(e) => {
+                                                                if (!isRegisterFormValidForSubmit) {
+                                                                    e.preventDefault();
+                                                                    handleRegisterParticipant(); // show validation
+                                                                }
+                                                            }}
+                                                        >
+                                                            <Button className="w-full bg-blue-500 hover:bg-blue-600 text-white" disabled={!isRegisterFormValidForSubmit}>
+                                                                <Link className="mr-2 h-4 w-4" />
+                                                                <span>Pagar con Link</span>
+                                                            </Button>
+                                                        </a>
+                                                    )}
+                                                    {isCurrentUserAdmin && (
+                                                        <Button 
+                                                            className="w-full bg-green-600 hover:bg-green-700" 
+                                                            onClick={() => handleRegisterParticipant(false, true)}
+                                                            disabled={!isRegisterFormValidForSubmit}
+                                                        >
+                                                            Registrar y Confirmar Pago
+                                                        </Button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </fieldset>
                                     </div>
-                                ) : (
-                                    <p className="text-gray-500">No hay participantes con pago confirmado.</p>
-                                )}
-                            </div>
-                        </div>
-                    </>
-                )}
 
-                {notification.show && (
-                    <div className={`fixed top-4 right-4 z-[100] px-4 py-3 rounded-lg shadow-lg transition-opacity duration-300 ${
-                        notification.type === 'error' ? 'bg-red-100 text-red-700 border border-red-300' :
-                        notification.type === 'success' ? 'bg-green-100 text-green-700 border border-green-300' :
-                        notification.type === 'warning' ? 'bg-yellow-100 text-yellow-700 border border-yellow-300' :
-                        'bg-blue-100 text-blue-700 border border-blue-300'
-                    }`}>
-                        {notification.message}
-                    </div>
-                )}
+                                    {(generatedTicketData) && (
+                                        <InlineTicket ticketData={generatedTicketData} />
+                                    )}
+
+                                    {(!raffleState || !raffleState.isDetailsConfirmed) && (
+                                        <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-6" role="alert">
+                                            <p className="font-bold">Aviso</p>
+                                            <p>Debes activar o buscar una rifa y confirmar los detalles del premio en la pestaña "Tablero" para poder participar.</p>
+                                        </div>
+                                    )}
+                                    {raffleState?.isWinnerConfirmed && (
+                                        <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-6" role="alert">
+                                            <p className="font-bold">Juego terminado</p>
+                                            <p>El registro de nuevos participantes está deshabilitado porque ya se ha confirmado un ganador. Reinicia el tablero para comenzar una nueva rifa.</p>
+                                        </div>
+                                    )}
+                                </div>
+                                {isCurrentUserAdmin && (
+                                <div className={activeTab === 'pending' ? 'tab-content active' : 'tab-content'}>
+                                    <h2 className="text-2xl font-bold text-gray-800 mb-4">Pagos Pendientes</h2>
+                                    {pendingParticipants.length > 0 ? (
+                                        <div className="overflow-x-auto">
+                                            <table className="min-w-full divide-y divide-gray-200">
+                                                <thead className="bg-gray-50">
+                                                    <tr>
+                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Número</th>
+                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
+                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Celular</th>
+                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha Registro</th>
+                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acción</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="bg-white divide-y divide-gray-200">
+                                                    {pendingParticipants.sort((a: Participant, b: Participant) => a.raffleNumber.localeCompare(b.raffleNumber)).map((p: Participant) => (
+                                                        <tr key={p.id}>
+                                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-purple-600">{p.raffleNumber}</td>
+                                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{p.name}</td>
+                                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{p.phoneNumber}</td>
+                                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                                    {p.timestamp && p.timestamp.toDate ? format(p.timestamp.toDate(), 'PPpp', { locale: es }) : 'N/A'}
+                                                                </td>
+                                                            <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                                                <Button onClick={() => handleConfirmPayment(p.id)} size="sm" className="bg-green-500 hover:bg-green-600 text-white">
+                                                                    Confirmar Pago
+                                                                </Button>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    ) : (
+                                        <p className="text-gray-500">No hay pagos pendientes de confirmación.</p>
+                                    )}
+                                </div>
+                                )}
+                                <div className={activeTab === 'participants' ? 'tab-content active' : 'tab-content'}>
+                                    <div className="flex justify-between items-center mb-4">
+                                            <h2 className="text-2xl font-bold text-gray-800">Participantes Confirmados</h2>
+                                            {isCurrentUserAdmin && confirmedParticipants.length > 0 && (
+                                                <Button onClick={() => setIsCollectiveMessageDialogOpen(true)} size="sm">
+                                                    <MessageCircle className="mr-2 h-4 w-4" />
+                                                    Enviar Mensaje Colectivo
+                                                </Button>
+                                            )}
+                                    </div>
+
+                                    {!raffleState ? (
+                                        <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-6" role="alert">
+                                            <p className="font-bold">Aviso</p>
+                                            <p>Debes activar o buscar una rifa en la pestaña "Tablero" para poder ver los participantes.</p>
+                                        </div>
+                                    ) : confirmedParticipants.length > 0 ? (
+                                        <div className="overflow-x-auto">
+                                            <table className="min-w-full divide-y divide-gray-200">
+                                                <thead className="bg-gray-50">
+                                                    <tr>
+                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
+                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
+                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Celular</th>
+                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Número</th>
+                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acción</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="bg-white divide-y divide-gray-200">
+                                                    {confirmedParticipants
+                                                        .sort((a: Participant, b: Participant) => a.raffleNumber.localeCompare(b.raffleNumber))
+                                                        .map((p: any, index: number) => (
+                                                        <tr key={p.id}>
+                                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{index + 1}</td>
+                                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{p.name}</td>
+                                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{p.phoneNumber}</td>
+                                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-purple-600">{p.raffleNumber}</td>
+                                                            <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                                                <Button onClick={() => handleGenerateTicket(p)} size="sm" variant="outline">
+                                                                    Generar Tiquete
+                                                                </Button>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    ) : (
+                                        <p className="text-gray-500">No hay participantes con pago confirmado.</p>
+                                    )}
+                                </div>
+                            </div>
+                        </>
+                    )}
+
+                    {notification.show && (
+                        <div className={`fixed top-4 right-4 z-[100] px-4 py-3 rounded-lg shadow-lg transition-opacity duration-300 ${
+                            notification.type === 'error' ? 'bg-red-100 text-red-700 border border-red-300' :
+                            notification.type === 'success' ? 'bg-green-100 text-green-700 border border-green-300' :
+                            notification.type === 'warning' ? 'bg-yellow-100 text-yellow-700 border border-yellow-300' :
+                            'bg-blue-100 text-blue-700 border border-blue-300'
+                        }`}>
+                            {notification.message}
+                        </div>
+                    )}
+                </div>
             </div>
+
 
             {showConfirmation && (
                 <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-[101]">
@@ -1838,3 +1847,5 @@ const App = () => {
 };
 
 export default App;
+
+    
