@@ -634,7 +634,7 @@ const App = () => {
                  handleGenerateTheme(imageUrl);
             }
 
-            await setDoc(doc(db, "raffles", newRef), newRaffleData);
+            await setDoc(doc(db, "raffles", newRef), newRffleData);
 
             await handleAdminSearch(newRef, true);
         } catch (error) {
@@ -1198,11 +1198,11 @@ const App = () => {
 
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-purple-100 to-blue-100 p-4 font-sans relative">
+        <div className="min-h-screen bg-background p-4 font-sans relative">
             {backgroundImage && (
                 <div className="fixed inset-0 z-0">
-                    <Image src={backgroundImage} alt="Fondo de la rifa" layout="fill" objectFit="cover" className="opacity-20 blur-sm" />
-                    <div className="absolute inset-0 bg-background/80 backdrop-blur-sm"></div>
+                    <Image src={backgroundImage} alt="Fondo de la rifa" layout="fill" objectFit="cover" />
+                    <div className="absolute inset-0 bg-black/50"></div>
                 </div>
             )}
             <div className="relative z-10">
@@ -1860,5 +1860,3 @@ const App = () => {
 };
 
 export default App;
-
-    
