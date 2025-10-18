@@ -11,6 +11,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import fetch from 'node-fetch';
+import { googleAI } from '@genkit-ai/googleai';
 
 const ExtractImageColorsInputSchema = z.object({
   imageUrl: z.string().url().describe('The URL of the image to analyze.'),
@@ -48,7 +49,7 @@ async function imageUrlToDataUri(url: string): Promise<string> {
 
 const extractImageColorsPrompt = ai.definePrompt({
   name: 'extractImageColorsPrompt',
-  model: 'gemini-1.5-flash-latest',
+  model: googleAI('gemini-1.5-flash-latest'),
   input: { schema: z.object({ photoDataUri: z.string() }) },
   output: { schema: ExtractImageColorsOutputSchema },
   prompt: `Analyze the provided image and determine a harmonious color palette for a web application theme.
@@ -69,7 +70,7 @@ const extractImageColorsFlow = ai.defineFlow(
   },
   async ({ imageUrl }) => {
     // Basic validation for image extension
-    if (!imageUrl.match(/\.(jpeg|jpg|png|gif)$/i)) {
+    if (!imageUrl.match(/\.(jpeg|jpg|png|gif|webp)$/i)) {
       console.log('Invalid image URL for color extraction, skipping.');
       return { theme: undefined };
     }
