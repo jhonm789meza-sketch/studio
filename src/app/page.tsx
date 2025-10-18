@@ -734,11 +734,6 @@ const App = () => {
         
         return (
             <>
-                {raffleState.prizeImageUrl && raffleState.prizeImageUrl.trim() !== '' && (
-                    <div className="mb-6 rounded-lg overflow-hidden relative aspect-video max-w-2xl mx-auto">
-                        <Image src={raffleState.prizeImageUrl} alt="Premio de la rifa" fill style={{ objectFit: 'cover' }} unoptimized />
-                    </div>
-                )}
                 {isCurrentUserAdmin && (
                     <div className="mb-4 p-3 bg-green-100 border border-green-300 text-green-800 rounded-lg text-center font-semibold">
                         Eres el administrador de este juego
@@ -776,6 +771,11 @@ const App = () => {
                                     <WhatsappIcon />
                                 </button>
                             </div>
+                        </div>
+                    )}
+                    {raffleState.prizeImageUrl && raffleState.prizeImageUrl.trim() !== '' && (
+                        <div className="mb-6 rounded-lg overflow-hidden relative aspect-video max-w-2xl mx-auto">
+                            <Image src={raffleState.prizeImageUrl} alt="Premio de la rifa" fill style={{ objectFit: 'cover' }} unoptimized />
                         </div>
                     )}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
@@ -1848,4 +1848,3 @@ const App = () => {
 
 export default App;
 
-    
