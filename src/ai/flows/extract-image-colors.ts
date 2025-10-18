@@ -9,6 +9,7 @@
  */
 
 import { ai } from '@/ai/genkit';
+import { googleAI } from '@genkit-ai/googleai';
 import { z } from 'genkit';
 import fetch from 'node-fetch';
 
@@ -48,6 +49,7 @@ async function imageUrlToDataUri(url: string): Promise<string> {
 
 const prompt = ai.definePrompt({
   name: 'extractImageColorsPrompt',
+  model: googleAI('gemini-pro-vision'),
   input: { schema: z.object({ photoDataUri: z.string() }) },
   output: { schema: ExtractImageColorsOutputSchema },
   prompt: `Analyze the provided image and determine a harmonious color palette for a web application theme.
