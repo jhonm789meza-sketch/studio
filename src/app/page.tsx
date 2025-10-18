@@ -1099,7 +1099,9 @@ const App = () => {
     );
 
     const InlineTicket = ({ ticketData }: { ticketData: any }) => {
-        if (!ticketData) return null;
+        if (!ticketData) {
+            return null;
+        }
         return (
             <div className="mt-8">
                 <h3 className="text-xl font-bold text-gray-800 mb-4 text-center">¡Tu Tiquete!</h3>
