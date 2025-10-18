@@ -47,9 +47,9 @@ async function imageUrlToDataUri(url: string): Promise<string> {
 }
 
 
-const prompt = ai.definePrompt({
+const extractImageColorsPrompt = ai.definePrompt({
   name: 'extractImageColorsPrompt',
-  model: googleAI('gemini-pro-vision'),
+  model: 'googleai/gemini-pro-vision',
   input: { schema: z.object({ photoDataUri: z.string() }) },
   output: { schema: ExtractImageColorsOutputSchema },
   prompt: `Analyze the provided image and determine a harmonious color palette for a web application theme.
@@ -75,7 +75,11 @@ const extractImageColorsFlow = ai.defineFlow(
       return { theme: undefined };
     }
     const photoDataUri = await imageUrlToDataUri(imageUrl);
-    const { output } = await prompt({ photoDataUri });
-    return output!;
+    const { output } = await extractImageColorsPrompt({ photoDataUri });
+    
+    if (!output) {
+      throw new Error('Failed to extract colors from image.');
+    }
+    return output;
   }
 );
