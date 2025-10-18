@@ -25,25 +25,26 @@ export async function generateRaffleDescription(input: GenerateRaffleDescription
   return generateRaffleDescriptionFlow(input);
 }
 
-const prompt = ai.definePrompt({
-  name: 'generateRaffleDescriptionPrompt',
-  input: {schema: GenerateRaffleDescriptionInputSchema},
-  output: {schema: GenerateRaffleDescriptionOutputSchema},
-  prompt: `You are an expert marketing copywriter specializing in generating exciting and appealing descriptions for raffles.
-
-  Given the name of the raffle, create a unique and engaging description to entice people to participate.
-
-Raffle Name: {{{raffleName}}}`,
-});
-
 const generateRaffleDescriptionFlow = ai.defineFlow(
   {
     name: 'generateRaffleDescriptionFlow',
     inputSchema: GenerateRaffleDescriptionInputSchema,
     outputSchema: GenerateRaffleDescriptionOutputSchema,
   },
-  async input => {
-    const {output} = await prompt(input);
+  async ({ raffleName }) => {
+    const prompt = ai.definePrompt({
+        name: 'generateRaffleDescriptionPrompt',
+        input: {schema: GenerateRaffleDescriptionInputSchema},
+        output: {schema: GenerateRaffleDescriptionOutputSchema},
+        model: 'googleai/gemini-pro',
+        prompt: `You are an expert marketing copywriter specializing in generating exciting and appealing descriptions for raffles.
+
+  Given the name of the raffle, create a unique and engaging description to entice people to participate.
+
+Raffle Name: {{{raffleName}}}`,
+    });
+
+    const {output} = await prompt({raffleName});
     return output!;
   }
 );
