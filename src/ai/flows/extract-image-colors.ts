@@ -24,12 +24,12 @@ const ThemeSchema = z.object({
 });
 
 const ExtractImageColorsOutputSchema = z.object({
-  theme: ThemeSchema.describe('The generated color theme based on the image.'),
+  theme: ThemeSchema.describe('The generated color theme based on the image.').optional(),
 });
 export type ExtractImageColorsOutput = z.infer<typeof ExtractImageColorsOutputSchema>;
 
 
-export async function extractImageColors(input: ExtractImageColorsInput): Promise<ExtractImageColorsOutput | undefined> {
+export async function extractImageColors(input: ExtractImageColorsInput): Promise<ExtractImageColorsOutput> {
   return extractImageColorsFlow(input);
 }
 
@@ -64,17 +64,16 @@ const extractImageColorsFlow = ai.defineFlow(
   {
     name: 'extractImageColorsFlow',
     inputSchema: ExtractImageColorsInputSchema,
-    outputSchema: ExtractImageColorsOutputSchema.optional(),
+    outputSchema: ExtractImageColorsOutputSchema,
   },
   async ({ imageUrl }) => {
     // Basic validation for image extension
     if (!imageUrl.match(/\.(jpeg|jpg|png|gif)$/i)) {
       console.log('Invalid image URL for color extraction, skipping.');
-      // Return undefined to avoid breaking the flow on schema validation.
-      return; 
+      return { theme: undefined };
     }
     const photoDataUri = await imageUrlToDataUri(imageUrl);
     const { output } = await prompt({ photoDataUri });
-    return output;
+    return output!;
   }
 );
