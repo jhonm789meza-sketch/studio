@@ -578,7 +578,7 @@ const App = () => {
     };
 
     const handleGenerateTheme = (url: string) => {
-        if (!url || url.match(/\.(jpeg|jpg|gif|png)$/) == null) {
+        if (!url) {
             return;
         }
         
@@ -737,7 +737,7 @@ const App = () => {
             <>
                 {raffleState.prizeImageUrl && (
                     <div className="mb-6 rounded-lg overflow-hidden relative aspect-video max-w-2xl mx-auto">
-                        <Image src={raffleState.prizeImageUrl} alt="Premio de la rifa" fill style={{ objectFit: 'cover' }} />
+                        <Image src={raffleState.prizeImageUrl} alt="Premio de la rifa" fill style={{ objectFit: 'cover' }} unoptimized />
                     </div>
                 )}
                 {isCurrentUserAdmin && (
@@ -1209,7 +1209,7 @@ const App = () => {
         <div className="min-h-screen bg-background p-4 font-sans relative">
             {backgroundImage && backgroundImage.trim() !== '' && (
                 <div className="fixed inset-0 z-0">
-                    <Image src={backgroundImage} alt="Fondo de la rifa" layout="fill" objectFit="cover" />
+                    <Image src={backgroundImage} alt="Fondo de la rifa" layout="fill" objectFit="cover" unoptimized />
                     <div className="absolute inset-0 bg-black/50"></div>
                 </div>
             )}

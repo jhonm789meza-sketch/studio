@@ -67,10 +67,15 @@ const extractImageColorsFlow = ai.defineFlow(
     outputSchema: ExtractImageColorsOutputSchema,
   },
   async ({ imageUrl }) => {
+    // Basic validation for image extension
+    if (!imageUrl.match(/\.(jpeg|jpg|png|gif)$/i)) {
+      console.log('Invalid image URL for color extraction, skipping.');
+      // Return a default or empty theme to avoid breaking the flow.
+      // Returning an empty object and handling it on the client side.
+      return {} as ExtractImageColorsOutput; 
+    }
     const photoDataUri = await imageUrlToDataUri(imageUrl);
     const { output } = await prompt({ photoDataUri });
     return output!;
   }
 );
-
-    
