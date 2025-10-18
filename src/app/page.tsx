@@ -1205,16 +1205,16 @@ const App = () => {
 
 
     return (
-        <div className="min-h-screen bg-background p-4 font-sans relative">
+        <div className="min-h-screen bg-background font-sans relative">
             {backgroundImage && backgroundImage.trim() !== '' && (
                 <div className="fixed inset-0 z-0">
                     <Image src={backgroundImage} alt="Fondo de la rifa" layout="fill" objectFit="cover" unoptimized />
-                    <div className="absolute inset-0 bg-black/50"></div>
+                    <div className="absolute inset-0 bg-black/60"></div>
                 </div>
             )}
-            <div className="relative z-10">
+            <div className="relative z-10 p-4">
                 {showConfetti && <Confetti />}
-                <div className="max-w-6xl mx-auto bg-white/80 backdrop-blur-lg rounded-2xl shadow-2xl overflow-hidden border">
+                <div className="max-w-6xl mx-auto bg-white/90 backdrop-blur-sm rounded-2xl shadow-2xl overflow-hidden border">
                     <div className="bg-gradient-to-r from-purple-600/80 to-blue-600/80 text-white p-6 flex justify-between items-center">
                         <div>
                             <DropdownMenu>
@@ -1847,3 +1847,5 @@ const App = () => {
 };
 
 export default App;
+
+    
