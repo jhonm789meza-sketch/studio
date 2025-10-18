@@ -86,8 +86,6 @@ const App = () => {
     const [collectiveMessage, setCollectiveMessage] = useState('');
     const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
 
-    const [twoDigitImageUrl, setTwoDigitImageUrl] = useState('');
-    const [threeDigitImageUrl, setThreeDigitImageUrl] = useState('');
     const [isThemeGenerating, startThemeTransition] = useTransition();
 
     const raffleManager = new RaffleManager(db);
@@ -512,6 +510,9 @@ const App = () => {
                 if (docSnapshot.exists()) {
                     const data = docSnapshot.data();
                     setRaffleState(data);
+                    if (data.prizeImageUrl) {
+                        handleGenerateTheme(data.prizeImageUrl);
+                    }
                     if (!isInitialLoad) { 
                         showNotification(`Cargando rifa con referencia: ${aRef}`, 'success');
                     }
@@ -576,14 +577,6 @@ const App = () => {
         await setDoc(doc(db, "raffles", raffleState.raffleRef), { [field]: value }, { merge: true });
     };
 
-    const handleImageUrlChange = (mode: 'two-digit' | 'three-digit', url: string) => {
-        if (mode === 'two-digit') {
-            setTwoDigitImageUrl(url);
-        } else {
-            setThreeDigitImageUrl(url);
-        }
-    };
-    
     const handleGenerateTheme = (url: string) => {
         if (!url || url.match(/\.(jpeg|jpg|gif|png)$/) == null) {
             return;
@@ -610,7 +603,7 @@ const App = () => {
     };
 
 
-    const handleActivateBoard = async (mode: RaffleMode, imageUrl: string) => {
+    const handleActivateBoard = async (mode: RaffleMode) => {
         setLoading(true);
         try {
             let adminId = localStorage.getItem('rifaAdminId');
@@ -627,13 +620,9 @@ const App = () => {
                 raffleRef: newRef,
                 adminId: adminId,
                 isPaid: true,
-                prizeImageUrl: imageUrl,
+                prizeImageUrl: '',
             };
             
-            if (imageUrl) {
-                 handleGenerateTheme(imageUrl);
-            }
-
             await setDoc(doc(db, "raffles", newRef), newRaffleData);
 
             await handleAdminSearch(newRef, true);
@@ -733,7 +722,7 @@ const App = () => {
 
     const confirmedNumbers = new Set(raffleState?.participants.filter((p: Participant) => p.paymentStatus === 'confirmed').map((p: Participant) => parseInt(p.raffleNumber, 10)) || []);
     
-    const backgroundImage = raffleState?.prizeImageUrl || twoDigitImageUrl || threeDigitImageUrl;
+    const backgroundImage = raffleState?.prizeImageUrl;
 
     if (loading) {
         return <div className="flex justify-center items-center h-screen text-xl font-semibold">Cargando...</div>;
@@ -929,6 +918,25 @@ const App = () => {
                                 />
                             </div>
                         )}
+                        <div className="md:col-span-2">
+                             <Label htmlFor="prize-image-url-input">Link de Imagen (Opcional):</Label>
+                             <div className="relative mt-1">
+                                 <Input
+                                     id="prize-image-url-input"
+                                     type="text"
+                                     value={raffleState.prizeImageUrl}
+                                     onChange={(e) => handleLocalFieldChange('prizeImageUrl', e.target.value)}
+                                     onBlur={(e) => {
+                                         handleFieldChange('prizeImageUrl', e.target.value);
+                                         handleGenerateTheme(e.target.value);
+                                     }}
+                                     placeholder="https://ejemplo.com/imagen.png"
+                                     disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
+                                     className="w-full"
+                                 />
+                                 {isThemeGenerating && <Loader2 className="animate-spin h-4 w-4 absolute right-2 top-1/2 -translate-y-1/2 text-gray-500" />}
+                             </div>
+                        </div>
                         {isCurrentUserAdmin && !raffleState.isDetailsConfirmed && (
                             <div className="md:col-span-2">
                                 <Button
@@ -1260,17 +1268,7 @@ const App = () => {
                                             </div>
                                         </div>
                                         <div className="p-6 pt-0 space-y-2">
-                                            <div className="relative">
-                                                <Input
-                                                    type="text"
-                                                    placeholder="Link de Imagen (Opcional)"
-                                                    value={twoDigitImageUrl}
-                                                    onChange={(e) => handleImageUrlChange('two-digit', e.target.value)}
-                                                    onBlur={(e) => handleGenerateTheme(e.target.value)}
-                                                />
-                                                {isThemeGenerating && <Loader2 className="animate-spin h-4 w-4 absolute right-2 top-1/2 -translate-y-1/2 text-gray-500" />}
-                                            </div>
-                                            <Button onClick={() => handleActivateBoard('two-digit', twoDigitImageUrl)} size="lg" className="w-full bg-green-500 hover:bg-green-600 text-white font-bold">
+                                            <Button onClick={() => handleActivateBoard('two-digit')} size="lg" className="w-full bg-green-500 hover:bg-green-600 text-white font-bold">
                                                 Activar ($1.500 COP)
                                             </Button>
                                         </div>
@@ -1290,17 +1288,7 @@ const App = () => {
                                             </div>
                                         </div>
                                         <div className="p-6 pt-0 space-y-2">
-                                            <div className="relative">
-                                                <Input
-                                                    type="text"
-                                                    placeholder="Link de Imagen (Opcional)"
-                                                    value={threeDigitImageUrl}
-                                                    onChange={(e) => handleImageUrlChange('three-digit', e.target.value)}
-                                                    onBlur={(e) => handleGenerateTheme(e.target.value)}
-                                                />
-                                                {isThemeGenerating && <Loader2 className="animate-spin h-4 w-4 absolute right-2 top-1/2 -translate-y-1/2 text-gray-500" />}
-                                            </div>
-                                            <Button onClick={() => handleActivateBoard('three-digit', threeDigitImageUrl)} size="lg" className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold">
+                                            <Button onClick={() => handleActivateBoard('three-digit')} size="lg" className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold">
                                                 Activar ($15.000 COP)
                                             </Button>
                                         </div>
@@ -1441,7 +1429,7 @@ const App = () => {
                                                     )}
                                                 </div>
                                                 <div className="flex flex-wrap gap-2">
-                                                    {!isCurrentUserAdmin && raffleState?.isNequiEnabled && raffleState?.nequiAccountNumber && raffleState?.value && (
+                                                    {raffleState?.isNequiEnabled && raffleState?.nequiAccountNumber && raffleState?.value && (
                                                         <a
                                                             href={`nequi://app/pay?phoneNumber=${raffleState.nequiAccountNumber}&value=${String(raffleState.value).replace(/\D/g, '')}&currency=COP&description=Pago Rifa`}
                                                             target="_blank"
@@ -1463,7 +1451,7 @@ const App = () => {
                                                             </Button>
                                                         </a>
                                                     )}
-                                                    {!isCurrentUserAdmin && raffleState?.isPaymentLinkEnabled && raffleState?.paymentLink && (
+                                                    {raffleState?.isPaymentLinkEnabled && raffleState?.paymentLink && (
                                                         <a
                                                             href={`${raffleState.paymentLink}${raffleState.paymentLink.includes('?') ? '&' : '?'}pName=${encodeURIComponent(raffleState.name || '')}&pPhone=${encodeURIComponent(raffleState.phoneNumber || '')}&pNum=${encodeURIComponent(raffleState.raffleNumber || '')}`}
                                                             target="_blank"
