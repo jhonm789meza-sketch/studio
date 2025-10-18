@@ -64,7 +64,7 @@ const extractImageColorsFlow = ai.defineFlow(
   {
     name: 'extractImageColorsFlow',
     inputSchema: ExtractImageColorsInputSchema,
-    outputSchema: ExtractImageColorsOutputSchema,
+    outputSchema: ExtractImageColorsOutputSchema.optional(),
   },
   async ({ imageUrl }) => {
     // Basic validation for image extension
@@ -75,6 +75,6 @@ const extractImageColorsFlow = ai.defineFlow(
     }
     const photoDataUri = await imageUrlToDataUri(imageUrl);
     const { output } = await prompt({ photoDataUri });
-    return output!;
+    return output;
   }
 );
