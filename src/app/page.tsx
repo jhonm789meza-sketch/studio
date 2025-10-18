@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect, useRef, useTransition } from 'react';
 import jsPDF from 'jspdf';
@@ -733,7 +734,7 @@ const App = () => {
         
         return (
             <>
-                {raffleState.prizeImageUrl && (
+                {raffleState.prizeImageUrl && raffleState.prizeImageUrl.trim() !== '' && (
                     <div className="mb-6 rounded-lg overflow-hidden relative aspect-video max-w-2xl mx-auto">
                         <Image src={raffleState.prizeImageUrl} alt="Premio de la rifa" fill style={{ objectFit: 'cover' }} unoptimized />
                     </div>
