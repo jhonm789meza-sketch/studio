@@ -129,7 +129,6 @@ const App = () => {
                 const raffleData = docSnap.data();
                 let participant: Participant | undefined;
     
-                // If participantData is provided, it's a new registration post-payment
                 if (participantData && participantData.raffleNumber) {
                     const newParticipant: Participant = {
                         id: Date.now(),
@@ -142,10 +141,22 @@ const App = () => {
                     const updatedParticipants = [...raffleData.participants, newParticipant];
                     await setDoc(raffleDocRef, { participants: updatedParticipants }, { merge: true });
                     participant = newParticipant;
-
+                    
+                    if (window.location.search.includes('status=APPROVED')) {
+                        const now = new Date();
+                        const ticketData = {
+                            ...raffleData, // Use fetched raffleData here
+                            name: newParticipant.name,
+                            phoneNumber: newParticipant.phoneNumber,
+                            raffleNumber: newParticipant.raffleNumber,
+                            date: format(now, 'PPP', { locale: es }),
+                            time: format(now, 'p', { locale: es }),
+                        };
+                        setGeneratedTicketData(ticketData);
+                        showNotification('¡Pago exitoso! Tu número ha sido registrado. Puedes generar tu tiquete en la pestaña "Participantes".', 'success');
+                    }
 
                 } else if (participantId) { 
-                    // This handles manual confirmation by admin
                     const numericParticipantId = parseInt(participantId, 10);
                     const currentParticipant = raffleData.participants.find((p: Participant) => p.id === numericParticipantId);
                     
@@ -160,7 +171,7 @@ const App = () => {
                     }
                 }
                 
-                if (participant) {
+                if (participant && !participantData) {
                     showNotification(`Pago para ${participant.name} (${participant.raffleNumber}) confirmado.`, 'success');
                 }
             }
@@ -177,24 +188,12 @@ const App = () => {
                 url.searchParams.delete('pNum');
                 window.history.replaceState({}, '', url.toString());
 
-                if (participantData) {
-                     const now = new Date();
-                    const ticketData = {
-                        ...raffleState,
-                        name: participantData.name,
-                        phoneNumber: participantData.phoneNumber,
-                        raffleNumber: participantData.raffleNumber,
-                        date: format(now, 'PPP', { locale: es }),
-                        time: format(now, 'p', { locale: es }),
-                    };
-                    setGeneratedTicketData(ticketData);
+                if (raffleRef) {
                     await handleAdminSearch(raffleRef, true);
-                    showNotification('¡Pago exitoso! Tu número ha sido registrado. Puedes generar tu tiquete en la pestaña "Participantes".', 'success');
                 }
-            } else {
-                 if (activeTab !== 'pending') {
-                   //setLoading(false);
-                 }
+            }
+            if (activeTab !== 'pending') {
+               setLoading(false);
             }
         }
     };
@@ -1848,3 +1847,5 @@ const App = () => {
 };
 
 export default App;
+
+    
