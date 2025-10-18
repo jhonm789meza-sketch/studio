@@ -1208,11 +1208,12 @@ const App = () => {
             {backgroundImage && backgroundImage.trim() !== '' && (
                 <div className="fixed inset-0 z-0 pointer-events-none">
                     <Image src={backgroundImage} alt="Fondo de la rifa" layout="fill" objectFit="cover" unoptimized />
+                    <div className="absolute inset-0" />
                 </div>
             )}
             <div className="relative z-10 p-4">
                 {showConfetti && <Confetti />}
-                <div className="max-w-6xl mx-auto bg-card/80 backdrop-blur-sm rounded-2xl shadow-2xl overflow-hidden border">
+                <div className="max-w-6xl mx-auto bg-card/90 rounded-2xl shadow-2xl overflow-hidden border">
                     <div className="bg-gradient-to-r from-purple-600/80 to-blue-600/80 text-white p-6 flex justify-between items-center">
                         <div>
                             <DropdownMenu>
