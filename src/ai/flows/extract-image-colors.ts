@@ -48,7 +48,7 @@ async function imageUrlToDataUri(url: string): Promise<string> {
 
 const extractImageColorsPrompt = ai.definePrompt({
   name: 'extractImageColorsPrompt',
-  model: 'gemini-pro-vision',
+  model: 'gemini-1.5-flash-latest',
   input: { schema: z.object({ photoDataUri: z.string() }) },
   output: { schema: ExtractImageColorsOutputSchema },
   prompt: `Analyze the provided image and determine a harmonious color palette for a web application theme.
