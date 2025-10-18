@@ -419,17 +419,17 @@ const App = () => {
         if (isNequiPayment && !confirmPayment) {
             showNotification(`¡Número ${formattedRaffleNumber} registrado para ${participantName}! Tu pago está pendiente de confirmación por el administrador.`, 'success');
         } else if (confirmPayment) {
-            const now = new Date();
-            const ticketData = {
-                ...raffleState,
-                name: newParticipant.name,
-                phoneNumber: newParticipant.phoneNumber,
-                raffleNumber: newParticipant.raffleNumber,
-                date: format(now, 'PPP', { locale: es }),
-                time: format(now, 'p', { locale: es }),
-            };
-            setGeneratedTicketData(ticketData);
-            showNotification(`¡Tiquete para ${participantName} (${formattedRaffleNumber}) generado!`, 'success');
+             const now = new Date();
+             const ticketData = {
+                 ...raffleState,
+                 name: newParticipant.name,
+                 phoneNumber: newParticipant.phoneNumber,
+                 raffleNumber: newParticipant.raffleNumber,
+                 date: format(now, 'PPP', { locale: es }),
+                 time: format(now, 'p', { locale: es }),
+             };
+             setGeneratedTicketData(ticketData);
+             showNotification(`¡Tiquete para ${participantName} (${formattedRaffleNumber}) generado!`, 'success');
         }
 
         if (!confirmPayment) {
@@ -1210,7 +1210,7 @@ const App = () => {
             {backgroundImage && backgroundImage.trim() !== '' && (
                 <div className="fixed inset-0 z-0 pointer-events-none">
                     <Image src={backgroundImage} alt="Fondo de la rifa" layout="fill" objectFit="cover" unoptimized />
-                    <div className="absolute inset-0" />
+                    <div className="absolute inset-0 bg-black/30" />
                 </div>
             )}
             <div className="relative z-10 p-4">
