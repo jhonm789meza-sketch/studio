@@ -29,7 +29,7 @@ const ExtractImageColorsOutputSchema = z.object({
 export type ExtractImageColorsOutput = z.infer<typeof ExtractImageColorsOutputSchema>;
 
 
-export async function extractImageColors(input: ExtractImageColorsInput): Promise<ExtractImageColorsOutput> {
+export async function extractImageColors(input: ExtractImageColorsInput): Promise<ExtractImageColorsOutput | undefined> {
   return extractImageColorsFlow(input);
 }
 
@@ -70,9 +70,8 @@ const extractImageColorsFlow = ai.defineFlow(
     // Basic validation for image extension
     if (!imageUrl.match(/\.(jpeg|jpg|png|gif)$/i)) {
       console.log('Invalid image URL for color extraction, skipping.');
-      // Return a default or empty theme to avoid breaking the flow.
-      // Returning an empty object and handling it on the client side.
-      return {} as ExtractImageColorsOutput; 
+      // Return undefined to avoid breaking the flow on schema validation.
+      return; 
     }
     const photoDataUri = await imageUrlToDataUri(imageUrl);
     const { output } = await prompt({ photoDataUri });

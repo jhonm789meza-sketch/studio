@@ -592,8 +592,6 @@ const App = () => {
                     root.style.setProperty('--background', background);
                     root.style.setProperty('--accent', accent);
                     showNotification('¡Tema de la aplicación actualizado con los colores de la imagen!', 'success');
-                } else {
-                    showNotification('No se pudieron extraer los colores de la imagen.', 'warning');
                 }
             } catch (error) {
                 console.error("Error extracting colors:", error);
