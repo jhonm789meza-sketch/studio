@@ -1207,7 +1207,7 @@ const App = () => {
 
     return (
         <div className="min-h-screen bg-background p-4 font-sans relative">
-            {backgroundImage && (
+            {backgroundImage && backgroundImage.trim() !== '' && (
                 <div className="fixed inset-0 z-0">
                     <Image src={backgroundImage} alt="Fondo de la rifa" layout="fill" objectFit="cover" />
                     <div className="absolute inset-0 bg-black/50"></div>
