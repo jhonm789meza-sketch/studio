@@ -1209,7 +1209,7 @@ const App = () => {
             {backgroundImage && backgroundImage.trim() !== '' && (
                 <div className="fixed inset-0 z-0">
                     <Image src={backgroundImage} alt="Fondo de la rifa" layout="fill" objectFit="cover" unoptimized />
-                    <div className="absolute inset-0 bg-background/80 backdrop-blur-sm"></div>
+                    <div className="absolute inset-0 bg-background/80"></div>
                 </div>
             )}
             <div className="relative z-10 p-4">
@@ -1847,5 +1847,3 @@ const App = () => {
 };
 
 export default App;
-
-    
