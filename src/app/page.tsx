@@ -774,7 +774,7 @@ const App = () => {
                         </div>
                     )}
                     {raffleState.prizeImageUrl && raffleState.prizeImageUrl.trim() !== '' && (
-                        <div className="mb-6 rounded-lg overflow-hidden relative aspect-video max-w-2xl mx-auto">
+                        <div className="mb-6 rounded-lg overflow-hidden relative aspect-video max-w-2xl mx-auto shadow-lg">
                             <Image src={raffleState.prizeImageUrl} alt="Premio de la rifa" fill style={{ objectFit: 'cover' }} unoptimized />
                         </div>
                     )}
@@ -1209,12 +1209,12 @@ const App = () => {
             {backgroundImage && backgroundImage.trim() !== '' && (
                 <div className="fixed inset-0 z-0">
                     <Image src={backgroundImage} alt="Fondo de la rifa" layout="fill" objectFit="cover" unoptimized />
-                    <div className="absolute inset-0 bg-black/60"></div>
+                    <div className="absolute inset-0 bg-background/80 backdrop-blur-sm"></div>
                 </div>
             )}
             <div className="relative z-10 p-4">
                 {showConfetti && <Confetti />}
-                <div className="max-w-6xl mx-auto bg-white/90 backdrop-blur-sm rounded-2xl shadow-2xl overflow-hidden border">
+                <div className="max-w-6xl mx-auto bg-card/80 backdrop-blur-sm rounded-2xl shadow-2xl overflow-hidden border">
                     <div className="bg-gradient-to-r from-purple-600/80 to-blue-600/80 text-white p-6 flex justify-between items-center">
                         <div>
                             <DropdownMenu>
@@ -1848,3 +1848,4 @@ const App = () => {
 
 export default App;
 
+    
