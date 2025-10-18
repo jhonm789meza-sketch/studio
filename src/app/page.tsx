@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect, useRef, useTransition } from 'react';
 import jsPDF from 'jspdf';
@@ -1207,14 +1206,13 @@ const App = () => {
     return (
         <div className="min-h-screen bg-background font-sans relative">
             {backgroundImage && backgroundImage.trim() !== '' && (
-                <div className="fixed inset-0 z-0">
+                <div className="fixed inset-0 z-20 pointer-events-none opacity-80">
                     <Image src={backgroundImage} alt="Fondo de la rifa" layout="fill" objectFit="cover" unoptimized />
-                    <div className="absolute inset-0 bg-background/80"></div>
                 </div>
             )}
             <div className="relative z-10 p-4">
                 {showConfetti && <Confetti />}
-                <div className="max-w-6xl mx-auto bg-card/80 backdrop-blur-sm rounded-2xl shadow-2xl overflow-hidden border">
+                <div className="max-w-6xl mx-auto bg-card/90 backdrop-blur-sm rounded-2xl shadow-2xl overflow-hidden border">
                     <div className="bg-gradient-to-r from-purple-600/80 to-blue-600/80 text-white p-6 flex justify-between items-center">
                         <div>
                             <DropdownMenu>
