@@ -8,6 +8,7 @@ import { doc, onSnapshot, setDoc, getDoc, deleteDoc, Unsubscribe, Timestamp } fr
 import Image from 'next/image';
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { extractImageColors } from '@/ai/flows/extract-image-colors';
+import { generateTicketImage } from '@/ai/flows/generate-ticket-image';
 
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
@@ -85,6 +86,7 @@ const App = () => {
     const [isCollectiveMessageDialogOpen, setIsCollectiveMessageDialogOpen] = useState(false);
     const [collectiveMessage, setCollectiveMessage] = useState('');
     const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
+    const [isTicketGenerating, startTicketGeneration] = useTransition();
 
     const [isThemeGenerating, startThemeTransition] = useTransition();
 
@@ -101,18 +103,36 @@ const App = () => {
         }
     };
 
-    const handleGenerateTicket = (participant: Participant) => {
-        const now = new Date();
-        const ticketData = {
-            ...raffleState,
-            name: participant.name,
-            phoneNumber: participant.phoneNumber,
-            raffleNumber: participant.raffleNumber,
-            date: format(now, 'PPP', { locale: es }),
-            time: format(now, 'p', { locale: es }),
-        };
-        setTicketInfo(ticketData);
+    const handleGenerateTicket = async (participant: Participant) => {
+        if (!raffleState.prizeImageUrl) {
+             showNotification('Se necesita una imagen del premio para generar el tiquete con IA.', 'warning');
+             return;
+        }
+
         setIsTicketModalOpen(true);
+        startTicketGeneration(async () => {
+            try {
+                const result = await generateTicketImage({
+                    prizeImageUrl: raffleState.prizeImageUrl,
+                    raffleName: raffleState.prize,
+                    raffleNumber: participant.raffleNumber,
+                    organizerName: raffleState.organizerName,
+                    gameDate: new Date(raffleState.gameDate + 'T00:00:00-05:00').toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' }),
+                    lottery: raffleState.lottery === 'Otro' ? raffleState.customLottery : raffleState.lottery,
+                });
+                
+                const ticketData = {
+                    ...participant, // contains name, phoneNumber, raffleNumber
+                    ticketImageUrl: result.ticketImageUrl,
+                };
+                setTicketInfo(ticketData);
+
+            } catch (error) {
+                console.error("Error generating AI ticket:", error);
+                showNotification('Error al generar el tiquete con IA.', 'error');
+                setIsTicketModalOpen(false);
+            }
+        });
     };
     
     const confirmParticipantPayment = async (raffleRef: string, participantId: string, participantData?: any) => {
@@ -143,16 +163,6 @@ const App = () => {
                     participant = newParticipant;
     
                     if (window.location.search.includes('status=APPROVED')) {
-                        const now = new Date();
-                        const ticketData = {
-                            ...raffleData, // Use fetched raffleData here
-                            name: newParticipant.name,
-                            phoneNumber: newParticipant.phoneNumber,
-                            raffleNumber: newParticipant.raffleNumber,
-                            date: format(now, 'PPP', { locale: es }),
-                            time: format(now, 'p', { locale: es }),
-                        };
-                        setGeneratedTicketData(ticketData);
                         showNotification('¡Pago exitoso! Tu número ha sido registrado. Puedes generar tu tiquete en la pestaña "Participantes".', 'success');
                     }
     
@@ -175,7 +185,8 @@ const App = () => {
                     showNotification(`Pago para ${participant.name} (${participant.raffleNumber}) confirmado.`, 'success');
                 }
             }
-        } catch (error) {
+        } catch (error)
+        {
             console.error("Error confirming participant payment:", error);
             showNotification('Error al confirmar el pago del participante.', 'error');
         } finally {
@@ -418,17 +429,30 @@ const App = () => {
         if (isNequiPayment && !confirmPayment) {
             showNotification(`¡Número ${formattedRaffleNumber} registrado para ${participantName}! Tu pago está pendiente de confirmación por el administrador.`, 'success');
         } else if (confirmPayment) {
-             const now = new Date();
-             const ticketData = {
-                 ...raffleState,
-                 name: newParticipant.name,
-                 phoneNumber: newParticipant.phoneNumber,
-                 raffleNumber: newParticipant.raffleNumber,
-                 date: format(now, 'PPP', { locale: es }),
-                 time: format(now, 'p', { locale: es }),
-             };
-             setGeneratedTicketData(ticketData);
-             showNotification(`¡Tiquete para ${participantName} (${formattedRaffleNumber}) generado!`, 'success');
+            showNotification(`¡Participante ${participantName} (${formattedRaffleNumber}) registrado y confirmado!`, 'success');
+             if (raffleState.prizeImageUrl) {
+                 startTicketGeneration(async () => {
+                     try {
+                         const result = await generateTicketImage({
+                             prizeImageUrl: raffleState.prizeImageUrl,
+                             raffleName: raffleState.prize,
+                             raffleNumber: newParticipant.raffleNumber,
+                             organizerName: raffleState.organizerName,
+                             gameDate: new Date(raffleState.gameDate + 'T00:00:00-05:00').toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' }),
+                             lottery: raffleState.lottery === 'Otro' ? raffleState.customLottery : raffleState.lottery,
+                         });
+                         
+                         setGeneratedTicketData({
+                             ...newParticipant,
+                             ticketImageUrl: result.ticketImageUrl,
+                         });
+
+                     } catch (error) {
+                         console.error("Error generating AI ticket:", error);
+                         showNotification('Error al generar el tiquete con IA.', 'error');
+                     }
+                 });
+             }
         }
 
         if (!confirmPayment) {
@@ -446,31 +470,24 @@ const App = () => {
     const handleDownloadTicket = () => {
         const ticketRef = ticketModalRef.current;
         const targetInfo = generatedTicketData || ticketInfo;
-        if (!ticketRef || !targetInfo) return;
+        if (!targetInfo?.ticketImageUrl) return;
 
-        html2canvas(ticketRef, { scale: 2 }).then((canvas) => {
-            const imgData = canvas.toDataURL('image/png');
-            const pdf = new jsPDF({
-                orientation: 'portrait',
-                unit: 'px',
-                format: [canvas.width, canvas.height]
-            });
-            pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-            pdf.save(`tiquete_${targetInfo.raffleNumber}.pdf`);
-            showNotification('Tiquete descargado', 'success');
-        });
+        const pdf = new jsPDF();
+        pdf.addImage(targetInfo.ticketImageUrl, 'PNG', 10, 10, 190, 0);
+        pdf.save(`tiquete_${targetInfo.raffleNumber}.pdf`);
+        showNotification('Tiquete descargado', 'success');
     };
 
     const handleShareTicket = () => {
         const targetInfo = generatedTicketData || ticketInfo;
         if (!targetInfo || !targetInfo.phoneNumber) return;
 
-        const message = encodeURIComponent(`¡Hola! Aquí tienes tu tiquete para la rifa.`);
+        const message = encodeURIComponent(`¡Hola! Aquí tienes tu tiquete para la rifa "${raffleState?.prize}". ¡Mucha suerte!`);
         const whatsappUrl = `https://wa.me/57${targetInfo.phoneNumber}?text=${message}`;
         window.open(whatsappUrl, '_blank');
         
         if (isTicketModalOpen) {
-            setIsTicketModalOpen(false);
+            closeTicketModal();
         }
         if (generatedTicketData) {
             setGeneratedTicketData(null);
@@ -728,6 +745,12 @@ const App = () => {
     const confirmedNumbers = new Set(raffleState?.participants.filter((p: Participant) => p.paymentStatus === 'confirmed').map((p: Participant) => parseInt(p.raffleNumber, 10)) || []);
     
     const backgroundImage = raffleState?.prizeImageUrl;
+
+    const closeTicketModal = () => {
+        setIsTicketModalOpen(false);
+        setTicketInfo(null);
+    };
+
 
     if (loading) {
         return <div className="flex justify-center items-center h-screen text-xl font-semibold">Cargando...</div>;
@@ -1107,94 +1130,43 @@ const App = () => {
     );
 
     const InlineTicket = ({ ticketData }: { ticketData: any }) => {
-        if (!ticketData) {
-            return null;
-        }
+        if (!ticketData) return null;
+    
         return (
             <div className="mt-8">
                 <h3 className="text-xl font-bold text-gray-800 mb-4 text-center">¡Tu Tiquete!</h3>
                 <div className="max-w-sm mx-auto bg-white rounded-lg shadow-xl flex flex-col font-mono">
-                    <div ref={ticketModalRef} className="bg-white rounded-t-lg p-6 relative overflow-hidden">
-                       <div className="absolute inset-0 flex items-center justify-center z-0">
-                           <p className="text-gray-200 text-7xl font-black transform -rotate-45 opacity-40 select-none">
-                               RIFAEXPRESS
-                           </p>
-                       </div>
-                       <div className="relative z-10">
-                           <div className="border-b border-dashed border-gray-400 pb-4 text-center">
-                               <h2 className="text-2xl font-bold mb-1">RIFA EXPRESS</h2>
-                               {ticketData.raffleRef && (
-                                   <p className="text-xs font-semibold text-gray-600 mb-2">
-                                       Ref: {ticketData.raffleRef}
-                                   </p>
-                               )}
-                               <p className="text-sm text-gray-500">COMPROBANTE DE COMPRA</p>
-                           </div>
-
-                           <div className="py-4 space-y-3 text-sm">
-                               <div className="flex justify-between">
-                                   <span className="text-gray-500">FECHA:</span>
-                                   <span className="font-semibold text-right">{ticketData.date}</span>
-                               </div>
-                               <div className="flex justify-between">
-                                   <span className="text-gray-500">HORA:</span>
-                                   <span className="font-semibold text-right">{ticketData.time}</span>
-                               </div>
-                               <div className="flex justify-between">
-                                   <span className="text-gray-500">CLIENTE:</span>
-                                   <span className="font-semibold text-right">{ticketData.name}</span>
-                               </div>
-                               <div className="flex justify-between">
-                                   <span className="text-gray-500">CELULAR:</span>
-                                   <span className="font-semibold">{ticketData.phoneNumber}</span>
-                               </div>
-                           </div>
-                           
-                           <div className="border-t border-b border-dashed border-gray-400 my-2 py-4 space-y-2 text-sm">
-                               <p className="text-center font-bold text-base uppercase">Detalles de la Rifa</p>
-                               <div className="flex justify-between">
-                                   <span className="text-gray-500">PREMIO:</span>
-                                   <span className="font-semibold text-right">{ticketData.prize}</span>
-                               </div>
-                               <div className="flex justify-between">
-                                   <span className="text-gray-500">VALOR BOLETA:</span>
-                                   <span className="font-semibold">{formatValue(ticketData.value)}</span>
-                               </div>
-                               <div className="flex justify-between">
-                                   <span className="text-gray-500">FECHA SORTEO:</span>
-                                   <span className="font-semibold">{new Date(ticketData.gameDate + 'T00:00:00-05:00').toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
-                               </div>
-                               <div className="flex justify-between">
-                                   <span className="text-gray-500">JUEGA CON:</span>
-                                   <span className="font-semibold">{ticketData.lottery === 'Otro' ? ticketData.customLottery : ticketData.lottery}</span>
-                               </div>
-                               <div className="flex justify-between">
-                                   <span className="text-gray-500">ORGANIZA:</span>
-                                   <span className="font-semibold text-right">{ticketData.organizerName}</span>
-                               </div>
-                           </div>
-                           
-                           <div className="text-center pt-4">
-                               <p className="text-gray-500 uppercase text-sm">Número Asignado</p>
-                               <p className="text-6xl font-bold text-purple-600 tracking-wider">{ticketData.raffleNumber}</p>
-                           </div>
-
-                           <p className="text-center text-xs text-gray-500 mt-4 pt-4 border-t border-dashed">
-                               ¡Gracias por participar y mucha suerte!
-                           </p>
-                       </div>
-                   </div>
+                    <div className="p-4 bg-white rounded-t-lg">
+                        {isTicketGenerating ? (
+                            <div className="flex flex-col items-center justify-center h-64">
+                                <Loader2 className="h-12 w-12 animate-spin text-purple-600" />
+                                <p className="mt-4 text-gray-600 font-semibold">Generando tu tiquete con IA...</p>
+                            </div>
+                        ) : ticketData.ticketImageUrl ? (
+                            <div ref={ticketModalRef}>
+                                <Image
+                                    src={ticketData.ticketImageUrl}
+                                    alt={`Tiquete para ${ticketData.raffleNumber}`}
+                                    width={400}
+                                    height={600}
+                                    className="w-full h-auto rounded-md"
+                                />
+                            </div>
+                        ) : null}
+                    </div>
                    
                    <div className="p-4 bg-gray-50 rounded-b-lg flex flex-col sm:flex-row items-center justify-center gap-2 mt-auto border-t">
                        <Button
                            onClick={handleDownloadTicket}
                            className="w-full sm:w-auto bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors font-semibold shadow-md"
+                           disabled={isTicketGenerating || !ticketData.ticketImageUrl}
                        >
                            Descargar PDF
                        </Button>
                        <Button
                            onClick={handleShareTicket}
                            className="w-full sm:w-auto bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-semibold shadow-md flex items-center gap-2"
+                            disabled={isTicketGenerating || !ticketData.ticketImageUrl}
                        >
                            <WhatsappIcon/>
                            Compartir
@@ -1492,7 +1464,7 @@ const App = () => {
                                         </fieldset>
                                     </div>
 
-                                    {(generatedTicketData) && (
+                                    {(generatedTicketData || isTicketGenerating) && (
                                         <InlineTicket ticketData={generatedTicketData} />
                                     )}
 
@@ -1586,8 +1558,9 @@ const App = () => {
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{p.phoneNumber}</td>
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-purple-600">{p.raffleNumber}</td>
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                                                <Button onClick={() => handleGenerateTicket(p)} size="sm" variant="outline">
-                                                                    Generar Tiquete
+                                                                <Button onClick={() => handleGenerateTicket(p)} size="sm" variant="outline" disabled={isTicketGenerating || !raffleState.prizeImageUrl}>
+                                                                     {isTicketGenerating && ticketInfo?.id === p.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                                                    Generar Tiquete IA
                                                                 </Button>
                                                             </td>
                                                         </tr>
@@ -1642,106 +1615,63 @@ const App = () => {
                     </div>
                 </div>
             )}
-
-            {isTicketModalOpen && ticketInfo && (
-                <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-[101] font-mono">
-                    <div className="bg-white rounded-lg shadow-xl w-full max-w-sm flex flex-col">
-                        <div ref={ticketModalRef} className="bg-white rounded-t-lg p-6 relative overflow-hidden">
-                            <div className="absolute inset-0 flex items-center justify-center z-0">
-                                <p className="text-gray-200 text-7xl font-black transform -rotate-45 opacity-40 select-none">
-                                    RIFAEXPRESS
-                                </p>
+            
+            <Dialog open={isTicketModalOpen} onOpenChange={closeTicketModal}>
+                <DialogContent className="max-w-sm">
+                    <DialogHeader>
+                        <DialogTitle>Tiquete Generado por IA</DialogTitle>
+                        <DialogDescription>
+                            {isTicketGenerating ? 'Tu tiquete se está creando...' : '¡Aquí está tu tiquete único!'}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4">
+                        {isTicketGenerating ? (
+                            <div className="flex flex-col items-center justify-center h-64">
+                                <Loader2 className="h-12 w-12 animate-spin text-purple-600" />
+                                <p className="mt-4 text-gray-600 font-semibold">Generando tu tiquete...</p>
                             </div>
-                            <div className="relative z-10">
-                                <div className="border-b border-dashed border-gray-400 pb-4 text-center">
-                                    <h2 className="text-2xl font-bold mb-1">RIFA EXPRESS</h2>
-                                    {ticketInfo.raffleRef && (
-                                        <p className="text-xs font-semibold text-gray-600 mb-2">
-                                            Ref: {ticketInfo.raffleRef}
-                                        </p>
-                                    )}
-                                    <p className="text-sm text-gray-500">COMPROBANTE DE COMPRA</p>
-                                </div>
-
-                                <div className="py-4 space-y-3 text-sm">
-                                    <div className="flex justify-between">
-                                        <span className="text-gray-500">FECHA:</span>
-                                        <span className="font-semibold text-right">{ticketInfo.date}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span className="text-gray-500">HORA:</span>
-                                        <span className="font-semibold text-right">{ticketInfo.time}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span className="text-gray-500">CLIENTE:</span>
-                                        <span className="font-semibold text-right">{ticketInfo.name}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span className="text-gray-500">CELULAR:</span>
-                                        <span className="font-semibold">{ticketInfo.phoneNumber}</span>
-                                    </div>
-                                </div>
-                                
-                                <div className="border-t border-b border-dashed border-gray-400 my-2 py-4 space-y-2 text-sm">
-                                    <p className="text-center font-bold text-base uppercase">Detalles de la Rifa</p>
-                                    <div className="flex justify-between">
-                                        <span className="text-gray-500">PREMIO:</span>
-                                        <span className="font-semibold text-right">{ticketInfo.prize}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span className="text-gray-500">VALOR BOLETA:</span>
-                                        <span className="font-semibold">{formatValue(ticketInfo.value)}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span className="text-gray-500">FECHA SORTEO:</span>
-                                        <span className="font-semibold">{new Date(ticketInfo.gameDate + 'T00:00:00-05:00').toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span className="text-gray-500">JUEGA CON:</span>
-                                        <span className="font-semibold">{ticketInfo.lottery === 'Otro' ? ticketInfo.customLottery : ticketInfo.lottery}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span className="text-gray-500">ORGANIZA:</span>
-                                        <span className="font-semibold text-right">{ticketInfo.organizerName}</span>
-                                    </div>
-                                </div>
-                                
-                                <div className="text-center pt-4">
-                                    <p className="text-gray-500 uppercase text-sm">Número Asignado</p>
-                                    <p className="text-6xl font-bold text-purple-600 tracking-wider">{ticketInfo.raffleNumber}</p>
-                                </div>
-
-                                <p className="text-center text-xs text-gray-500 mt-4 pt-4 border-t border-dashed">
-                                    ¡Gracias por participar y mucha suerte!
-                                </p>
+                        ) : ticketInfo?.ticketImageUrl ? (
+                            <div ref={ticketModalRef}>
+                                <Image
+                                    src={ticketInfo.ticketImageUrl}
+                                    alt={`Tiquete para ${ticketInfo.raffleNumber}`}
+                                    width={400}
+                                    height={600}
+                                    className="w-full h-auto rounded-md"
+                                />
                             </div>
-                        </div>
-                        
-                        <div className="p-4 bg-gray-50 rounded-b-lg flex flex-col sm:flex-row items-center justify-center gap-2 mt-auto border-t">
-                            <Button
-                                onClick={handleDownloadTicket}
-                                className="w-full sm:w-auto bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors font-semibold shadow-md"
-                            >
-                                Descargar PDF
-                            </Button>
-                            <Button
-                                onClick={handleShareTicket}
-                                className="w-full sm:w-auto bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-semibold shadow-md flex items-center gap-2"
-                            >
-                                <WhatsappIcon/>
-                                Compartir
-                            </Button>
-                            <Button
-                                onClick={() => setIsTicketModalOpen(false)}
-                                variant="outline"
-                                className="w-full sm:w-auto"
-                            >
-                                Cerrar
-                            </Button>
-                        </div>
+                        ) : (
+                             <div className="flex flex-col items-center justify-center h-64">
+                                <p className="text-gray-600">No se pudo generar la imagen del tiquete.</p>
+                            </div>
+                        )}
                     </div>
-                </div>
-            )}
+                    <DialogFooter className="flex-col sm:flex-row gap-2">
+                        <Button
+                            onClick={handleDownloadTicket}
+                            className="w-full sm:w-auto bg-purple-500 text-white"
+                            disabled={isTicketGenerating || !ticketInfo?.ticketImageUrl}
+                        >
+                            Descargar PDF
+                        </Button>
+                        <Button
+                            onClick={handleShareTicket}
+                            className="w-full sm:w-auto bg-green-500 text-white flex items-center gap-2"
+                             disabled={isTicketGenerating || !ticketInfo?.ticketImageUrl}
+                        >
+                            <WhatsappIcon/>
+                            Compartir
+                        </Button>
+                        <Button
+                            onClick={closeTicketModal}
+                            variant="outline"
+                            className="w-full sm:w-auto"
+                        >
+                            Cerrar
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
             <Dialog open={isAdminLoginOpen} onOpenChange={setIsAdminLoginOpen}>
                 <DialogContent>
