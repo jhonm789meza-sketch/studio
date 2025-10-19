@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect, useRef, useTransition } from 'react';
 import jsPDF from 'jspdf';
@@ -179,7 +180,7 @@ const App = () => {
                     }
                 }
     
-                if (participantToReturn && !participantData) {
+                if (participantToReturn && participantToReturn.name) {
                      showNotification(`Pago para ${participantToReturn.name} (${participantToReturn.raffleNumber}) confirmado.`, 'success');
                 }
                  return participantToReturn;
