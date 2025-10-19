@@ -117,11 +117,11 @@ const App = () => {
     
     const confirmParticipantPayment = async (raffleRef: string, participantId: string, participantData?: any) => {
         if (!raffleRef) return;
-        
+    
         setLoading(true);
         try {
             if (persistenceEnabled) await persistenceEnabled;
-            
+    
             const raffleDocRef = doc(db, "raffles", raffleRef);
             const docSnap = await getDoc(raffleDocRef);
     
@@ -141,7 +141,7 @@ const App = () => {
                     const updatedParticipants = [...raffleData.participants, newParticipant];
                     await setDoc(raffleDocRef, { participants: updatedParticipants }, { merge: true });
                     participant = newParticipant;
-                    
+    
                     if (window.location.search.includes('status=APPROVED')) {
                         const now = new Date();
                         const ticketData = {
@@ -155,13 +155,13 @@ const App = () => {
                         setGeneratedTicketData(ticketData);
                         showNotification('¡Pago exitoso! Tu número ha sido registrado. Puedes generar tu tiquete en la pestaña "Participantes".', 'success');
                     }
-
-                } else if (participantId) { 
+    
+                } else if (participantId) {
                     const numericParticipantId = parseInt(participantId, 10);
                     const currentParticipant = raffleData.participants.find((p: Participant) => p.id === numericParticipantId);
-                    
+    
                     if (currentParticipant && currentParticipant.paymentStatus === 'pending') {
-                        const updatedParticipants = raffleData.participants.map((p: Participant) => 
+                        const updatedParticipants = raffleData.participants.map((p: Participant) =>
                             p.id === numericParticipantId ? { ...p, paymentStatus: 'confirmed' } : p
                         );
                         await setDoc(raffleDocRef, { participants: updatedParticipants }, { merge: true });
@@ -170,7 +170,7 @@ const App = () => {
                         participant = currentParticipant;
                     }
                 }
-                
+    
                 if (participant && !participantData) {
                     showNotification(`Pago para ${participant.name} (${participant.raffleNumber}) confirmado.`, 'success');
                 }
@@ -187,13 +187,13 @@ const App = () => {
                 url.searchParams.delete('pPhone');
                 url.searchParams.delete('pNum');
                 window.history.replaceState({}, '', url.toString());
-
+    
                 if (raffleRef) {
                     await handleAdminSearch(raffleRef, true);
                 }
             }
             if (activeTab !== 'pending') {
-               setLoading(false);
+                setLoading(false);
             }
         }
     };
@@ -632,24 +632,29 @@ const App = () => {
     };
 
     const confirmActivation = async (raffleRef: string, adminId: string | null) => {
-        setLoading(true);
-        
         if (!raffleRef) {
             showNotification('No se encontró una referencia de activación.', 'error');
             setLoading(false);
             return;
         }
-
+    
         try {
             if (persistenceEnabled) {
                 await persistenceEnabled;
             }
             const raffleDocRef = doc(db, "raffles", raffleRef);
-            const docSnap = await getDoc(raffleDocRef);
-
-            if(docSnap.exists()){
+    
+            // First, try to get the doc from cache
+            let docSnap = await getDoc(raffleDocRef);
+    
+            if (!docSnap.exists()) {
+                // If not in cache, fetch from server
+                docSnap = await getDoc(raffleDocRef);
+            }
+    
+            if (docSnap.exists()) {
                 const raffleData = docSnap.data();
-                if(raffleData.isPaid){
+                if (raffleData.isPaid) {
                     showNotification('Esta rifa ya ha sido activada.', 'info');
                 } else {
                     let currentDeviceAdminId = localStorage.getItem('rifaAdminId');
@@ -658,14 +663,17 @@ const App = () => {
                         localStorage.setItem('rifaAdminId', currentDeviceAdminId);
                     }
                     setCurrentAdminId(currentDeviceAdminId);
-
+    
                     await setDoc(raffleDocRef, { isPaid: true, adminId: currentDeviceAdminId }, { merge: true });
                     showNotification('¡Nueva rifa activada! Ahora eres el administrador.', 'success');
                 }
+            } else {
+                console.error(`Raffle with ref ${raffleRef} not found.`);
+                showNotification(`No se encontró la rifa con referencia ${raffleRef}.`, 'error');
             }
-           
+    
             await handleAdminSearch(raffleRef, true);
-        
+    
         } catch (error) {
             console.error("Error activating board:", error);
             showNotification("Error al activar el tablero.", "error");
@@ -839,6 +847,7 @@ const App = () => {
                            <Input
                                id="game-date-input"
                                type="date"
+                               min={new Date().toISOString().split('T')[0]}
                                value={raffleState.gameDate}
                                onChange={(e) => handleLocalFieldChange('gameDate', e.target.value)}
                                onBlur={(e) => handleFieldChange('gameDate', e.target.value)}
@@ -1847,5 +1856,3 @@ const App = () => {
 };
 
 export default App;
-
-    
