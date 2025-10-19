@@ -110,6 +110,7 @@ const App = () => {
         }
 
         setIsTicketModalOpen(true);
+        setTicketInfo(participant);
         startTicketGeneration(async () => {
             try {
                 const result = await generateTicketImage({
@@ -135,8 +136,8 @@ const App = () => {
         });
     };
     
-    const confirmParticipantPayment = async (raffleRef: string, participantId: string, participantData?: any) => {
-        if (!raffleRef) return;
+    const confirmParticipantPayment = async (raffleRef: string, participantId: string, participantData?: any): Promise<Participant | null> => {
+        if (!raffleRef) return null;
     
         setLoading(true);
         try {
@@ -147,7 +148,7 @@ const App = () => {
     
             if (docSnap.exists()) {
                 const raffleData = docSnap.data();
-                let participant: Participant | undefined;
+                let participantToReturn: Participant | null = null;
     
                 if (participantData && participantData.raffleNumber) {
                     const newParticipant: Participant = {
@@ -160,35 +161,34 @@ const App = () => {
                     };
                     const updatedParticipants = [...raffleData.participants, newParticipant];
                     await setDoc(raffleDocRef, { participants: updatedParticipants }, { merge: true });
-                    participant = newParticipant;
-    
-                    if (window.location.search.includes('status=APPROVED')) {
-                        showNotification('¡Pago exitoso! Tu número ha sido registrado. Puedes generar tu tiquete en la pestaña "Participantes".', 'success');
-                    }
+                    participantToReturn = newParticipant;
     
                 } else if (participantId) {
                     const numericParticipantId = parseInt(participantId, 10);
-                    const currentParticipant = raffleData.participants.find((p: Participant) => p.id === numericParticipantId);
+                    const participantIndex = raffleData.participants.findIndex((p: Participant) => p.id === numericParticipantId);
     
-                    if (currentParticipant && currentParticipant.paymentStatus === 'pending') {
-                        const updatedParticipants = raffleData.participants.map((p: Participant) =>
-                            p.id === numericParticipantId ? { ...p, paymentStatus: 'confirmed' } : p
-                        );
+                    if (participantIndex > -1 && raffleData.participants[participantIndex].paymentStatus === 'pending') {
+                        const updatedParticipants = [...raffleData.participants];
+                        const updatedParticipant = { ...updatedParticipants[participantIndex], paymentStatus: 'confirmed' as 'confirmed' };
+                        updatedParticipants[participantIndex] = updatedParticipant;
+
                         await setDoc(raffleDocRef, { participants: updatedParticipants }, { merge: true });
-                        participant = { ...currentParticipant, paymentStatus: 'confirmed' };
+                        participantToReturn = updatedParticipant;
                     } else {
-                        participant = currentParticipant;
+                        participantToReturn = raffleData.participants[participantIndex];
                     }
                 }
     
-                if (participant && !participantData) {
-                    showNotification(`Pago para ${participant.name} (${participant.raffleNumber}) confirmado.`, 'success');
+                if (participantToReturn && !participantData) {
+                     showNotification(`Pago para ${participantToReturn.name} (${participantToReturn.raffleNumber}) confirmado.`, 'success');
                 }
+                 return participantToReturn;
             }
-        } catch (error)
-        {
+            return null;
+        } catch (error) {
             console.error("Error confirming participant payment:", error);
             showNotification('Error al confirmar el pago del participante.', 'error');
+            return null;
         } finally {
             if (window.location.search.includes('status=APPROVED')) {
                 const url = new URL(window.location.href);
@@ -231,7 +231,10 @@ const App = () => {
                  if (statusFromUrl === 'APPROVED') {
                     if (pName && pPhone && pNum) {
                         // New flow: Register participant after payment confirmation
-                        await confirmParticipantPayment(refFromUrl, '', { name: pName, phoneNumber: pPhone, raffleNumber: pNum });
+                        const registeredParticipant = await confirmParticipantPayment(refFromUrl, '', { name: pName, phoneNumber: pPhone, raffleNumber: pNum });
+                         if (registeredParticipant) {
+                            showNotification('¡Pago exitoso! Tu número ha sido registrado. Puedes generar tu tiquete en la pestaña "Participantes".', 'success');
+                        }
                     } else {
                         // Board activation confirmation
                         await confirmActivation(refFromUrl, activationAdminId);
@@ -431,6 +434,14 @@ const App = () => {
         } else if (confirmPayment) {
             showNotification(`¡Participante ${participantName} (${formattedRaffleNumber}) registrado y confirmado!`, 'success');
              if (raffleState.prizeImageUrl) {
+                const ticketData = {
+                    ...newParticipant,
+                    raffleName: raffleState.prize,
+                    organizerName: raffleState.organizerName,
+                    gameDate: new Date(raffleState.gameDate + 'T00:00:00-05:00').toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' }),
+                    lottery: raffleState.lottery === 'Otro' ? raffleState.customLottery : raffleState.lottery,
+                };
+                setGeneratedTicketData(ticketData);
                  startTicketGeneration(async () => {
                      try {
                          const result = await generateTicketImage({
@@ -443,7 +454,7 @@ const App = () => {
                          });
                          
                          setGeneratedTicketData({
-                             ...newParticipant,
+                             ...ticketData,
                              ticketImageUrl: result.ticketImageUrl,
                          });
 
@@ -1621,11 +1632,11 @@ const App = () => {
                     <DialogHeader>
                         <DialogTitle>Tiquete Generado por IA</DialogTitle>
                         <DialogDescription>
-                            {isTicketGenerating ? 'Tu tiquete se está creando...' : '¡Aquí está tu tiquete único!'}
+                            {isTicketGenerating && !ticketInfo?.ticketImageUrl ? 'Tu tiquete se está creando...' : '¡Aquí está tu tiquete único!'}
                         </DialogDescription>
                     </DialogHeader>
                     <div className="py-4">
-                        {isTicketGenerating ? (
+                        {(isTicketGenerating && !ticketInfo?.ticketImageUrl) ? (
                             <div className="flex flex-col items-center justify-center h-64">
                                 <Loader2 className="h-12 w-12 animate-spin text-purple-600" />
                                 <p className="mt-4 text-gray-600 font-semibold">Generando tu tiquete...</p>
@@ -1786,3 +1797,5 @@ const App = () => {
 };
 
 export default App;
+
+    
