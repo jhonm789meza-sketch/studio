@@ -1,14 +1,12 @@
+
 'use client';
-import { useState, useEffect, useRef, useTransition } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 import { RaffleManager } from '@/lib/RaffleManager';
 import { db, persistenceEnabled } from '@/lib/firebase';
-import { doc, onSnapshot, setDoc, getDoc, deleteDoc, Unsubscribe, Timestamp } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc, getDoc, deleteDoc, Unsubscribe } from 'firebase/firestore';
 import Image from 'next/image';
-import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { extractImageColors } from '@/ai/flows/extract-image-colors';
-import { generateTicketImage } from '@/ai/flows/generate-ticket-image';
 import { useRouter } from 'next/navigation';
 
 
@@ -19,7 +17,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Confetti } from '@/components/confetti';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
 import type { Participant } from '@/lib/types';
 import { format } from 'date-fns';
@@ -72,6 +69,7 @@ const App = () => {
     const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
     const [ticketInfo, setTicketInfo] = useState<any>(null);
     const [generatedTicketData, setGeneratedTicketData] = useState<any>(null);
+    const [isTicketGenerating, setIsTicketGenerating] = useState(false);
     const [showConfirmation, setShowConfirmation] = useState(false);
     const [confirmationMessage, setConfirmationMessage] = useState('');
     const [confirmationAction, setConfirmationAction] = useState<(() => void) | null>(null);
@@ -90,9 +88,7 @@ const App = () => {
     const [isCollectiveMessageDialogOpen, setIsCollectiveMessageDialogOpen] = useState(false);
     const [collectiveMessage, setCollectiveMessage] = useState('');
     const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
-    const [isTicketGenerating, startTicketGeneration] = useTransition();
-
-    const [isThemeGenerating, startThemeTransition] = useTransition();
+    const [isThemeGenerating, setIsThemeGenerating] = useState(false);
 
     const raffleManager = new RaffleManager(db);
     
@@ -115,7 +111,6 @@ const App = () => {
     const confirmParticipantPayment = async (raffleRef: string, participantId: string, participantData?: any): Promise<Participant | null> => {
         if (!raffleRef) return null;
     
-        setLoading(true);
         try {
             if (persistenceEnabled) await persistenceEnabled;
     
@@ -188,6 +183,7 @@ const App = () => {
 
     useEffect(() => {
         const initialize = async () => {
+            setLoading(true);
             if (persistenceEnabled) {
                 await persistenceEnabled;
             }
@@ -410,16 +406,17 @@ const App = () => {
         } else if (confirmPayment) {
             showNotification(`¡Participante ${participantName} (${formattedRaffleNumber}) registrado y confirmado!`, 'success');
              if (raffleState.prize) {
+                setIsTicketGenerating(true);
                 const ticketData = {
                     ...newParticipant,
                     raffleName: raffleState.prize,
                     organizerName: raffleState.organizerName,
                     gameDate: new Date(raffleState.gameDate + 'T00:00:00-05:00').toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' }),
                     lottery: raffleState.lottery === 'Otro' ? raffleState.customLottery : raffleState.lottery,
+                    prizeImageUrl: raffleState.prizeImageUrl,
                 };
                 setGeneratedTicketData(ticketData);
-                const prompt = `Rifa de ${ticketData.raffleName}, tiquete para ${ticketData.name}, número ${ticketData.raffleNumber}`;
-                router.push(`/ia-ticket-generator?prompt=${encodeURIComponent(prompt)}`);
+                // The IA ticket generation will be handled by the InlineTicket component
              }
         }
 
@@ -565,22 +562,21 @@ const App = () => {
         if (!url) {
             return;
         }
-        
-        startThemeTransition(async () => {
-            try {
-                const result = await extractImageColors({ imageUrl: url });
-                if (result && result.theme) {
-                    const { primary, background, accent } = result.theme;
-                    const root = document.documentElement;
-                    root.style.setProperty('--primary', primary);
-                    root.style.setProperty('--background', background);
-                    root.style.setProperty('--accent', accent);
-                    showNotification('¡Tema de la aplicación actualizado con los colores de la imagen!', 'success');
-                }
-            } catch (error) {
-                console.error("Error extracting colors:", error);
-                showNotification('Error al generar el tema desde la imagen.', 'error');
+        setIsThemeGenerating(true);
+        extractImageColors({ imageUrl: url }).then(result => {
+            if (result && result.theme) {
+                const { primary, background, accent } = result.theme;
+                const root = document.documentElement;
+                root.style.setProperty('--primary', primary);
+                root.style.setProperty('--background', background);
+                root.style.setProperty('--accent', accent);
+                showNotification('¡Tema de la aplicación actualizado con los colores de la imagen!', 'success');
             }
+        }).catch(error => {
+            console.error("Error extracting colors:", error);
+            showNotification('Error al generar el tema desde la imagen.', 'error');
+        }).finally(() => {
+            setIsThemeGenerating(false);
         });
     };
 
@@ -629,13 +625,7 @@ const App = () => {
             }
             const raffleDocRef = doc(db, "raffles", raffleRef);
     
-            // First, try to get the doc from cache
             let docSnap = await getDoc(raffleDocRef);
-    
-            if (!docSnap.exists()) {
-                // If not in cache, fetch from server
-                docSnap = await getDoc(raffleDocRef);
-            }
     
             if (docSnap.exists()) {
                 const raffleData = docSnap.data();
@@ -694,23 +684,21 @@ const App = () => {
     };
 
     const handleShareToWhatsApp = () => {
-        const urlToShare = 'https://9000-firebase-studio-1755886670506.cluster-zhw3w37rxzgkutusbbhib6qhra.cloudworkstations.dev/';
-        const message = encodeURIComponent(`¡Mira esta increíble plataforma de rifas!\n`);
+        const urlToShare = window.location.href;
+        const message = encodeURIComponent(`¡Participa en esta increíble rifa!\n`);
         const whatsappUrl = `https://wa.me/?text=${message}${encodeURIComponent(urlToShare)}`;
         window.open(whatsappUrl, '_blank');
         setIsShareDialogOpen(false);
     };
 
     const handleShareToFacebook = () => {
-        const urlToShare = 'https://9000-firebase-studio-1755886670506.cluster-zhw3w37rxzgkutusbbhib6qhra.cloudworkstations.dev/';
+        const urlToShare = window.location.href;
         const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(urlToShare)}`;
         window.open(facebookUrl, '_blank');
         setIsShareDialogOpen(false);
     };
 
     const allNumbers = Array.from({ length: totalNumbers }, (_, i) => i);
-
-    const confirmedNumbers = new Set(raffleState?.participants.filter((p: Participant) => p.paymentStatus === 'confirmed').map((p: Participant) => parseInt(p.raffleNumber, 10)) || []);
     
     const backgroundImage = raffleState?.prizeImageUrl;
 
@@ -764,7 +752,7 @@ const App = () => {
                                 <p className="text-sm text-gray-500">Referencia del Juego</p>
                                 <div className="flex items-center gap-2">
                                     <p className="text-2xl font-bold text-gray-800 tracking-wider">{raffleState.raffleRef}</p>
-                                    <button onClick={handleTalkToAdmin} className="p-2 rounded-full hover:bg-gray-100">
+                                    <button onClick={() => handleShareToWhatsApp()} className="p-2 rounded-full hover:bg-gray-100">
                                         <WhatsappIcon />
                                     </button>
                                 </div>
@@ -856,7 +844,7 @@ const App = () => {
                                        handleFieldChange('lottery', value);
                                    }}
                                    disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
-                                   className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100 disabled:cursor-not-allowed mt-1"
+                                   className="w-full mt-1 px-3 py-2 text-base border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                                >
                                    <option value="">Selecciona una lotería</option>
                                    <option value="Lotería de Bogotá">Lotería de Bogotá</option>
@@ -1123,7 +1111,12 @@ const App = () => {
                                     className="w-full h-auto rounded-md"
                                 />
                             </div>
-                        ) : null}
+                        ) : (
+                             <div className="flex flex-col items-center justify-center h-64">
+                                <Loader2 className="h-12 w-12 animate-spin text-purple-600" />
+                                <p className="mt-4 text-gray-600 font-semibold">Preparando para generar tiquete...</p>
+                            </div>
+                        )}
                     </div>
                    
                    <div className="p-4 bg-gray-50 rounded-b-lg flex flex-col sm:flex-row items-center justify-center gap-2 mt-auto border-t">
