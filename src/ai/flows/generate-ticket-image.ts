@@ -76,6 +76,7 @@ The ticket MUST include the following information clearly and legibly:
 
 Do not add any other text or elements not specified. The final output must be only the generated image of the ticket.`},
         ],
+        model: googleAI('gemini-2.5-flash-image-preview'),
         config: {
             responseModalities: ['IMAGE'],
         },
