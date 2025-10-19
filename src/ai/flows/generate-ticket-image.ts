@@ -51,7 +51,6 @@ const generateTicketImageFlow = ai.defineFlow(
     name: 'generateTicketImageFlow',
     inputSchema: GenerateTicketImageInputSchema,
     outputSchema: GenerateTicketImageOutputSchema,
-    model: googleAI('gemini-2.5-flash-image-preview'),
   },
   async (input) => {
     if (!input.prizeImageUrl) {
