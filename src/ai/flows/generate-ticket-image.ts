@@ -61,19 +61,22 @@ const generateTicketImageFlow = ai.defineFlow(
     const { media } = await ai.generate({
         prompt: [
             { media: { url: prizeImageUri } },
-            { text: `Based on the provided prize image, generate a visually appealing and modern raffle ticket.
+            { text: `Act as an expert graphic designer tasked with creating a raffle ticket. Your design must be inspired by the provided prize image, capturing its essence and excitement.
 
-The ticket must be vertical, clean, and elegant. It should look like a premium event ticket.
+The ticket must be a vertical, visually stunning, modern, and elegant masterpiece. It should feel like a premium, collectible event ticket.
 
-Incorporate colors and themes from the prize image into the ticket design. The design should be abstract and not just a copy of the image.
+**Design Instructions:**
+1.  **Analyze the Prize Image:** Deeply analyze the provided image. Go beyond just colors. Consider its shapes, textures, mood, and the concept of the prize itself.
+2.  **Abstract Interpretation:** Do not just copy the image. Create an abstract, artistic design that incorporates the theme, colors, and feeling of the prize. For example, if it's a sports car, evoke speed and luxury. If it's a tropical vacation, evoke relaxation and nature.
+3.  **Layout & Typography:** The design must be clean and balanced. All text must be perfectly legible and integrated beautifully into the design.
 
-The ticket MUST include the following information clearly and legibly:
-- Raffle Name: "${input.raffleName}"
-- Ticket Number: A large, prominent display of the number "${input.raffleNumber}"
-- Organizer: "Organized by: ${input.organizerName}"
-- Draw Details: "Draws with ${input.lottery} on ${input.gameDate}"
+**Required Text Content (MUST be included clearly):**
+-   Raffle Name: "${input.raffleName}"
+-   Ticket Number: A large, prominent, and stylish display of the number "${input.raffleNumber}"
+-   Organizer: "Organized by: ${input.organizerName}"
+-   Draw Details: "Draws with ${input.lottery} on ${input.gameDate}"
 
-Do not add any other text or elements not specified. The final output must be only the generated image of the ticket.`},
+Do not add any other text or elements not specified. Your final output must be ONLY the generated image of the ticket.`},
         ],
         model: googleAI('gemini-2.5-flash-image-preview'),
         config: {
