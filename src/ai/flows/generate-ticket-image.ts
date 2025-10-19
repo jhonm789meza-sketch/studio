@@ -61,22 +61,22 @@ const generateTicketImageFlow = ai.defineFlow(
     const { media } = await ai.generate({
         prompt: [
             { media: { url: prizeImageUri } },
-            { text: `Act as an expert graphic designer tasked with creating a raffle ticket. Your design must be inspired by the provided prize image, capturing its essence and excitement.
+            { text: `You are an expert graphic designer. Your sole task is to create a vertical image of a raffle ticket.
 
-The ticket must be a vertical, visually stunning, modern, and elegant masterpiece. It should feel like a premium, collectible event ticket.
+**Design Brief:**
+-   **Inspiration:** Use the provided image as the primary source of inspiration for the ticket's theme, colors, and overall mood.
+-   **Style:** The design must be visually stunning, modern, and elegant.
+-   **Layout:** Ensure the layout is clean, balanced, and all text is perfectly legible.
 
-**Design Instructions:**
-1.  **Analyze the Prize Image:** Deeply analyze the provided image. Go beyond just colors. Consider its shapes, textures, mood, and the concept of the prize itself.
-2.  **Abstract Interpretation:** Do not just copy the image. Create an abstract, artistic design that incorporates the theme, colors, and feeling of the prize. For example, if it's a sports car, evoke speed and luxury. If it's a tropical vacation, evoke relaxation and nature.
-3.  **Layout & Typography:** The design must be clean and balanced. All text must be perfectly legible and integrated beautifully into the design.
-
-**Required Text Content (MUST be included clearly):**
+**Required Text Content (MUST be clearly visible on the ticket):**
 -   Raffle Name: "${input.raffleName}"
--   Ticket Number: A large, prominent, and stylish display of the number "${input.raffleNumber}"
+-   Ticket Number: Display the number "${input.raffleNumber}" prominently and stylishly.
 -   Organizer: "Organized by: ${input.organizerName}"
 -   Draw Details: "Draws with ${input.lottery} on ${input.gameDate}"
 
-Do not add any other text or elements not specified. Your final output must be ONLY the generated image of the ticket.`},
+**Important Rules:**
+-   Do not add any other text or elements not specified above.
+-   Your final output must be ONLY the generated image of the ticket. Do not output any text or commentary.`},
         ],
         model: googleAI('gemini-2.5-flash-image-preview'),
         config: {
