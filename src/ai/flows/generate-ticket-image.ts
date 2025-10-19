@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -50,6 +51,7 @@ const generateTicketImageFlow = ai.defineFlow(
     name: 'generateTicketImageFlow',
     inputSchema: GenerateTicketImageInputSchema,
     outputSchema: GenerateTicketImageOutputSchema,
+    model: googleAI('gemini-2.5-flash-image-preview'),
   },
   async (input) => {
     if (!input.prizeImageUrl) {
@@ -58,7 +60,6 @@ const generateTicketImageFlow = ai.defineFlow(
     const prizeImageUri = await imageUrlToDataUri(input.prizeImageUrl);
 
     const { media } = await ai.generate({
-        model: googleAI('gemini-2.5-flash-image-preview'),
         prompt: [
             { media: { url: prizeImageUri } },
             { text: `Based on the provided prize image, generate a visually appealing and modern raffle ticket.
