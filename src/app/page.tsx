@@ -14,7 +14,7 @@ import { generateTicketImage } from '@/ai/flows/generate-ticket-image';
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House, Clock, Ticket, Users, MessageCircle, DollarSign, Share2, Link, Loader2 } from 'lucide-react';
+import { Menu, Award, Lock, House, Clock, Ticket, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, Bot } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -25,6 +25,8 @@ import type { Participant } from '@/lib/types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Textarea } from '@/components/ui/textarea';
+import NextLink from 'next/link';
+
 
 type RaffleMode = 'two-digit' | 'three-digit';
 type Tab = 'board' | 'register' | 'participants' | 'pending' | 'recaudado';
@@ -176,7 +178,7 @@ const App = () => {
                         await setDoc(raffleDocRef, { participants: updatedParticipants }, { merge: true });
                         participantToReturn = updatedParticipant;
                     } else {
-                        participantToReturn = raffleData.participants[participantIndex];
+                        participantToReturn = raffleData.participants.find((p: Participant) => p.id === numericParticipantId);
                     }
                 }
     
@@ -1221,6 +1223,13 @@ const App = () => {
                                         Buscar por Referencia
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
+                                     <NextLink href="/ia-ticket-generator" passHref>
+                                        <DropdownMenuItem>
+                                            <Bot className="mr-2 h-4 w-4" />
+                                            <span>Generador de Tiquetes IA</span>
+                                        </DropdownMenuItem>
+                                    </NextLink>
+                                    <DropdownMenuSeparator />
                                     <DropdownMenuItem onSelect={() => setIsShareDialogOpen(true)}>
                                         <Share2 className="mr-2 h-4 w-4" />
                                         <span>Compartir</span>
@@ -1457,7 +1466,7 @@ const App = () => {
                                                             }}
                                                         >
                                                             <Button className="w-full bg-blue-500 hover:bg-blue-600 text-white" disabled={!isRegisterFormValidForSubmit}>
-                                                                <Link className="mr-2 h-4 w-4" />
+                                                                <LinkIcon className="mr-2 h-4 w-4" />
                                                                 <span>Pagar con Link</span>
                                                             </Button>
                                                         </a>
