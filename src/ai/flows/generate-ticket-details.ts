@@ -14,6 +14,7 @@ const GenerateTicketDetailsInputSchema = z.object({
   prompt: z.string().describe('The user-provided description of the event or ticket.'),
   ticketType: z.string().describe('The type of ticket (e.g., event, concert, conference).'),
 });
+export type GenerateTicketDetailsInput = z.infer<typeof GenerateTicketDetailsInputSchema>;
 
 const TicketContentSchema = z.object({
   event_name: z.string().describe('A creative and professional name for the event. Should be concise and engaging.'),
@@ -28,6 +29,12 @@ const TicketContentSchema = z.object({
 });
 
 export type TicketContent = z.infer<typeof TicketContentSchema>;
+
+
+export async function generateTicketDetails(input: GenerateTicketDetailsInput): Promise<TicketContent> {
+  return generateTicketDetailsFlow(input);
+}
+
 
 const generateDetailsPrompt = ai.definePrompt({
     name: 'generateTicketDetailsPrompt',
@@ -57,7 +64,7 @@ const generateDetailsPrompt = ai.definePrompt({
 });
 
 
-export const generateTicketDetails = ai.defineFlow(
+const generateTicketDetailsFlow = ai.defineFlow(
   {
     name: 'generateTicketDetailsFlow',
     inputSchema: GenerateTicketDetailsInputSchema,
@@ -73,5 +80,3 @@ export const generateTicketDetails = ai.defineFlow(
     return output;
   }
 );
-
-    
