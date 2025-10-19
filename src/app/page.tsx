@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect, useRef, useTransition } from 'react';
 import jsPDF from 'jspdf';
@@ -1810,5 +1809,3 @@ const App = () => {
 };
 
 export default App;
-
-    
