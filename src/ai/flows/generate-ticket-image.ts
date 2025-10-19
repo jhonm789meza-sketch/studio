@@ -61,22 +61,22 @@ const generateTicketImageFlow = ai.defineFlow(
     const { media } = await ai.generate({
         prompt: [
             { media: { url: prizeImageUri } },
-            { text: `You are an expert graphic designer. Your sole task is to create a vertical image of a raffle ticket.
+            { text: `Actúa como un diseñador gráfico experto. Tu única tarea es crear una imagen vertical de un tiquete de rifa.
 
-**Design Brief:**
--   **Inspiration:** Use the provided image as the primary source of inspiration for the ticket's theme, colors, and overall mood.
--   **Style:** The design must be visually stunning, modern, and elegant.
--   **Layout:** Ensure the layout is clean, balanced, and all text is perfectly legible.
+**Instrucciones de Diseño:**
+- **Fondo del Tiquete:** Utiliza la imagen proporcionada como fondo principal del tiquete. Puedes aplicar un ligero desenfoque o una superposición de color sutil al fondo para asegurar que el texto superpuesto sea perfectamente legible.
+- **Estilo:** El diseño debe ser visualmente impactante, moderno y elegante.
+- **Diseño:** Asegúrate de que el diseño sea limpio, equilibrado y que todo el texto sea perfectamente legible.
 
-**Required Text Content (MUST be clearly visible on the ticket):**
--   Raffle Name: "${input.raffleName}"
--   Ticket Number: Display the number "${input.raffleNumber}" prominently and stylishly.
--   Organizer: "Organized by: ${input.organizerName}"
--   Draw Details: "Draws with ${input.lottery} on ${input.gameDate}"
+**Contenido de Texto Requerido (DEBE ser claramente visible en el tiquete):**
+-   Nombre de la Rifa: "${input.raffleName}"
+-   Número del Tiquete: Muestra el número "${input.raffleNumber}" de forma prominente y con estilo.
+-   Organizador: "Organizado por: ${input.organizerName}"
+-   Detalles del Sorteo: "Juega con ${input.lottery} el ${input.gameDate}"
 
-**Important Rules:**
--   Do not add any other text or elements not specified above.
--   Your final output must be ONLY the generated image of the ticket. Do not output any text or commentary.`},
+**Reglas Importantes:**
+-   No agregues ningún otro texto o elemento no especificado anteriormente.
+-   Tu resultado final debe ser ÚNICAMENTE la imagen generada del tiquete. No respondas con texto o comentarios.`},
         ],
         model: googleAI('gemini-2.5-flash-image-preview'),
         config: {
