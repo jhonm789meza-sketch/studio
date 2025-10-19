@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 
 interface TicketContent {
   event_name: string;
@@ -95,10 +96,15 @@ export default function TicketGeneratorClient() {
   const [ticket, setTicket] = useState<TicketData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isMounted, setIsMounted] = useState(false);
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     setIsMounted(true);
-  }, []);
+    const promptFromUrl = searchParams.get('prompt');
+    if (promptFromUrl) {
+      setPrompt(promptFromUrl);
+    }
+  }, [searchParams]);
 
   const generateTicket = async () => {
     if (!prompt.trim()) {
@@ -378,3 +384,5 @@ export default function TicketGeneratorClient() {
     </div>
   );
 }
+
+    

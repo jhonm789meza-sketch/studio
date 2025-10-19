@@ -9,6 +9,7 @@ import Image from 'next/image';
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { extractImageColors } from '@/ai/flows/extract-image-colors';
 import { generateTicketImage } from '@/ai/flows/generate-ticket-image';
+import { useRouter } from 'next/navigation';
 
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
@@ -65,6 +66,7 @@ const App = () => {
     const [activeTab, setActiveTab] = useState<Tab>('board');
     const [currencySymbol] = useState('$');
     
+    const router = useRouter();
 
 
     const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
@@ -106,36 +108,8 @@ const App = () => {
     };
 
     const handleGenerateTicket = async (participant: Participant) => {
-        if (!raffleState.prizeImageUrl) {
-             showNotification('Se necesita una imagen del premio para generar el tiquete con IA.', 'warning');
-             return;
-        }
-
-        setIsTicketModalOpen(true);
-        setTicketInfo(participant);
-        startTicketGeneration(async () => {
-            try {
-                const result = await generateTicketImage({
-                    prizeImageUrl: raffleState.prizeImageUrl,
-                    raffleName: raffleState.prize,
-                    raffleNumber: participant.raffleNumber,
-                    organizerName: raffleState.organizerName,
-                    gameDate: new Date(raffleState.gameDate + 'T00:00:00-05:00').toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' }),
-                    lottery: raffleState.lottery === 'Otro' ? raffleState.customLottery : raffleState.lottery,
-                });
-                
-                const ticketData = {
-                    ...participant, // contains name, phoneNumber, raffleNumber
-                    ticketImageUrl: result.ticketImageUrl,
-                };
-                setTicketInfo(ticketData);
-
-            } catch (error) {
-                console.error("Error generating AI ticket:", error);
-                showNotification('Error al generar el tiquete con IA.', 'error');
-                setIsTicketModalOpen(false);
-            }
-        });
+        const prompt = `Rifa de ${raffleState.prize}, tiquete para ${participant.name}, número ${participant.raffleNumber}`;
+        router.push(`/ia-ticket-generator?prompt=${encodeURIComponent(prompt)}`);
     };
     
     const confirmParticipantPayment = async (raffleRef: string, participantId: string, participantData?: any): Promise<Participant | null> => {
@@ -435,7 +409,7 @@ const App = () => {
             showNotification(`¡Número ${formattedRaffleNumber} registrado para ${participantName}! Tu pago está pendiente de confirmación por el administrador.`, 'success');
         } else if (confirmPayment) {
             showNotification(`¡Participante ${participantName} (${formattedRaffleNumber}) registrado y confirmado!`, 'success');
-             if (raffleState.prizeImageUrl) {
+             if (raffleState.prize) {
                 const ticketData = {
                     ...newParticipant,
                     raffleName: raffleState.prize,
@@ -444,27 +418,8 @@ const App = () => {
                     lottery: raffleState.lottery === 'Otro' ? raffleState.customLottery : raffleState.lottery,
                 };
                 setGeneratedTicketData(ticketData);
-                 startTicketGeneration(async () => {
-                     try {
-                         const result = await generateTicketImage({
-                             prizeImageUrl: raffleState.prizeImageUrl,
-                             raffleName: raffleState.prize,
-                             raffleNumber: newParticipant.raffleNumber,
-                             organizerName: raffleState.organizerName,
-                             gameDate: new Date(raffleState.gameDate + 'T00:00:00-05:00').toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' }),
-                             lottery: raffleState.lottery === 'Otro' ? raffleState.customLottery : raffleState.lottery,
-                         });
-                         
-                         setGeneratedTicketData({
-                             ...ticketData,
-                             ticketImageUrl: result.ticketImageUrl,
-                         });
-
-                     } catch (error) {
-                         console.error("Error generating AI ticket:", error);
-                         showNotification('Error al generar el tiquete con IA.', 'error');
-                     }
-                 });
+                const prompt = `Rifa de ${ticketData.raffleName}, tiquete para ${ticketData.name}, número ${ticketData.raffleNumber}`;
+                router.push(`/ia-ticket-generator?prompt=${encodeURIComponent(prompt)}`);
              }
         }
 
@@ -1581,8 +1536,8 @@ const App = () => {
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{p.phoneNumber}</td>
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-purple-600">{p.raffleNumber}</td>
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                                                <Button onClick={() => handleGenerateTicket(p)} size="sm" variant="outline" disabled={isTicketGenerating || !raffleState.prizeImageUrl}>
-                                                                     {isTicketGenerating && ticketInfo?.id === p.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                                                <Button onClick={() => handleGenerateTicket(p)} size="sm" variant="outline" disabled={!raffleState.prize}>
+                                                                    <Bot className="mr-2 h-4 w-4" />
                                                                     Generar Tiquete IA
                                                                 </Button>
                                                             </td>
@@ -1809,3 +1764,5 @@ const App = () => {
 };
 
 export default App;
+
+    
