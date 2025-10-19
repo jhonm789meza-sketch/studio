@@ -7,7 +7,7 @@ import { db, persistenceEnabled } from '@/lib/firebase';
 import { doc, onSnapshot, setDoc, getDoc, deleteDoc, Unsubscribe } from 'firebase/firestore';
 import Image from 'next/image';
 import { extractImageColors } from '@/ai/flows/extract-image-colors';
-import { useRouter } from 'next/navigation';
+import { generateTicketImage } from '@/ai/flows/generate-ticket-image';
 
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
@@ -22,7 +22,6 @@ import type { Participant } from '@/lib/types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Textarea } from '@/components/ui/textarea';
-import NextLink from 'next/link';
 
 
 type RaffleMode = 'two-digit' | 'three-digit';
@@ -63,7 +62,6 @@ const App = () => {
     const [activeTab, setActiveTab] = useState<Tab>('board');
     const [currencySymbol] = useState('$');
     
-    const router = useRouter();
 
 
     const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
@@ -104,8 +102,42 @@ const App = () => {
     };
 
     const handleGenerateTicket = async (participant: Participant) => {
-        const prompt = `Rifa de ${raffleState.prize}, tiquete para ${participant.name}, número ${participant.raffleNumber}`;
-        router.push(`/ia-ticket-generator?prompt=${encodeURIComponent(prompt)}`);
+        if (!raffleState?.prize) {
+            showNotification('El premio debe estar definido para generar un tiquete.', 'warning');
+            return;
+        }
+
+        const ticketData = {
+            ...participant,
+            raffleName: raffleState.prize,
+            organizerName: raffleState.organizerName,
+            gameDate: new Date(raffleState.gameDate + 'T00:00:00-05:00').toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' }),
+            lottery: raffleState.lottery === 'Otro' ? raffleState.customLottery : raffleState.lottery,
+            prizeImageUrl: raffleState.prizeImageUrl,
+        };
+
+        setTicketInfo(ticketData);
+        setIsTicketModalOpen(true);
+        setIsTicketGenerating(true);
+
+        try {
+            const { ticketImageUrl } = await generateTicketImage({
+                prizeImageUrl: ticketData.prizeImageUrl,
+                raffleName: ticketData.raffleName,
+                raffleNumber: ticketData.raffleNumber,
+                organizerName: ticketData.organizerName,
+                gameDate: ticketData.gameDate,
+                lottery: ticketData.lottery,
+            });
+
+            setTicketInfo((prev: any) => ({ ...prev, ticketImageUrl }));
+        } catch (error) {
+            console.error("Error generating ticket image:", error);
+            showNotification('Error al generar la imagen del tiquete.', 'error');
+            closeTicketModal();
+        } finally {
+            setIsTicketGenerating(false);
+        }
     };
     
     const confirmParticipantPayment = async (raffleRef: string, participantId: string, participantData?: any): Promise<Participant | null> => {
@@ -407,7 +439,7 @@ const App = () => {
             showNotification(`¡Participante ${participantName} (${formattedRaffleNumber}) registrado y confirmado!`, 'success');
              if (raffleState.prize) {
                 setIsTicketGenerating(true);
-                const ticketData = {
+                 const ticketData = {
                     ...newParticipant,
                     raffleName: raffleState.prize,
                     organizerName: raffleState.organizerName,
@@ -1089,6 +1121,31 @@ const App = () => {
     );
 
     const InlineTicket = ({ ticketData }: { ticketData: any }) => {
+        const [localTicketImage, setLocalTicketImage] = useState<string | null>(null);
+        const [isGenerating, setIsGenerating] = useState(false);
+
+        useEffect(() => {
+            if (ticketData && !localTicketImage) {
+                setIsGenerating(true);
+                generateTicketImage({
+                    prizeImageUrl: ticketData.prizeImageUrl,
+                    raffleName: ticketData.raffleName,
+                    raffleNumber: ticketData.raffleNumber,
+                    organizerName: ticketData.organizerName,
+                    gameDate: ticketData.gameDate,
+                    lottery: ticketData.lottery,
+                }).then(({ ticketImageUrl }) => {
+                    setLocalTicketImage(ticketImageUrl);
+                }).catch(err => {
+                    console.error("Failed to generate inline ticket", err);
+                    showNotification("Error al generar la imagen del tiquete.", "error");
+                }).finally(() => {
+                    setIsGenerating(false);
+                });
+            }
+        }, [ticketData]);
+
+
         if (!ticketData) return null;
     
         return (
@@ -1096,15 +1153,15 @@ const App = () => {
                 <h3 className="text-xl font-bold text-gray-800 mb-4 text-center">¡Tu Tiquete!</h3>
                 <div className="max-w-sm mx-auto bg-white rounded-lg shadow-xl flex flex-col font-mono">
                     <div className="p-4 bg-white rounded-t-lg">
-                        {isTicketGenerating ? (
+                        {isGenerating ? (
                             <div className="flex flex-col items-center justify-center h-64">
                                 <Loader2 className="h-12 w-12 animate-spin text-purple-600" />
                                 <p className="mt-4 text-gray-600 font-semibold">Generando tu tiquete con IA...</p>
                             </div>
-                        ) : ticketData.ticketImageUrl ? (
+                        ) : localTicketImage ? (
                             <div ref={ticketModalRef}>
                                 <Image
-                                    src={ticketData.ticketImageUrl}
+                                    src={localTicketImage}
                                     alt={`Tiquete para ${ticketData.raffleNumber}`}
                                     width={400}
                                     height={600}
@@ -1123,14 +1180,14 @@ const App = () => {
                        <Button
                            onClick={handleDownloadTicket}
                            className="w-full sm:w-auto bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors font-semibold shadow-md"
-                           disabled={isTicketGenerating || !ticketData.ticketImageUrl}
+                           disabled={isGenerating || !localTicketImage}
                        >
                            Descargar PDF
                        </Button>
                        <Button
                            onClick={handleShareTicket}
                            className="w-full sm:w-auto bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-semibold shadow-md flex items-center gap-2"
-                            disabled={isTicketGenerating || !ticketData.ticketImageUrl}
+                            disabled={isGenerating || !localTicketImage}
                        >
                            <WhatsappIcon/>
                            Compartir
@@ -1172,13 +1229,6 @@ const App = () => {
                                     <DropdownMenuItem onSelect={() => setIsAdminLoginOpen(true)}>
                                         Buscar por Referencia
                                     </DropdownMenuItem>
-                                    <DropdownMenuSeparator />
-                                     <NextLink href="/ia-ticket-generator" passHref>
-                                        <DropdownMenuItem>
-                                            <Bot className="mr-2 h-4 w-4" />
-                                            <span>Generador de Tiquetes IA</span>
-                                        </DropdownMenuItem>
-                                    </NextLink>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem onSelect={() => setIsShareDialogOpen(true)}>
                                         <Share2 className="mr-2 h-4 w-4" />
@@ -1435,7 +1485,7 @@ const App = () => {
                                         </fieldset>
                                     </div>
 
-                                    {(generatedTicketData || isTicketGenerating) && (
+                                    {generatedTicketData && (
                                         <InlineTicket ticketData={generatedTicketData} />
                                     )}
 

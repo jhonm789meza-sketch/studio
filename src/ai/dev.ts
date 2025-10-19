@@ -5,4 +5,3 @@ import '@/ai/flows/generate-raffle-description.ts';
 import '@/ai/flows/extract-image-colors.ts';
 import '@/ai/flows/generate-ticket-image.ts';
 import '@/ai/flows/generate-raffle-ticket.ts';
-import '@/ai/flows/generate-ticket-details.ts';
