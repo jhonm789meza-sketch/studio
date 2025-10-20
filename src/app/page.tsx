@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import jsPDF from 'jspdf';
@@ -111,7 +110,7 @@ const App = () => {
             ...participant,
             raffleName: raffleState.prize,
             organizerName: raffleState.organizerName,
-            gameDate: new Date(raffleState.gameDate + 'T00:00:00-05:00').toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' }),
+            gameDate: raffleState.gameDate,
             lottery: raffleState.lottery === 'Otro' ? raffleState.customLottery : raffleState.lottery,
             prizeImageUrl: raffleState.prizeImageUrl,
         };
@@ -438,8 +437,7 @@ const App = () => {
         } else if (confirmPayment) {
             showNotification(`¡Participante ${participantName} (${formattedRaffleNumber}) registrado y confirmado!`, 'success');
              if (raffleState.prize) {
-                setIsTicketGenerating(true);
-                 const ticketData = {
+                const ticketData = {
                     ...newParticipant,
                     raffleName: raffleState.prize,
                     organizerName: raffleState.organizerName,
@@ -448,7 +446,6 @@ const App = () => {
                     prizeImageUrl: raffleState.prizeImageUrl,
                 };
                 setGeneratedTicketData(ticketData);
-                // The IA ticket generation will be handled by the InlineTicket component
              }
         }
 
