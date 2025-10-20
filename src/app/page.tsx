@@ -1602,72 +1602,70 @@ const App = () => {
             )}
             
             <Dialog open={isTicketModalOpen} onOpenChange={closeTicketModal}>
-                <DialogContent className="max-w-4xl p-0 border-0 bg-transparent shadow-none">
+                <DialogContent className="max-w-md w-full p-0 border-0 bg-transparent shadow-none">
                 {ticketInfo && (
-                    <div
+                     <div
                         ref={ticketModalRef}
-                        className="bg-cover bg-center w-[800px] h-[350px] font-sans overflow-hidden relative shadow-xl rounded-2xl flex"
-                        style={{ backgroundImage: `url(${ticketInfo.prizeImageUrl || ''})` }}
+                        className="w-full max-w-sm mx-auto font-sans overflow-hidden relative shadow-xl rounded-2xl bg-cover bg-center"
+                        style={{ 
+                            backgroundImage: `url(${ticketInfo.prizeImageUrl || ''})`,
+                            aspectRatio: '9 / 19.5'
+                        }}
                     >
-                        {/* Overlay */}
                         <div className="absolute inset-0 bg-black/50"></div>
 
-                        {/* Main Content */}
-                        <div className="relative w-2/3 p-8 flex flex-col justify-between text-white">
-                            <div>
-                                <p className="text-sm uppercase tracking-widest text-white/80" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.7)' }}>
+                        <div className="relative h-full flex flex-col text-white p-4" style={{ textShadow: '1px 1px 3px rgba(0,0,0,0.5)' }}>
+                            <div className="flex-1 flex flex-col justify-center items-center text-center">
+                                <p className="text-xs uppercase tracking-widest text-white/80">
                                     Organizado por: <span className="font-bold">{ticketInfo.organizerName}</span>
                                 </p>
-                                <h2 className="text-5xl font-extrabold uppercase tracking-tighter mt-2" style={{ textShadow: '2px 2px 6px rgba(0,0,0,0.8)' }}>
+                                <h2 className="text-3xl font-extrabold uppercase tracking-tighter my-4">
                                     {ticketInfo.raffleName}
                                 </h2>
-                            </div>
-                            <div className="flex justify-between items-end text-sm font-semibold">
-                                <div>
-                                    <p className="text-white/70">Juega el:</p>
-                                    <p>{ticketInfo.gameDate ? format(new Date(ticketInfo.gameDate), 'PPP', { locale: es }) : 'Fecha no definida'}</p>
+                                <div className="font-semibold text-center">
+                                    <p className="text-white/70 text-xs">Juega el:</p>
+                                    <p className="text-sm">{ticketInfo.gameDate ? format(new Date(ticketInfo.gameDate), 'PPP', { locale: es }) : 'Fecha no definida'}</p>
                                 </div>
-                                <div className="text-right">
-                                    <p className="text-white/70">Con:</p>
-                                    <p>{ticketInfo.lottery}</p>
+                                <div className="font-semibold text-center mt-2">
+                                    <p className="text-white/70 text-xs">Con:</p>
+                                    <p className="text-sm">{ticketInfo.lottery}</p>
                                 </div>
-                            </div>
-                        </div>
-
-                        {/* Stub Part */}
-                        <div className="relative w-1/3 bg-black/30 p-6 flex flex-col items-center justify-between border-l-2 border-dashed border-white/50">
-                            <div className="text-center text-white">
-                                <p className="font-mono text-sm uppercase text-white/80">Participante</p>
-                                <p className="font-bold text-xl truncate max-w-[200px]">{ticketInfo.name}</p>
                             </div>
                             
-                            <div className="text-center text-white">
-                                <p className="font-mono text-lg uppercase tracking-wider">Número</p>
-                                <p className="font-extrabold text-8xl" style={{ textShadow: '2px 2px 8px rgba(0,0,0,0.8)' }}>
+                            <div className="border-t-2 border-dashed border-white/50 my-4"></div>
+
+                            <div className="flex-1 flex flex-col justify-center items-center text-center">
+                                <p className="font-mono text-xs uppercase text-white/80">Participante</p>
+                                <p className="font-bold text-lg truncate max-w-[200px]">{ticketInfo.name}</p>
+                                
+                                <p className="font-mono text-lg uppercase tracking-wider mt-4">Número</p>
+                                <p className="font-extrabold text-7xl" style={{ textShadow: '2px 2px 8px rgba(0,0,0,0.8)' }}>
                                     {ticketInfo.raffleNumber}
                                 </p>
                             </div>
-                            
-                            <QrCode className="h-16 w-16 text-white/80"/>
+
+                             <div className="mt-4 flex justify-center">
+                                <QrCode className="h-16 w-16 text-white/80"/>
+                            </div>
                         </div>
                     </div>
                 )}
-                    <DialogFooter className="flex-col sm:flex-row gap-2 p-4 bg-gray-100 rounded-b-2xl mt-0">
+                    <DialogFooter className="flex flex-col sm:flex-col gap-2 p-4 bg-gray-100 rounded-b-2xl mt-0">
                         <Button
                             onClick={() => handleDownloadTicket('pdf')}
-                            className="w-full sm:w-auto bg-purple-500 text-white"
+                            className="w-full bg-purple-500 text-white"
                         >
                             Descargar PDF
                         </Button>
                         <Button
                             onClick={() => handleDownloadTicket('gif')}
-                            className="w-full sm:w-auto bg-blue-500 text-white"
+                            className="w-full bg-blue-500 text-white"
                         >
                             Descargar GIF
                         </Button>
                         <Button
                             onClick={handleShareTicket}
-                            className="w-full sm:w-auto bg-green-500 text-white flex items-center gap-2"
+                            className="w-full bg-green-500 text-white flex items-center justify-center gap-2"
                         >
                             <WhatsappIcon/>
                             Compartir
@@ -1675,7 +1673,7 @@ const App = () => {
                         <Button
                             onClick={closeTicketModal}
                             variant="outline"
-                            className="w-full sm:w-auto"
+                            className="w-full"
                         >
                             Cerrar
                         </Button>
