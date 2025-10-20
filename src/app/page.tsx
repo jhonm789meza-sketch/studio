@@ -9,7 +9,7 @@ import Image from 'next/image';
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House, Clock, Ticket, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2 } from 'lucide-react';
+import { Menu, Award, Lock, House, Clock, Ticket, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -446,14 +446,31 @@ const App = () => {
         if (!targetInfo) return;
 
         import('html2canvas').then(html2canvas => {
-            html2canvas(ticketElement, { useCORS: true, backgroundColor: null }).then(canvas => {
+            html2canvas(ticketElement, { useCORS: true, backgroundColor: '#111827' }).then(canvas => {
                 const imgData = canvas.toDataURL('image/png');
-                const pdf = new jsPDF();
-                const imgProps = pdf.getImageProperties(imgData);
+                const pdf = new jsPDF({
+                    orientation: 'landscape',
+                });
                 const pdfWidth = pdf.internal.pageSize.getWidth();
-                const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+                const pdfHeight = pdf.internal.pageSize.getHeight();
                 
-                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                const canvasAspectRatio = canvas.width / canvas.height;
+                const pdfAspectRatio = pdfWidth / pdfHeight;
+
+                let renderWidth, renderHeight;
+
+                if (canvasAspectRatio > pdfAspectRatio) {
+                    renderWidth = pdfWidth;
+                    renderHeight = pdfWidth / canvasAspectRatio;
+                } else {
+                    renderHeight = pdfHeight;
+                    renderWidth = pdfHeight * canvasAspectRatio;
+                }
+                
+                const x = (pdfWidth - renderWidth) / 2;
+                const y = (pdfHeight - renderHeight) / 2;
+
+                pdf.addImage(imgData, 'PNG', x, y, renderWidth, renderHeight);
                 pdf.save(`tiquete_${targetInfo.raffleNumber}.pdf`);
                 showNotification('Tiquete descargado', 'success');
             });
@@ -1078,8 +1095,6 @@ const App = () => {
     );
 
     const InlineTicket = ({ ticketData }: { ticketData: any }) => {
-        const [isGenerating, setIsGenerating] = useState(false);
-
         if (!ticketData) return null;
     
         return (
@@ -1087,7 +1102,7 @@ const App = () => {
                 <h3 className="text-xl font-bold text-gray-800 mb-4 text-center">¡Tu Tiquete!</h3>
                 <div className="max-w-sm mx-auto bg-white rounded-lg shadow-xl flex flex-col font-mono">
                     <div className="p-4 bg-white rounded-t-lg">
-                        {isGenerating ? (
+                        {isTicketGenerating ? (
                             <div className="flex flex-col items-center justify-center h-64">
                                 <Loader2 className="h-12 w-12 animate-spin text-purple-600" />
                                 <p className="mt-4 text-gray-600 font-semibold">Generando tu tiquete con IA...</p>
@@ -1114,14 +1129,14 @@ const App = () => {
                        <Button
                            onClick={handleDownloadTicket}
                            className="w-full sm:w-auto bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors font-semibold shadow-md"
-                           disabled={isGenerating || !ticketData.ticketImageUrl}
+                           disabled={isTicketGenerating || !ticketData.ticketImageUrl}
                        >
                            Descargar PDF
                        </Button>
                        <Button
                            onClick={handleShareTicket}
                            className="w-full sm:w-auto bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-semibold shadow-md flex items-center gap-2"
-                            disabled={isGenerating || !ticketData.ticketImageUrl}
+                            disabled={isTicketGenerating || !ticketData.ticketImageUrl}
                        >
                            <WhatsappIcon/>
                            Compartir
@@ -1571,38 +1586,77 @@ const App = () => {
             )}
             
             <Dialog open={isTicketModalOpen} onOpenChange={closeTicketModal}>
-                <DialogContent className="max-w-sm">
-                    <DialogHeader>
-                        <DialogTitle>Tiquete Generado</DialogTitle>
-                        <DialogDescription>
-                            ¡Aquí está tu tiquete!
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className="py-4">
-                        <div ref={ticketModalRef}>
-                            {ticketInfo && (
-                                <div
-                                    className="p-6 rounded-lg relative text-white shadow-lg overflow-hidden"
-                                    style={{
-                                        backgroundImage: `url(${ticketInfo.prizeImageUrl})`,
-                                        backgroundSize: 'cover',
-                                        backgroundPosition: 'center',
-                                    }}
-                                >
-                                    <div className="absolute inset-0 bg-black bg-opacity-60 z-0"></div>
-                                    <div className="relative z-10 space-y-3" style={{ textShadow: '1px 1px 3px rgba(0,0,0,0.7)' }}>
-                                        <h3 className="text-2xl font-bold text-center mb-3">{ticketInfo.raffleName}</h3>
-                                        <p><strong>Número:</strong> <span className="text-3xl font-bold text-yellow-300">{ticketInfo.raffleNumber}</span></p>
-                                        <p><strong>Nombre:</strong> {ticketInfo.name}</p>
-                                        <p><strong>Organizador:</strong> {ticketInfo.organizerName}</p>
-                                        <p><strong>Juega con:</strong> {ticketInfo.lottery}</p>
-                                        <p><strong>Fecha:</strong> {ticketInfo.gameDate}</p>
+                <DialogContent className="max-w-3xl p-0 border-0">
+                    <div ref={ticketModalRef} className="bg-gray-900 text-white">
+                        {ticketInfo && (
+                            <div className="flex font-mono">
+                                {/* Main Part */}
+                                <div className="w-2/3 p-6 flex flex-col relative overflow-hidden">
+                                    {ticketInfo.prizeImageUrl && (
+                                        <div className="absolute inset-0 z-0">
+                                            <Image
+                                                src={ticketInfo.prizeImageUrl}
+                                                alt="Fondo del premio"
+                                                layout="fill"
+                                                objectFit="cover"
+                                                className="opacity-20 blur-sm"
+                                                unoptimized
+                                            />
+                                        </div>
+                                    )}
+                                    <div className="relative z-10 flex-grow">
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <p className="text-xs text-gray-400 uppercase tracking-widest">Organizado por</p>
+                                                <p className="text-lg font-bold">{ticketInfo.organizerName}</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-xs text-gray-400 uppercase tracking-widest">Rifa</p>
+                                                <p className="text-lg font-bold">{ticketInfo.raffleName}</p>
+                                            </div>
+                                        </div>
+                                        <div className="mt-8">
+                                            <p className="text-xs text-gray-400 uppercase tracking-widest">Participante</p>
+                                            <p className="text-2xl font-bold tracking-tight">{ticketInfo.name}</p>
+                                        </div>
+                                    </div>
+                                    <div className="relative z-10 flex justify-between items-end mt-8">
+                                        <div>
+                                            <p className="text-xs text-gray-400 uppercase">Juega con</p>
+                                            <p className="font-semibold">{ticketInfo.lottery}</p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-xs text-gray-400 uppercase">Fecha Sorteo</p>
+                                            <p className="font-semibold">{ticketInfo.gameDate}</p>
+                                        </div>
                                     </div>
                                 </div>
-                            )}
-                        </div>
+
+                                {/* Stub Part */}
+                                <div className="w-1/3 bg-gray-800 p-6 flex flex-col items-center justify-between border-l-2 border-dashed border-gray-600">
+                                    <div className="text-center">
+                                        <p className="text-sm text-gray-400 uppercase tracking-widest">Número</p>
+                                        <p
+                                            className="text-7xl font-bold text-yellow-300"
+                                            style={{ textShadow: '0 0 10px rgba(253, 224, 71, 0.5)' }}
+                                        >
+                                            {ticketInfo.raffleNumber}
+                                        </p>
+                                    </div>
+                                    <div className="text-center">
+                                        <div className="bg-white p-2 rounded-lg">
+                                            <QrCode className="h-20 w-20 text-gray-900" />
+                                        </div>
+                                        <p className="text-xs text-gray-500 mt-2">ID: {ticketInfo.id}</p>
+                                    </div>
+                                    <p className="font-bold text-lg text-yellow-300 -rotate-90 origin-center whitespace-nowrap tracking-widest absolute right-[-2.5rem]">
+                                        ¡BUENA SUERTE!
+                                    </p>
+                                </div>
+                            </div>
+                        )}
                     </div>
-                    <DialogFooter className="flex-col sm:flex-row gap-2">
+                    <DialogFooter className="flex-col sm:flex-row gap-2 p-4 bg-gray-100">
                         <Button
                             onClick={handleDownloadTicket}
                             className="w-full sm:w-auto bg-purple-500 text-white"
@@ -1740,5 +1794,3 @@ const App = () => {
 };
 
 export default App;
-
-    
