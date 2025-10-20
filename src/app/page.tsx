@@ -9,7 +9,7 @@ import Image from 'next/image';
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House, Clock, Ticket, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode } from 'lucide-react';
+import { Menu, Award, Lock, House, Clock, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -1258,7 +1258,7 @@ const App = () => {
                                         className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'board' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
                                         onClick={() => handleTabClick('board')}
                                     >
-                                        <Ticket className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">Tablero</span>
+                                        <TicketIcon className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">Tablero</span>
                                     </button>
                                     <button 
                                         className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'register' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
@@ -1587,76 +1587,51 @@ const App = () => {
             
             <Dialog open={isTicketModalOpen} onOpenChange={closeTicketModal}>
                 <DialogContent className="max-w-4xl p-0 border-0 bg-transparent shadow-none">
-                    <div ref={ticketModalRef} className="font-sans">
-                        {ticketInfo && (
-                             <div className="bg-white rounded-2xl shadow-xl mx-auto w-full max-w-3xl flex" style={{fontFamily: "'Roboto', sans-serif"}}>
-                                {/* Main Part */}
-                                <div className="w-2/3 bg-blue-900 text-white p-6 rounded-l-2xl flex flex-col relative overflow-hidden">
-                                     {/* Notches */}
-                                    <div className="absolute top-0 left-0 -translate-x-1/2 w-8 h-8 bg-background rounded-full"></div>
-                                    <div className="absolute bottom-0 left-0 -translate-x-1/2 w-8 h-8 bg-background rounded-full"></div>
-
-                                    <div className="flex justify-between items-center mb-4">
-                                        <div className="w-24 h-24 rounded-lg overflow-hidden border-2 border-white/50">
-                                            {ticketInfo.prizeImageUrl ? (
-                                                <Image
-                                                    src={ticketInfo.prizeImageUrl}
-                                                    alt="Premio"
-                                                    width={96}
-                                                    height={96}
-                                                    className="object-cover w-full h-full"
-                                                    unoptimized
-                                                />
-                                            ) : (
-                                                <div className="w-full h-full bg-blue-800 flex items-center justify-center">
-                                                    <Ticket className="w-8 h-8 text-white/50"/>
-                                                </div>
-                                            )}
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="text-xs uppercase tracking-widest text-blue-300">Organizado por</p>
-                                            <p className="text-lg font-bold">{ticketInfo.organizerName}</p>
-                                        </div>
-                                    </div>
-                                    
-                                    <div className="flex-grow mt-4">
-                                        <h2 className="text-4xl font-extrabold uppercase tracking-wider text-center" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.3)' }}>{ticketInfo.raffleName}</h2>
-                                    </div>
-
-                                    <div className="flex justify-between items-end text-sm">
-                                        <div>
-                                            <p className="text-blue-300">Juega el:</p>
-                                            <p className="font-semibold">{ticketInfo.gameDate}</p>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="text-blue-300">Con:</p>
-                                            <p className="font-semibold">{ticketInfo.lottery}</p>
-                                        </div>
-                                    </div>
+                <div ref={ticketModalRef} className="font-sans text-white" style={{ fontFamily: "'Roboto', sans-serif" }}>
+                    {ticketInfo && (
+                        <div
+                            className="relative bg-center bg-cover rounded-2xl shadow-xl mx-auto w-full max-w-3xl flex h-80 overflow-hidden"
+                            style={{ backgroundImage: `url(${ticketInfo.prizeImageUrl || 'https://placehold.co/1200x600/1e293b/ffffff?text=Rifa' })` }}
+                        >
+                            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+                            {/* Main Part */}
+                            <div className="relative w-2/3 p-6 flex flex-col justify-between">
+                                <div>
+                                    <p className="text-sm uppercase tracking-widest text-white/70" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.7)' }}>Organizado por</p>
+                                    <p className="text-2xl font-bold" style={{ textShadow: '1px 1px 3px rgba(0,0,0,0.8)' }}>{ticketInfo.organizerName}</p>
                                 </div>
-                        
-                                {/* Stub Part */}
-                                <div className="w-1/3 bg-red-600 text-white p-6 rounded-r-2xl flex flex-col items-center justify-between relative border-l-4 border-dashed border-white/50">
-                                    {/* Notches */}
-                                    <div className="absolute top-0 right-0 translate-x-1/2 w-8 h-8 bg-background rounded-full"></div>
-                                    <div className="absolute bottom-0 right-0 translate-x-1/2 w-8 h-8 bg-background rounded-full"></div>
-                                    
-                                    <div className="text-center">
-                                        <p className="font-mono text-sm uppercase">Participante</p>
-                                        <p className="font-bold text-lg">{ticketInfo.name}</p>
+                                <h2 className="text-5xl font-extrabold uppercase tracking-wider" style={{ textShadow: '2px 2px 6px rgba(0,0,0,0.7)' }}>{ticketInfo.raffleName}</h2>
+                                <div className="flex justify-between items-end text-sm">
+                                    <div>
+                                        <p className="text-white/70">Juega el:</p>
+                                        <p className="font-semibold">{ticketInfo.gameDate}</p>
                                     </div>
-                                    
-                                    <div className="text-center my-4">
-                                        <p className="font-mono text-xl uppercase tracking-wider">Número</p>
-                                        <p className="font-extrabold text-7xl text-yellow-300" style={{ textShadow: '2px 2px 6px rgba(0,0,0,0.5)' }}>{ticketInfo.raffleNumber}</p>
+                                    <div className="text-right">
+                                        <p className="text-white/70">Con:</p>
+                                        <p className="font-semibold">{ticketInfo.lottery}</p>
                                     </div>
-                        
-                                    <p className="font-mono text-xs tracking-wider text-center text-red-200">ID: {ticketInfo.id}</p>
                                 </div>
                             </div>
-                        )}
-                    </div>
-                    <DialogFooter className="flex-col sm:flex-row gap-2 p-4 bg-gray-100 rounded-b-2xl mt-2">
+
+                            {/* Stub Part */}
+                            <div className="relative w-1/3 p-6 flex flex-col items-center justify-between border-l-2 border-dashed border-white/50">
+                                <div className="text-center">
+                                    <p className="font-mono text-sm uppercase text-white/80">Participante</p>
+                                    <p className="font-bold text-xl truncate">{ticketInfo.name}</p>
+                                </div>
+                                
+                                <div className="text-center">
+                                    <p className="font-mono text-lg uppercase tracking-wider">Número</p>
+                                    <p className="font-extrabold text-8xl" style={{ textShadow: '2px 2px 8px rgba(0,0,0,0.8)' }}>{ticketInfo.raffleNumber}</p>
+                                </div>
+
+                                <p className="font-mono text-xs tracking-wider text-center text-white/60">ID: {ticketInfo.id}</p>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                    <DialogFooter className="flex-col sm:flex-row gap-2 p-4 bg-gray-100 rounded-b-2xl mt-0">
                         <Button
                             onClick={handleDownloadTicket}
                             className="w-full sm:w-auto bg-purple-500 text-white"
