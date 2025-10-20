@@ -61,28 +61,22 @@ const generateTicketImageFlow = ai.defineFlow(
     const { media } = await ai.generate({
         prompt: [
             { media: { url: prizeImageUri } },
-            { text: `Actúa como un diseñador experto en tiquetes con estética retro y vintage. Tu única tarea es crear la imagen de un tiquete de rifa con un diseño clásico y atractivo.
+            { text: `As an expert ticket designer, create an attractive, vintage-style raffle ticket.
 
-**Instrucciones de Diseño Inspiradas en Tiquetes Clásicos:**
+**Design Requirements:**
+1.  **Background:** Use the provided image as the main background for the ticket. Apply a subtle visual treatment (like a slight blur or a color overlay) to ensure the text on top is perfectly readable.
+2.  **Style:** The design should be classic, elegant, and resemble a traditional raffle ticket. Use a mix of serif and decorative fonts.
+3.  **Layout:** Create a horizontal ticket layout.
 
-1.  **Formato General:** Crea un tiquete de formato horizontal, similar a una entrada de evento clásica. El diseño debe estar dividido en dos secciones principales: un talón (stub) a la izquierda y el cuerpo principal del tiquete a la derecha.
+**Required Text (MUST be clearly visible on the ticket):**
+-   Raffle Name: "${input.raffleName}"
+-   Ticket Number: "TICKET N° ${input.raffleNumber}"
+-   Draw Details: "Plays with ${input.lottery} on ${input.gameDate}"
+-   Organizer: "Organized by: ${input.organizerName}"
 
-2.  **Sección Izquierda (Talón):**
-    *   **Fondo:** Utiliza un color oscuro y sólido, como negro o un marrón muy oscuro.
-    *   **Contenido:** Muestra el texto "TIQUETE N°" y, debajo, el número de la rifa de forma prominente: "${input.raffleNumber}". Utiliza una tipografía de estilo "máquina de escribir" o una fuente sans-serif simple y clara.
-
-3.  **Sección Derecha (Cuerpo Principal):**
-    *   **Fondo:** Utiliza la imagen proporcionada como fondo. Aplica un tratamiento visual (como una superposición de color sepia o una ligera opacidad) para darle un aspecto vintage y asegurar que el texto sea legible.
-    *   **Tipografía:** Emplea una mezcla de tipografías con serifa, decorativas y de estilo antiguo para el texto, evocando un sentimiento clásico.
-    *   **Contenido de Texto Requerido (DEBE ser claramente visible):**
-        *   **Título Principal:** El nombre de la rifa: "${input.raffleName}". Este debe ser el elemento de texto más destacado.
-        *   **Detalles del Sorteo:** "Juega con ${input.lottery} el ${input.gameDate}".
-        *   **Organizador:** "Organiza: ${input.organizerName}".
-
-**Reglas Importantes:**
--   El diseño debe ser cohesivo, equilibrado y profesional.
--   No agregues ningún otro texto o elemento no especificado.
--   Tu resultado final debe ser ÚNICAMENTE la imagen generada del tiquete, sin texto ni comentarios adicionales.`},
+**Important Rules:**
+-   Do not add any text or elements not specified above.
+-   Your final output must be ONLY the generated ticket image.`},
         ],
         model: googleAI('gemini-2.5-flash-image-preview'),
         config: {
