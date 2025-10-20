@@ -5,13 +5,11 @@ import { RaffleManager } from '@/lib/RaffleManager';
 import { db, persistenceEnabled } from '@/lib/firebase';
 import { doc, onSnapshot, setDoc, getDoc, deleteDoc, Unsubscribe } from 'firebase/firestore';
 import Image from 'next/image';
-import { extractImageColors } from '@/ai/flows/extract-image-colors';
-import { generateTicketImage } from '@/ai/flows/generate-ticket-image';
 
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House, Clock, Ticket, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, Bot } from 'lucide-react';
+import { Menu, Award, Lock, House, Clock, Ticket, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -85,7 +83,6 @@ const App = () => {
     const [isCollectiveMessageDialogOpen, setIsCollectiveMessageDialogOpen] = useState(false);
     const [collectiveMessage, setCollectiveMessage] = useState('');
     const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
-    const [isThemeGenerating, setIsThemeGenerating] = useState(false);
 
     const raffleManager = new RaffleManager(db);
     
@@ -117,26 +114,6 @@ const App = () => {
 
         setTicketInfo(ticketData);
         setIsTicketModalOpen(true);
-        setIsTicketGenerating(true);
-
-        try {
-            const { ticketImageUrl } = await generateTicketImage({
-                prizeImageUrl: ticketData.prizeImageUrl,
-                raffleName: ticketData.raffleName,
-                raffleNumber: ticketData.raffleNumber,
-                organizerName: ticketData.organizerName,
-                gameDate: ticketData.gameDate,
-                lottery: ticketData.lottery,
-            });
-
-            setTicketInfo((prev: any) => ({ ...prev, ticketImageUrl }));
-        } catch (error) {
-            console.error("Error generating ticket image:", error);
-            showNotification('Error al generar la imagen del tiquete.', 'error');
-            closeTicketModal();
-        } finally {
-            setIsTicketGenerating(false);
-        }
     };
     
     const confirmParticipantPayment = async (raffleRef: string, participantId: string, participantData?: any): Promise<Participant | null> => {
@@ -441,7 +418,7 @@ const App = () => {
                     ...newParticipant,
                     raffleName: raffleState.prize,
                     organizerName: raffleState.organizerName,
-                    gameDate: new Date(raffleState.gameDate + 'T00:00:00-05:00').toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' }),
+                    gameDate: raffleState.gameDate,
                     lottery: raffleState.lottery === 'Otro' ? raffleState.customLottery : raffleState.lottery,
                     prizeImageUrl: raffleState.prizeImageUrl,
                 };
@@ -520,9 +497,6 @@ const App = () => {
                 if (docSnapshot.exists()) {
                     const data = docSnapshot.data();
                     setRaffleState(data);
-                    if (data.prizeImageUrl) {
-                        handleGenerateTheme(data.prizeImageUrl);
-                    }
                     if (!isInitialLoad) { 
                         showNotification(`Cargando rifa con referencia: ${aRef}`, 'success');
                     }
@@ -586,29 +560,6 @@ const App = () => {
         handleLocalFieldChange(field, value);
         await setDoc(doc(db, "raffles", raffleState.raffleRef), { [field]: value }, { merge: true });
     };
-
-    const handleGenerateTheme = (url: string) => {
-        if (!url) {
-            return;
-        }
-        setIsThemeGenerating(true);
-        extractImageColors({ imageUrl: url }).then(result => {
-            if (result && result.theme) {
-                const { primary, background, accent } = result.theme;
-                const root = document.documentElement;
-                root.style.setProperty('--primary', primary);
-                root.style.setProperty('--background', background);
-                root.style.setProperty('--accent', accent);
-                showNotification('¡Tema de la aplicación actualizado con los colores de la imagen!', 'success');
-            }
-        }).catch(error => {
-            console.error("Error extracting colors:", error);
-            showNotification('Error al generar el tema desde la imagen.', 'error');
-        }).finally(() => {
-            setIsThemeGenerating(false);
-        });
-    };
-
 
     const handleActivateBoard = async (mode: RaffleMode) => {
         setLoading(true);
@@ -941,13 +892,11 @@ const App = () => {
                                          onChange={(e) => handleLocalFieldChange('prizeImageUrl', e.target.value)}
                                          onBlur={(e) => {
                                              handleFieldChange('prizeImageUrl', e.target.value);
-                                             handleGenerateTheme(e.target.value);
                                          }}
                                          placeholder="https://ejemplo.com/imagen.png"
                                          disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
                                          className="w-full"
                                      />
-                                     {isThemeGenerating && <Loader2 className="animate-spin h-4 w-4 absolute right-2 top-1/2 -translate-y-1/2 text-gray-500" />}
                                  </div>
                             </div>
                             {isCurrentUserAdmin && !raffleState.isDetailsConfirmed && (
@@ -1118,30 +1067,7 @@ const App = () => {
     );
 
     const InlineTicket = ({ ticketData }: { ticketData: any }) => {
-        const [localTicketImage, setLocalTicketImage] = useState<string | null>(null);
         const [isGenerating, setIsGenerating] = useState(false);
-
-        useEffect(() => {
-            if (ticketData && !localTicketImage) {
-                setIsGenerating(true);
-                generateTicketImage({
-                    prizeImageUrl: ticketData.prizeImageUrl,
-                    raffleName: ticketData.raffleName,
-                    raffleNumber: ticketData.raffleNumber,
-                    organizerName: ticketData.organizerName,
-                    gameDate: ticketData.gameDate,
-                    lottery: ticketData.lottery,
-                }).then(({ ticketImageUrl }) => {
-                    setLocalTicketImage(ticketImageUrl);
-                }).catch(err => {
-                    console.error("Failed to generate inline ticket", err);
-                    showNotification("Error al generar la imagen del tiquete.", "error");
-                }).finally(() => {
-                    setIsGenerating(false);
-                });
-            }
-        }, [ticketData]);
-
 
         if (!ticketData) return null;
     
@@ -1155,10 +1081,10 @@ const App = () => {
                                 <Loader2 className="h-12 w-12 animate-spin text-purple-600" />
                                 <p className="mt-4 text-gray-600 font-semibold">Generando tu tiquete con IA...</p>
                             </div>
-                        ) : localTicketImage ? (
+                        ) : ticketData.ticketImageUrl ? (
                             <div ref={ticketModalRef}>
                                 <Image
-                                    src={localTicketImage}
+                                    src={ticketData.ticketImageUrl}
                                     alt={`Tiquete para ${ticketData.raffleNumber}`}
                                     width={400}
                                     height={600}
@@ -1177,14 +1103,14 @@ const App = () => {
                        <Button
                            onClick={handleDownloadTicket}
                            className="w-full sm:w-auto bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors font-semibold shadow-md"
-                           disabled={isGenerating || !localTicketImage}
+                           disabled={isGenerating || !ticketData.ticketImageUrl}
                        >
                            Descargar PDF
                        </Button>
                        <Button
                            onClick={handleShareTicket}
                            className="w-full sm:w-auto bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-semibold shadow-md flex items-center gap-2"
-                            disabled={isGenerating || !localTicketImage}
+                            disabled={isGenerating || !ticketData.ticketImageUrl}
                        >
                            <WhatsappIcon/>
                            Compartir
@@ -1577,8 +1503,7 @@ const App = () => {
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-purple-600">{p.raffleNumber}</td>
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm">
                                                                 <Button onClick={() => handleGenerateTicket(p)} size="sm" variant="outline" disabled={!raffleState.prize}>
-                                                                    <Bot className="mr-2 h-4 w-4" />
-                                                                    Generar Tiquete IA
+                                                                    Generar Tiquete
                                                                 </Button>
                                                             </td>
                                                         </tr>
@@ -1637,45 +1562,36 @@ const App = () => {
             <Dialog open={isTicketModalOpen} onOpenChange={closeTicketModal}>
                 <DialogContent className="max-w-sm">
                     <DialogHeader>
-                        <DialogTitle>Tiquete Generado por IA</DialogTitle>
+                        <DialogTitle>Tiquete Generado</DialogTitle>
                         <DialogDescription>
-                            {isTicketGenerating && !ticketInfo?.ticketImageUrl ? 'Tu tiquete se está creando...' : '¡Aquí está tu tiquete único!'}
+                            ¡Aquí está tu tiquete!
                         </DialogDescription>
                     </DialogHeader>
                     <div className="py-4">
-                        {(isTicketGenerating && !ticketInfo?.ticketImageUrl) ? (
-                            <div className="flex flex-col items-center justify-center h-64">
-                                <Loader2 className="h-12 w-12 animate-spin text-purple-600" />
-                                <p className="mt-4 text-gray-600 font-semibold">Generando tu tiquete...</p>
-                            </div>
-                        ) : ticketInfo?.ticketImageUrl ? (
-                            <div ref={ticketModalRef}>
-                                <Image
-                                    src={ticketInfo.ticketImageUrl}
-                                    alt={`Tiquete para ${ticketInfo.raffleNumber}`}
-                                    width={400}
-                                    height={600}
-                                    className="w-full h-auto rounded-md"
-                                />
-                            </div>
-                        ) : (
-                             <div className="flex flex-col items-center justify-center h-64">
-                                <p className="text-gray-600">No se pudo generar la imagen del tiquete.</p>
-                            </div>
-                        )}
+                        <div ref={ticketModalRef}>
+                            {ticketInfo && (
+                                <div className="p-4 border rounded-lg">
+                                    <h3 className="text-xl font-bold text-center mb-2">{ticketInfo.raffleName}</h3>
+                                    {ticketInfo.prizeImageUrl && <Image src={ticketInfo.prizeImageUrl} alt="Premio" width={300} height={200} className="w-full h-auto rounded-md mb-4" />}
+                                    <p><strong>Número:</strong> <span className="text-2xl font-bold text-purple-600">{ticketInfo.raffleNumber}</span></p>
+                                    <p><strong>Nombre:</strong> {ticketInfo.name}</p>
+                                    <p><strong>Organizador:</strong> {ticketInfo.organizerName}</p>
+                                    <p><strong>Juega con:</strong> {ticketInfo.lottery}</p>
+                                    <p><strong>Fecha:</strong> {ticketInfo.gameDate}</p>
+                                </div>
+                            )}
+                        </div>
                     </div>
                     <DialogFooter className="flex-col sm:flex-row gap-2">
                         <Button
                             onClick={handleDownloadTicket}
                             className="w-full sm:w-auto bg-purple-500 text-white"
-                            disabled={isTicketGenerating || !ticketInfo?.ticketImageUrl}
                         >
                             Descargar PDF
                         </Button>
                         <Button
                             onClick={handleShareTicket}
                             className="w-full sm:w-auto bg-green-500 text-white flex items-center gap-2"
-                             disabled={isTicketGenerating || !ticketInfo?.ticketImageUrl}
                         >
                             <WhatsappIcon/>
                             Compartir
@@ -1804,5 +1720,3 @@ const App = () => {
 };
 
 export default App;
-
-    
