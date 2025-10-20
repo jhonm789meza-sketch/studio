@@ -446,7 +446,7 @@ const App = () => {
         if (!targetInfo) return;
 
         import('html2canvas').then(html2canvas => {
-            html2canvas(ticketElement, { useCORS: true, backgroundColor: '#111827' }).then(canvas => {
+            html2canvas(ticketElement, { useCORS: true, backgroundColor: null }).then(canvas => {
                 const imgData = canvas.toDataURL('image/png');
                 const pdf = new jsPDF({
                     orientation: 'landscape',
@@ -1586,77 +1586,77 @@ const App = () => {
             )}
             
             <Dialog open={isTicketModalOpen} onOpenChange={closeTicketModal}>
-                <DialogContent className="max-w-3xl p-0 border-0">
-                    <div ref={ticketModalRef} className="bg-gray-900 text-white">
+                <DialogContent className="max-w-4xl p-0 border-0 bg-transparent shadow-none">
+                    <div ref={ticketModalRef} className="font-sans">
                         {ticketInfo && (
-                            <div className="flex font-mono">
+                             <div className="bg-white rounded-2xl shadow-xl mx-auto w-full max-w-3xl flex" style={{fontFamily: "'Roboto', sans-serif"}}>
                                 {/* Main Part */}
-                                <div className="w-2/3 p-6 flex flex-col relative overflow-hidden">
-                                    {ticketInfo.prizeImageUrl && (
-                                        <div className="absolute inset-0 z-0">
-                                            <Image
-                                                src={ticketInfo.prizeImageUrl}
-                                                alt="Fondo del premio"
-                                                layout="fill"
-                                                objectFit="cover"
-                                                className="opacity-20 blur-sm"
-                                                unoptimized
-                                            />
-                                        </div>
-                                    )}
-                                    <div className="relative z-10 flex-grow">
-                                        <div className="flex justify-between items-start">
-                                            <div>
-                                                <p className="text-xs text-gray-400 uppercase tracking-widest">Organizado por</p>
-                                                <p className="text-lg font-bold">{ticketInfo.organizerName}</p>
-                                            </div>
-                                            <div className="text-right">
-                                                <p className="text-xs text-gray-400 uppercase tracking-widest">Rifa</p>
-                                                <p className="text-lg font-bold">{ticketInfo.raffleName}</p>
-                                            </div>
-                                        </div>
-                                        <div className="mt-8">
-                                            <p className="text-xs text-gray-400 uppercase tracking-widest">Participante</p>
-                                            <p className="text-2xl font-bold tracking-tight">{ticketInfo.name}</p>
-                                        </div>
-                                    </div>
-                                    <div className="relative z-10 flex justify-between items-end mt-8">
-                                        <div>
-                                            <p className="text-xs text-gray-400 uppercase">Juega con</p>
-                                            <p className="font-semibold">{ticketInfo.lottery}</p>
+                                <div className="w-2/3 bg-blue-900 text-white p-6 rounded-l-2xl flex flex-col relative overflow-hidden">
+                                     {/* Notches */}
+                                    <div className="absolute top-0 left-0 -translate-x-1/2 w-8 h-8 bg-background rounded-full"></div>
+                                    <div className="absolute bottom-0 left-0 -translate-x-1/2 w-8 h-8 bg-background rounded-full"></div>
+
+                                    <div className="flex justify-between items-center mb-4">
+                                        <div className="w-24 h-24 rounded-lg overflow-hidden border-2 border-white/50">
+                                            {ticketInfo.prizeImageUrl ? (
+                                                <Image
+                                                    src={ticketInfo.prizeImageUrl}
+                                                    alt="Premio"
+                                                    width={96}
+                                                    height={96}
+                                                    className="object-cover w-full h-full"
+                                                    unoptimized
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full bg-blue-800 flex items-center justify-center">
+                                                    <Ticket className="w-8 h-8 text-white/50"/>
+                                                </div>
+                                            )}
                                         </div>
                                         <div className="text-right">
-                                            <p className="text-xs text-gray-400 uppercase">Fecha Sorteo</p>
+                                            <p className="text-xs uppercase tracking-widest text-blue-300">Organizado por</p>
+                                            <p className="text-lg font-bold">{ticketInfo.organizerName}</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="flex-grow mt-4">
+                                        <h2 className="text-4xl font-extrabold uppercase tracking-wider text-center" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.3)' }}>{ticketInfo.raffleName}</h2>
+                                    </div>
+
+                                    <div className="flex justify-between items-end text-sm">
+                                        <div>
+                                            <p className="text-blue-300">Juega el:</p>
                                             <p className="font-semibold">{ticketInfo.gameDate}</p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-blue-300">Con:</p>
+                                            <p className="font-semibold">{ticketInfo.lottery}</p>
                                         </div>
                                     </div>
                                 </div>
-
+                        
                                 {/* Stub Part */}
-                                <div className="w-1/3 bg-gray-800 p-6 flex flex-col items-center justify-between border-l-2 border-dashed border-gray-600">
+                                <div className="w-1/3 bg-red-600 text-white p-6 rounded-r-2xl flex flex-col items-center justify-between relative border-l-4 border-dashed border-white/50">
+                                    {/* Notches */}
+                                    <div className="absolute top-0 right-0 translate-x-1/2 w-8 h-8 bg-background rounded-full"></div>
+                                    <div className="absolute bottom-0 right-0 translate-x-1/2 w-8 h-8 bg-background rounded-full"></div>
+                                    
                                     <div className="text-center">
-                                        <p className="text-sm text-gray-400 uppercase tracking-widest">Número</p>
-                                        <p
-                                            className="text-7xl font-bold text-yellow-300"
-                                            style={{ textShadow: '0 0 10px rgba(253, 224, 71, 0.5)' }}
-                                        >
-                                            {ticketInfo.raffleNumber}
-                                        </p>
+                                        <p className="font-mono text-sm uppercase">Participante</p>
+                                        <p className="font-bold text-lg">{ticketInfo.name}</p>
                                     </div>
-                                    <div className="text-center">
-                                        <div className="bg-white p-2 rounded-lg">
-                                            <QrCode className="h-20 w-20 text-gray-900" />
-                                        </div>
-                                        <p className="text-xs text-gray-500 mt-2">ID: {ticketInfo.id}</p>
+                                    
+                                    <div className="text-center my-4">
+                                        <p className="font-mono text-xl uppercase tracking-wider">Número</p>
+                                        <p className="font-extrabold text-7xl text-yellow-300" style={{ textShadow: '2px 2px 6px rgba(0,0,0,0.5)' }}>{ticketInfo.raffleNumber}</p>
                                     </div>
-                                    <p className="font-bold text-lg text-yellow-300 -rotate-90 origin-center whitespace-nowrap tracking-widest absolute right-[-2.5rem]">
-                                        ¡BUENA SUERTE!
-                                    </p>
+                        
+                                    <p className="font-mono text-xs tracking-wider text-center text-red-200">ID: {ticketInfo.id}</p>
                                 </div>
                             </div>
                         )}
                     </div>
-                    <DialogFooter className="flex-col sm:flex-row gap-2 p-4 bg-gray-100">
+                    <DialogFooter className="flex-col sm:flex-row gap-2 p-4 bg-gray-100 rounded-b-2xl mt-2">
                         <Button
                             onClick={handleDownloadTicket}
                             className="w-full sm:w-auto bg-purple-500 text-white"
