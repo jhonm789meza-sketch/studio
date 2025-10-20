@@ -439,14 +439,25 @@ const App = () => {
     };
     
     const handleDownloadTicket = () => {
-        const ticketRef = ticketModalRef.current;
-        const targetInfo = generatedTicketData || ticketInfo;
-        if (!targetInfo?.ticketImageUrl) return;
+        const ticketElement = ticketModalRef.current;
+        if (!ticketElement) return;
 
-        const pdf = new jsPDF();
-        pdf.addImage(targetInfo.ticketImageUrl, 'PNG', 10, 10, 190, 0);
-        pdf.save(`tiquete_${targetInfo.raffleNumber}.pdf`);
-        showNotification('Tiquete descargado', 'success');
+        const targetInfo = generatedTicketData || ticketInfo;
+        if (!targetInfo) return;
+
+        import('html2canvas').then(html2canvas => {
+            html2canvas(ticketElement, { useCORS: true, backgroundColor: null }).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jsPDF();
+                const imgProps = pdf.getImageProperties(imgData);
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+                
+                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                pdf.save(`tiquete_${targetInfo.raffleNumber}.pdf`);
+                showNotification('Tiquete descargado', 'success');
+            });
+        });
     };
 
     const handleShareTicket = () => {
@@ -1570,14 +1581,23 @@ const App = () => {
                     <div className="py-4">
                         <div ref={ticketModalRef}>
                             {ticketInfo && (
-                                <div className="p-4 border rounded-lg">
-                                    <h3 className="text-xl font-bold text-center mb-2">{ticketInfo.raffleName}</h3>
-                                    {ticketInfo.prizeImageUrl && <Image src={ticketInfo.prizeImageUrl} alt="Premio" width={300} height={200} className="w-full h-auto rounded-md mb-4" />}
-                                    <p><strong>Número:</strong> <span className="text-2xl font-bold text-purple-600">{ticketInfo.raffleNumber}</span></p>
-                                    <p><strong>Nombre:</strong> {ticketInfo.name}</p>
-                                    <p><strong>Organizador:</strong> {ticketInfo.organizerName}</p>
-                                    <p><strong>Juega con:</strong> {ticketInfo.lottery}</p>
-                                    <p><strong>Fecha:</strong> {ticketInfo.gameDate}</p>
+                                <div
+                                    className="p-6 rounded-lg relative text-white shadow-lg overflow-hidden"
+                                    style={{
+                                        backgroundImage: `url(${ticketInfo.prizeImageUrl})`,
+                                        backgroundSize: 'cover',
+                                        backgroundPosition: 'center',
+                                    }}
+                                >
+                                    <div className="absolute inset-0 bg-black bg-opacity-60 z-0"></div>
+                                    <div className="relative z-10 space-y-3" style={{ textShadow: '1px 1px 3px rgba(0,0,0,0.7)' }}>
+                                        <h3 className="text-2xl font-bold text-center mb-3">{ticketInfo.raffleName}</h3>
+                                        <p><strong>Número:</strong> <span className="text-3xl font-bold text-yellow-300">{ticketInfo.raffleNumber}</span></p>
+                                        <p><strong>Nombre:</strong> {ticketInfo.name}</p>
+                                        <p><strong>Organizador:</strong> {ticketInfo.organizerName}</p>
+                                        <p><strong>Juega con:</strong> {ticketInfo.lottery}</p>
+                                        <p><strong>Fecha:</strong> {ticketInfo.gameDate}</p>
+                                    </div>
                                 </div>
                             )}
                         </div>
@@ -1720,3 +1740,5 @@ const App = () => {
 };
 
 export default App;
+
+    
