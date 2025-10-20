@@ -446,7 +446,7 @@ const App = () => {
         if (!targetInfo) return;
 
         import('html2canvas').then(html2canvas => {
-            html2canvas(ticketElement, { useCORS: true, backgroundColor: null }).then(canvas => {
+            html2canvas(ticketElement, { useCORS: true }).then(canvas => {
                 if (format === 'pdf') {
                     const imgData = canvas.toDataURL('image/png');
                     const pdf = new jsPDF({
@@ -1606,21 +1606,19 @@ const App = () => {
                 {ticketInfo && (
                     <div
                         ref={ticketModalRef}
-                        className="bg-white rounded-2xl shadow-xl mx-auto w-[800px] h-[350px] flex font-sans overflow-hidden relative"
+                        className="bg-cover bg-center w-[800px] h-[350px] font-sans overflow-hidden relative shadow-xl rounded-2xl flex"
+                        style={{ backgroundImage: `url(${ticketInfo.prizeImageUrl || ''})` }}
                     >
-                        <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${ticketInfo.prizeImageUrl || ''})` }}>
-                           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
-                        </div>
+                        {/* Overlay */}
+                        <div className="absolute inset-0 bg-black/50"></div>
 
-                        {/* Main Part */}
+                        {/* Main Content */}
                         <div className="relative w-2/3 p-8 flex flex-col justify-between text-white">
-                            <div className="text-left">
+                            <div>
                                 <p className="text-sm uppercase tracking-widest text-white/80" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.7)' }}>
                                     Organizado por: <span className="font-bold">{ticketInfo.organizerName}</span>
                                 </p>
-                            </div>
-                            <div>
-                                <h2 className="text-5xl font-extrabold uppercase tracking-tighter" style={{ textShadow: '2px 2px 6px rgba(0,0,0,0.8)' }}>
+                                <h2 className="text-5xl font-extrabold uppercase tracking-tighter mt-2" style={{ textShadow: '2px 2px 6px rgba(0,0,0,0.8)' }}>
                                     {ticketInfo.raffleName}
                                 </h2>
                             </div>
@@ -1798,5 +1796,3 @@ const App = () => {
 };
 
 export default App;
-
-    
