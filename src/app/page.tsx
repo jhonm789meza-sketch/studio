@@ -438,7 +438,7 @@ const App = () => {
         await confirmParticipantPayment(raffleState.raffleRef, String(participantId));
     };
     
-    const handleDownloadTicket = () => {
+    const handleDownloadTicket = (format: 'pdf' | 'gif') => {
         const ticketElement = ticketModalRef.current;
         if (!ticketElement) return;
 
@@ -447,32 +447,48 @@ const App = () => {
 
         import('html2canvas').then(html2canvas => {
             html2canvas(ticketElement, { useCORS: true, backgroundColor: null }).then(canvas => {
-                const imgData = canvas.toDataURL('image/png');
-                const pdf = new jsPDF({
-                    orientation: 'landscape',
-                });
-                const pdfWidth = pdf.internal.pageSize.getWidth();
-                const pdfHeight = pdf.internal.pageSize.getHeight();
-                
-                const canvasAspectRatio = canvas.width / canvas.height;
-                const pdfAspectRatio = pdfWidth / pdfHeight;
+                if (format === 'pdf') {
+                    const imgData = canvas.toDataURL('image/png');
+                    const pdf = new jsPDF({
+                        orientation: 'landscape',
+                    });
+                    const pdfWidth = pdf.internal.pageSize.getWidth();
+                    const pdfHeight = pdf.internal.pageSize.getHeight();
+                    
+                    const canvasAspectRatio = canvas.width / canvas.height;
+                    const pdfAspectRatio = pdfWidth / pdfHeight;
 
-                let renderWidth, renderHeight;
+                    let renderWidth, renderHeight;
 
-                if (canvasAspectRatio > pdfAspectRatio) {
-                    renderWidth = pdfWidth;
-                    renderHeight = pdfWidth / canvasAspectRatio;
-                } else {
-                    renderHeight = pdfHeight;
-                    renderWidth = pdfHeight * canvasAspectRatio;
+                    if (canvasAspectRatio > pdfAspectRatio) {
+                        renderWidth = pdfWidth;
+                        renderHeight = pdfWidth / canvasAspectRatio;
+                    } else {
+                        renderHeight = pdfHeight;
+                        renderWidth = pdfHeight * canvasAspectRatio;
+                    }
+                    
+                    const x = (pdfWidth - renderWidth) / 2;
+                    const y = (pdfHeight - renderHeight) / 2;
+
+                    pdf.addImage(imgData, 'PNG', x, y, renderWidth, renderHeight);
+                    pdf.save(`tiquete_${targetInfo.raffleNumber}.pdf`);
+                    showNotification('Tiquete PDF descargado', 'success');
+                } else if (format === 'gif') {
+                    canvas.toBlob((blob) => {
+                        if (blob) {
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = `tiquete_${targetInfo.raffleNumber}.gif`;
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                            URL.revokeObjectURL(url);
+                            showNotification('Tiquete GIF descargado (estático)', 'success');
+                        }
+                    }, 'image/gif');
                 }
-                
-                const x = (pdfWidth - renderWidth) / 2;
-                const y = (pdfHeight - renderHeight) / 2;
-
-                pdf.addImage(imgData, 'PNG', x, y, renderWidth, renderHeight);
-                pdf.save(`tiquete_${targetInfo.raffleNumber}.pdf`);
-                showNotification('Tiquete descargado', 'success');
             });
         });
     };
@@ -1127,7 +1143,7 @@ const App = () => {
                    
                    <div className="p-4 bg-gray-50 rounded-b-lg flex flex-col sm:flex-row items-center justify-center gap-2 mt-auto border-t">
                        <Button
-                           onClick={handleDownloadTicket}
+                           onClick={() => handleDownloadTicket('pdf')}
                            className="w-full sm:w-auto bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors font-semibold shadow-md"
                            disabled={isTicketGenerating || !ticketData.ticketImageUrl}
                        >
@@ -1587,56 +1603,69 @@ const App = () => {
             
             <Dialog open={isTicketModalOpen} onOpenChange={closeTicketModal}>
                 <DialogContent className="max-w-4xl p-0 border-0 bg-transparent shadow-none">
-                <div ref={ticketModalRef} className="font-sans text-white" style={{ fontFamily: "'Roboto', sans-serif" }}>
-                    {ticketInfo && (
-                        <div
-                            className="relative bg-center bg-cover rounded-2xl shadow-xl mx-auto w-full max-w-3xl flex h-80 overflow-hidden"
-                            style={{ backgroundImage: `url(${ticketInfo.prizeImageUrl || 'https://placehold.co/1200x600/1e293b/ffffff?text=Rifa' })` }}
-                        >
-                            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
-                            {/* Main Part */}
-                            <div className="relative w-2/3 p-6 flex flex-col justify-between">
-                                <div>
-                                    <p className="text-sm uppercase tracking-widest text-white/70" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.7)' }}>Organizado por</p>
-                                    <p className="text-2xl font-bold" style={{ textShadow: '1px 1px 3px rgba(0,0,0,0.8)' }}>{ticketInfo.organizerName}</p>
-                                </div>
-                                <h2 className="text-5xl font-extrabold uppercase tracking-wider" style={{ textShadow: '2px 2px 6px rgba(0,0,0,0.7)' }}>{ticketInfo.raffleName}</h2>
-                                <div className="flex justify-between items-end text-sm">
-                                    <div>
-                                        <p className="text-white/70">Juega el:</p>
-                                        <p className="font-semibold">{ticketInfo.gameDate}</p>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="text-white/70">Con:</p>
-                                        <p className="font-semibold">{ticketInfo.lottery}</p>
-                                    </div>
-                                </div>
+                {ticketInfo && (
+                    <div
+                        ref={ticketModalRef}
+                        className="bg-white rounded-2xl shadow-xl mx-auto w-[800px] h-[350px] flex font-sans overflow-hidden relative"
+                    >
+                        <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${ticketInfo.prizeImageUrl || ''})` }}>
+                           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+                        </div>
+
+                        {/* Main Part */}
+                        <div className="relative w-2/3 p-8 flex flex-col justify-between text-white">
+                            <div className="text-left">
+                                <p className="text-sm uppercase tracking-widest text-white/80" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.7)' }}>
+                                    Organizado por: <span className="font-bold">{ticketInfo.organizerName}</span>
+                                </p>
                             </div>
-
-                            {/* Stub Part */}
-                            <div className="relative w-1/3 p-6 flex flex-col items-center justify-between border-l-2 border-dashed border-white/50">
-                                <div className="text-center">
-                                    <p className="font-mono text-sm uppercase text-white/80">Participante</p>
-                                    <p className="font-bold text-xl truncate">{ticketInfo.name}</p>
+                            <div>
+                                <h2 className="text-5xl font-extrabold uppercase tracking-tighter" style={{ textShadow: '2px 2px 6px rgba(0,0,0,0.8)' }}>
+                                    {ticketInfo.raffleName}
+                                </h2>
+                            </div>
+                            <div className="flex justify-between items-end text-sm font-semibold">
+                                <div>
+                                    <p className="text-white/70">Juega el:</p>
+                                    <p>{ticketInfo.gameDate ? format(new Date(ticketInfo.gameDate), 'PPP', { locale: es }) : 'Fecha no definida'}</p>
                                 </div>
-                                
-                                <div className="text-center">
-                                    <p className="font-mono text-lg uppercase tracking-wider">Número</p>
-                                    <p className="font-extrabold text-8xl" style={{ textShadow: '2px 2px 8px rgba(0,0,0,0.8)' }}>{ticketInfo.raffleNumber}</p>
+                                <div className="text-right">
+                                    <p className="text-white/70">Con:</p>
+                                    <p>{ticketInfo.lottery}</p>
                                 </div>
-
-                                <p className="font-mono text-xs tracking-wider text-center text-white/60">ID: {ticketInfo.id}</p>
                             </div>
                         </div>
-                    )}
-                </div>
 
+                        {/* Stub Part */}
+                        <div className="relative w-1/3 bg-black/30 p-6 flex flex-col items-center justify-between border-l-2 border-dashed border-white/50">
+                            <div className="text-center text-white">
+                                <p className="font-mono text-sm uppercase text-white/80">Participante</p>
+                                <p className="font-bold text-xl truncate max-w-[200px]">{ticketInfo.name}</p>
+                            </div>
+                            
+                            <div className="text-center text-white">
+                                <p className="font-mono text-lg uppercase tracking-wider">Número</p>
+                                <p className="font-extrabold text-8xl" style={{ textShadow: '2px 2px 8px rgba(0,0,0,0.8)' }}>
+                                    {ticketInfo.raffleNumber}
+                                </p>
+                            </div>
+                            
+                            <QrCode className="h-16 w-16 text-white/80"/>
+                        </div>
+                    </div>
+                )}
                     <DialogFooter className="flex-col sm:flex-row gap-2 p-4 bg-gray-100 rounded-b-2xl mt-0">
                         <Button
-                            onClick={handleDownloadTicket}
+                            onClick={() => handleDownloadTicket('pdf')}
                             className="w-full sm:w-auto bg-purple-500 text-white"
                         >
                             Descargar PDF
+                        </Button>
+                        <Button
+                            onClick={() => handleDownloadTicket('gif')}
+                            className="w-full sm:w-auto bg-blue-500 text-white"
+                        >
+                            Descargar GIF
                         </Button>
                         <Button
                             onClick={handleShareTicket}
@@ -1769,3 +1798,5 @@ const App = () => {
 };
 
 export default App;
+
+    
