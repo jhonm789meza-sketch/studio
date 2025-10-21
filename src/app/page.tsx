@@ -9,7 +9,7 @@ import Image from 'next/image';
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House, Clock, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode } from 'lucide-react';
+import { Menu, Award, Lock, House, Clock, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, Palette } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -22,7 +22,7 @@ import { Textarea } from '@/components/ui/textarea';
 
 
 type RaffleMode = 'two-digit' | 'three-digit';
-type Tab = 'board' | 'register' | 'participants' | 'pending' | 'recaudado';
+type Tab = 'board' | 'register' | 'participants' | 'designs' | 'pending' | 'recaudado';
 
 const initialRaffleData = {
     drawnNumbers: [],
@@ -52,6 +52,15 @@ const initialRaffleData = {
     raffleMode: 'two-digit',
     prizeImageUrl: ''
 };
+
+const ticketDesigns = [
+    { name: 'Clásico', url: 'https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/156d9d27-4554-40c1-a5df-a97fabb03948.png' },
+    { name: 'Moderno', url: 'https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/7a878190-a68c-4261-9baf-7a399748d2a2.png' },
+    { name: 'Elegante', url: 'https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/f5df7168-bcec-459b-a246-35aec9b41943.png' },
+    { name: 'Tecnología', url: 'https://picsum.photos/seed/tech/600/400' },
+    { name: 'Viaje', url: 'https://picsum.photos/seed/travel/600/400' },
+    { name: 'Navidad', url: 'https://picsum.photos/seed/christmas/600/400' },
+];
 
 
 const App = () => {
@@ -732,6 +741,17 @@ const App = () => {
         setIsShareDialogOpen(false);
     };
 
+    const handleSelectDesign = (url: string) => {
+        if (!isCurrentUserAdmin) {
+            showNotification('Solo el administrador puede cambiar el diseño.', 'warning');
+            return;
+        }
+        handleLocalFieldChange('prizeImageUrl', url);
+        handleFieldChange('prizeImageUrl', url);
+        showNotification('Diseño aplicado. La nueva imagen se ha guardado.', 'success');
+        handleTabClick('board');
+    };
+
     const allNumbers = Array.from({ length: totalNumbers }, (_, i) => i);
     
     const backgroundImage = raffleState?.prizeImageUrl;
@@ -1306,6 +1326,14 @@ const App = () => {
                                         <Users className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">Participantes</span>
                                     </button>
                                     {isCurrentUserAdmin && (
+                                        <button
+                                            className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'designs' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
+                                            onClick={() => handleTabClick('designs')}
+                                        >
+                                            <Palette className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">Diseños</span>
+                                        </button>
+                                    )}
+                                    {isCurrentUserAdmin && (
                                     <button 
                                         className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'recaudado' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
                                         onClick={() => setIsSalesModalOpen(true)}
@@ -1564,6 +1592,31 @@ const App = () => {
                                         <p className="text-gray-500">No hay participantes con pago confirmado.</p>
                                     )}
                                 </div>
+                                {isCurrentUserAdmin && (
+                                <div className={activeTab === 'designs' ? 'tab-content active' : 'tab-content'}>
+                                    <h2 className="text-2xl font-bold text-gray-800 mb-4">Galería de Diseños de Tiquetes</h2>
+                                    <p className="text-gray-600 mb-6">Selecciona un diseño para aplicarlo a la rifa actual. La imagen seleccionada se usará como fondo para los tiquetes.</p>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                        {ticketDesigns.map((design) => (
+                                            <div key={design.name} className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 transition-all hover:shadow-xl hover:-translate-y-1">
+                                                <div className="relative aspect-video w-full">
+                                                    <Image src={design.url} alt={`Diseño ${design.name}`} layout="fill" objectFit="cover" unoptimized />
+                                                </div>
+                                                <div className="p-4">
+                                                    <h3 className="font-semibold text-lg text-gray-800">{design.name}</h3>
+                                                    <Button 
+                                                        onClick={() => handleSelectDesign(design.url)} 
+                                                        className="w-full mt-3 bg-purple-500 hover:bg-purple-600 text-white"
+                                                        size="sm"
+                                                    >
+                                                        Usar este diseño
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                                )}
                             </div>
                         </>
                     )}
@@ -1793,3 +1846,5 @@ const App = () => {
 };
 
 export default App;
+
+    
