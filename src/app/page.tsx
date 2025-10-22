@@ -457,7 +457,7 @@ const App = () => {
         if (!targetInfo) return;
     
         import('html2canvas').then(html2canvas => {
-            html2canvas(ticketElement, { useCORS: true }).then(canvas => {
+            html2canvas(ticketElement, { useCORS: true, backgroundColor: null }).then(canvas => {
                 if (format === 'pdf') {
                     const imgData = canvas.toDataURL('image/png');
                     const pdf = new jsPDF({
@@ -1612,39 +1612,48 @@ const App = () => {
             <Dialog open={isTicketModalOpen} onOpenChange={closeTicketModal}>
                 <DialogContent className="w-full max-w-md md:max-w-lg lg:max-w-xl p-0 border-0 bg-transparent shadow-none">
                     <DialogTitle className="sr-only">Tiquete de Rifa</DialogTitle>
-                    {ticketInfo && (
+                     {ticketInfo && (
                         <div
                             ref={ticketModalRef}
-                            className="w-full max-w-none md:max-w-md lg:max-w-lg mx-auto font-sans overflow-hidden relative shadow-xl rounded-2xl bg-cover bg-center text-white before:content-[''] before:absolute before:inset-0 before:bg-black/60 before:z-0"
-                            style={{
-                                backgroundImage: `url(${ticketInfo.prizeImageUrl || ''})`,
-                                backgroundColor: '#111827',
-                            }}
+                            className="w-full max-w-md mx-auto font-sans overflow-hidden relative shadow-2xl rounded-2xl bg-gradient-to-br from-gray-800 to-gray-900 text-white"
                         >
-                           <div className="h-full flex flex-row relative">
-                                <div className="flex-grow p-4 md:p-6 flex flex-col text-left space-y-2">
-                                    <p className="text-xs uppercase tracking-widest text-white/80" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.7)' }}>{ticketInfo.organizerName}</p>
-                                    <h2 className="text-xl md:text-2xl font-extrabold uppercase tracking-tighter my-2" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.7)' }}>
-                                        {ticketInfo.raffleName}
-                                    </h2>
-                                    <div className="relative w-full aspect-video rounded-md overflow-hidden my-2 border-2 border-white/20">
-                                         {ticketInfo.prizeImageUrl && <Image src={ticketInfo.prizeImageUrl} alt="Premio" width={400} height={225} objectFit="cover" />}
+                            <div
+                                className="absolute inset-0 bg-cover bg-center opacity-10"
+                                style={{
+                                    backgroundImage: `url(${ticketInfo.prizeImageUrl || ''})`,
+                                }}
+                            ></div>
+
+                            <div className="relative flex flex-row">
+                                <div className="flex-grow p-6 flex flex-col justify-between">
+                                    <div>
+                                        <p className="text-sm font-semibold uppercase tracking-wider text-gray-400">{ticketInfo.organizerName}</p>
+                                        <h2 className="text-2xl font-bold uppercase tracking-tight my-2 text-white">
+                                            {ticketInfo.raffleName}
+                                        </h2>
                                     </div>
-                                    <div className="mt-auto space-y-2 text-xs">
+                                    <div className="relative w-full aspect-video rounded-lg overflow-hidden my-4 border-2 border-white/10">
+                                        {ticketInfo.prizeImageUrl && <Image src={ticketInfo.prizeImageUrl} alt="Premio" layout="fill" objectFit="cover" />}
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4 text-xs">
                                         <div>
-                                            <p className="font-semibold uppercase text-white/80">Juega el</p>
-                                            <p className="font-bold text-sm">{ticketInfo.gameDate ? format(new Date(ticketInfo.gameDate), 'PPP', { locale: es }) : 'N/A'}</p>
+                                            <p className="font-semibold uppercase text-gray-400">Juega el</p>
+                                            <p className="font-bold text-sm text-white">{ticketInfo.gameDate ? format(new Date(ticketInfo.gameDate), 'PPP', { locale: es }) : 'N/A'}</p>
+                                        </div>
+                                        <div>
+                                            <p className="font-semibold uppercase text-gray-400">Con la Lotería</p>
+                                            <p className="font-bold text-sm text-white truncate">{ticketInfo.lottery}</p>
                                         </div>
                                     </div>
                                 </div>
-                                <div className="absolute top-0 bottom-0 right-0 w-20 md:w-24 bg-red-600/80 flex flex-col items-center justify-between p-2 border-l-2 border-dashed border-white/50 rounded-r-2xl">
-                                    <div className="text-center">
-                                        <p className="font-bold uppercase tracking-wider text-xs">Número</p>
-                                        <p className="font-mono font-extrabold text-3xl sm:text-4xl" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>{ticketInfo.raffleNumber}</p>
+                                <div className="w-28 md:w-32 bg-gradient-to-br from-yellow-400 to-amber-500 flex flex-col items-center justify-around p-3 text-center text-black rounded-r-2xl border-l-2 border-dashed border-yellow-200/50">
+                                    <div className="w-full">
+                                        <p className="font-bold uppercase tracking-widest text-xs opacity-80">Número</p>
+                                        <p className="font-mono font-extrabold text-5xl" style={{ textShadow: '0 2px 3px rgba(0,0,0,0.2)' }}>{ticketInfo.raffleNumber}</p>
                                     </div>
-                                    <div className="text-center text-xs">
-                                        <p className="font-semibold uppercase text-white/80">Participante</p>
-                                        <p className="font-bold text-sm truncate">{ticketInfo.name}</p>
+                                    <div className="w-full">
+                                        <p className="font-semibold uppercase text-xs opacity-80">Participante</p>
+                                        <p className="font-bold text-base truncate">{ticketInfo.name}</p>
                                     </div>
                                 </div>
                             </div>
@@ -1794,3 +1803,5 @@ const App = () => {
 };
 
 export default App;
+
+    
