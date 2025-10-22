@@ -113,6 +113,7 @@ const App = () => {
             gameDate: raffleState.gameDate,
             lottery: raffleState.lottery === 'Otro' ? raffleState.customLottery : raffleState.lottery,
             prizeImageUrl: raffleState.prizeImageUrl,
+            raffleRef: raffleState.raffleRef,
         };
 
         setTicketInfo(ticketData);
@@ -444,6 +445,7 @@ const App = () => {
                     gameDate: raffleState.gameDate,
                     lottery: raffleState.lottery === 'Otro' ? raffleState.customLottery : raffleState.lottery,
                     prizeImageUrl: raffleState.prizeImageUrl,
+                    raffleRef: raffleState.raffleRef,
                 };
                 setGeneratedTicketData(ticketData);
              }
@@ -1622,33 +1624,38 @@ const App = () => {
                      {ticketInfo && (
                         <div
                             ref={ticketModalRef}
-                            className="w-full aspect-[2/1] mx-auto bg-[#FDF4E3] shadow-2xl rounded-lg flex overflow-hidden"
+                            className="w-full aspect-[2/1] mx-auto bg-[#FDF4E3] shadow-2xl rounded-lg flex overflow-hidden font-sans"
                             style={{
                                 fontFamily: "'Libre Baskerville', serif",
-                                clipPath: 'polygon(0% 0%, 100% 0%, 100% 35%, 95% 50%, 100% 65%, 100% 100%, 0% 100%)',
+                                clipPath: 'polygon(0% 0%, 100% 0%, 100% 15%, 95% 25%, 100% 35%, 100% 100%, 0% 100%, 0% 65%, 5% 50%, 0% 35%)',
                             }}
                         >
                             {/* Left Stub */}
-                            <div className="w-1/3 bg-black text-white flex flex-col items-center justify-center p-2 sm:p-4 border-r-2 border-dashed border-gray-400 relative">
+                            <div className="w-1/3 bg-black text-white flex flex-col items-center justify-between p-2 sm:p-4 border-r-2 border-dashed border-gray-400 relative">
                                 <div className="text-center w-full">
                                     <p className="text-3xl sm:text-5xl font-extrabold text-red-500" style={{ fontFamily: "'Anton', sans-serif" }}>{ticketInfo.raffleNumber}</p>
                                     <p className="text-xs sm:text-sm font-light mt-2 truncate">{ticketInfo.name}</p>
                                 </div>
                             </div>
+
                             {/* Main Body */}
-                            <div className="w-2/3 p-2 sm:p-6 flex flex-col items-center text-center relative bg-[radial-gradient(ellipse_at_center,_rgba(224,180,136,0.5)_0%,_rgba(253,244,227,0)_60%)]">
+                            <div 
+                                className="w-2/3 p-2 sm:p-4 flex flex-col items-center text-center relative"
+                                style={{
+                                    backgroundImage: "radial-gradient(circle, rgba(0,0,0,0.05) 1px, transparent 1px)",
+                                    backgroundSize: "8px 8px"
+                                }}
+                            >
                                 <div className="w-full">
                                     <p className="text-[10px] sm:text-xs font-bold tracking-widest text-[#5C3D2E]">ORGANIZADO POR</p>
-                                    <p className="text-sm sm:text-lg font-semibold text-black mb-1 sm:mb-2">{ticketInfo.organizerName}</p>
+                                    <p className="text-sm sm:text-base font-semibold text-black mb-1 sm:mb-2">{ticketInfo.organizerName}</p>
 
-                                    <h2 className="text-xl sm:text-4xl font-extrabold text-[#5C3D2E] uppercase" style={{ fontFamily: "'Anton', sans-serif" }}>
+                                    <h2 className="text-xl sm:text-3xl font-extrabold text-[#5C3D2E] uppercase" style={{ fontFamily: "'Anton', sans-serif" }}>
                                         {ticketInfo.raffleName}
                                     </h2>
                                 </div>
                                 
-                                <div className="my-2 sm:my-4">
-                                     {ticketInfo.prizeImageUrl && <Image src={ticketInfo.prizeImageUrl} alt="Premio" width={120} height={80} className="rounded-md shadow-lg object-cover h-10 w-auto sm:h-20"/>}
-                                </div>
+                                {ticketInfo.prizeImageUrl && <div className="my-1 sm:my-2"><Image src={ticketInfo.prizeImageUrl} alt="Premio" width={100} height={60} className="rounded-md shadow-lg object-cover h-8 w-auto sm:h-16"/></div>}
                                 
                                 <div className="grid grid-cols-2 gap-2 sm:gap-4 text-[10px] sm:text-xs mt-auto w-full">
                                     <div>
@@ -1659,6 +1666,9 @@ const App = () => {
                                         <p className="font-bold uppercase text-[#5C3D2E]">Con la Lotería</p>
                                         <p className="font-bold text-xs sm:text-base text-black truncate">{ticketInfo.lottery}</p>
                                     </div>
+                                </div>
+                                <div className="mt-2 text-[10px] sm:text-xs text-gray-500 font-mono">
+                                    REF: {ticketInfo.raffleRef}
                                 </div>
                             </div>
                         </div>
