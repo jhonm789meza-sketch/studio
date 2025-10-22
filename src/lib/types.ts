@@ -7,6 +7,7 @@ export interface Participant {
     timestamp: Date | any; // Allow for Firebase Timestamp
     paymentStatus: 'pending' | 'confirmed';
     isHouse?: boolean;
+    raffleRef?: string;
 }
 
 export interface Raffle {

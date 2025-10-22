@@ -72,7 +72,7 @@ const App = () => {
     const [confirmationAction, setConfirmationAction] = useState<(() => void) | null>(null);
     const [notification, setNotification] = useState({ show: false, message: '', type: '' });
     
-    const ticketModalRef = useRef(null);
+    const ticketModalRef = useRef<HTMLDivElement>(null);
     const raffleSubscription = useRef<Unsubscribe | null>(null);
     
     const [raffleState, setRaffleState] = useState<any>(null);
@@ -417,7 +417,8 @@ const App = () => {
             phoneNumber: phoneNumber,
             raffleNumber: formattedRaffleNumber,
             timestamp: new Date(),
-            paymentStatus: confirmPayment ? 'confirmed' : 'pending'
+            paymentStatus: confirmPayment ? 'confirmed' : 'pending',
+            raffleRef: raffleState.raffleRef,
         };
         
         const updatedParticipants = [...raffleState.participants, newParticipant];
@@ -466,37 +467,36 @@ const App = () => {
     const handleDownloadTicket = (format: 'pdf' | 'gif') => {
         const ticketElement = ticketModalRef.current;
         if (!ticketElement) return;
+
+        // Store original styles
+        const originalWidth = ticketElement.style.width;
+        const originalHeight = ticketElement.style.height;
+
+        // Force high-resolution dimensions for capture
+        ticketElement.style.width = '1200px';
+        ticketElement.style.height = '600px';
     
         const targetInfo = generatedTicketData || ticketInfo;
         if (!targetInfo) return;
     
         import('html2canvas').then(html2canvas => {
-            html2canvas(ticketElement, { useCORS: true, backgroundColor: null }).then(canvas => {
+            html2canvas(ticketElement, { 
+                useCORS: true, 
+                backgroundColor: null,
+                scale: 2 // Increase scale for better quality
+            }).then(canvas => {
+                // Restore original styles
+                ticketElement.style.width = originalWidth;
+                ticketElement.style.height = originalHeight;
+
                 if (format === 'pdf') {
                     const imgData = canvas.toDataURL('image/png');
                     const pdf = new jsPDF({
                         orientation: 'landscape',
+                        unit: 'px',
+                        format: [canvas.width, canvas.height]
                     });
-                    const pdfWidth = pdf.internal.pageSize.getWidth();
-                    const pdfHeight = pdf.internal.pageSize.getHeight();
-                    
-                    const canvasAspectRatio = canvas.width / canvas.height;
-                    const pdfAspectRatio = pdfWidth / pdfHeight;
-    
-                    let renderWidth, renderHeight;
-    
-                    if (canvasAspectRatio > pdfAspectRatio) {
-                        renderWidth = pdfWidth;
-                        renderHeight = pdfWidth / canvasAspectRatio;
-                    } else {
-                        renderHeight = pdfHeight;
-                        renderWidth = pdfHeight * canvasAspectRatio;
-                    }
-                    
-                    const x = (pdfWidth - renderWidth) / 2;
-                    const y = (pdfHeight - renderHeight) / 2;
-    
-                    pdf.addImage(imgData, 'PNG', x, y, renderWidth, renderHeight);
+                    pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
                     pdf.save(`tiquete_${targetInfo.raffleNumber}.pdf`);
                     showNotification('Tiquete PDF descargado', 'success');
                 } else if (format === 'gif') {
@@ -1624,7 +1624,7 @@ const App = () => {
                      {ticketInfo && (
                         <div
                             ref={ticketModalRef}
-                            className="w-full aspect-[2/1] mx-auto bg-[#FDF4E3] shadow-2xl rounded-lg flex overflow-hidden font-sans"
+                            className="w-full aspect-[2/1] mx-auto bg-[#FDF4E3] shadow-2xl flex overflow-hidden font-sans"
                             style={{
                                 fontFamily: "'Libre Baskerville', serif",
                                 clipPath: 'polygon(0% 0%, 100% 0%, 100% 15%, 95% 25%, 100% 35%, 100% 100%, 0% 100%, 0% 65%, 5% 50%, 0% 35%)',
@@ -1632,10 +1632,12 @@ const App = () => {
                         >
                             {/* Left Stub */}
                             <div className="w-1/3 bg-black text-white flex flex-col items-center justify-between p-2 sm:p-4 border-r-2 border-dashed border-gray-400 relative">
+                                <p className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 -rotate-90 text-sm font-bold tracking-widest text-gray-500 opacity-70" style={{fontFamily: "'Anton', sans-serif"}}></p>
                                 <div className="text-center w-full">
                                     <p className="text-3xl sm:text-5xl font-extrabold text-red-500" style={{ fontFamily: "'Anton', sans-serif" }}>{ticketInfo.raffleNumber}</p>
                                     <p className="text-xs sm:text-sm font-light mt-2 truncate">{ticketInfo.name}</p>
                                 </div>
+                                <div>{/* Placeholder for bottom spacing */}</div>
                             </div>
 
                             {/* Main Body */}
