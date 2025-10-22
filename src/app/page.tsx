@@ -1,4 +1,5 @@
 
+
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import jsPDF from 'jspdf';
@@ -1610,50 +1611,50 @@ const App = () => {
             )}
             
             <Dialog open={isTicketModalOpen} onOpenChange={closeTicketModal}>
-                <DialogContent className="w-full max-w-md md:max-w-lg lg:max-w-xl p-0 border-0 bg-transparent shadow-none">
+                <DialogContent className="w-full max-w-2xl p-0 border-0 bg-transparent shadow-none font-sans">
                     <DialogTitle className="sr-only">Tiquete de Rifa</DialogTitle>
                      {ticketInfo && (
                         <div
                             ref={ticketModalRef}
-                            className="w-full max-w-md mx-auto font-sans overflow-hidden relative shadow-2xl rounded-2xl bg-gradient-to-br from-gray-800 to-gray-900 text-white"
+                            className="w-full max-w-[600px] aspect-[2/1] mx-auto bg-[#FDF4E3] shadow-2xl rounded-lg flex overflow-hidden"
+                            style={{
+                                fontFamily: "'Libre Baskerville', serif",
+                                // Simulate the ticket notch
+                                clipPath: 'polygon(0% 0%, 100% 0%, 100% 35%, 95% 50%, 100% 65%, 100% 100%, 0% 100%)',
+                            }}
                         >
-                            <div
-                                className="absolute inset-0 bg-cover bg-center opacity-10"
-                                style={{
-                                    backgroundImage: `url(${ticketInfo.prizeImageUrl || ''})`,
-                                }}
-                            ></div>
-
-                            <div className="relative flex flex-row">
-                                <div className="flex-grow p-6 flex flex-col justify-between">
-                                    <div>
-                                        <p className="text-sm font-semibold uppercase tracking-wider text-gray-400">{ticketInfo.organizerName}</p>
-                                        <h2 className="text-2xl font-bold uppercase tracking-tight my-2 text-white">
-                                            {ticketInfo.raffleName}
-                                        </h2>
-                                    </div>
-                                    <div className="relative w-full aspect-video rounded-lg overflow-hidden my-4 border-2 border-white/10">
-                                        {ticketInfo.prizeImageUrl && <Image src={ticketInfo.prizeImageUrl} alt="Premio" layout="fill" objectFit="cover" />}
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-4 text-xs">
-                                        <div>
-                                            <p className="font-semibold uppercase text-gray-400">Juega el</p>
-                                            <p className="font-bold text-sm text-white">{ticketInfo.gameDate ? format(new Date(ticketInfo.gameDate), 'PPP', { locale: es }) : 'N/A'}</p>
-                                        </div>
-                                        <div>
-                                            <p className="font-semibold uppercase text-gray-400">Con la Lotería</p>
-                                            <p className="font-bold text-sm text-white truncate">{ticketInfo.lottery}</p>
-                                        </div>
-                                    </div>
+                            {/* Left Stub */}
+                            <div className="w-1/3 bg-black text-white flex flex-col items-center justify-between p-4 border-r-2 border-dashed border-gray-400 relative">
+                                <span className="transform -rotate-90 text-xl font-bold tracking-widest absolute left-1 top-1/2 -translate-y-1/2 origin-center-left">ADMIT ONE</span>
+                                <div className="text-center w-full mt-auto">
+                                    <p className="text-sm font-semibold tracking-wider">NÚMERO</p>
+                                    <p className="text-5xl font-extrabold text-red-500" style={{ fontFamily: "'Anton', sans-serif" }}>{ticketInfo.raffleNumber}</p>
+                                    <p className="text-sm font-light mt-2 truncate">{ticketInfo.name}</p>
                                 </div>
-                                <div className="w-28 md:w-32 bg-gradient-to-br from-yellow-400 to-amber-500 flex flex-col items-center justify-around p-3 text-center text-black rounded-r-2xl border-l-2 border-dashed border-yellow-200/50">
-                                    <div className="w-full">
-                                        <p className="font-bold uppercase tracking-widest text-xs opacity-80">Número</p>
-                                        <p className="font-mono font-extrabold text-5xl" style={{ textShadow: '0 2px 3px rgba(0,0,0,0.2)' }}>{ticketInfo.raffleNumber}</p>
+                            </div>
+                            {/* Main Body */}
+                            <div className="w-2/3 p-6 flex flex-col items-center text-center relative bg-[radial-gradient(ellipse_at_center,_rgba(224,180,136,0.5)_0%,_rgba(253,244,227,0)_60%)]">
+                                <div className="w-full">
+                                    <p className="text-xs font-bold tracking-widest text-[#5C3D2E]">ORGANIZADO POR</p>
+                                    <p className="text-lg font-semibold text-black mb-2">{ticketInfo.organizerName}</p>
+
+                                    <h2 className="text-4xl font-extrabold text-[#5C3D2E] uppercase" style={{ fontFamily: "'Anton', sans-serif" }}>
+                                        {ticketInfo.raffleName}
+                                    </h2>
+                                </div>
+                                
+                                <div className="my-4">
+                                     {ticketInfo.prizeImageUrl && <Image src={ticketInfo.prizeImageUrl} alt="Premio" width={120} height={80} className="rounded-md shadow-lg object-cover"/>}
+                                </div>
+                                
+                                <div className="grid grid-cols-2 gap-4 text-xs mt-auto w-full">
+                                    <div>
+                                        <p className="font-bold uppercase text-[#5C3D2E]">Juega el</p>
+                                        <p className="font-bold text-base text-red-600">{ticketInfo.gameDate ? format(new Date(ticketInfo.gameDate), 'PPP', { locale: es }) : 'N/A'}</p>
                                     </div>
-                                    <div className="w-full">
-                                        <p className="font-semibold uppercase text-xs opacity-80">Participante</p>
-                                        <p className="font-bold text-base truncate">{ticketInfo.name}</p>
+                                    <div>
+                                        <p className="font-bold uppercase text-[#5C3D2E]">Con la Lotería</p>
+                                        <p className="font-bold text-base text-black truncate">{ticketInfo.lottery}</p>
                                     </div>
                                 </div>
                             </div>
