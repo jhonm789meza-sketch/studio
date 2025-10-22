@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import jsPDF from 'jspdf';
@@ -786,7 +787,7 @@ const App = () => {
                                 <p className="text-sm text-gray-500">Referencia del Juego</p>
                                 <div className="flex items-center gap-2">
                                     <p className="text-2xl font-bold text-gray-800 tracking-wider">{raffleState.raffleRef}</p>
-                                    <button onClick={() => handleShareToWhatsApp()} className="p-2 rounded-full hover:bg-gray-100">
+                                    <button onClick={handleTalkToAdmin} className="p-2 rounded-full hover:bg-gray-100">
                                         <WhatsappIcon />
                                     </button>
                                 </div>
@@ -1094,7 +1095,7 @@ const App = () => {
     );
     
     const FacebookIcon = () => (
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5">
+        <svg xmlns="http://www'w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5">
             <path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987H7.897v-2.89h2.54V9.526c0-2.509 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562v1.875h2.773l-.443 2.89h-2.33V21.878C18.343 21.128 22 16.991 22 12z"/>
         </svg>
     );
