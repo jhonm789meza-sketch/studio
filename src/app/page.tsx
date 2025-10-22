@@ -299,6 +299,17 @@ const App = () => {
         }
     };
 
+    const handleFieldChange = async (field: string, value: any) => {
+        if (!raffleState || !raffleState.raffleRef || !isCurrentUserAdmin) return;
+        
+        try {
+            await setDoc(doc(db, "raffles", raffleState.raffleRef), { [field]: value }, { merge: true });
+        } catch (error) {
+            console.error(`Error updating field ${field}:`, error);
+            showNotification(`Error al actualizar el campo ${field}.`, 'error');
+        }
+    };
+
     const isCurrentUserAdmin = !!raffleState?.adminId && !!currentAdminId && raffleState.adminId === currentAdminId;
     
     const allAssignedNumbers = new Set(raffleState?.participants.map((p: Participant) => parseInt(p.raffleNumber, 10)) || []);
@@ -603,12 +614,6 @@ const App = () => {
             await setDoc(doc(db, "raffles", raffleState.raffleRef), { winner: houseWinner }, { merge: true });
             showNotification(`El número ${winningNumberStr} no fue vendido. El premio queda en casa.`, 'info');
         }
-    };
-
-    const handleFieldChange = async (field: string, value: any) => {
-        if (!raffleState || !raffleState.raffleRef || !isCurrentUserAdmin) return;
-        // The local state is already updated by handleLocalFieldChange
-        await setDoc(doc(db, "raffles", raffleState.raffleRef), { [field]: value }, { merge: true });
     };
 
     const handlePaymentMethodToggle = async (field: string, value: boolean) => {
@@ -946,6 +951,7 @@ const App = () => {
                                          type="text"
                                          value={raffleState.prizeImageUrl}
                                          onChange={(e) => handleLocalFieldChange('prizeImageUrl', e.target.value)}
+                                         onBlur={(e) => handleFieldChange('prizeImageUrl', e.target.value)}
                                          placeholder="https://ejemplo.com/imagen.png"
                                          disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
                                          className="w-full"
@@ -1619,15 +1625,12 @@ const App = () => {
                             className="w-full aspect-[2/1] mx-auto bg-[#FDF4E3] shadow-2xl rounded-lg flex overflow-hidden"
                             style={{
                                 fontFamily: "'Libre Baskerville', serif",
-                                // Simulate the ticket notch
                                 clipPath: 'polygon(0% 0%, 100% 0%, 100% 35%, 95% 50%, 100% 65%, 100% 100%, 0% 100%)',
                             }}
                         >
                             {/* Left Stub */}
-                            <div className="w-1/3 bg-black text-white flex flex-col items-center justify-between p-2 sm:p-4 border-r-2 border-dashed border-gray-400 relative">
-                                <span className="transform -rotate-90 text-sm sm:text-xl font-bold tracking-widest absolute left-1 sm:left-1 top-1/2 -translate-y-1/2 origin-center-left">ADMIT ONE</span>
-                                <div className="text-center w-full mt-auto">
-                                    <p className="text-xs sm:text-sm font-semibold tracking-wider">NÚMERO</p>
+                            <div className="w-1/3 bg-black text-white flex flex-col items-center justify-center p-2 sm:p-4 border-r-2 border-dashed border-gray-400 relative">
+                                <div className="text-center w-full">
                                     <p className="text-3xl sm:text-5xl font-extrabold text-red-500" style={{ fontFamily: "'Anton', sans-serif" }}>{ticketInfo.raffleNumber}</p>
                                     <p className="text-xs sm:text-sm font-light mt-2 truncate">{ticketInfo.name}</p>
                                 </div>
@@ -1804,5 +1807,3 @@ const App = () => {
 };
 
 export default App;
-
-    
