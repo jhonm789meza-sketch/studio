@@ -1611,12 +1611,12 @@ const App = () => {
             )}
             
             <Dialog open={isTicketModalOpen} onOpenChange={closeTicketModal}>
-                <DialogContent className="w-full max-w-2xl p-0 border-0 bg-transparent shadow-none font-sans">
+                <DialogContent className="w-[95vw] max-w-2xl p-0 border-0 bg-transparent shadow-none font-sans sm:w-full">
                     <DialogTitle className="sr-only">Tiquete de Rifa</DialogTitle>
                      {ticketInfo && (
                         <div
                             ref={ticketModalRef}
-                            className="w-full max-w-[600px] aspect-[2/1] mx-auto bg-[#FDF4E3] shadow-2xl rounded-lg flex overflow-hidden"
+                            className="w-full aspect-[2/1] mx-auto bg-[#FDF4E3] shadow-2xl rounded-lg flex overflow-hidden"
                             style={{
                                 fontFamily: "'Libre Baskerville', serif",
                                 // Simulate the ticket notch
@@ -1624,37 +1624,37 @@ const App = () => {
                             }}
                         >
                             {/* Left Stub */}
-                            <div className="w-1/3 bg-black text-white flex flex-col items-center justify-between p-4 border-r-2 border-dashed border-gray-400 relative">
-                                <span className="transform -rotate-90 text-xl font-bold tracking-widest absolute left-1 top-1/2 -translate-y-1/2 origin-center-left">ADMIT ONE</span>
+                            <div className="w-1/3 bg-black text-white flex flex-col items-center justify-between p-2 sm:p-4 border-r-2 border-dashed border-gray-400 relative">
+                                <span className="transform -rotate-90 text-sm sm:text-xl font-bold tracking-widest absolute left-1 sm:left-1 top-1/2 -translate-y-1/2 origin-center-left">ADMIT ONE</span>
                                 <div className="text-center w-full mt-auto">
-                                    <p className="text-sm font-semibold tracking-wider">NÚMERO</p>
-                                    <p className="text-5xl font-extrabold text-red-500" style={{ fontFamily: "'Anton', sans-serif" }}>{ticketInfo.raffleNumber}</p>
-                                    <p className="text-sm font-light mt-2 truncate">{ticketInfo.name}</p>
+                                    <p className="text-xs sm:text-sm font-semibold tracking-wider">NÚMERO</p>
+                                    <p className="text-3xl sm:text-5xl font-extrabold text-red-500" style={{ fontFamily: "'Anton', sans-serif" }}>{ticketInfo.raffleNumber}</p>
+                                    <p className="text-xs sm:text-sm font-light mt-2 truncate">{ticketInfo.name}</p>
                                 </div>
                             </div>
                             {/* Main Body */}
-                            <div className="w-2/3 p-6 flex flex-col items-center text-center relative bg-[radial-gradient(ellipse_at_center,_rgba(224,180,136,0.5)_0%,_rgba(253,244,227,0)_60%)]">
+                            <div className="w-2/3 p-2 sm:p-6 flex flex-col items-center text-center relative bg-[radial-gradient(ellipse_at_center,_rgba(224,180,136,0.5)_0%,_rgba(253,244,227,0)_60%)]">
                                 <div className="w-full">
-                                    <p className="text-xs font-bold tracking-widest text-[#5C3D2E]">ORGANIZADO POR</p>
-                                    <p className="text-lg font-semibold text-black mb-2">{ticketInfo.organizerName}</p>
+                                    <p className="text-[10px] sm:text-xs font-bold tracking-widest text-[#5C3D2E]">ORGANIZADO POR</p>
+                                    <p className="text-sm sm:text-lg font-semibold text-black mb-1 sm:mb-2">{ticketInfo.organizerName}</p>
 
-                                    <h2 className="text-4xl font-extrabold text-[#5C3D2E] uppercase" style={{ fontFamily: "'Anton', sans-serif" }}>
+                                    <h2 className="text-xl sm:text-4xl font-extrabold text-[#5C3D2E] uppercase" style={{ fontFamily: "'Anton', sans-serif" }}>
                                         {ticketInfo.raffleName}
                                     </h2>
                                 </div>
                                 
-                                <div className="my-4">
-                                     {ticketInfo.prizeImageUrl && <Image src={ticketInfo.prizeImageUrl} alt="Premio" width={120} height={80} className="rounded-md shadow-lg object-cover"/>}
+                                <div className="my-2 sm:my-4">
+                                     {ticketInfo.prizeImageUrl && <Image src={ticketInfo.prizeImageUrl} alt="Premio" width={120} height={80} className="rounded-md shadow-lg object-cover h-10 w-auto sm:h-20"/>}
                                 </div>
                                 
-                                <div className="grid grid-cols-2 gap-4 text-xs mt-auto w-full">
+                                <div className="grid grid-cols-2 gap-2 sm:gap-4 text-[10px] sm:text-xs mt-auto w-full">
                                     <div>
                                         <p className="font-bold uppercase text-[#5C3D2E]">Juega el</p>
-                                        <p className="font-bold text-base text-red-600">{ticketInfo.gameDate ? format(new Date(ticketInfo.gameDate), 'PPP', { locale: es }) : 'N/A'}</p>
+                                        <p className="font-bold text-xs sm:text-base text-red-600">{ticketInfo.gameDate ? format(new Date(ticketInfo.gameDate), 'PPP', { locale: es }) : 'N/A'}</p>
                                     </div>
                                     <div>
                                         <p className="font-bold uppercase text-[#5C3D2E]">Con la Lotería</p>
-                                        <p className="font-bold text-base text-black truncate">{ticketInfo.lottery}</p>
+                                        <p className="font-bold text-xs sm:text-base text-black truncate">{ticketInfo.lottery}</p>
                                     </div>
                                 </div>
                             </div>
