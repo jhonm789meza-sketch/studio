@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import jsPDF from 'jspdf';
@@ -544,8 +545,7 @@ const App = () => {
             }
 
             raffleSubscription.current = onSnapshot(raffleDocRef, (docSnapshot) => {
-                // Only load adminId if it's already there, don't create a new one on search
-                if (!isInitialLoad) {
+                if (!isInitialLoad && !docSnapshot.data()?.adminId) {
                     const adminIdFromStorage = localStorage.getItem('rifaAdminId');
                     if (adminIdFromStorage) {
                         setCurrentAdminId(adminIdFromStorage);
@@ -1078,7 +1078,7 @@ const App = () => {
         const gameDateFormatted = ticketData.gameDate ? format(new Date(ticketData.gameDate), "d 'de' MMMM 'de' yyyy", { locale: es }) : 'N/A';
     
         return (
-            <div className="mt-8 max-w-xs mx-auto">
+             <div className="mt-8 max-w-xs mx-auto">
                 <div
                     ref={ticketModalRef}
                     className="bg-white p-4 rounded-lg shadow-lg font-mono text-gray-800 text-[13px] relative overflow-hidden"
