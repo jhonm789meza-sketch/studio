@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import jsPDF from 'jspdf';
@@ -248,8 +247,6 @@ const App = () => {
                 } else if (!newRefFromUrl) {
                     raffleSubscription.current?.();
                     setRaffleState(null);
-                    // Don't clear adminId on popstate to home, user might be navigating
-                    // setCurrentAdminId(null); 
                     setLoading(false);
                 }
             };
@@ -548,9 +545,11 @@ const App = () => {
 
             raffleSubscription.current = onSnapshot(raffleDocRef, (docSnapshot) => {
                 // Only load adminId if it's already there, don't create a new one on search
-                const adminIdFromStorage = localStorage.getItem('rifaAdminId');
-                if (adminIdFromStorage) {
-                    setCurrentAdminId(adminIdFromStorage);
+                if (!isInitialLoad) {
+                    const adminIdFromStorage = localStorage.getItem('rifaAdminId');
+                    if (adminIdFromStorage) {
+                        setCurrentAdminId(adminIdFromStorage);
+                    }
                 }
 
                 if (docSnapshot.exists()) {
@@ -617,7 +616,6 @@ const App = () => {
     const handleActivateBoard = async (mode: RaffleMode) => {
         setLoading(true);
         try {
-            // Only generate and save adminId on creation
             const adminId = `admin_${Date.now()}_${Math.random()}`;
             localStorage.setItem('rifaAdminId', adminId);
             setCurrentAdminId(adminId);
@@ -627,7 +625,7 @@ const App = () => {
                 ...initialRaffleData,
                 raffleMode: mode,
                 raffleRef: newRef,
-                adminId: adminId, // Assign the newly created adminId
+                adminId: adminId,
                 isPaid: true, 
                 prizeImageUrl: '',
             };
@@ -1198,14 +1196,16 @@ const App = () => {
                                     <div className="my-8 flex flex-col items-center gap-4">
                                         <div className="relative inline-block">
                                             <Image
-                                                src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(appUrl)}&qzone=1`}
+                                                src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(appUrl)}&qzone=1&ecc=H`}
                                                 alt="Código QR de la aplicación"
                                                 width={200}
                                                 height={200}
                                                 className="rounded-lg shadow-md"
                                             />
-                                            <span className="absolute inset-0 flex items-center justify-center text-xl font-extrabold text-gray-800 bg-white bg-opacity-80 p-2 rounded-md border-2 border-white"
-                                                  style={{width: '85%', height: '25%', margin: 'auto'}}>
+                                            <span
+                                                className="absolute inset-0 flex items-center justify-center text-xl font-extrabold text-gray-800"
+                                                style={{ textShadow: '0 0 4px white, 0 0 4px white, 0 0 4px white' }}
+                                            >
                                                 RIFA<span className='text-purple-600'>⚡</span>EXPRESS
                                             </span>
                                         </div>
