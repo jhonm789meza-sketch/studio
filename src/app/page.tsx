@@ -1,5 +1,4 @@
 
-
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import jsPDF from 'jspdf';
@@ -201,6 +200,11 @@ const App = () => {
                 await persistenceEnabled;
             }
 
+            const adminIdFromStorage = localStorage.getItem('rifaAdminId');
+            if (adminIdFromStorage) {
+                setCurrentAdminId(adminIdFromStorage);
+            }
+
             const urlParams = new URLSearchParams(window.location.search);
             const refFromUrl = urlParams.get('ref');
             const statusFromUrl = urlParams.get('status');
@@ -369,6 +373,7 @@ const App = () => {
 
                 setRaffleState(null);
                 setCurrentAdminId(null);
+                localStorage.removeItem('rifaAdminId');
                 window.history.pushState({}, '', window.location.pathname);
                 showNotification('Tablero reiniciado. Ahora puedes activar una nueva rifa.', 'success');
                 setShowConfetti(false);
@@ -538,12 +543,10 @@ const App = () => {
             }
 
             raffleSubscription.current = onSnapshot(raffleDocRef, (docSnapshot) => {
-                let adminId = localStorage.getItem('rifaAdminId');
-                if (!adminId) {
-                    adminId = `admin_${Date.now()}_${Math.random()}`;
-                    localStorage.setItem('rifaAdminId', adminId);
+                const adminIdFromStorage = localStorage.getItem('rifaAdminId');
+                if (adminIdFromStorage) {
+                    setCurrentAdminId(adminIdFromStorage);
                 }
-                setCurrentAdminId(adminId);
 
                 if (docSnapshot.exists()) {
                     const data = docSnapshot.data();
@@ -609,11 +612,8 @@ const App = () => {
     const handleActivateBoard = async (mode: RaffleMode) => {
         setLoading(true);
         try {
-            let adminId = localStorage.getItem('rifaAdminId');
-            if (!adminId) {
-                adminId = `admin_${Date.now()}_${Math.random()}`;
-                localStorage.setItem('rifaAdminId', adminId);
-            }
+            const adminId = `admin_${Date.now()}_${Math.random()}`;
+            localStorage.setItem('rifaAdminId', adminId);
             setCurrentAdminId(adminId);
 
             const newRef = await raffleManager.createNewRaffleRef();
@@ -657,14 +657,11 @@ const App = () => {
                 if (raffleData.isPaid) {
                     showNotification('Esta rifa ya ha sido activada.', 'info');
                 } else {
-                    let currentDeviceAdminId = localStorage.getItem('rifaAdminId');
-                    if (!currentDeviceAdminId) {
-                        currentDeviceAdminId = `admin_${Date.now()}_${Math.random()}`;
-                        localStorage.setItem('rifaAdminId', currentDeviceAdminId);
-                    }
-                    setCurrentAdminId(currentDeviceAdminId);
+                    const newAdminId = `admin_${Date.now()}_${Math.random()}`;
+                    localStorage.setItem('rifaAdminId', newAdminId);
+                    setCurrentAdminId(newAdminId);
     
-                    await setDoc(raffleDocRef, { isPaid: true, adminId: currentDeviceAdminId }, { merge: true });
+                    await setDoc(raffleDocRef, { isPaid: true, adminId: newAdminId }, { merge: true });
                     showNotification('¡Nueva rifa activada! Ahora eres el administrador.', 'success');
                 }
             } else {
