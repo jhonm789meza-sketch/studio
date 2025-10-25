@@ -472,7 +472,7 @@ const App = () => {
         const originalWidth = ticketElement.style.width;
         const originalHeight = ticketElement.style.height;
 
-        ticketElement.style.width = '400px';
+        ticketElement.style.width = '320px';
         ticketElement.style.height = 'auto';
     
         const targetInfo = generatedTicketData || ticketInfo;
@@ -783,11 +783,16 @@ const App = () => {
                                 </div>
                             </div>
                         )}
-                        {raffleState.prizeImageUrl && raffleState.prizeImageUrl.trim() !== '' && (
-                             <div className="mb-6 rounded-lg overflow-hidden relative aspect-video max-w-2xl mx-auto shadow-lg">
+                        {raffleState.prizeImageUrl && raffleState.prizeImageUrl.trim() !== '' ? (
+                            <div className="mb-6 rounded-lg overflow-hidden relative aspect-video max-w-2xl mx-auto shadow-lg">
                                 <Image src={raffleState.prizeImageUrl} alt="Premio de la rifa" width={600} height={400} style={{ objectFit: 'cover' }} unoptimized />
                             </div>
+                        ) : (
+                            <div className="mb-6 rounded-lg overflow-hidden relative aspect-video max-w-2xl mx-auto shadow-lg bg-gray-200 flex items-center justify-center">
+                                <span className="text-gray-500">Sin imagen de premio</span>
+                            </div>
                         )}
+
                         <div className="space-y-4 mb-6">
                            <div>
                                <Label htmlFor="organizer-name-input">Quien Organiza:</Label>
@@ -928,19 +933,19 @@ const App = () => {
                                />
                             </div>
                             <div>
-                                 <Label htmlFor="prize-image-url-input">Link de Imagen (Opcional):</Label>
-                                 <div className="relative mt-1">
-                                     <Input
-                                         id="prize-image-url-input"
-                                         type="text"
-                                         value={raffleState.prizeImageUrl}
-                                         onChange={(e) => handleLocalFieldChange('prizeImageUrl', e.target.value)}
-                                         onBlur={(e) => handleFieldChange('prizeImageUrl', e.target.value)}
-                                         placeholder="https://ejemplo.com/imagen.png"
-                                         disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
-                                         className="w-full"
-                                     />
-                                 </div>
+                                <Label htmlFor="prize-image-url-input">Link de Imagen (Opcional):</Label>
+                                <div className="relative mt-1">
+                                    <Input
+                                        id="prize-image-url-input"
+                                        type="text"
+                                        value={raffleState.prizeImageUrl}
+                                        onChange={(e) => handleLocalFieldChange('prizeImageUrl', e.target.value)}
+                                        onBlur={(e) => handleFieldChange('prizeImageUrl', e.target.value)}
+                                        placeholder="https://ejemplo.com/imagen.png"
+                                        disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
+                                        className="w-full"
+                                    />
+                                </div>
                             </div>
                             {isCurrentUserAdmin && !raffleState.isDetailsConfirmed && (
                                 <div className="col-span-1 md:col-span-2">
@@ -1116,55 +1121,52 @@ const App = () => {
         const gameDateFormatted = ticketData.gameDate ? format(new Date(ticketData.gameDate), "d 'de' MMMM 'de' yyyy", { locale: es }) : 'N/A';
     
         return (
-            <div className="mt-8 max-w-sm mx-auto">
-                <div 
+            <div className="mt-8 max-w-xs mx-auto">
+                 <div
                     ref={ticketModalRef}
-                    className="bg-white p-6 rounded-lg shadow-lg font-mono text-gray-800 text-sm relative overflow-hidden"
+                    className="bg-white p-4 rounded-lg shadow-lg font-mono text-gray-800 text-[13px] relative overflow-hidden"
                 >
                      <div className="absolute inset-0 flex items-center justify-center z-0">
                         <p className="text-gray-200/50 text-7xl font-bold -rotate-45 select-none opacity-50">RIFA EXPRESS</p>
                     </div>
-
-                    <div className="relative z-10">
+                     <div className="relative z-10">
+                        <Button
+                            onClick={() => setGeneratedTicketData(null)}
+                            variant="ghost"
+                            className="absolute -top-2 -right-2 z-20 h-8 w-8 p-1 rounded-full bg-gray-100 hover:bg-gray-200"
+                        >
+                            <X className="h-4 w-4" />
+                            <span className="sr-only">Cerrar</span>
+                        </Button>
                         <div className="text-center mb-4">
-                            <h3 className="text-2xl font-bold">RIFA EXPRESS</h3>
+                            <h3 className="text-xl font-bold">RIFA EXPRESS</h3>
                             <p>Referencia: {ticketData.raffleRef}</p>
                             <p className="font-semibold">COMPROBANTE DE COMPRA</p>
                         </div>
-        
                         <p className="text-center text-xs mb-4">{receiptDate}</p>
-        
                         <div className="border-t border-dashed border-gray-400 my-4"></div>
-        
                         <div className="space-y-1">
-                            <div className="flex justify-between"><span>CLIENTE:</span><span className="font-semibold">{ticketData.name}</span></div>
+                            <div className="flex justify-between"><span>CLIENTE:</span><span className="font-semibold text-right">{ticketData.name}</span></div>
                             <div className="flex justify-between"><span>CELULAR:</span><span className="font-semibold">{ticketData.phoneNumber}</span></div>
                         </div>
-                        
                         <div className="border-t border-dashed border-gray-400 my-4"></div>
-        
                         <h4 className="font-bold text-center mb-2">DETALLES DE LA RIFA</h4>
                         <div className="space-y-1">
-                            <div className="flex justify-between"><span>PREMIO:</span><span className="font-semibold">{formatValue(ticketData.raffleName)}</span></div>
-                            <div className="flex justify-between"><span>VALOR BOLETA:</span><span className="font-semibold">{formatValue(ticketData.value)}</span></div>
-                            <div className="flex justify-between"><span>FECHA SORTEO:</span><span className="font-semibold">{gameDateFormatted}</span></div>
-                            <div className="flex justify-between"><span>JUEGA CON:</span><span className="font-semibold">{ticketData.lottery}</span></div>
-                            <div className="flex justify-between"><span>QUIEN ORGANIZA:</span><span className="font-semibold">{ticketData.organizerName}</span></div>
+                            <div className="flex justify-between"><span>PREMIO:</span><span className="font-semibold text-right">{formatValue(ticketData.raffleName)}</span></div>
+                            <div className="flex justify-between"><span>VALOR BOLETA:</span><span className="font-semibold text-right">{formatValue(ticketData.value)}</span></div>
+                            <div className="flex justify-between"><span>FECHA SORTEO:</span><span className="font-semibold text-right">{gameDateFormatted}</span></div>
+                            <div className="flex justify-between"><span>JUEGA CON:</span><span className="font-semibold text-right">{ticketData.lottery}</span></div>
+                            <div className="flex justify-between"><span>QUIEN ORGANIZA:</span><span className="font-semibold text-right">{ticketData.organizerName}</span></div>
                         </div>
-                        
                         <div className="border-t border-dashed border-gray-400 my-4"></div>
-        
                         <div className="text-center my-4">
                             <p className="font-bold">NÚMERO ASIGNADO</p>
-                            <p className="text-6xl font-bold text-violet-600 tracking-wider">{ticketData.raffleNumber}</p>
+                            <p className="text-5xl font-bold text-violet-600 tracking-wider">{ticketData.raffleNumber}</p>
                         </div>
-        
                         <div className="border-t border-dashed border-gray-400 my-4"></div>
-        
                         <p className="text-center font-semibold">¡Gracias por participar!</p>
                     </div>
                 </div>
-               
                <div className="p-4 bg-gray-50 rounded-b-lg flex flex-col sm:flex-row items-center justify-center gap-2 mt-auto">
                    <Button
                        onClick={() => handleDownloadTicket()}
@@ -1178,13 +1180,6 @@ const App = () => {
                    >
                        <WhatsappIcon/>
                        Compartir
-                   </Button>
-                   <Button
-                       onClick={() => setGeneratedTicketData(null)}
-                       variant="outline"
-                       className="w-full sm:w-auto"
-                   >
-                       Cerrar
                    </Button>
                </div>
            </div>
@@ -1623,41 +1618,41 @@ const App = () => {
             )}
             
             <Dialog open={isTicketModalOpen} onOpenChange={closeTicketModal}>
-                <DialogContent className="w-[95vw] max-w-sm p-0 border-0 bg-transparent shadow-none font-sans">
+                <DialogContent className="w-[95vw] max-w-xs p-0 border-0 bg-transparent shadow-none font-sans">
                      {ticketInfo && (
                         <div>
-                            <div 
+                            <div
                                 ref={ticketModalRef}
-                                className="bg-white p-6 rounded-lg shadow-lg font-mono text-gray-800 text-sm relative overflow-hidden"
+                                className="bg-white p-4 rounded-lg shadow-lg font-mono text-gray-800 text-[13px] relative overflow-hidden"
                             >
                                 <div className="absolute inset-0 flex items-center justify-center z-0">
                                     <p className="text-gray-200/50 text-7xl font-bold -rotate-45 select-none opacity-50">RIFA EXPRESS</p>
                                 </div>
                                 <div className="relative z-10">
                                     <div className="text-center mb-4">
-                                        <h3 className="text-2xl font-bold">RIFA EXPRESS</h3>
+                                        <h3 className="text-xl font-bold">RIFA EXPRESS</h3>
                                         <p>Referencia: {ticketInfo.raffleRef}</p>
                                         <p className="font-semibold">COMPROBANTE DE COMPRA</p>
                                     </div>
                                     <p className="text-center text-xs mb-4">{ticketInfo.timestamp?.toDate ? format(ticketInfo.timestamp.toDate(), "d 'de' MMMM 'de' yyyy - h:mm a", { locale: es }) : 'Fecha no disponible'}</p>
                                     <div className="border-t border-dashed border-gray-400 my-4"></div>
                                     <div className="space-y-1">
-                                        <div className="flex justify-between"><span>CLIENTE:</span><span className="font-semibold">{ticketInfo.name}</span></div>
+                                        <div className="flex justify-between"><span>CLIENTE:</span><span className="font-semibold text-right">{ticketInfo.name}</span></div>
                                         <div className="flex justify-between"><span>CELULAR:</span><span className="font-semibold">{ticketInfo.phoneNumber}</span></div>
                                     </div>
                                     <div className="border-t border-dashed border-gray-400 my-4"></div>
                                     <h4 className="font-bold text-center mb-2">DETALLES DE LA RIFA</h4>
                                     <div className="space-y-1">
-                                        <div className="flex justify-between"><span>PREMIO:</span><span className="font-semibold">{formatValue(ticketInfo.raffleName)}</span></div>
-                                        <div className="flex justify-between"><span>VALOR BOLETA:</span><span className="font-semibold">{formatValue(ticketInfo.value)}</span></div>
-                                        <div className="flex justify-between"><span>FECHA SORTEO:</span><span className="font-semibold">{ticketInfo.gameDate ? format(new Date(ticketInfo.gameDate), "d 'de' MMMM 'de' yyyy", { locale: es }) : 'N/A'}</span></div>
-                                        <div className="flex justify-between"><span>JUEGA CON:</span><span className="font-semibold">{ticketInfo.lottery}</span></div>
-                                        <div className="flex justify-between"><span>QUIEN ORGANIZA:</span><span className="font-semibold">{ticketInfo.organizerName}</span></div>
+                                        <div className="flex justify-between"><span>PREMIO:</span><span className="font-semibold text-right">{formatValue(ticketInfo.raffleName)}</span></div>
+                                        <div className="flex justify-between"><span>VALOR BOLETA:</span><span className="font-semibold text-right">{formatValue(ticketInfo.value)}</span></div>
+                                        <div className="flex justify-between"><span>FECHA SORTEO:</span><span className="font-semibold text-right">{ticketInfo.gameDate ? format(new Date(ticketInfo.gameDate), "d 'de' MMMM 'de' yyyy", { locale: es }) : 'N/A'}</span></div>
+                                        <div className="flex justify-between"><span>JUEGA CON:</span><span className="font-semibold text-right">{ticketInfo.lottery}</span></div>
+                                        <div className="flex justify-between"><span>QUIEN ORGANIZA:</span><span className="font-semibold text-right">{ticketInfo.organizerName}</span></div>
                                     </div>
                                     <div className="border-t border-dashed border-gray-400 my-4"></div>
                                     <div className="text-center my-4">
                                         <p className="font-bold">NÚMERO ASIGNADO</p>
-                                        <p className="text-6xl font-bold text-violet-600 tracking-wider">{ticketInfo.raffleNumber}</p>
+                                        <p className="text-5xl font-bold text-violet-600 tracking-wider">{ticketInfo.raffleNumber}</p>
                                     </div>
                                     <div className="border-t border-dashed border-gray-400 my-4"></div>
                                     <p className="text-center font-semibold">¡Gracias por participar!</p>
