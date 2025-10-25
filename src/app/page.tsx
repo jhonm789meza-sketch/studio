@@ -11,7 +11,7 @@ import Image from 'next/image';
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House, Clock, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode } from 'lucide-react';
+import { Menu, Award, Lock, House, Clock, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -114,6 +114,7 @@ const App = () => {
             lottery: raffleState.lottery === 'Otro' ? raffleState.customLottery : raffleState.lottery,
             prizeImageUrl: raffleState.prizeImageUrl,
             raffleRef: raffleState.raffleRef,
+            value: raffleState.value,
         };
 
         setTicketInfo(ticketData);
@@ -445,8 +446,8 @@ const App = () => {
                     organizerName: raffleState.organizerName,
                     gameDate: raffleState.gameDate,
                     lottery: raffleState.lottery === 'Otro' ? raffleState.customLottery : raffleState.lottery,
-                    prizeImageUrl: raffleState.prizeImageUrl,
                     raffleRef: raffleState.raffleRef,
+                    value: raffleState.value,
                 };
                 setGeneratedTicketData(ticketData);
              }
@@ -464,17 +465,15 @@ const App = () => {
         await confirmParticipantPayment(raffleState.raffleRef, String(participantId));
     };
     
-    const handleDownloadTicket = (format: 'pdf' | 'gif') => {
+    const handleDownloadTicket = () => {
         const ticketElement = ticketModalRef.current;
         if (!ticketElement) return;
 
-        // Store original styles
         const originalWidth = ticketElement.style.width;
         const originalHeight = ticketElement.style.height;
 
-        // Force high-resolution dimensions for capture
-        ticketElement.style.width = '1200px';
-        ticketElement.style.height = '600px';
+        ticketElement.style.width = '400px';
+        ticketElement.style.height = 'auto';
     
         const targetInfo = generatedTicketData || ticketInfo;
         if (!targetInfo) return;
@@ -483,37 +482,20 @@ const App = () => {
             html2canvas(ticketElement, { 
                 useCORS: true, 
                 backgroundColor: null,
-                scale: 2 // Increase scale for better quality
+                scale: 3, // Increase scale for better quality
             }).then(canvas => {
-                // Restore original styles
                 ticketElement.style.width = originalWidth;
                 ticketElement.style.height = originalHeight;
 
-                if (format === 'pdf') {
-                    const imgData = canvas.toDataURL('image/png');
-                    const pdf = new jsPDF({
-                        orientation: 'landscape',
-                        unit: 'px',
-                        format: [canvas.width, canvas.height]
-                    });
-                    pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-                    pdf.save(`tiquete_${targetInfo.raffleNumber}.pdf`);
-                    showNotification('Tiquete PDF descargado', 'success');
-                } else if (format === 'gif') {
-                    canvas.toBlob((blob) => {
-                        if (blob) {
-                            const url = URL.createObjectURL(blob);
-                            const a = document.createElement('a');
-                            a.href = url;
-                            a.download = `tiquete_${targetInfo.raffleNumber}.gif`;
-                            document.body.appendChild(a);
-                            a.click();
-                            document.body.removeChild(a);
-                            URL.revokeObjectURL(url);
-                            showNotification('Tiquete GIF descargado (estático)', 'success');
-                        }
-                    }, 'image/gif');
-                }
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jsPDF({
+                    orientation: 'portrait',
+                    unit: 'px',
+                    format: [canvas.width, canvas.height]
+                });
+                pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+                pdf.save(`tiquete_${targetInfo.raffleNumber}.pdf`);
+                showNotification('Tiquete PDF descargado', 'success');
             });
         });
     };
@@ -1104,7 +1086,7 @@ const App = () => {
     );
     
     const FacebookIcon = () => (
-        <svg xmlns="http://www'w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5">
             <path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987H7.897v-2.89h2.54V9.526c0-2.509 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562v1.875h2.773l-.443 2.89h-2.33V21.878C18.343 21.128 22 16.991 22 12z"/>
         </svg>
     );
@@ -1130,60 +1112,82 @@ const App = () => {
     const InlineTicket = ({ ticketData }: { ticketData: any }) => {
         if (!ticketData) return null;
     
+        const receiptDate = ticketData.timestamp?.toDate ? format(ticketData.timestamp.toDate(), "d 'de' MMMM 'de' yyyy - h:mm a", { locale: es }) : format(new Date(), "d 'de' MMMM 'de' yyyy - h:mm a", { locale: es });
+        const gameDateFormatted = ticketData.gameDate ? format(new Date(ticketData.gameDate), "d 'de' MMMM 'de' yyyy", { locale: es }) : 'N/A';
+    
         return (
-            <div className="mt-8">
-                <h3 className="text-xl font-bold text-gray-800 mb-4 text-center">¡Tu Tiquete!</h3>
-                <div className="max-w-sm mx-auto bg-white rounded-lg shadow-xl flex flex-col font-mono">
-                    <div className="p-4 bg-white rounded-t-lg">
-                        {isTicketGenerating ? (
-                            <div className="flex flex-col items-center justify-center h-64">
-                                <Loader2 className="h-12 w-12 animate-spin text-purple-600" />
-                                <p className="mt-4 text-gray-600 font-semibold">Generando tu tiquete con IA...</p>
-                            </div>
-                        ) : ticketData.ticketImageUrl ? (
-                            <div ref={ticketModalRef}>
-                                <Image
-                                    src={ticketData.ticketImageUrl}
-                                    alt={`Tiquete para ${ticketData.raffleNumber}`}
-                                    width={400}
-                                    height={600}
-                                    className="w-full h-auto rounded-md"
-                                />
-                            </div>
-                        ) : (
-                             <div className="flex flex-col items-center justify-center h-64">
-                                <Loader2 className="h-12 w-12 animate-spin text-purple-600" />
-                                <p className="mt-4 text-gray-600 font-semibold">Preparando para generar tiquete...</p>
-                            </div>
-                        )}
+            <div className="mt-8 max-w-sm mx-auto">
+                <div 
+                    ref={ticketModalRef}
+                    className="bg-white p-6 rounded-lg shadow-lg font-mono text-gray-800 text-sm relative overflow-hidden"
+                >
+                     <div className="absolute inset-0 flex items-center justify-center z-0">
+                        <p className="text-gray-200/50 text-7xl font-bold -rotate-45 select-none opacity-50">RIFA EXPRESS</p>
                     </div>
-                   
-                   <div className="p-4 bg-gray-50 rounded-b-lg flex flex-col sm:flex-row items-center justify-center gap-2 mt-auto border-t">
-                       <Button
-                           onClick={() => handleDownloadTicket('pdf')}
-                           className="w-full sm:w-auto bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors font-semibold shadow-md"
-                           disabled={isTicketGenerating || !ticketData.ticketImageUrl}
-                       >
-                           Descargar PDF
-                       </Button>
-                       <Button
-                           onClick={handleShareTicket}
-                           className="w-full sm:w-auto bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-semibold shadow-md flex items-center gap-2"
-                            disabled={isTicketGenerating || !ticketData.ticketImageUrl}
-                       >
-                           <WhatsappIcon/>
-                           Compartir
-                       </Button>
-                       <Button
-                           onClick={() => setGeneratedTicketData(null)}
-                           variant="outline"
-                           className="w-full sm:w-auto"
-                       >
-                           Cerrar
-                       </Button>
-                   </div>
+
+                    <div className="relative z-10">
+                        <div className="text-center mb-4">
+                            <h3 className="text-2xl font-bold">RIFA EXPRESS</h3>
+                            <p>Referencia: {ticketData.raffleRef}</p>
+                            <p className="font-semibold">COMPROBANTE DE COMPRA</p>
+                        </div>
+        
+                        <p className="text-center text-xs mb-4">{receiptDate}</p>
+        
+                        <div className="border-t border-dashed border-gray-400 my-4"></div>
+        
+                        <div className="space-y-1">
+                            <div className="flex justify-between"><span>CLIENTE:</span><span className="font-semibold">{ticketData.name}</span></div>
+                            <div className="flex justify-between"><span>CELULAR:</span><span className="font-semibold">{ticketData.phoneNumber}</span></div>
+                        </div>
+                        
+                        <div className="border-t border-dashed border-gray-400 my-4"></div>
+        
+                        <h4 className="font-bold text-center mb-2">DETALLES DE LA RIFA</h4>
+                        <div className="space-y-1">
+                            <div className="flex justify-between"><span>PREMIO:</span><span className="font-semibold">{formatValue(ticketData.raffleName)}</span></div>
+                            <div className="flex justify-between"><span>VALOR BOLETA:</span><span className="font-semibold">{formatValue(ticketData.value)}</span></div>
+                            <div className="flex justify-between"><span>FECHA SORTEO:</span><span className="font-semibold">{gameDateFormatted}</span></div>
+                            <div className="flex justify-between"><span>JUEGA CON:</span><span className="font-semibold">{ticketData.lottery}</span></div>
+                            <div className="flex justify-between"><span>QUIEN ORGANIZA:</span><span className="font-semibold">{ticketData.organizerName}</span></div>
+                        </div>
+                        
+                        <div className="border-t border-dashed border-gray-400 my-4"></div>
+        
+                        <div className="text-center my-4">
+                            <p className="font-bold">NÚMERO ASIGNADO</p>
+                            <p className="text-6xl font-bold text-violet-600 tracking-wider">{ticketData.raffleNumber}</p>
+                        </div>
+        
+                        <div className="border-t border-dashed border-gray-400 my-4"></div>
+        
+                        <p className="text-center font-semibold">¡Gracias por participar!</p>
+                    </div>
+                </div>
+               
+               <div className="p-4 bg-gray-50 rounded-b-lg flex flex-col sm:flex-row items-center justify-center gap-2 mt-auto">
+                   <Button
+                       onClick={() => handleDownloadTicket()}
+                       className="w-full sm:w-auto bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors font-semibold shadow-md"
+                   >
+                       Descargar Tiquete
+                   </Button>
+                   <Button
+                       onClick={handleShareTicket}
+                       className="w-full sm:w-auto bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-semibold shadow-md flex items-center gap-2"
+                   >
+                       <WhatsappIcon/>
+                       Compartir
+                   </Button>
+                   <Button
+                       onClick={() => setGeneratedTicketData(null)}
+                       variant="outline"
+                       className="w-full sm:w-auto"
+                   >
+                       Cerrar
+                   </Button>
                </div>
-            </div>
+           </div>
         );
     };
 
@@ -1619,90 +1623,70 @@ const App = () => {
             )}
             
             <Dialog open={isTicketModalOpen} onOpenChange={closeTicketModal}>
-                <DialogContent className="w-[95vw] max-w-2xl p-0 border-0 bg-transparent shadow-none font-sans sm:w-full">
-                    <DialogTitle className="sr-only">Tiquete de Rifa</DialogTitle>
+                <DialogContent className="w-[95vw] max-w-sm p-0 border-0 bg-transparent shadow-none font-sans">
                      {ticketInfo && (
-                        <div
-                            ref={ticketModalRef}
-                            className="w-full aspect-[2/1] mx-auto bg-[#FDF4E3] shadow-2xl flex overflow-hidden font-sans"
-                            style={{
-                                fontFamily: "'Libre Baskerville', serif",
-                                clipPath: 'polygon(0% 0%, 100% 0%, 100% 15%, 95% 25%, 100% 35%, 100% 100%, 0% 100%, 0% 65%, 5% 50%, 0% 35%)',
-                            }}
-                        >
-                            {/* Left Stub */}
-                            <div className="w-1/3 bg-black text-white flex flex-col items-center justify-between p-2 sm:p-4 border-r-2 border-dashed border-gray-400 relative">
-                                <p className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 -rotate-90 text-sm font-bold tracking-widest text-gray-500 opacity-70" style={{fontFamily: "'Anton', sans-serif"}}></p>
-                                <div className="text-center w-full">
-                                    <p className="text-3xl sm:text-5xl font-extrabold text-red-500" style={{ fontFamily: "'Anton', sans-serif" }}>{ticketInfo.raffleNumber}</p>
-                                    <p className="text-xs sm:text-sm font-light mt-2 truncate">{ticketInfo.name}</p>
-                                </div>
-                                <div>{/* Placeholder for bottom spacing */}</div>
-                            </div>
-
-                            {/* Main Body */}
+                        <div>
                             <div 
-                                className="w-2/3 p-2 sm:p-4 flex flex-col items-center text-center relative"
-                                style={{
-                                    backgroundImage: "radial-gradient(circle, rgba(0,0,0,0.05) 1px, transparent 1px)",
-                                    backgroundSize: "8px 8px"
-                                }}
+                                ref={ticketModalRef}
+                                className="bg-white p-6 rounded-lg shadow-lg font-mono text-gray-800 text-sm relative overflow-hidden"
                             >
-                                <div className="w-full">
-                                    <p className="text-[10px] sm:text-xs font-bold tracking-widest text-[#5C3D2E]">ORGANIZADO POR</p>
-                                    <p className="text-sm sm:text-base font-semibold text-black mb-1 sm:mb-2">{ticketInfo.organizerName}</p>
-
-                                    <h2 className="text-xl sm:text-3xl font-extrabold text-[#5C3D2E] uppercase" style={{ fontFamily: "'Anton', sans-serif" }}>
-                                        {ticketInfo.raffleName}
-                                    </h2>
+                                <div className="absolute inset-0 flex items-center justify-center z-0">
+                                    <p className="text-gray-200/50 text-7xl font-bold -rotate-45 select-none opacity-50">RIFA EXPRESS</p>
                                 </div>
-                                
-                                {ticketInfo.prizeImageUrl && <div className="my-1 sm:my-2"><Image src={ticketInfo.prizeImageUrl} alt="Premio" width={100} height={60} className="rounded-md shadow-lg object-cover h-8 w-auto sm:h-16"/></div>}
-                                
-                                <div className="grid grid-cols-2 gap-2 sm:gap-4 text-[10px] sm:text-xs mt-auto w-full">
-                                    <div>
-                                        <p className="font-bold uppercase text-[#5C3D2E]">Juega el</p>
-                                        <p className="font-bold text-xs sm:text-base text-red-600">{ticketInfo.gameDate ? format(new Date(ticketInfo.gameDate), 'PPP', { locale: es }) : 'N/A'}</p>
+                                <div className="relative z-10">
+                                    <div className="text-center mb-4">
+                                        <h3 className="text-2xl font-bold">RIFA EXPRESS</h3>
+                                        <p>Referencia: {ticketInfo.raffleRef}</p>
+                                        <p className="font-semibold">COMPROBANTE DE COMPRA</p>
                                     </div>
-                                    <div>
-                                        <p className="font-bold uppercase text-[#5C3D2E]">Con la Lotería</p>
-                                        <p className="font-bold text-xs sm:text-base text-black truncate">{ticketInfo.lottery}</p>
+                                    <p className="text-center text-xs mb-4">{ticketInfo.timestamp?.toDate ? format(ticketInfo.timestamp.toDate(), "d 'de' MMMM 'de' yyyy - h:mm a", { locale: es }) : 'Fecha no disponible'}</p>
+                                    <div className="border-t border-dashed border-gray-400 my-4"></div>
+                                    <div className="space-y-1">
+                                        <div className="flex justify-between"><span>CLIENTE:</span><span className="font-semibold">{ticketInfo.name}</span></div>
+                                        <div className="flex justify-between"><span>CELULAR:</span><span className="font-semibold">{ticketInfo.phoneNumber}</span></div>
                                     </div>
-                                </div>
-                                <div className="mt-2 text-[10px] sm:text-xs text-gray-500 font-mono">
-                                    REF: {ticketInfo.raffleRef}
+                                    <div className="border-t border-dashed border-gray-400 my-4"></div>
+                                    <h4 className="font-bold text-center mb-2">DETALLES DE LA RIFA</h4>
+                                    <div className="space-y-1">
+                                        <div className="flex justify-between"><span>PREMIO:</span><span className="font-semibold">{formatValue(ticketInfo.raffleName)}</span></div>
+                                        <div className="flex justify-between"><span>VALOR BOLETA:</span><span className="font-semibold">{formatValue(ticketInfo.value)}</span></div>
+                                        <div className="flex justify-between"><span>FECHA SORTEO:</span><span className="font-semibold">{ticketInfo.gameDate ? format(new Date(ticketInfo.gameDate), "d 'de' MMMM 'de' yyyy", { locale: es }) : 'N/A'}</span></div>
+                                        <div className="flex justify-between"><span>JUEGA CON:</span><span className="font-semibold">{ticketInfo.lottery}</span></div>
+                                        <div className="flex justify-between"><span>QUIEN ORGANIZA:</span><span className="font-semibold">{ticketInfo.organizerName}</span></div>
+                                    </div>
+                                    <div className="border-t border-dashed border-gray-400 my-4"></div>
+                                    <div className="text-center my-4">
+                                        <p className="font-bold">NÚMERO ASIGNADO</p>
+                                        <p className="text-6xl font-bold text-violet-600 tracking-wider">{ticketInfo.raffleNumber}</p>
+                                    </div>
+                                    <div className="border-t border-dashed border-gray-400 my-4"></div>
+                                    <p className="text-center font-semibold">¡Gracias por participar!</p>
                                 </div>
                             </div>
+                            <DialogFooter className="flex-col sm:flex-col sm:space-x-0 gap-2 w-full pt-4">
+                                <Button
+                                    onClick={handleDownloadTicket}
+                                    className="w-full bg-purple-500 text-white"
+                                >
+                                    Descargar Tiquete
+                                </Button>
+                                <Button
+                                    onClick={handleShareTicket}
+                                    className="w-full bg-green-500 text-white flex items-center justify-center gap-2"
+                                >
+                                    <WhatsappIcon/>
+                                    Compartir
+                                </Button>
+                                <Button
+                                    onClick={closeTicketModal}
+                                    variant="outline"
+                                    className="w-full bg-white/80"
+                                >
+                                    Cerrar
+                                </Button>
+                            </DialogFooter>
                         </div>
                     )}
-                    <DialogFooter className="flex-col sm:flex-col sm:space-x-0 gap-2 w-full pt-4 max-w-sm mx-auto">
-                        <Button
-                            onClick={() => handleDownloadTicket('pdf')}
-                            className="w-full bg-purple-500 text-white"
-                        >
-                            Descargar PDF
-                        </Button>
-                        <Button
-                            onClick={() => handleDownloadTicket('gif')}
-                            className="w-full bg-blue-500 text-white"
-                        >
-                            Descargar GIF
-                        </Button>
-                        <Button
-                            onClick={handleShareTicket}
-                            className="w-full bg-green-500 text-white flex items-center justify-center gap-2"
-                        >
-                            <WhatsappIcon/>
-                            Compartir
-                        </Button>
-                        <Button
-                            onClick={closeTicketModal}
-                            variant="outline"
-                            className="w-full bg-white/80"
-                        >
-                            Cerrar
-                        </Button>
-                    </DialogFooter>
                 </DialogContent>
             </Dialog>
 
