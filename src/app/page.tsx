@@ -59,7 +59,7 @@ const App = () => {
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<Tab>('board');
     const [currencySymbol] = useState('$');
-    
+    const [appUrl, setAppUrl] = useState('');
 
 
     const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
@@ -200,6 +200,10 @@ const App = () => {
                 await persistenceEnabled;
             }
 
+            if (typeof window !== 'undefined') {
+                setAppUrl(window.location.origin);
+            }
+
             const adminIdFromStorage = localStorage.getItem('rifaAdminId');
             if (adminIdFromStorage) {
                 setCurrentAdminId(adminIdFromStorage);
@@ -208,7 +212,6 @@ const App = () => {
             const urlParams = new URLSearchParams(window.location.search);
             const refFromUrl = urlParams.get('ref');
             const statusFromUrl = urlParams.get('status');
-            const activationAdminId = urlParams.get('adminId');
 
             // For post-payment registration
             const pName = urlParams.get('pName');
@@ -225,12 +228,12 @@ const App = () => {
                             showNotification('¡Pago exitoso! Tu número ha sido registrado. Puedes generar tu tiquete en la pestaña "Participantes".', 'success');
                         }
                     } else {
-                        // Board activation confirmation
-                        await confirmActivation(refFromUrl, activationAdminId);
+                        // Board activation confirmation - this flow might be deprecated/unused if activation is direct
+                        showNotification('Activación confirmada por pago.', 'info');
                     }
-                 } else {
-                    await handleAdminSearch(refFromUrl, true);
-                }
+                 }
+                await handleAdminSearch(refFromUrl, true);
+
             } else {
                 setRaffleState(null);
                 setLoading(false);
@@ -245,7 +248,8 @@ const App = () => {
                 } else if (!newRefFromUrl) {
                     raffleSubscription.current?.();
                     setRaffleState(null);
-                    setCurrentAdminId(null);
+                    // Don't clear adminId on popstate to home, user might be navigating
+                    // setCurrentAdminId(null); 
                     setLoading(false);
                 }
             };
@@ -622,7 +626,7 @@ const App = () => {
                 raffleMode: mode,
                 raffleRef: newRef,
                 adminId: adminId,
-                isPaid: true,
+                isPaid: true, // Assuming direct activation marks it as paid
                 prizeImageUrl: '',
             };
             
@@ -636,49 +640,6 @@ const App = () => {
             setLoading(false);
         }
     };
-
-    const confirmActivation = async (raffleRef: string, adminId: string | null) => {
-        if (!raffleRef) {
-            showNotification('No se encontró una referencia de activación.', 'error');
-            setLoading(false);
-            return;
-        }
-    
-        try {
-            if (persistenceEnabled) {
-                await persistenceEnabled;
-            }
-            const raffleDocRef = doc(db, "raffles", raffleRef);
-    
-            let docSnap = await getDoc(raffleDocRef);
-    
-            if (docSnap.exists()) {
-                const raffleData = docSnap.data();
-                if (raffleData.isPaid) {
-                    showNotification('Esta rifa ya ha sido activada.', 'info');
-                } else {
-                    const newAdminId = `admin_${Date.now()}_${Math.random()}`;
-                    localStorage.setItem('rifaAdminId', newAdminId);
-                    setCurrentAdminId(newAdminId);
-    
-                    await setDoc(raffleDocRef, { isPaid: true, adminId: newAdminId }, { merge: true });
-                    showNotification('¡Nueva rifa activada! Ahora eres el administrador.', 'success');
-                }
-            } else {
-                console.error(`Raffle with ref ${raffleRef} not found.`);
-                showNotification(`No se encontró la rifa con referencia ${raffleRef}.`, 'error');
-            }
-    
-            await handleAdminSearch(raffleRef, true);
-    
-        } catch (error) {
-            console.error("Error activating board:", error);
-            showNotification("Error al activar el tablero.", "error");
-        } finally {
-            setLoading(false);
-        }
-    };
-
 
     const handleTalkToAdmin = () => {
         if (!raffleState || !raffleState.organizerPhoneNumber) {
@@ -780,15 +741,14 @@ const App = () => {
                                 </div>
                             </div>
                         )}
-                        {raffleState.prizeImageUrl && raffleState.prizeImageUrl.trim() !== '' ? (
-                            <div className="mb-6 rounded-lg overflow-hidden relative aspect-video max-w-2xl mx-auto shadow-lg">
-                                <Image src={raffleState.prizeImageUrl} alt="Premio de la rifa" width={600} height={400} style={{ objectFit: 'cover' }} unoptimized />
-                            </div>
-                        ) : (
-                            <div className="mb-6 rounded-lg overflow-hidden relative aspect-video max-w-2xl mx-auto shadow-lg bg-gray-200 flex items-center justify-center">
+                        
+                        <div className="mb-6 rounded-lg overflow-hidden relative aspect-video max-w-2xl mx-auto shadow-lg bg-gray-200 flex items-center justify-center">
+                            {raffleState.prizeImageUrl && raffleState.prizeImageUrl.trim() !== '' ? (
+                                <Image src={raffleState.prizeImageUrl} alt="Premio de la rifa" layout="fill" style={{ objectFit: 'cover' }} unoptimized />
+                            ) : (
                                 <span className="text-gray-500">Sin imagen de premio</span>
-                            </div>
-                        )}
+                            )}
+                        </div>
 
                         <div className="space-y-4 mb-6">
                            <div>
@@ -1231,6 +1191,20 @@ const App = () => {
                                 <p className="text-gray-600 mb-6 max-w-md mx-auto">
                                     Busca una rifa por su referencia o crea una nueva para empezar.
                                 </p>
+                                
+                                {appUrl && (
+                                    <div className="my-8 flex flex-col items-center gap-4">
+                                        <Image
+                                            src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(appUrl)}`}
+                                            alt="Código QR de la aplicación"
+                                            width={200}
+                                            height={200}
+                                            className="rounded-lg shadow-md"
+                                        />
+                                        <h3 className="text-2xl font-bold text-gray-800">RIFA EXPRESS</h3>
+                                    </div>
+                                )}
+                                
                                 <div className="flex flex-col justify-center items-center gap-8 mb-6">
                                     
                                     {/* Ticket for 2 digits */}
@@ -1805,3 +1779,4 @@ const App = () => {
 };
 
 export default App;
+
