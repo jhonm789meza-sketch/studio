@@ -547,6 +547,7 @@ const App = () => {
             }
 
             raffleSubscription.current = onSnapshot(raffleDocRef, (docSnapshot) => {
+                // Only load adminId if it's already there, don't create a new one on search
                 const adminIdFromStorage = localStorage.getItem('rifaAdminId');
                 if (adminIdFromStorage) {
                     setCurrentAdminId(adminIdFromStorage);
@@ -616,6 +617,7 @@ const App = () => {
     const handleActivateBoard = async (mode: RaffleMode) => {
         setLoading(true);
         try {
+            // Only generate and save adminId on creation
             const adminId = `admin_${Date.now()}_${Math.random()}`;
             localStorage.setItem('rifaAdminId', adminId);
             setCurrentAdminId(adminId);
@@ -625,8 +627,8 @@ const App = () => {
                 ...initialRaffleData,
                 raffleMode: mode,
                 raffleRef: newRef,
-                adminId: adminId,
-                isPaid: true, // Assuming direct activation marks it as paid
+                adminId: adminId, // Assign the newly created adminId
+                isPaid: true, 
                 prizeImageUrl: '',
             };
             
@@ -1079,7 +1081,7 @@ const App = () => {
     
         return (
             <div className="mt-8 max-w-xs mx-auto">
-                 <div
+                <div
                     ref={ticketModalRef}
                     className="bg-white p-4 rounded-lg shadow-lg font-mono text-gray-800 text-[13px] relative overflow-hidden"
                 >
@@ -1194,14 +1196,19 @@ const App = () => {
                                 
                                 {appUrl && (
                                     <div className="my-8 flex flex-col items-center gap-4">
-                                        <Image
-                                            src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(appUrl)}`}
-                                            alt="Código QR de la aplicación"
-                                            width={200}
-                                            height={200}
-                                            className="rounded-lg shadow-md"
-                                        />
-                                        <h3 className="text-2xl font-bold text-gray-800">RIFA EXPRESS</h3>
+                                        <div className="relative inline-block">
+                                            <Image
+                                                src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(appUrl)}&qzone=1`}
+                                                alt="Código QR de la aplicación"
+                                                width={200}
+                                                height={200}
+                                                className="rounded-lg shadow-md"
+                                            />
+                                            <span className="absolute inset-0 flex items-center justify-center text-xl font-extrabold text-gray-800 bg-white bg-opacity-80 p-2 rounded-md border-2 border-white"
+                                                  style={{width: '85%', height: '25%', margin: 'auto'}}>
+                                                RIFA<span className='text-purple-600'>⚡</span>EXPRESS
+                                            </span>
+                                        </div>
                                     </div>
                                 )}
                                 
@@ -1779,4 +1786,3 @@ const App = () => {
 };
 
 export default App;
-
