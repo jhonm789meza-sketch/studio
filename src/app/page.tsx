@@ -545,7 +545,7 @@ const App = () => {
             }
 
             raffleSubscription.current = onSnapshot(raffleDocRef, (docSnapshot) => {
-                if (!isInitialLoad && !docSnapshot.data()?.adminId) {
+                if (isInitialLoad && !docSnapshot.data()?.adminId) {
                     const adminIdFromStorage = localStorage.getItem('rifaAdminId');
                     if (adminIdFromStorage) {
                         setCurrentAdminId(adminIdFromStorage);
@@ -1193,7 +1193,7 @@ const App = () => {
                                 </p>
                                 
                                 {appUrl && (
-                                    <div className="my-8 flex flex-col items-center gap-4">
+                                    <div className="my-8 flex justify-center">
                                         <div className="relative inline-block">
                                             <Image
                                                 src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(appUrl)}&qzone=1&ecc=H`}
@@ -1202,12 +1202,13 @@ const App = () => {
                                                 height={200}
                                                 className="rounded-lg shadow-md"
                                             />
-                                            <span
-                                                className="absolute inset-0 flex items-center justify-center text-xl font-extrabold text-gray-800"
-                                                style={{ textShadow: '0 0 4px white, 0 0 4px white, 0 0 4px white' }}
-                                            >
-                                                RIFA<span className='text-purple-600'>⚡</span>EXPRESS
-                                            </span>
+                                            <div className="absolute inset-0 flex items-center justify-center">
+                                                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white shadow-md">
+                                                    <span className="text-center text-sm font-bold leading-tight text-gray-800">
+                                                        RIFA<span className="text-purple-600">⚡</span><br/>EXPRESS
+                                                    </span>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 )}
