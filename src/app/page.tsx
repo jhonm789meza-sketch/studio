@@ -1090,7 +1090,6 @@ const App = () => {
                         <div className="border-t border-dashed border-gray-400 my-4"></div>
                         <div className="space-y-1">
                             <div className="flex justify-between"><span>CLIENTE:</span><span className="font-semibold text-right">{ticketData.name}</span></div>
-                            <div className="flex justify-between"><span>CELULAR:</span><span className="font-semibold">{ticketData.phoneNumber}</span></div>
                         </div>
                         <div className="border-t border-dashed border-gray-400 my-4"></div>
                         <h4 className="font-bold text-center mb-2">DETALLES DE LA RIFA</h4>
@@ -1611,7 +1610,6 @@ const App = () => {
                                     <div className="border-t border-dashed border-gray-400 my-4"></div>
                                     <div className="space-y-1">
                                         <div className="flex justify-between"><span>CLIENTE:</span><span className="font-semibold text-right">{ticketInfo.name}</span></div>
-                                        <div className="flex justify-between"><span>CELULAR:</span><span className="font-semibold">{ticketInfo.phoneNumber}</span></div>
                                     </div>
                                     <div className="border-t border-dashed border-gray-400 my-4"></div>
                                     <h4 className="font-bold text-center mb-2">DETALLES DE LA RIFA</h4>
