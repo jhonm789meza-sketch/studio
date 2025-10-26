@@ -545,7 +545,10 @@ const App = () => {
             }
 
             raffleSubscription.current = onSnapshot(raffleDocRef, (docSnapshot) => {
-                if (isInitialLoad && !docSnapshot.data()?.adminId) {
+                if (isInitialLoad && !docSnapshot.exists() && !localStorage.getItem('rifaAdminId')) {
+                    // Do not set adminId if just viewing
+                } else if (isInitialLoad && docSnapshot.data()?.adminId) {
+                    // This is for admin loading their own raffle
                     const adminIdFromStorage = localStorage.getItem('rifaAdminId');
                     if (adminIdFromStorage) {
                         setCurrentAdminId(adminIdFromStorage);
@@ -1078,24 +1081,24 @@ const App = () => {
         const gameDateFormatted = ticketData.gameDate ? format(new Date(ticketData.gameDate), "d 'de' MMMM 'de' yyyy", { locale: es }) : 'N/A';
     
         return (
-             <div className="mt-8 max-w-xs mx-auto">
+            <div className="mt-8 max-w-xs mx-auto">
                 <div
                     ref={ticketModalRef}
-                    className="bg-white p-4 rounded-lg shadow-lg font-mono text-gray-800 text-[13px] relative overflow-hidden"
+                    className="bg-white p-4 rounded-lg shadow-lg font-mono text-gray-800 text-sm relative overflow-hidden"
                 >
                      <div className="absolute inset-0 flex items-center justify-center z-0">
                         <p className="text-gray-200/50 text-7xl font-bold -rotate-45 select-none opacity-50">RIFA EXPRESS</p>
                     </div>
-                     <div className="relative z-10">
-                        <Button
-                            onClick={() => setGeneratedTicketData(null)}
-                            variant="ghost"
-                            className="absolute -top-2 -right-2 z-20 h-8 w-8 p-1 rounded-full bg-gray-100 hover:bg-gray-200"
-                        >
-                            <X className="h-4 w-4" />
-                            <span className="sr-only">Cerrar</span>
-                        </Button>
+                    <div className="relative z-10">
                         <div className="text-center mb-4">
+                           <Button
+                               onClick={() => setGeneratedTicketData(null)}
+                               variant="ghost"
+                               className="absolute -top-2 -right-2 z-20 h-8 w-8 p-1 rounded-full bg-gray-100 hover:bg-gray-200"
+                           >
+                               <X className="h-4 w-4" />
+                               <span className="sr-only">Cerrar</span>
+                           </Button>
                             <h3 className="text-xl font-bold">RIFA EXPRESS</h3>
                             <p>Referencia: {ticketData.raffleRef}</p>
                             <p className="font-semibold">COMPROBANTE DE COMPRA</p>
@@ -1153,6 +1156,26 @@ const App = () => {
                 </div>
             )}
             <div className="relative z-10 p-4">
+                {appUrl && (
+                    <div className="absolute top-4 right-4 z-20">
+                        <div className="relative inline-block">
+                            <Image
+                                src={`https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent(appUrl)}&qzone=1&ecc=H`}
+                                alt="Código QR de la aplicación"
+                                width={80}
+                                height={80}
+                                className="rounded-lg shadow-md"
+                            />
+                            <div className="absolute inset-0 flex items-center justify-center">
+                                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-md">
+                                    <span className="text-center text-[5px] font-bold leading-tight text-gray-800">
+                                        RIFA<span className="text-purple-600">⚡</span><br/>EXPRESS
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
                 {showConfetti && <Confetti />}
                 <div className="max-w-6xl mx-auto bg-card/90 rounded-2xl shadow-2xl overflow-hidden border">
                     <div className="bg-gradient-to-r from-purple-600/80 to-blue-600/80 text-white p-6 flex justify-between items-center">
@@ -1192,28 +1215,7 @@ const App = () => {
                                     Busca una rifa por su referencia o crea una nueva para empezar.
                                 </p>
                                 
-                                {appUrl && (
-                                    <div className="my-8 flex justify-center">
-                                        <div className="relative inline-block">
-                                            <Image
-                                                src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(appUrl)}&qzone=1&ecc=H`}
-                                                alt="Código QR de la aplicación"
-                                                width={200}
-                                                height={200}
-                                                className="rounded-lg shadow-md"
-                                            />
-                                            <div className="absolute inset-0 flex items-center justify-center">
-                                                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white shadow-md">
-                                                    <span className="text-center text-sm font-bold leading-tight text-gray-800">
-                                                        RIFA<span className="text-purple-600">⚡</span><br/>EXPRESS
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-                                
-                                <div className="flex flex-col justify-center items-center gap-8 mb-6">
+                                <div className="flex flex-col justify-center items-center gap-8 my-8">
                                     
                                     {/* Ticket for 2 digits */}
                                     <div className="bg-white rounded-2xl shadow-lg flex flex-col max-w-md w-full">
