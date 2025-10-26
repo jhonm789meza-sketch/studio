@@ -543,18 +543,18 @@ const App = () => {
             }
 
             raffleSubscription.current = onSnapshot(raffleDocRef, (docSnapshot) => {
-                if (isInitialLoad && !docSnapshot.exists() && !localStorage.getItem('rifaAdminId')) {
-                    // Do not set adminId if just viewing
-                } else if (isInitialLoad && docSnapshot.data()?.adminId) {
-                    // This is for admin loading their own raffle
-                    const adminIdFromStorage = localStorage.getItem('rifaAdminId');
-                    if (adminIdFromStorage) {
-                        setCurrentAdminId(adminIdFromStorage);
-                    }
-                }
-
                 if (docSnapshot.exists()) {
                     const data = docSnapshot.data();
+                    
+                    if (isInitialLoad && !localStorage.getItem('rifaAdminId')) {
+                        // This is a player viewing the raffle, do not set adminId
+                    } else {
+                        const adminIdFromStorage = localStorage.getItem('rifaAdminId');
+                        if (adminIdFromStorage && data.adminId === adminIdFromStorage) {
+                            setCurrentAdminId(adminIdFromStorage);
+                        }
+                    }
+
                     setRaffleState(data);
                     if (!isInitialLoad) { 
                         showNotification(`Cargando rifa con referencia: ${aRef}`, 'success');
@@ -1590,12 +1590,12 @@ const App = () => {
             )}
             
             <Dialog open={isTicketModalOpen} onOpenChange={closeTicketModal}>
-                <DialogContent className="w-[95vw] max-w-xs p-0 border-0 bg-transparent shadow-none font-sans">
+                <DialogContent className="w-auto max-w-xs p-0 border-0 bg-transparent shadow-none font-sans">
                      {ticketInfo && (
                         <div>
                             <div
                                 ref={ticketModalRef}
-                                className="bg-white p-4 rounded-lg shadow-lg font-mono text-gray-800 text-[13px] relative overflow-hidden"
+                                className="bg-white p-2 rounded-lg shadow-lg font-mono text-gray-800 text-[11px] relative overflow-hidden"
                             >
                                 <div className="absolute inset-0 flex items-center justify-center z-0">
                                     <p className="text-gray-200/50 text-7xl font-bold -rotate-45 select-none opacity-50">RIFA EXPRESS</p>
