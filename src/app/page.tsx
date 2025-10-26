@@ -81,8 +81,6 @@ const App = () => {
     const [adminRefSearch, setAdminRefSearch] = useState('');
     const [showConfetti, setShowConfetti] = useState(false);
     const [currentAdminId, setCurrentAdminId] = useState<string | null>(null);
-    const [isCollectiveMessageDialogOpen, setIsCollectiveMessageDialogOpen] = useState(false);
-    const [collectiveMessage, setCollectiveMessage] = useState('');
     const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
     const imageUpdateTimeout = useRef<NodeJS.Timeout | null>(null);
 
@@ -654,21 +652,6 @@ const App = () => {
         window.open(whatsappUrl, '_blank');
     };
     
-    const handleSendCollectiveMessage = () => {
-        if (confirmedParticipants.length === 0) {
-            showNotification('No hay participantes confirmados para enviar un mensaje.', 'warning');
-            return;
-        }
-
-        const firstPhoneNumber = confirmedParticipants[0].phoneNumber;
-        const message = encodeURIComponent(collectiveMessage);
-        
-        const whatsappUrl = `https://wa.me/57${firstPhoneNumber}?text=${message}`;
-        window.open(whatsappUrl, '_blank');
-        setIsCollectiveMessageDialogOpen(false);
-        setCollectiveMessage('');
-    };
-
     const handleShareToWhatsApp = () => {
         const urlToShare = window.location.href;
         const message = encodeURIComponent(`¡Participa en esta increíble rifa!\n`);
@@ -1506,12 +1489,7 @@ const App = () => {
                                 <div className={activeTab === 'participants' ? 'tab-content active' : 'tab-content'}>
                                     <div className="flex justify-between items-center mb-4">
                                             <h2 className="text-2xl font-bold text-gray-800">Participantes Confirmados</h2>
-                                            {isCurrentUserAdmin && confirmedParticipants.length > 0 && (
-                                                <Button onClick={() => setIsCollectiveMessageDialogOpen(true)} size="sm">
-                                                    <MessageCircle className="mr-2 h-4 w-4" />
-                                                    Enviar Mensaje Colectivo
-                                                </Button>
-                                            )}
+                                            
                                     </div>
 
                                     {!raffleState ? (
@@ -1729,32 +1707,6 @@ const App = () => {
                     </div>
                     <DialogFooter>
                         <Button type="button" variant="outline" onClick={() => setIsSalesModalOpen(false)}>Cerrar</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-
-            <Dialog open={isCollectiveMessageDialogOpen} onOpenChange={setIsCollectiveMessageDialogOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Enviar Mensaje Colectivo</DialogTitle>
-                        <DialogDescription>
-                            Escribe un mensaje para enviarlo a todos los participantes confirmados. Esto abrirá WhatsApp.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                        <Textarea
-                            placeholder="Tu mensaje aquí..."
-                            value={collectiveMessage}
-                            onChange={(e) => setCollectiveMessage(e.target.value)}
-                            rows={5}
-                        />
-                    </div>
-                    <DialogFooter>
-                        <Button type="button" variant="outline" onClick={() => setIsCollectiveMessageDialogOpen(false)}>Cancelar</Button>
-                        <Button type="button" onClick={handleSendCollectiveMessage} disabled={!collectiveMessage.trim()}>
-                            <WhatsappIcon />
-                            <span className="ml-2">Abrir WhatsApp con Mensaje</span>
-                        </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
