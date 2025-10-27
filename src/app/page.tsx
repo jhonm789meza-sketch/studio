@@ -670,6 +670,15 @@ const App = () => {
     const allNumbers = Array.from({ length: totalNumbers }, (_, i) => i);
     
     const backgroundImage = raffleState?.prizeImageUrl;
+    const isValidUrl = (url: string) => {
+        try {
+            new URL(url);
+            return true;
+        } catch (e) {
+            return false;
+        }
+    };
+
 
     const closeTicketModal = () => {
         setIsTicketModalOpen(false);
@@ -1131,7 +1140,7 @@ const App = () => {
 
     return (
         <div className="min-h-screen bg-background font-sans relative">
-            {backgroundImage && backgroundImage.trim() !== '' && (
+            {backgroundImage && backgroundImage.trim() !== '' && isValidUrl(backgroundImage) && (
                 <div className="fixed inset-0 z-0 pointer-events-none">
                     <Image src={backgroundImage} alt="Fondo de la rifa" layout="fill" objectFit="cover" unoptimized />
                     <div className="absolute inset-0 bg-black/30" />
