@@ -671,6 +671,7 @@ const App = () => {
     
     const backgroundImage = raffleState?.prizeImageUrl;
     const isValidUrl = (url: string) => {
+        if (!url || typeof url !== 'string') return false;
         try {
             new URL(url);
             return true;
@@ -738,7 +739,7 @@ const App = () => {
                         )}
                         
                         <div className="mb-6 rounded-lg overflow-hidden relative aspect-video max-w-2xl mx-auto shadow-lg bg-gray-200 flex items-center justify-center">
-                            {raffleState.prizeImageUrl && raffleState.prizeImageUrl.trim() !== '' ? (
+                            {isValidUrl(raffleState.prizeImageUrl) ? (
                                 <Image src={raffleState.prizeImageUrl} alt="Premio de la rifa" layout="fill" style={{ objectFit: 'cover' }} unoptimized />
                             ) : (
                                 <span className="text-gray-500">Sin imagen de premio</span>
@@ -1076,7 +1077,8 @@ const App = () => {
             <div className="mt-8 max-w-xs mx-auto">
                 <div
                     ref={ticketModalRef}
-                    className="bg-white p-4 rounded-lg shadow-lg font-mono text-gray-800 text-sm relative overflow-hidden"
+                    className="bg-white p-2 rounded-lg shadow-lg font-mono text-gray-800 text-[11px] relative overflow-hidden"
+                    style={{width: '280px'}}
                 >
                      <div className="absolute inset-0 flex items-center justify-center z-0">
                         <p className="text-gray-200/50 text-7xl font-bold -rotate-45 select-none opacity-50">RIFA EXPRESS</p>
@@ -1605,6 +1607,7 @@ const App = () => {
                             <div
                                 ref={ticketModalRef}
                                 className="bg-white p-2 rounded-lg shadow-lg font-mono text-gray-800 text-[11px] relative overflow-hidden"
+                                style={{width: '280px'}}
                             >
                                 <div className="absolute inset-0 flex items-center justify-center z-0">
                                     <p className="text-gray-200/50 text-7xl font-bold -rotate-45 select-none opacity-50">RIFA EXPRESS</p>
