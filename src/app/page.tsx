@@ -1,16 +1,15 @@
-
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import jsPDF from 'jspdf';
 import { RaffleManager } from '@/lib/RaffleManager';
-import { db, persistenceEnabled } from '@/lib/firebase';
+import { db, storage, persistenceEnabled } from '@/lib/firebase';
 import { doc, onSnapshot, setDoc, getDoc, deleteDoc, Unsubscribe } from 'firebase/firestore';
+import { ref, uploadBytesResumable, getDownloadURL, UploadTask } from 'firebase/storage';
 import Image from 'next/image';
-
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House, Clock, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X } from 'lucide-react';
+import { Menu, Award, Lock, House, Clock, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Upload } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,6 +19,7 @@ import type { Participant } from '@/lib/types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Textarea } from '@/components/ui/textarea';
+import { Progress } from '@/components/ui/progress';
 
 
 type RaffleMode = 'two-digit' | 'three-digit';
@@ -65,7 +65,6 @@ const App = () => {
     const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
     const [ticketInfo, setTicketInfo] = useState<any>(null);
     const [generatedTicketData, setGeneratedTicketData] = useState<any>(null);
-    const [isTicketGenerating, setIsTicketGenerating] = useState(false);
     const [showConfirmation, setShowConfirmation] = useState(false);
     const [confirmationMessage, setConfirmationMessage] = useState('');
     const [confirmationAction, setConfirmationAction] = useState<(() => void) | null>(null);
@@ -83,6 +82,9 @@ const App = () => {
     const [currentAdminId, setCurrentAdminId] = useState<string | null>(null);
     const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
     const imageUpdateTimeout = useRef<NodeJS.Timeout | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+    const [uploadTask, setUploadTask] = useState<UploadTask | null>(null);
 
     const raffleManager = new RaffleManager(db);
     
@@ -666,6 +668,36 @@ const App = () => {
         window.open(facebookUrl, '_blank');
         setIsShareDialogOpen(false);
     };
+    
+    const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file || !raffleState || !raffleState.raffleRef) return;
+        
+        const storageRef = ref(storage, `raffles/${raffleState.raffleRef}/${file.name}`);
+        const uploadTask = uploadBytesResumable(storageRef, file);
+        setUploadTask(uploadTask);
+
+        uploadTask.on('state_changed', 
+            (snapshot) => {
+                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                setUploadProgress(progress);
+            }, 
+            (error) => {
+                console.error("Upload failed:", error);
+                showNotification('Error al subir la imagen.', 'error');
+                setUploadProgress(null);
+                setUploadTask(null);
+            }, 
+            async () => {
+                const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                await handleFieldChange('prizeImageUrl', downloadURL);
+                handleLocalFieldChange('prizeImageUrl', downloadURL);
+                setUploadProgress(null);
+                setUploadTask(null);
+                showNotification('Imagen del premio actualizada.', 'success');
+            }
+        );
+    };
 
     const allNumbers = Array.from({ length: totalNumbers }, (_, i) => i);
     
@@ -739,8 +771,8 @@ const App = () => {
                         )}
                         
                         <div className="mb-6 rounded-lg overflow-hidden relative aspect-video max-w-2xl mx-auto shadow-lg bg-gray-200 flex items-center justify-center">
-                            {isValidUrl(raffleState.prizeImageUrl) ? (
-                                <Image src={raffleState.prizeImageUrl} alt="Premio de la rifa" layout="fill" style={{ objectFit: 'cover' }} unoptimized />
+                             {isValidUrl(raffleState.prizeImageUrl) ? (
+                                <Image src={raffleState.prizeImageUrl} alt="Premio de la rifa" layout="fill" style={{ objectFit: 'cover' }} unoptimized key={raffleState.prizeImageUrl}/>
                             ) : (
                                 <span className="text-gray-500">Sin imagen de premio</span>
                             )}
@@ -886,19 +918,27 @@ const App = () => {
                                />
                             </div>
                             <div>
-                                <Label htmlFor="prize-image-url-input">URL de la Imagen (Opcional):</Label>
-                                <div className="relative mt-1">
-                                    <Input
-                                        id="prize-image-url-input"
-                                        type="text"
-                                        value={raffleState.prizeImageUrl}
-                                        onChange={(e) => handleLocalFieldChange('prizeImageUrl', e.target.value)}
-                                        onBlur={(e) => handleFieldChange('prizeImageUrl', e.target.value)}
-                                        placeholder="https://ejemplo.com/imagen.png"
-                                        disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
-                                        className="w-full"
-                                    />
-                                </div>
+                                <Label>Imagen del Premio:</Label>
+                                <Input
+                                    type="file"
+                                    ref={fileInputRef}
+                                    onChange={handleImageUpload}
+                                    className="hidden"
+                                    accept="image/*"
+                                    disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed || uploadProgress !== null}
+                                />
+                                <Button
+                                    onClick={() => fileInputRef.current?.click()}
+                                    disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed || uploadProgress !== null}
+                                    variant="outline"
+                                    className="w-full mt-1"
+                                >
+                                    <Upload className="mr-2 h-4 w-4" />
+                                    {uploadProgress !== null ? `Subiendo... ${Math.round(uploadProgress)}%` : "Subir Imagen del Premio"}
+                                </Button>
+                                {uploadProgress !== null && (
+                                    <Progress value={uploadProgress} className="w-full mt-2" />
+                                )}
                             </div>
                             {isCurrentUserAdmin && !raffleState.isDetailsConfirmed && (
                                 <div className="col-span-1 md:col-span-2">

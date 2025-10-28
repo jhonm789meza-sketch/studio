@@ -1,11 +1,12 @@
 
 import { initializeApp, getApp, FirebaseApp } from 'firebase/app';
 import { getFirestore, Firestore, enableIndexedDbPersistence } from 'firebase/firestore';
+import { getStorage, FirebaseStorage } from 'firebase/storage';
 
 const firebaseConfig = {
   "projectId": "rifaexpress",
   "appId": "1:945876849893:web:0c59d3ea4376475c76b00c",
-  "storageBucket": "rifaexpress.firebasestorage.app",
+  "storageBucket": "rifaexpress.appspot.com",
   "apiKey": "AIzaSyBnHP82Rccw1gS35YCUWGyYfRKbvnvXdmg",
   "authDomain": "rifaexpress-5b0ac.firebaseapp.com",
   "measurementId": "",
@@ -14,15 +15,18 @@ const firebaseConfig = {
 
 let app: FirebaseApp;
 let db: Firestore;
+let storage: FirebaseStorage;
 let persistenceEnabled: Promise<void> | null = null;
 
 
 try {
   app = getApp();
   db = getFirestore(app);
+  storage = getStorage(app);
 } catch (e) {
   app = initializeApp(firebaseConfig);
   db = getFirestore(app);
+  storage = getStorage(app);
 }
 
 // Enable offline persistence
@@ -42,4 +46,4 @@ if (typeof window !== 'undefined' && !persistenceEnabled) {
 }
 
 
-export { db, persistenceEnabled };
+export { db, storage, persistenceEnabled };
