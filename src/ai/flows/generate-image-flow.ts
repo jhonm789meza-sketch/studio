@@ -39,9 +39,6 @@ const generateImageFlow = ai.defineFlow(
       }
 
       // The image is a data URI (e.g., "data:image/png;base64,..."). We need to upload it to Firebase Storage.
-      const base64Data = media.url.split(',')[1];
-      const imageBuffer = Buffer.from(base64Data, 'base64');
-      
       const storageRef = ref(storage, `generated-images/${Date.now()}.png`);
       
       const snapshot = await uploadString(storageRef, media.url, 'data_url');
