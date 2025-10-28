@@ -670,11 +670,11 @@ const App = () => {
     const allNumbers = Array.from({ length: totalNumbers }, (_, i) => i);
     
     const backgroundImage = raffleState?.prizeImageUrl;
-    const isValidUrl = (url: string) => {
-        if (!url || typeof url !== 'string') return false;
+    const isValidUrl = (url: string | null | undefined): boolean => {
+        if (!url) return false;
         try {
             new URL(url);
-            return true;
+            return url.startsWith('http://') || url.startsWith('https://');
         } catch (e) {
             return false;
         }
@@ -886,7 +886,7 @@ const App = () => {
                                />
                             </div>
                             <div>
-                                <Label htmlFor="prize-image-url-input">Link de Imagen (Opcional):</Label>
+                                <Label htmlFor="prize-image-url-input">URL de la Imagen (Opcional):</Label>
                                 <div className="relative mt-1">
                                     <Input
                                         id="prize-image-url-input"
@@ -1142,32 +1142,32 @@ const App = () => {
 
     return (
         <div className="min-h-screen bg-background font-sans relative">
-            {backgroundImage && backgroundImage.trim() !== '' && isValidUrl(backgroundImage) && (
+            {isValidUrl(backgroundImage) && (
                 <div className="fixed inset-0 z-0 pointer-events-none">
-                    <Image src={backgroundImage} alt="Fondo de la rifa" layout="fill" objectFit="cover" unoptimized />
+                    <Image src={backgroundImage!} alt="Fondo de la rifa" layout="fill" objectFit="cover" unoptimized />
                     <div className="absolute inset-0 bg-black/30" />
                 </div>
             )}
             <div className="relative z-10 p-4">
                 {appUrl && (
                     <div className="absolute top-4 right-4 z-20">
-                        <div className="relative inline-block">
-                            <Image
-                                src={`https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent(appUrl)}&qzone=1&ecc=H`}
-                                alt="Código QR de la aplicación"
-                                width={80}
-                                height={80}
-                                className="rounded-lg shadow-md"
-                            />
-                            <div className="absolute inset-0 flex items-center justify-center">
-                                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-md">
-                                    <span className="text-center text-[5px] font-bold leading-tight text-gray-800">
-                                        RIFA<span className="text-purple-600">⚡</span><br/>EXPRESS
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                         <div className="relative inline-block">
+                             <Image
+                                 src={`https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent(appUrl)}&qzone=1&ecc=H`}
+                                 alt="Código QR de la aplicación"
+                                 width={80}
+                                 height={80}
+                                 className="rounded-lg shadow-md"
+                             />
+                             <div className="absolute inset-0 flex items-center justify-center">
+                                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-md">
+                                     <span className="text-center text-[5px] font-bold leading-tight text-gray-800">
+                                         RIFA<span className="text-purple-600">⚡</span><br/>EXPRESS
+                                     </span>
+                                 </div>
+                             </div>
+                         </div>
+                     </div>
                 )}
                 {showConfetti && <Confetti />}
                 <div className="max-w-6xl mx-auto bg-card/90 rounded-2xl shadow-2xl overflow-hidden border">
