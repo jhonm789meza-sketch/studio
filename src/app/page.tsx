@@ -81,7 +81,6 @@ const App = () => {
     const [showConfetti, setShowConfetti] = useState(false);
     const [currentAdminId, setCurrentAdminId] = useState<string | null>(null);
     const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
-    const imageUpdateTimeout = useRef<NodeJS.Timeout | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [uploadProgress, setUploadProgress] = useState<number | null>(null);
     const [uploadTask, setUploadTask] = useState<UploadTask | null>(null);
@@ -296,15 +295,6 @@ const App = () => {
     
     const handleLocalFieldChange = (field: string, value: any) => {
         setRaffleState((s: any) => ({ ...s, [field]: value }));
-
-        if (field === 'prizeImageUrl') {
-            if (imageUpdateTimeout.current) {
-                clearTimeout(imageUpdateTimeout.current);
-            }
-            imageUpdateTimeout.current = setTimeout(() => {
-                handleFieldChange(field, value);
-            }, 1000);
-        }
     };
 
     const handleFieldChange = async (field: string, value: any) => {
