@@ -692,16 +692,6 @@ const App = () => {
     const allNumbers = Array.from({ length: totalNumbers }, (_, i) => i);
     
     const backgroundImage = raffleState?.prizeImageUrl;
-    const isValidUrl = (url: string | null | undefined): boolean => {
-        if (!url) return false;
-        try {
-            new URL(url);
-            return url.startsWith('http://') || url.startsWith('https://');
-        } catch (e) {
-            return false;
-        }
-    };
-
 
     const closeTicketModal = () => {
         setIsTicketModalOpen(false);
@@ -761,7 +751,7 @@ const App = () => {
                         )}
                         
                         <div className="mb-6 rounded-lg overflow-hidden relative aspect-video max-w-2xl mx-auto shadow-lg bg-gray-200 flex items-center justify-center">
-                             {isValidUrl(raffleState.prizeImageUrl) ? (
+                             {raffleState?.prizeImageUrl ? (
                                 <Image src={raffleState.prizeImageUrl} alt="Premio de la rifa" layout="fill" style={{ objectFit: 'cover' }} unoptimized key={raffleState.prizeImageUrl}/>
                             ) : (
                                 <span className="text-gray-500">Sin imagen de premio</span>
@@ -1172,9 +1162,9 @@ const App = () => {
 
     return (
         <div className="min-h-screen bg-background font-sans relative">
-            {isValidUrl(backgroundImage) && (
+            {backgroundImage && (
                 <div className="fixed inset-0 z-0 pointer-events-none">
-                    <Image src={backgroundImage!} alt="Fondo de la rifa" layout="fill" objectFit="cover" unoptimized />
+                    <Image src={backgroundImage} alt="Fondo de la rifa" layout="fill" objectFit="cover" unoptimized />
                     <div className="absolute inset-0 bg-black/30" />
                 </div>
             )}
