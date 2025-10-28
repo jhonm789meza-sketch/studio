@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useTransition } from 'react';
 import jsPDF from 'jspdf';
 import { RaffleManager } from '@/lib/RaffleManager';
 import { db, storage, persistenceEnabled } from '@/lib/firebase';
@@ -9,7 +9,7 @@ import Image from 'next/image';
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House, Clock, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Upload } from 'lucide-react';
+import { Menu, Award, Lock, House, Clock, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Upload, Wand2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,6 +20,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
+import { generateImage } from '@/ai/flows/generate-image-flow';
 
 
 type RaffleMode = 'two-digit' | 'three-digit';
@@ -51,7 +52,8 @@ const initialRaffleData = {
     isPaid: false,
     adminId: null,
     raffleMode: 'two-digit',
-    prizeImageUrl: ''
+    prizeImageUrl: '',
+    imageGenPrompt: '',
 };
 
 
@@ -81,9 +83,7 @@ const App = () => {
     const [showConfetti, setShowConfetti] = useState(false);
     const [currentAdminId, setCurrentAdminId] = useState<string | null>(null);
     const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
-    const fileInputRef = useRef<HTMLInputElement>(null);
-    const [uploadProgress, setUploadProgress] = useState<number | null>(null);
-    const [uploadTask, setUploadTask] = useState<UploadTask | null>(null);
+    const [isGeneratingImage, startImageGeneration] = useTransition();
 
     const raffleManager = new RaffleManager(db);
     
@@ -659,34 +659,28 @@ const App = () => {
         setIsShareDialogOpen(false);
     };
     
-    const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (!file || !raffleState || !raffleState.raffleRef) return;
-        
-        const storageRef = ref(storage, `raffles/${raffleState.raffleRef}/${file.name}`);
-        const uploadTask = uploadBytesResumable(storageRef, file);
-        setUploadTask(uploadTask);
+    const handleGenerateImage = () => {
+        if (!raffleState?.imageGenPrompt) {
+            showNotification('Por favor, describe la imagen que quieres generar.', 'warning');
+            return;
+        }
 
-        uploadTask.on('state_changed', 
-            (snapshot) => {
-                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                setUploadProgress(progress);
-            }, 
-            (error) => {
-                console.error("Upload failed:", error);
-                showNotification('Error al subir la imagen.', 'error');
-                setUploadProgress(null);
-                setUploadTask(null);
-            }, 
-            async () => {
-                const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                await handleFieldChange('prizeImageUrl', downloadURL);
-                handleLocalFieldChange('prizeImageUrl', downloadURL);
-                setUploadProgress(null);
-                setUploadTask(null);
-                showNotification('Imagen del premio actualizada.', 'success');
+        startImageGeneration(async () => {
+            try {
+                const { imageUrl, error } = await generateImage(raffleState.imageGenPrompt);
+                if (error) {
+                    throw new Error(error);
+                }
+                if (imageUrl) {
+                    await handleFieldChange('prizeImageUrl', imageUrl);
+                    handleLocalFieldChange('prizeImageUrl', imageUrl);
+                    showNotification('Imagen generada y actualizada.', 'success');
+                }
+            } catch (err: any) {
+                console.error("Image generation failed:", err);
+                showNotification(err.message || 'Error al generar la imagen.', 'error');
             }
-        );
+        });
     };
 
     const allNumbers = Array.from({ length: totalNumbers }, (_, i) => i);
@@ -753,6 +747,11 @@ const App = () => {
                         <div className="mb-6 rounded-lg overflow-hidden relative aspect-video max-w-2xl mx-auto shadow-lg bg-gray-200 flex items-center justify-center">
                              {raffleState?.prizeImageUrl ? (
                                 <Image src={raffleState.prizeImageUrl} alt="Premio de la rifa" layout="fill" style={{ objectFit: 'cover' }} unoptimized key={raffleState.prizeImageUrl}/>
+                            ) : isGeneratingImage ? (
+                                <div className="flex flex-col items-center text-gray-500">
+                                    <Loader2 className="h-8 w-8 animate-spin mb-2" />
+                                    <span>Generando imagen...</span>
+                                </div>
                             ) : (
                                 <span className="text-gray-500">Sin imagen de premio</span>
                             )}
@@ -898,27 +897,26 @@ const App = () => {
                                />
                             </div>
                             <div>
-                                <Label>Imagen del Premio:</Label>
-                                <Input
-                                    type="file"
-                                    ref={fileInputRef}
-                                    onChange={handleImageUpload}
-                                    className="hidden"
-                                    accept="image/*"
-                                    disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed || uploadProgress !== null}
-                                />
-                                <Button
-                                    onClick={() => fileInputRef.current?.click()}
-                                    disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed || uploadProgress !== null}
-                                    variant="outline"
-                                    className="w-full mt-1"
-                                >
-                                    <Upload className="mr-2 h-4 w-4" />
-                                    {uploadProgress !== null ? `Subiendo... ${Math.round(uploadProgress)}%` : "Subir Imagen del Premio"}
-                                </Button>
-                                {uploadProgress !== null && (
-                                    <Progress value={uploadProgress} className="w-full mt-2" />
-                                )}
+                                <Label htmlFor="image-gen-prompt">Generar Imagen con IA:</Label>
+                                <div className="flex gap-2 mt-1">
+                                    <Input
+                                        id="image-gen-prompt"
+                                        type="text"
+                                        value={raffleState.imageGenPrompt || ''}
+                                        onChange={(e) => handleLocalFieldChange('imageGenPrompt', e.target.value)}
+                                        onBlur={(e) => handleFieldChange('imageGenPrompt', e.target.value)}
+                                        placeholder="Ej: Un carro deportivo rojo brillante"
+                                        disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed || isGeneratingImage}
+                                        className="w-full"
+                                    />
+                                    <Button
+                                        onClick={handleGenerateImage}
+                                        disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed || isGeneratingImage}
+                                        variant="outline"
+                                    >
+                                        {isGeneratingImage ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
+                                    </Button>
+                                </div>
                             </div>
                             {isCurrentUserAdmin && !raffleState.isDetailsConfirmed && (
                                 <div className="col-span-1 md:col-span-2">

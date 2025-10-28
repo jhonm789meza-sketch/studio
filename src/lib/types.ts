@@ -37,4 +37,5 @@ export interface Raffle {
     adminId: null | string;
     raffleMode: 'two-digit' | 'three-digit';
     prizeImageUrl: string;
+    imageGenPrompt: string;
 }
