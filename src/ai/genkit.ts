@@ -9,9 +9,8 @@ import 'dotenv/config'
 export const ai = genkit({
   plugins: [
     googleAI({
-      // You can specify the API key here, but it's recommended to use the
-      // a .env file and the `GEMINI_API_KEY` environment variable.
-      // apiKey: process.env.GEMINI_API_KEY,
+      // The API key is passed explicitly from the environment variable.
+      apiKey: process.env.GEMINI_API_KEY,
     }),
   ],
   // Log developer-friendly errors and warnings.
