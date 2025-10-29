@@ -20,7 +20,6 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
-import { generateImage } from '@/ai/flows/generate-image-flow';
 
 
 type RaffleMode = 'two-digit' | 'three-digit';
@@ -83,7 +82,6 @@ const App = () => {
     const [showConfetti, setShowConfetti] = useState(false);
     const [currentAdminId, setCurrentAdminId] = useState<string | null>(null);
     const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
-    const [isGeneratingImage, startImageGeneration] = useTransition();
 
     const raffleManager = new RaffleManager(db);
     
@@ -659,30 +657,6 @@ const App = () => {
         setIsShareDialogOpen(false);
     };
     
-    const handleGenerateImage = () => {
-        if (!raffleState?.imageGenPrompt) {
-            showNotification('Por favor, describe la imagen que quieres generar.', 'warning');
-            return;
-        }
-
-        startImageGeneration(async () => {
-            try {
-                const { imageUrl, error } = await generateImage(raffleState.imageGenPrompt);
-                if (error) {
-                    throw new Error(error);
-                }
-                if (imageUrl) {
-                    await handleFieldChange('prizeImageUrl', imageUrl);
-                    handleLocalFieldChange('prizeImageUrl', imageUrl);
-                    showNotification('Imagen generada y actualizada.', 'success');
-                }
-            } catch (err: any) {
-                console.error("Image generation failed:", err);
-                showNotification(err.message || 'Error al generar la imagen.', 'error');
-            }
-        });
-    };
-
     const allNumbers = Array.from({ length: totalNumbers }, (_, i) => i);
     
     const backgroundImage = raffleState?.prizeImageUrl;
@@ -747,11 +721,6 @@ const App = () => {
                         <div className="mb-6 rounded-lg overflow-hidden relative aspect-video max-w-2xl mx-auto shadow-lg bg-gray-200 flex items-center justify-center">
                              {raffleState?.prizeImageUrl ? (
                                 <Image src={raffleState.prizeImageUrl} alt="Premio de la rifa" layout="fill" style={{ objectFit: 'cover' }} unoptimized key={raffleState.prizeImageUrl}/>
-                            ) : isGeneratingImage ? (
-                                <div className="flex flex-col items-center text-gray-500">
-                                    <Loader2 className="h-8 w-8 animate-spin mb-2" />
-                                    <span>Generando imagen...</span>
-                                </div>
                             ) : (
                                 <span className="text-gray-500">Sin imagen de premio</span>
                             )}
@@ -897,26 +866,17 @@ const App = () => {
                                />
                             </div>
                             <div>
-                                <Label htmlFor="image-gen-prompt">Generar Imagen con IA:</Label>
-                                <div className="flex gap-2 mt-1">
-                                    <Input
-                                        id="image-gen-prompt"
-                                        type="text"
-                                        value={raffleState.imageGenPrompt || ''}
-                                        onChange={(e) => handleLocalFieldChange('imageGenPrompt', e.target.value)}
-                                        onBlur={(e) => handleFieldChange('imageGenPrompt', e.target.value)}
-                                        placeholder="Ej: Un carro deportivo rojo brillante"
-                                        disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed || isGeneratingImage}
-                                        className="w-full"
-                                    />
-                                    <Button
-                                        onClick={handleGenerateImage}
-                                        disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed || isGeneratingImage}
-                                        variant="outline"
-                                    >
-                                        {isGeneratingImage ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
-                                    </Button>
-                                </div>
+                                <Label htmlFor="prize-image-url-input">URL de la Imagen del Premio:</Label>
+                                <Input
+                                    id="prize-image-url-input"
+                                    type="text"
+                                    value={raffleState.prizeImageUrl}
+                                    onChange={(e) => handleLocalFieldChange('prizeImageUrl', e.target.value)}
+                                    onBlur={(e) => handleFieldChange('prizeImageUrl', e.target.value)}
+                                    placeholder="https://example.com/image.png"
+                                    disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
+                                    className="w-full mt-1"
+                                />
                             </div>
                             {isCurrentUserAdmin && !raffleState.isDetailsConfirmed && (
                                 <div className="col-span-1 md:col-span-2">
