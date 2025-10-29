@@ -242,7 +242,7 @@ const App = () => {
             const handlePopState = (event: PopStateEvent) => {
                 const newUrlParams = new URLSearchParams(window.location.search);
                 const newRefFromUrl = newUrlParams.get('ref');
-                if (newRefFromUrl && newRefFromUrl !== (raffleState?.raffleRef || '')) {
+                if (newRefFromUrl && newUrlParams.get('ref') !== (raffleState?.raffleRef || '')) {
                     handleAdminSearch(newRefFromUrl, true);
                 } else if (!newRefFromUrl) {
                     raffleSubscription.current?.();
@@ -307,8 +307,40 @@ const App = () => {
             showNotification(`Error al actualizar el campo ${field}.`, 'error');
         }
     };
+    
+    const compressImage = (file: File): Promise<Blob> => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (event) => {
+                const img = document.createElement('img');
+                img.src = event.target?.result as string;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 1024;
+                    const scaleSize = MAX_WIDTH / img.width;
+                    canvas.width = MAX_WIDTH;
+                    canvas.height = img.height * scaleSize;
+                    
+                    const ctx = canvas.getContext('2d');
+                    if (!ctx) return reject(new Error('Could not get canvas context'));
+                    
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    
+                    canvas.toBlob((blob) => {
+                        if (blob) {
+                            resolve(blob);
+                        } else {
+                            reject(new Error('Canvas to Blob conversion failed'));
+                        }
+                    }, 'image/jpeg', 0.8);
+                };
+            };
+            reader.onerror = error => reject(error);
+        });
+    };
 
-    const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (!file || !raffleState?.raffleRef) return;
     
@@ -316,29 +348,37 @@ const App = () => {
             showNotification("Solo el administrador puede cambiar la imagen.", "warning");
             return;
         }
-    
-        const storageRef = ref(storage, `raffles/${raffleState.raffleRef}/prizeImage_${Date.now()}`);
-        const uploadTask = uploadBytesResumable(storageRef, file);
-    
-        uploadTask.on('state_changed',
-            (snapshot) => {
-                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                setUploadProgress(progress);
-            },
-            (error) => {
-                console.error("Upload failed:", error);
-                showNotification("Error al subir la imagen.", "error");
-                setUploadProgress(null);
-            },
-            async () => {
-                const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                await handleFieldChange('prizeImageUrl', downloadURL);
-                 // The onSnapshot listener will update the state, but we can force it
-                 setRaffleState((s: any) => ({ ...s, prizeImageUrl: downloadURL }));
-                setUploadProgress(null);
-                showNotification("Imagen actualizada correctamente.", "success");
-            }
-        );
+
+        try {
+            setUploadProgress(0);
+            const compressedFile = await compressImage(file);
+            
+            const storageRef = ref(storage, `raffles/${raffleState.raffleRef}/prizeImage_${Date.now()}`);
+            const uploadTask = uploadBytesResumable(storageRef, compressedFile);
+        
+            uploadTask.on('state_changed',
+                (snapshot) => {
+                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                    setUploadProgress(progress);
+                },
+                (error) => {
+                    console.error("Upload failed:", error);
+                    showNotification("Error al subir la imagen.", "error");
+                    setUploadProgress(null);
+                },
+                async () => {
+                    const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                    await handleFieldChange('prizeImageUrl', downloadURL);
+                     setRaffleState((s: any) => ({ ...s, prizeImageUrl: downloadURL }));
+                    setUploadProgress(null);
+                    showNotification("Imagen actualizada correctamente.", "success");
+                }
+            );
+        } catch (error) {
+            console.error("Image compression failed:", error);
+            showNotification("Error al procesar la imagen.", "error");
+            setUploadProgress(null);
+        }
     };
 
     const isCurrentUserAdmin = !!raffleState?.adminId && !!currentAdminId && raffleState.adminId === currentAdminId;
