@@ -61,6 +61,7 @@ const App = () => {
     const [activeTab, setActiveTab] = useState<Tab>('board');
     const [currencySymbol] = useState('$');
     const [appUrl, setAppUrl] = useState('');
+    const [uploadProgress, setUploadProgress] = useState<number | null>(null);
 
 
     const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
@@ -73,6 +74,7 @@ const App = () => {
     
     const ticketModalRef = useRef<HTMLDivElement>(null);
     const raffleSubscription = useRef<Unsubscribe | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
     
     const [raffleState, setRaffleState] = useState<any>(null);
     
@@ -304,6 +306,39 @@ const App = () => {
             console.error(`Error updating field ${field}:`, error);
             showNotification(`Error al actualizar el campo ${field}.`, 'error');
         }
+    };
+
+    const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file || !raffleState?.raffleRef) return;
+    
+        if (!isCurrentUserAdmin) {
+            showNotification("Solo el administrador puede cambiar la imagen.", "warning");
+            return;
+        }
+    
+        const storageRef = ref(storage, `raffles/${raffleState.raffleRef}/prizeImage_${Date.now()}`);
+        const uploadTask = uploadBytesResumable(storageRef, file);
+    
+        uploadTask.on('state_changed',
+            (snapshot) => {
+                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                setUploadProgress(progress);
+            },
+            (error) => {
+                console.error("Upload failed:", error);
+                showNotification("Error al subir la imagen.", "error");
+                setUploadProgress(null);
+            },
+            async () => {
+                const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                await handleFieldChange('prizeImageUrl', downloadURL);
+                 // The onSnapshot listener will update the state, but we can force it
+                 setRaffleState((s: any) => ({ ...s, prizeImageUrl: downloadURL }));
+                setUploadProgress(null);
+                showNotification("Imagen actualizada correctamente.", "success");
+            }
+        );
     };
 
     const isCurrentUserAdmin = !!raffleState?.adminId && !!currentAdminId && raffleState.adminId === currentAdminId;
@@ -720,7 +755,7 @@ const App = () => {
                         
                         <div className="mb-6 rounded-lg overflow-hidden relative aspect-video max-w-2xl mx-auto shadow-lg bg-gray-200 flex items-center justify-center">
                              {raffleState?.prizeImageUrl ? (
-                                <Image src={raffleState.prizeImageUrl} alt="Premio de la rifa" layout="fill" style={{ objectFit: 'cover' }} unoptimized key={raffleState.prizeImageUrl}/>
+                                <Image src={raffleState.prizeImageUrl} alt="Premio de la rifa" layout="fill" objectFit="cover" unoptimized key={raffleState.prizeImageUrl}/>
                             ) : (
                                 <span className="text-gray-500">Sin imagen de premio</span>
                             )}
@@ -865,21 +900,36 @@ const App = () => {
                                    className="w-full mt-1"
                                />
                             </div>
-                            <div>
-                                <Label htmlFor="prize-image-url-input">URL de la Imagen del Premio:</Label>
-                                <Input
-                                    id="prize-image-url-input"
-                                    type="text"
-                                    value={raffleState.prizeImageUrl}
-                                    onChange={(e) => handleLocalFieldChange('prizeImageUrl', e.target.value)}
-                                    onBlur={(e) => handleFieldChange('prizeImageUrl', e.target.value)}
-                                    placeholder="https://example.com/image.png"
-                                    disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
-                                    className="w-full mt-1"
-                                />
-                            </div>
                             {isCurrentUserAdmin && !raffleState.isDetailsConfirmed && (
-                                <div className="col-span-1 md:col-span-2">
+                                <>
+                                <div>
+                                    <Label>Imagen del Premio</Label>
+                                    <Input
+                                        id="prize-image-upload"
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handleImageUpload}
+                                        className="hidden"
+                                        ref={fileInputRef}
+                                        disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
+                                    />
+                                    <Button
+                                        onClick={() => fileInputRef.current?.click()}
+                                        variant="outline"
+                                        className="w-full mt-1 flex items-center gap-2"
+                                        disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed || uploadProgress !== null}
+                                    >
+                                        {uploadProgress !== null ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                                        Subir Imagen del Premio
+                                    </Button>
+                                    {uploadProgress !== null && (
+                                        <div className="mt-2">
+                                            <Progress value={uploadProgress} className="w-full" />
+                                            <p className="text-sm text-center mt-1">{`Subiendo... ${Math.round(uploadProgress)}%`}</p>
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="col-span-1 md:col-span-2 mt-4">
                                     <Button
                                         onClick={handleConfirmDetails}
                                         className="w-full bg-purple-500 text-white font-medium rounded-lg hover:bg-purple-600 transition-colors"
@@ -887,6 +937,7 @@ const App = () => {
                                         Confirmar Detalles del Premio
                                     </Button>
                                 </div>
+                                </>
                             )}
                         </div>
                    </div>
@@ -1733,3 +1784,5 @@ const App = () => {
 };
 
 export default App;
+
+    

@@ -47,3 +47,5 @@ if (typeof window !== 'undefined' && !persistenceEnabled) {
 
 
 export { db, storage, persistenceEnabled };
+
+    
