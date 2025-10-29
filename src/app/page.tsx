@@ -61,8 +61,6 @@ const App = () => {
     const [activeTab, setActiveTab] = useState<Tab>('board');
     const [currencySymbol] = useState('$');
     const [appUrl, setAppUrl] = useState('');
-    const [uploadProgress, setUploadProgress] = useState<number | null>(null);
-
 
     const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
     const [ticketInfo, setTicketInfo] = useState<any>(null);
@@ -74,7 +72,6 @@ const App = () => {
     
     const ticketModalRef = useRef<HTMLDivElement>(null);
     const raffleSubscription = useRef<Unsubscribe | null>(null);
-    const fileInputRef = useRef<HTMLInputElement>(null);
     
     const [raffleState, setRaffleState] = useState<any>(null);
     
@@ -308,79 +305,6 @@ const App = () => {
         }
     };
     
-    const compressImage = (file: File): Promise<Blob> => {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = (event) => {
-                const img = document.createElement('img');
-                img.src = event.target?.result as string;
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 1024;
-                    const scaleSize = MAX_WIDTH / img.width;
-                    canvas.width = MAX_WIDTH;
-                    canvas.height = img.height * scaleSize;
-                    
-                    const ctx = canvas.getContext('2d');
-                    if (!ctx) return reject(new Error('Could not get canvas context'));
-                    
-                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    
-                    canvas.toBlob((blob) => {
-                        if (blob) {
-                            resolve(blob);
-                        } else {
-                            reject(new Error('Canvas to Blob conversion failed'));
-                        }
-                    }, 'image/jpeg', 0.8);
-                };
-            };
-            reader.onerror = error => reject(error);
-        });
-    };
-
-    const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (!file || !raffleState?.raffleRef) return;
-    
-        if (!isCurrentUserAdmin) {
-            showNotification("Solo el administrador puede cambiar la imagen.", "warning");
-            return;
-        }
-
-        try {
-            setUploadProgress(0);
-            const compressedFile = await compressImage(file);
-            
-            const storageRef = ref(storage, `raffles/${raffleState.raffleRef}/prizeImage_${Date.now()}`);
-            const uploadTask = uploadBytesResumable(storageRef, compressedFile);
-        
-            uploadTask.on('state_changed',
-                (snapshot) => {
-                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                    setUploadProgress(progress);
-                },
-                (error) => {
-                    console.error("Upload failed:", error);
-                    showNotification("Error al subir la imagen.", "error");
-                    setUploadProgress(null);
-                },
-                async () => {
-                    const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                    await handleFieldChange('prizeImageUrl', downloadURL);
-                     setRaffleState((s: any) => ({ ...s, prizeImageUrl: downloadURL }));
-                    setUploadProgress(null);
-                    showNotification("Imagen actualizada correctamente.", "success");
-                }
-            );
-        } catch (error) {
-            console.error("Image compression failed:", error);
-            showNotification("Error al procesar la imagen.", "error");
-            setUploadProgress(null);
-        }
-    };
-
     const isCurrentUserAdmin = !!raffleState?.adminId && !!currentAdminId && raffleState.adminId === currentAdminId;
     
     const allAssignedNumbers = new Set(raffleState?.participants.map((p: Participant) => parseInt(p.raffleNumber, 10)) || []);
@@ -943,31 +867,17 @@ const App = () => {
                             {isCurrentUserAdmin && !raffleState.isDetailsConfirmed && (
                                 <>
                                 <div>
-                                    <Label>Imagen del Premio</Label>
+                                    <Label htmlFor="prize-image-url-input">URL de la Imagen del Premio</Label>
                                     <Input
-                                        id="prize-image-upload"
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={handleImageUpload}
-                                        className="hidden"
-                                        ref={fileInputRef}
+                                        id="prize-image-url-input"
+                                        type="text"
+                                        value={raffleState.prizeImageUrl || ''}
+                                        onChange={(e) => handleLocalFieldChange('prizeImageUrl', e.target.value)}
+                                        onBlur={(e) => handleFieldChange('prizeImageUrl', e.target.value)}
+                                        placeholder="https://ejemplo.com/imagen.png"
                                         disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
+                                        className="w-full mt-1"
                                     />
-                                    <Button
-                                        onClick={() => fileInputRef.current?.click()}
-                                        variant="outline"
-                                        className="w-full mt-1 flex items-center gap-2"
-                                        disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed || uploadProgress !== null}
-                                    >
-                                        {uploadProgress !== null ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                                        Subir Imagen del Premio
-                                    </Button>
-                                    {uploadProgress !== null && (
-                                        <div className="mt-2">
-                                            <Progress value={uploadProgress} className="w-full" />
-                                            <p className="text-sm text-center mt-1">{`Subiendo... ${Math.round(uploadProgress)}%`}</p>
-                                        </div>
-                                    )}
                                 </div>
                                 <div className="col-span-1 md:col-span-2 mt-4">
                                     <Button
