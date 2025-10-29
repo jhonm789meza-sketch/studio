@@ -1,57 +1,64 @@
 'use server';
 /**
- * @fileOverview A flow for generating an image from a text prompt.
+ * @fileOverview A flow for generating an image from a text prompt using OpenAI.
  *
  * - generateImage - A function that handles image generation.
  */
 
-import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import { uploadString, ref, getDownloadURL } from 'firebase/storage';
 import { storage } from '@/lib/firebase';
+import axios from 'axios';
 
 const GenerateImageOutputSchema = z.object({
   imageUrl: z.string().optional(),
   error: z.string().optional(),
 });
 
+const API_KEY = process.env.OPENAI_API_KEY;
+const API_URL = 'https://api.openai.com/v1/images/generations';
+
 export async function generateImage(
   prompt: string
 ): Promise<z.infer<typeof GenerateImageOutputSchema>> {
-  return generateImageFlow(prompt);
-}
+    if (!API_KEY) {
+        return { error: 'La clave de API de OpenAI no está configurada en el servidor.' };
+    }
 
-const generateImageFlow = ai.defineFlow(
-  {
-    name: 'generateImageFlow',
-    inputSchema: z.string(),
-    outputSchema: GenerateImageOutputSchema,
-  },
-  async (prompt) => {
     try {
-      const { media } = await ai.generate({
-        model: 'googleai/imagen-4.0-fast-generate-001',
-        prompt: prompt,
-      });
+        const response = await axios.post(
+            API_URL,
+            {
+                prompt: prompt,
+                n: 1,
+                size: '1024x1024',
+                model: "dall-e-3",
+                quality: "standard",
+                response_format: 'b64_json', // Request image as base64
+            },
+            {
+                headers: {
+                    'Authorization': `Bearer ${API_KEY}`,
+                    'Content-Type': 'application/json',
+                },
+            }
+        );
 
-      if (!media || !media.url) {
-        throw new Error('La IA no pudo generar una imagen.');
-      }
-
-      // The image is a data URI (e.g., "data:image/png;base64,..."). We need to upload it to Firebase Storage.
-      const storageRef = ref(storage, `generated-images/${Date.now()}.png`);
-      
-      const snapshot = await uploadString(storageRef, media.url, 'data_url');
-      const downloadURL = await getDownloadURL(snapshot.ref);
-
-      return { imageUrl: downloadURL };
-    } catch (err: any) {
-        const errorMessage = err.cause?.message || err.message || 'Error desconocido al generar la imagen.';
-        // Check for specific billing error
-        if (errorMessage.includes('only be accessed by billed users')) {
-            return { error: 'La generación de imágenes con IA requiere un plan de facturación activo en su cuenta de Google Cloud.' };
+        const b64Json = response.data.data[0].b64_json;
+        if (!b64Json) {
+            throw new Error('La respuesta de la API no incluyó datos de imagen.');
         }
+
+        const dataUrl = `data:image/png;base64,${b64Json}`;
+
+        const storageRef = ref(storage, `generated-images/${Date.now()}.png`);
+        const snapshot = await uploadString(storageRef, dataUrl, 'data_url');
+        const downloadURL = await getDownloadURL(snapshot.ref);
+
+        return { imageUrl: downloadURL };
+    } catch (err: any) {
+        console.error('Error generating image with OpenAI:', err.response ? err.response.data : err.message);
+        const errorMessage = err.response?.data?.error?.message || err.message || 'Error desconocido al generar la imagen.';
         return { error: `Error de la IA: ${errorMessage}` };
     }
-  }
-);
+}
