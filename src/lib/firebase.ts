@@ -21,13 +21,13 @@ let persistenceEnabled: Promise<void> | null = null;
 
 try {
   app = getApp();
-  db = getFirestore(app);
-  storage = getStorage(app);
 } catch (e) {
   app = initializeApp(firebaseConfig);
-  db = getFirestore(app);
-  storage = getStorage(app);
 }
+
+db = getFirestore(app);
+storage = getStorage(app);
+
 
 // Enable offline persistence
 if (typeof window !== 'undefined' && !persistenceEnabled) {
