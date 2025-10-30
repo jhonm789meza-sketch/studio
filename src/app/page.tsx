@@ -4,7 +4,6 @@ import jsPDF from 'jspdf';
 import { RaffleManager } from '@/lib/RaffleManager';
 import { db, storage, persistenceEnabled } from '@/lib/firebase';
 import { doc, onSnapshot, setDoc, getDoc, deleteDoc, Unsubscribe } from 'firebase/firestore';
-import { ref, uploadBytesResumable, getDownloadURL, UploadTask } from 'firebase/storage';
 import Image from 'next/image';
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
@@ -81,9 +80,7 @@ const App = () => {
     const [showConfetti, setShowConfetti] = useState(false);
     const [currentAdminId, setCurrentAdminId] = useState<string | null>(null);
     const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
-    const [uploadProgress, setUploadProgress] = useState<number | null>(null);
-    const fileInputRef = useRef<HTMLInputElement>(null);
-
+    
     const raffleManager = new RaffleManager(db);
     
     const raffleMode = raffleState?.raffleMode || 'two-digit';
@@ -667,91 +664,8 @@ const App = () => {
         setTicketInfo(null);
     };
 
-    const compressImage = (file: File): Promise<File> => {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = (event) => {
-                const img = document.createElement('img');
-                img.src = event.target?.result as string;
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 1024;
-                    const scaleSize = MAX_WIDTH / img.width;
-                    canvas.width = MAX_WIDTH;
-                    canvas.height = img.height * scaleSize;
-    
-                    const ctx = canvas.getContext('2d');
-                    if (!ctx) {
-                        return reject(new Error('No se pudo obtener el contexto del canvas'));
-                    }
-                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-    
-                    canvas.toBlob(
-                        (blob) => {
-                            if (!blob) {
-                                return reject(new Error('La compresión falló'));
-                            }
-                            const newFile = new File([blob], file.name, {
-                                type: 'image/jpeg',
-                                lastModified: Date.now(),
-                            });
-                            resolve(newFile);
-                        },
-                        'image/jpeg',
-                        0.8 
-                    );
-                };
-            };
-            reader.onerror = (error) => reject(error);
-        });
-    };
 
-    const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-        if (!raffleState?.raffleRef || !isCurrentUserAdmin) return;
-        const file = event.target.files?.[0];
-        if (!file) return;
-
-        setLoading(true);
-        showNotification('Comprimiendo imagen...', 'info');
-
-        try {
-            const compressedFile = await compressImage(file);
-            showNotification('Imagen comprimida. Subiendo...', 'info');
-
-            const storageRef = ref(storage, `raffles/${raffleState.raffleRef}/prizeImage.jpg`);
-            const uploadTask = uploadBytesResumable(storageRef, compressedFile);
-
-            uploadTask.on('state_changed',
-                (snapshot) => {
-                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                    setUploadProgress(progress);
-                },
-                (error) => {
-                    console.error("Error subiendo imagen:", error);
-                    showNotification('Error al subir la imagen.', 'error');
-                    setUploadProgress(null);
-                    setLoading(false);
-                },
-                async () => {
-                    const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                    await handleFieldChange('prizeImageUrl', downloadURL);
-                    handleLocalFieldChange('prizeImageUrl', downloadURL); // Ensure local state is updated immediately
-                    showNotification('Imagen del premio actualizada.', 'success');
-                    setUploadProgress(null);
-                    setLoading(false);
-                }
-            );
-
-        } catch (error) {
-            console.error("Error compressing or uploading image:", error);
-            showNotification('Error al procesar la imagen.', 'error');
-            setLoading(false);
-        }
-    };
-
-
-    if (loading && !uploadProgress) {
+    if (loading) {
         return <div className="flex justify-center items-center h-screen text-xl font-semibold">Cargando...</div>;
     }
     
@@ -951,29 +865,18 @@ const App = () => {
                             </div>
                             {isCurrentUserAdmin && !raffleState.isDetailsConfirmed && (
                                 <>
-                                <div className="mt-2">
+                                <div>
+                                    <Label htmlFor="prize-image-url-input">URL Imagen del Premio:</Label>
                                     <Input
-                                        type="file"
-                                        ref={fileInputRef}
-                                        onChange={handleImageUpload}
-                                        className="hidden"
-                                        accept="image/*"
+                                        id="prize-image-url-input"
+                                        type="text"
+                                        value={raffleState.prizeImageUrl}
+                                        onChange={(e) => handleLocalFieldChange('prizeImageUrl', e.target.value)}
+                                        onBlur={(e) => handleFieldChange('prizeImageUrl', e.target.value)}
+                                        placeholder="https://example.com/imagen.png"
+                                        disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
+                                        className="w-full mt-1"
                                     />
-                                    <Button
-                                        onClick={() => fileInputRef.current?.click()}
-                                        variant="outline"
-                                        className="w-full"
-                                        disabled={uploadProgress !== null}
-                                    >
-                                        <Upload className="mr-2 h-4 w-4" />
-                                        Subir Imagen del Premio
-                                    </Button>
-                                    {uploadProgress !== null && (
-                                        <div className="mt-2">
-                                            <Progress value={uploadProgress} />
-                                            <p className="text-xs text-center mt-1">{`Subiendo... ${Math.round(uploadProgress)}%`}</p>
-                                        </div>
-                                    )}
                                 </div>
                                 <div className="col-span-1 md:col-span-2 mt-4">
                                     <Button
