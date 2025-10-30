@@ -736,6 +736,7 @@ const App = () => {
                 async () => {
                     const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
                     await handleFieldChange('prizeImageUrl', downloadURL);
+                    handleLocalFieldChange('prizeImageUrl', downloadURL); // Ensure local state is updated immediately
                     showNotification('Imagen del premio actualizada.', 'success');
                     setUploadProgress(null);
                     setLoading(false);
