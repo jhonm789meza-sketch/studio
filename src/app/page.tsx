@@ -692,7 +692,7 @@ const App = () => {
 
     const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         if (!event.target.files || event.target.files.length === 0) return;
-        if (!isCurrentUserAdmin || !raffleState.raffleRef) {
+        if (!isCurrentUserAdmin || !raffleState?.raffleRef) {
             showNotification('No tienes permiso para cambiar la imagen.', 'error');
             return;
         }
@@ -719,7 +719,10 @@ const App = () => {
                 async () => {
                     const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
                     await handleFieldChange('prizeImageUrl', downloadURL);
-                    handleLocalFieldChange('prizeImageUrl', downloadURL); // Update local state immediately
+                    setRaffleState((prevState: any) => ({
+                        ...prevState,
+                        prizeImageUrl: downloadURL,
+                    }));
                     showNotification('Imagen del premio actualizada.', 'success');
                     setLoading(false);
                     setUploadProgress(0);
