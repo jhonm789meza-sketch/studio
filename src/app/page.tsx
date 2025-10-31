@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect, useRef, useTransition } from 'react';
 import jsPDF from 'jspdf';
@@ -9,7 +10,7 @@ import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } f
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House, Clock, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Upload, Wand2 } from 'lucide-react';
+import { Menu, Award, Lock, House, Clock, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Upload, Wand2, Search } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -770,17 +771,25 @@ const App = () => {
                            </div>
                            {isCurrentUserAdmin && !raffleState.isDetailsConfirmed && (
                                 <div>
-                                    <Label htmlFor="prize-image-url-input">URL de la Imagen del Premio:</Label>
-                                    <Input
-                                        id="prize-image-url-input"
-                                        type="text"
-                                        value={raffleState.prizeImageUrl}
-                                        onChange={(e) => handleLocalFieldChange('prizeImageUrl', e.target.value)}
-                                        onBlur={(e) => handleFieldChange('prizeImageUrl', e.target.value)}
-                                        placeholder="https://example.com/image.png"
-                                        disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
-                                        className="w-full mt-1"
-                                    />
+                                    <Label htmlFor="prize-image-url-input">Imagen del Premio</Label>
+                                    <div className="flex gap-2 mt-1">
+                                        <a href="https://www.google.com/imghp" target="_blank" rel="noopener noreferrer" className="flex-shrink-0">
+                                            <Button type="button" variant="outline">
+                                                <Search className="h-4 w-4 mr-2" />
+                                                Buscar en Google
+                                            </Button>
+                                        </a>
+                                        <Input
+                                            id="prize-image-url-input"
+                                            type="text"
+                                            value={raffleState.prizeImageUrl}
+                                            onChange={(e) => handleLocalFieldChange('prizeImageUrl', e.target.value)}
+                                            onBlur={(e) => handleFieldChange('prizeImageUrl', e.target.value)}
+                                            placeholder="Pegar enlace directo de la imagen"
+                                            disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
+                                            className="w-full"
+                                        />
+                                    </div>
                                 </div>
                            )}
                            <div>
