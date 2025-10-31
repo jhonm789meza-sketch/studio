@@ -81,9 +81,6 @@ const App = () => {
     const [showConfetti, setShowConfetti] = useState(false);
     const [currentAdminId, setCurrentAdminId] = useState<string | null>(null);
     const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
-
-    const [uploadProgress, setUploadProgress] = useState(0);
-    const fileInputRef = useRef<HTMLInputElement>(null);
     
     const raffleManager = new RaffleManager(db);
     
@@ -465,24 +462,22 @@ const App = () => {
     const handleDownloadTicket = () => {
         const ticketElement = ticketModalRef.current;
         if (!ticketElement) return;
-
-        const originalWidth = ticketElement.style.width;
-        const originalHeight = ticketElement.style.height;
-
-        ticketElement.style.width = '320px';
-        ticketElement.style.height = 'auto';
     
         const targetInfo = generatedTicketData || ticketInfo;
         if (!targetInfo) return;
-    
+        
+        // Temporarily set a fixed size for canvas rendering if needed
+        const originalWidth = ticketElement.style.width;
+        ticketElement.style.width = '320px';
+
         import('html2canvas').then(html2canvas => {
             html2canvas(ticketElement, { 
                 useCORS: true, 
                 backgroundColor: null,
                 scale: 3, // Increase scale for better quality
             }).then(canvas => {
+                // Restore original style
                 ticketElement.style.width = originalWidth;
-                ticketElement.style.height = originalHeight;
 
                 const imgData = canvas.toDataURL('image/png');
                 const pdf = new jsPDF({
@@ -658,82 +653,6 @@ const App = () => {
         window.open(facebookUrl, '_blank');
         setIsShareDialogOpen(false);
     };
-
-    const compressImage = (file: File): Promise<Blob> => {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = (event) => {
-                const img = document.createElement('img');
-                img.src = event.target?.result as string;
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 1024;
-                    const scaleSize = MAX_WIDTH / img.width;
-                    canvas.width = MAX_WIDTH;
-                    canvas.height = img.height * scaleSize;
-                    const ctx = canvas.getContext('2d');
-                    if (!ctx) {
-                        return reject(new Error('No se pudo obtener el contexto del canvas'));
-                    }
-                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    canvas.toBlob((blob) => {
-                        if (blob) {
-                            resolve(blob);
-                        } else {
-                            reject(new Error('La compresión de la imagen falló'));
-                        }
-                    }, 'image/jpeg', 0.8);
-                };
-            };
-            reader.onerror = error => reject(error);
-        });
-    };
-
-    const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-        if (!event.target.files || event.target.files.length === 0) return;
-        if (!isCurrentUserAdmin || !raffleState?.raffleRef) {
-            showNotification('No tienes permiso para cambiar la imagen.', 'error');
-            return;
-        }
-    
-        const file = event.target.files[0];
-        setLoading(true);
-        setUploadProgress(0);
-    
-        try {
-            const compressedBlob = await compressImage(file);
-            const imageRef = storageRef(storage, `raffles/${raffleState.raffleRef}-${Date.now()}.jpg`);
-            const uploadTask = uploadBytesResumable(imageRef, compressedBlob);
-    
-            uploadTask.on('state_changed',
-                (snapshot) => {
-                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                    setUploadProgress(progress);
-                },
-                (error) => {
-                    console.error("Error al subir imagen:", error);
-                    showNotification('Error al subir la imagen.', 'error');
-                    setLoading(false);
-                },
-                async () => {
-                    const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                    await handleFieldChange('prizeImageUrl', downloadURL);
-                    setRaffleState((prevState: any) => ({
-                        ...prevState,
-                        prizeImageUrl: downloadURL,
-                    }));
-                    showNotification('Imagen del premio actualizada.', 'success');
-                    setLoading(false);
-                    setUploadProgress(0);
-                }
-            );
-        } catch (error) {
-            console.error("Error comprimiendo o subiendo imagen:", error);
-            showNotification('Error al procesar la imagen.', 'error');
-            setLoading(false);
-        }
-    };
     
     const allNumbers = Array.from({ length: totalNumbers }, (_, i) => i);
     
@@ -804,36 +723,6 @@ const App = () => {
                             )}
                         </div>
 
-                        {isCurrentUserAdmin && !raffleState.isDetailsConfirmed && (
-                            <div className="mb-6">
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    ref={fileInputRef}
-                                    onChange={handleImageUpload}
-                                    className="hidden"
-                                />
-                                <Button
-                                    onClick={() => fileInputRef.current?.click()}
-                                    className="w-full bg-blue-500 text-white font-medium rounded-lg hover:bg-blue-600"
-                                    disabled={loading}
-                                >
-                                    {loading && uploadProgress > 0 ? (
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    ) : (
-                                        <Upload className="mr-2 h-4 w-4" />
-                                    )}
-                                    Subir Imagen del Premio
-                                </Button>
-                                {uploadProgress > 0 && (
-                                    <div className="mt-2">
-                                        <Progress value={uploadProgress} className="w-full" />
-                                        <p className="text-center text-sm mt-1">{Math.round(uploadProgress)}%</p>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-
                         <div className="space-y-4 mb-6">
                            <div>
                                <Label htmlFor="organizer-name-input">Quien Organiza:</Label>
@@ -879,6 +768,21 @@ const App = () => {
                                    className="w-full mt-1"
                                />
                            </div>
+                           {isCurrentUserAdmin && !raffleState.isDetailsConfirmed && (
+                                <div>
+                                    <Label htmlFor="prize-image-url-input">URL de la Imagen del Premio:</Label>
+                                    <Input
+                                        id="prize-image-url-input"
+                                        type="text"
+                                        value={raffleState.prizeImageUrl}
+                                        onChange={(e) => handleLocalFieldChange('prizeImageUrl', e.target.value)}
+                                        onBlur={(e) => handleFieldChange('prizeImageUrl', e.target.value)}
+                                        placeholder="https://example.com/image.png"
+                                        disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
+                                        className="w-full mt-1"
+                                    />
+                                </div>
+                           )}
                            <div>
                                <Label htmlFor="value-input">Valor:</Label>
                                <Input
