@@ -20,7 +20,6 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
-import { InstallPwaDialog } from '@/components/install-pwa-dialog';
 
 
 type RaffleMode = 'two-digit' | 'three-digit';
@@ -84,8 +83,6 @@ const App = () => {
     const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
     
     const raffleManager = new RaffleManager(db);
-    const [installPromptEvent, setInstallPromptEvent] = useState<any>(null);
-    const [isInstallDialogOpen, setIsInstallDialogOpen] = useState(false);
     
     const raffleMode = raffleState?.raffleMode || 'two-digit';
     const totalNumbers = raffleMode === 'two-digit' ? 100 : 1000;
@@ -206,12 +203,6 @@ const App = () => {
           });
         }
     
-        const handleBeforeInstallPrompt = (e: Event) => {
-          e.preventDefault();
-          setInstallPromptEvent(e);
-        };
-        window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    
         const initialize = async () => {
           setLoading(true);
           if (persistenceEnabled) {
@@ -275,7 +266,6 @@ const App = () => {
     
           return () => {
             window.removeEventListener('popstate', handlePopState);
-            window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
             raffleSubscription.current?.();
           };
         };
@@ -676,24 +666,6 @@ const App = () => {
         const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(urlToShare)}`;
         window.open(facebookUrl, '_blank');
         setIsShareDialogOpen(false);
-    };
-    
-    const handleInstallClick = () => {
-        if (installPromptEvent) {
-          installPromptEvent.prompt();
-          installPromptEvent.userChoice.then((choiceResult: { outcome: string }) => {
-            if (choiceResult.outcome === 'accepted') {
-              console.log('User accepted the install prompt');
-            } else {
-              console.log('User dismissed the install prompt');
-            }
-            // We don't need to do anything with the prompt event anymore
-            setInstallPromptEvent(null);
-          });
-        } else {
-          // If no prompt, it's likely iOS or an unsupported browser, so we show the dialog.
-          setIsInstallDialogOpen(true);
-        }
     };
     
     const allNumbers = Array.from({ length: totalNumbers }, (_, i) => i);
@@ -1214,10 +1186,6 @@ const App = () => {
                                     <DropdownMenuItem onSelect={() => setIsShareDialogOpen(true)}>
                                         <Share2 className="mr-2 h-4 w-4" />
                                         <span>Compartir</span>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onSelect={handleInstallClick}>
-                                        <Download className="mr-2 h-4 w-4" />
-                                        <span>Instalar Aplicación</span>
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
@@ -1784,11 +1752,6 @@ const App = () => {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-            <InstallPwaDialog
-              isOpen={isInstallDialogOpen}
-              onClose={() => setIsInstallDialogOpen(false)}
-              installPromptEvent={installPromptEvent}
-            />
         </div>
     );
 };
