@@ -1588,6 +1588,9 @@ const App = () => {
             
             <Dialog open={isTicketModalOpen} onOpenChange={closeTicketModal}>
                 <DialogContent className="w-auto max-w-xs p-0 border-0 bg-transparent shadow-none font-sans">
+                     <DialogHeader>
+                        <DialogTitle className="sr-only">Tiquete de Rifa</DialogTitle>
+                     </DialogHeader>
                      {ticketInfo && (
                         <div>
                             <div
