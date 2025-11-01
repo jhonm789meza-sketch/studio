@@ -21,6 +21,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
+import { CountrySelectionDialog } from '@/components/country-selection-dialog';
 
 
 type RaffleMode = 'two-digit' | 'three-digit' | 'infinite';
@@ -83,6 +84,9 @@ const App = () => {
     const [currentAdminId, setCurrentAdminId] = useState<string | null>(null);
     const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
     
+    const [isCountrySelectionOpen, setIsCountrySelectionOpen] = useState(false);
+    const [selectedRaffleMode, setSelectedRaffleMode] = useState<RaffleMode | null>(null);
+
     const raffleManager = new RaffleManager(db);
     
     const raffleMode = raffleState?.raffleMode || 'two-digit';
@@ -616,7 +620,13 @@ const App = () => {
         await setDoc(doc(db, "raffles", raffleState.raffleRef), { [field]: value }, { merge: true });
     };
 
+    const handlePriceButtonClick = (mode: RaffleMode) => {
+        setSelectedRaffleMode(mode);
+        setIsCountrySelectionOpen(true);
+    };
+
     const handleActivateBoard = async (mode: RaffleMode) => {
+        setIsCountrySelectionOpen(false);
         setLoading(true);
         try {
             const adminId = `admin_${Date.now()}_${Math.random()}`;
@@ -1236,7 +1246,7 @@ const App = () => {
                                             </div>
                                         </div>
                                         <div className="p-6 pt-0 space-y-2">
-                                            <Button onClick={() => handleActivateBoard('two-digit')} size="lg" className="w-full bg-green-500 hover:bg-green-600 text-white font-bold">
+                                            <Button onClick={() => handlePriceButtonClick('two-digit')} size="lg" className="w-full bg-green-500 hover:bg-green-600 text-white font-bold">
                                                 Precio
                                             </Button>
                                         </div>
@@ -1256,7 +1266,7 @@ const App = () => {
                                             </div>
                                         </div>
                                         <div className="p-6 pt-0 space-y-2">
-                                            <Button onClick={() => handleActivateBoard('three-digit')} size="lg" className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold">
+                                            <Button onClick={() => handlePriceButtonClick('three-digit')} size="lg" className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold">
                                                 Precio
                                             </Button>
                                         </div>
@@ -1276,7 +1286,7 @@ const App = () => {
                                             </div>
                                         </div>
                                         <div className="p-6 pt-0 space-y-2">
-                                            <Button onClick={() => handleActivateBoard('infinite')} size="lg" className="w-full bg-red-500 hover:bg-red-600 text-white font-bold">
+                                            <Button onClick={() => handlePriceButtonClick('infinite')} size="lg" className="w-full bg-red-500 hover:bg-red-600 text-white font-bold">
                                                 Precio
                                             </Button>
                                         </div>
@@ -1785,10 +1795,18 @@ const App = () => {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+            
+            <CountrySelectionDialog
+              isOpen={isCountrySelectionOpen}
+              onClose={() => setIsCountrySelectionOpen(false)}
+              onSelectCountry={() => {
+                if (selectedRaffleMode) {
+                  handleActivateBoard(selectedRaffleMode);
+                }
+              }}
+            />
         </div>
     );
 };
 
 export default App;
-
-    
