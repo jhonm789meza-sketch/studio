@@ -20,6 +20,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
+import { InstallPwaDialog } from '@/components/install-pwa-dialog';
 
 
 type RaffleMode = 'two-digit' | 'three-digit';
@@ -84,6 +85,7 @@ const App = () => {
     
     const raffleManager = new RaffleManager(db);
     const [installPromptEvent, setInstallPromptEvent] = useState<any>(null);
+    const [isInstallDialogOpen, setIsInstallDialogOpen] = useState(false);
     
     const raffleMode = raffleState?.raffleMode || 'two-digit';
     const totalNumbers = raffleMode === 'two-digit' ? 100 : 1000;
@@ -677,21 +679,9 @@ const App = () => {
     };
     
     const handleInstallClick = () => {
-        if (installPromptEvent) {
-            installPromptEvent.prompt();
-            installPromptEvent.userChoice.then((choiceResult: { outcome: string }) => {
-                if (choiceResult.outcome === 'accepted') {
-                    showNotification('¡Aplicación instalada!', 'success');
-                } else {
-                    showNotification('Instalación cancelada.', 'info');
-                }
-                setInstallPromptEvent(null);
-            });
-        } else {
-            showNotification('La instalación no está disponible en este navegador.', 'info');
-        }
+      setIsInstallDialogOpen(true);
     };
-
+    
     const allNumbers = Array.from({ length: totalNumbers }, (_, i) => i);
     
     const backgroundImage = raffleState?.prizeImageUrl;
@@ -1780,6 +1770,11 @@ const App = () => {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+            <InstallPwaDialog
+              isOpen={isInstallDialogOpen}
+              onClose={() => setIsInstallDialogOpen(false)}
+              installPromptEvent={installPromptEvent}
+            />
         </div>
     );
 };
