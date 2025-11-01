@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect, useRef, useTransition } from 'react';
 import jsPDF from 'jspdf';
@@ -1236,7 +1237,7 @@ const App = () => {
                                         </div>
                                         <div className="p-6 pt-0 space-y-2">
                                             <Button onClick={() => handleActivateBoard('two-digit')} size="lg" className="w-full bg-green-500 hover:bg-green-600 text-white font-bold">
-                                                Activar ($1.500 COP)
+                                                $1.500 COP
                                             </Button>
                                         </div>
                                     </div>
@@ -1256,7 +1257,7 @@ const App = () => {
                                         </div>
                                         <div className="p-6 pt-0 space-y-2">
                                             <Button onClick={() => handleActivateBoard('three-digit')} size="lg" className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold">
-                                                Activar ($15.000 COP)
+                                                $15.000 COP
                                             </Button>
                                         </div>
                                     </div>
@@ -1276,7 +1277,7 @@ const App = () => {
                                         </div>
                                         <div className="p-6 pt-0 space-y-2">
                                             <Button onClick={() => handleActivateBoard('infinite')} size="lg" className="w-full bg-red-500 hover:bg-red-600 text-white font-bold">
-                                                Activar ($1.500 COP)
+                                                $1.500 COP
                                             </Button>
                                         </div>
                                     </div>
@@ -1789,3 +1790,5 @@ const App = () => {
 };
 
 export default App;
+
+    
