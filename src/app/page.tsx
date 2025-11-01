@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect, useRef, useTransition } from 'react';
 import jsPDF from 'jspdf';
@@ -10,7 +9,7 @@ import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } f
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House, Clock, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Upload, Wand2, Search } from 'lucide-react';
+import { Menu, Award, Lock, House, Clock, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Upload, Wand2, Search, Download } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -84,6 +83,7 @@ const App = () => {
     const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
     
     const raffleManager = new RaffleManager(db);
+    const [installPromptEvent, setInstallPromptEvent] = useState<any>(null);
     
     const raffleMode = raffleState?.raffleMode || 'two-digit';
     const totalNumbers = raffleMode === 'two-digit' ? 100 : 1000;
@@ -191,6 +191,12 @@ const App = () => {
 
 
     useEffect(() => {
+        const handleBeforeInstallPrompt = (e: Event) => {
+            e.preventDefault();
+            setInstallPromptEvent(e);
+        };
+        window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
         const initialize = async () => {
             setLoading(true);
             if (persistenceEnabled) {
@@ -253,6 +259,7 @@ const App = () => {
     
             return () => {
                 window.removeEventListener('popstate', handlePopState);
+                window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
                 raffleSubscription.current?.();
             };
         };
@@ -655,6 +662,20 @@ const App = () => {
         setIsShareDialogOpen(false);
     };
     
+    const handleInstallClick = () => {
+        if (installPromptEvent) {
+            installPromptEvent.prompt();
+            installPromptEvent.userChoice.then((choiceResult: { outcome: string }) => {
+                if (choiceResult.outcome === 'accepted') {
+                    showNotification('¡Aplicación instalada!', 'success');
+                } else {
+                    showNotification('Instalación cancelada.', 'info');
+                }
+                setInstallPromptEvent(null);
+            });
+        }
+    };
+
     const allNumbers = Array.from({ length: totalNumbers }, (_, i) => i);
     
     const backgroundImage = raffleState?.prizeImageUrl;
@@ -1174,6 +1195,15 @@ const App = () => {
                                         <Share2 className="mr-2 h-4 w-4" />
                                         <span>Compartir</span>
                                     </DropdownMenuItem>
+                                    {installPromptEvent && (
+                                    <>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem onSelect={handleInstallClick}>
+                                            <Download className="mr-2 h-4 w-4" />
+                                            <span>Instalar Aplicación</span>
+                                        </DropdownMenuItem>
+                                    </>
+                                    )}
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         </div>

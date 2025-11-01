@@ -19,6 +19,7 @@ const libreBaskerville = Libre_Baskerville({
 export const metadata: Metadata = {
   title: 'Tablero de Rifas',
   description: 'Aplicación de Rifas con Firebase',
+  manifest: '/manifest.json',
 };
 
 export default function RootLayout({
@@ -28,11 +29,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
+      <head>
+          <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+      </head>
       <body className={`${inter.variable} ${anton.variable} ${libreBaskerville.variable}`}>
         {children}
       </body>
     </html>
   );
 }
-
-    
