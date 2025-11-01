@@ -679,7 +679,21 @@ const App = () => {
     };
     
     const handleInstallClick = () => {
-      setIsInstallDialogOpen(true);
+        if (installPromptEvent) {
+          installPromptEvent.prompt();
+          installPromptEvent.userChoice.then((choiceResult: { outcome: string }) => {
+            if (choiceResult.outcome === 'accepted') {
+              console.log('User accepted the install prompt');
+            } else {
+              console.log('User dismissed the install prompt');
+            }
+            // We don't need to do anything with the prompt event anymore
+            setInstallPromptEvent(null);
+          });
+        } else {
+          // If no prompt, it's likely iOS or an unsupported browser, so we show the dialog.
+          setIsInstallDialogOpen(true);
+        }
     };
     
     const allNumbers = Array.from({ length: totalNumbers }, (_, i) => i);
