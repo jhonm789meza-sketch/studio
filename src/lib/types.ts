@@ -35,7 +35,7 @@ export interface Raffle {
     manualWinnerNumber: string;
     isPaid: boolean;
     adminId: null | string;
-    raffleMode: 'two-digit' | 'three-digit';
+    raffleMode: 'two-digit' | 'three-digit' | 'infinite';
     prizeImageUrl: string;
     imageGenPrompt: string;
 }

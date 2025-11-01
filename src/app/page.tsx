@@ -9,7 +9,7 @@ import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } f
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House, Clock, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Upload, Wand2, Search, Download } from 'lucide-react';
+import { Menu, Award, Lock, House, Clock, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Upload, Wand2, Search, Download, Infinity as InfinityIcon } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -22,7 +22,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 
 
-type RaffleMode = 'two-digit' | 'three-digit';
+type RaffleMode = 'two-digit' | 'three-digit' | 'infinite';
 type Tab = 'board' | 'register' | 'participants' | 'pending' | 'recaudado';
 
 const initialRaffleData = {
@@ -50,7 +50,7 @@ const initialRaffleData = {
     manualWinnerNumber: '',
     isPaid: false,
     adminId: null,
-    raffleMode: 'two-digit',
+    raffleMode: 'two-digit' as RaffleMode,
     prizeImageUrl: '',
     imageGenPrompt: '',
 };
@@ -299,7 +299,7 @@ const App = () => {
         const inputValue = e.target.value.replace(/\D/g, '');
         handleLocalFieldChange('raffleNumber', inputValue);
 
-        if (inputValue.length === numberLength && allAssignedNumbers.has(parseInt(inputValue))) {
+        if (raffleMode !== 'infinite' && inputValue.length === numberLength && allAssignedNumbers.has(parseInt(inputValue))) {
              showNotification('Este número ya ha sido asignado.', 'warning');
         }
     };
@@ -406,7 +406,7 @@ const App = () => {
     
         const num = parseInt(raffleNumber, 10);
     
-        if (raffleNumber.length !== numberLength) {
+        if (raffleMode !== 'infinite' && raffleNumber.length !== numberLength) {
              showNotification(`El número para esta modalidad debe ser de ${numberLength} cifras`, 'warning');
              return false;
         }
@@ -417,7 +417,7 @@ const App = () => {
         }
     
         const participantName = name;
-        const formattedRaffleNumber = String(num).padStart(numberLength, '0');
+        const formattedRaffleNumber = raffleMode === 'infinite' ? raffleNumber : String(num).padStart(numberLength, '0');
         const participantId = Date.now();
 
         const newParticipant: Participant = {
@@ -586,7 +586,7 @@ const App = () => {
     const handleDrawWinner = async () => {
         if (!raffleState || !raffleState.raffleRef) return;
         const winningNumberStr = raffleState.manualWinnerNumber;
-        if (!winningNumberStr || winningNumberStr.length !== numberLength) {
+        if (!winningNumberStr || (raffleMode !== 'infinite' && winningNumberStr.length !== numberLength)) {
             showNotification(`Por favor, ingresa un número ganador válido de ${numberLength} cifras.`, 'warning');
             return;
         }
@@ -924,10 +924,10 @@ const App = () => {
                                              <Input
                                                  id="manual-winner-input"
                                                  type="text"
-                                                 placeholder={`Número (${numberLength} cifras)`}
+                                                 placeholder={raffleMode === 'infinite' ? 'Número ganador' : `Número (${numberLength} cifras)`}
                                                  value={raffleState.manualWinnerNumber}
                                                  onChange={(e) => handleLocalFieldChange('manualWinnerNumber', e.target.value.replace(/\D/g, ''))}
-                                                 maxLength={numberLength}
+                                                 maxLength={raffleMode === 'infinite' ? undefined : numberLength}
                                                  disabled={raffleState.isWinnerConfirmed || !!raffleState.winner}
                                                  className="w-36"
                                              />
@@ -962,74 +962,86 @@ const App = () => {
                          </div>
                        )}
 
-                       <div>
-                           <div className="flex justify-between items-center mb-4">
-                               <h2 className="text-2xl font-bold text-gray-800 flex items-center">
-                                   Tablero de Números
-                               </h2>
-                               {raffleState.raffleRef && (
-                                    <div className="font-semibold text-gray-700">
-                                        Modo: {raffleMode === 'two-digit' ? '2 Cifras' : '3 Cifras'}
-                                    </div>
-                               )}
-                           </div>
-                           <div className={`grid gap-2 ${raffleMode === 'two-digit' ? 'grid-cols-10' : 'grid-cols-10 md:grid-cols-20 lg:grid-cols-25'}`}>
-                               {allNumbers.map((number) => {
-                                   const formattedNumber = String(number).padStart(numberLength, '0');
-                                   const participant = raffleState.participants.find((p: Participant) => p.raffleNumber === formattedNumber);
-                                   const isConfirmed = participant && participant.paymentStatus === 'confirmed';
-                                   const isPending = participant && participant.paymentStatus === 'pending';
+                        {raffleMode !== 'infinite' ? (
+                           <div>
+                               <div className="flex justify-between items-center mb-4">
+                                   <h2 className="text-2xl font-bold text-gray-800 flex items-center">
+                                       Tablero de Números
+                                   </h2>
+                                   {raffleState.raffleRef && (
+                                        <div className="font-semibold text-gray-700">
+                                            Modo: {raffleMode === 'two-digit' ? '2 Cifras' : '3 Cifras'}
+                                        </div>
+                                   )}
+                               </div>
+                               <div className={`grid gap-2 ${raffleMode === 'two-digit' ? 'grid-cols-10' : 'grid-cols-10 md:grid-cols-20 lg:grid-cols-25'}`}>
+                                   {allNumbers.map((number) => {
+                                       const formattedNumber = String(number).padStart(numberLength, '0');
+                                       const participant = raffleState.participants.find((p: Participant) => p.raffleNumber === formattedNumber);
+                                       const isConfirmed = participant && participant.paymentStatus === 'confirmed';
+                                       const isPending = participant && participant.paymentStatus === 'pending';
 
-                                   return (
-                                       <div
-                                           key={number}
-                                           onClick={() => toggleNumber(number)}
-                                           className={`
-                                               number-cell text-center py-2 rounded-lg transition-all text-sm
-                                               ${raffleState.isWinnerConfirmed || !raffleState.isDetailsConfirmed || !!raffleState.winner || isConfirmed || isPending ? 'cursor-not-allowed' : 'cursor-pointer'}
-                                               ${isConfirmed
-                                                   ? 'bg-red-600 text-white shadow-lg'
-                                                   : isPending
-                                                   ? 'bg-yellow-400 text-yellow-900 shadow-md'
-                                                   : !raffleState.isDetailsConfirmed || !!raffleState.winner
-                                                   ? 'bg-gray-200 text-gray-500'
-                                                   : 'bg-green-200 text-green-800 hover:bg-green-300 hover:shadow-md'
-                                               }
-                                               ${raffleState.winner?.raffleNumber === formattedNumber ? 'ring-4 ring-yellow-400 animate-pulse' : ''}
-                                           `}
-                                       >
-                                           {formattedNumber}
-                                       </div>
-                                   );
-                               })}
+                                       return (
+                                           <div
+                                               key={number}
+                                               onClick={() => toggleNumber(number)}
+                                               className={`
+                                                   number-cell text-center py-2 rounded-lg transition-all text-sm
+                                                   ${raffleState.isWinnerConfirmed || !raffleState.isDetailsConfirmed || !!raffleState.winner || isConfirmed || isPending ? 'cursor-not-allowed' : 'cursor-pointer'}
+                                                   ${isConfirmed
+                                                       ? 'bg-red-600 text-white shadow-lg'
+                                                       : isPending
+                                                       ? 'bg-yellow-400 text-yellow-900 shadow-md'
+                                                       : !raffleState.isDetailsConfirmed || !!raffleState.winner
+                                                       ? 'bg-gray-200 text-gray-500'
+                                                       : 'bg-green-200 text-green-800 hover:bg-green-300 hover:shadow-md'
+                                                   }
+                                                   ${raffleState.winner?.raffleNumber === formattedNumber ? 'ring-4 ring-yellow-400 animate-pulse' : ''}
+                                               `}
+                                           >
+                                               {formattedNumber}
+                                           </div>
+                                       );
+                                   })}
+                               </div>
+                                <div className="flex flex-wrap gap-4 mt-4 text-sm">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-4 h-4 rounded-full bg-green-200"></div>
+                                        <span>Disponible</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-4 h-4 rounded-full bg-yellow-400"></div>
+                                        <span>Pendiente</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-4 h-4 rounded-full bg-red-600"></div>
+                                        <span>Vendido</span>
+                                    </div>
+                                </div>
+                               {!!raffleState.winner && !raffleState.isWinnerConfirmed && (
+                                    <div className="mt-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4" role="alert">
+                                        <p className="font-bold">Tablero Bloqueado</p>
+                                        <p>Se ha encontrado un ganador. Confirma el resultado o reinicia el tablero para continuar.</p>
+                                    </div>
+                                )}
+                               {!raffleState.isDetailsConfirmed && (
+                                    <div className="mt-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4" role="alert">
+                                        <p className="font-bold">Tablero Bloqueado</p>
+                                        <p>Debes completar y confirmar los detalles del premio para poder seleccionar números.</p>
+                                    </div>
+                                )}
                            </div>
-                            <div className="flex flex-wrap gap-4 mt-4 text-sm">
-                                <div className="flex items-center gap-2">
-                                    <div className="w-4 h-4 rounded-full bg-green-200"></div>
-                                    <span>Disponible</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <div className="w-4 h-4 rounded-full bg-yellow-400"></div>
-                                    <span>Pendiente</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <div className="w-4 h-4 rounded-full bg-red-600"></div>
-                                    <span>Vendido</span>
-                                </div>
+                        ) : (
+                            <div className="text-center p-8 bg-gray-50 rounded-lg">
+                                 <h2 className="text-2xl font-bold text-gray-800 flex items-center justify-center gap-2">
+                                    <InfinityIcon className="h-6 w-6"/>
+                                    Rifa Infinita
+                                </h2>
+                                <p className="text-gray-600 mt-2">
+                                    Esta rifa no tiene un tablero de números. Registra a los participantes directamente en la pestaña "Registrar".
+                                </p>
                             </div>
-                           {!!raffleState.winner && !raffleState.isWinnerConfirmed && (
-                                <div className="mt-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4" role="alert">
-                                    <p className="font-bold">Tablero Bloqueado</p>
-                                    <p>Se ha encontrado un ganador. Confirma el resultado o reinicia el tablero para continuar.</p>
-                                </div>
-                            )}
-                           {!raffleState.isDetailsConfirmed && (
-                                <div className="mt-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4" role="alert">
-                                    <p className="font-bold">Tablero Bloqueado</p>
-                                    <p>Debes completar y confirmar los detalles del premio para poder seleccionar números.</p>
-                                </div>
-                            )}
-                       </div>
+                        )}
                    </div>
                 </div>
             </>
@@ -1248,6 +1260,26 @@ const App = () => {
                                             </Button>
                                         </div>
                                     </div>
+
+                                     {/* Ticket for infinite numbers */}
+                                     <div className="bg-white rounded-2xl shadow-lg flex flex-col max-w-md w-full">
+                                        <div className='flex'>
+                                            <div className="bg-red-100 p-4 flex flex-col items-center justify-center rounded-l-2xl border-r-2 border-dashed border-red-300">
+                                                <InfinityIcon className="h-10 w-10 text-red-600 mb-2" />
+                                                <span className="text-red-800 font-bold text-lg">∞</span>
+                                                <span className="text-red-600 text-xs">INFINITA</span>
+                                            </div>
+                                            <div className="p-6 flex-grow">
+                                                <h5 className="mb-1 text-xl font-bold tracking-tight text-gray-900">Rifa Infinita</h5>
+                                                <p className="font-normal text-gray-600 mb-4 text-sm">Sin límite de números. Ideal para sorteos.</p>
+                                            </div>
+                                        </div>
+                                        <div className="p-6 pt-0 space-y-2">
+                                            <Button onClick={() => handleActivateBoard('infinite')} size="lg" className="w-full bg-red-500 hover:bg-red-600 text-white font-bold">
+                                                Activar ($1.500 COP)
+                                            </Button>
+                                        </div>
+                                    </div>
                                     
                                 </div>
                                 <Button onClick={() => setIsAdminLoginOpen(true)} size="lg" variant="outline">
@@ -1369,7 +1401,7 @@ const App = () => {
                                                     </div>
                                                 </div>
                                                 <div>
-                                                    <Label htmlFor="raffle-number-input">Número de rifa ({raffleMode === 'two-digit' ? '00-99' : '000-999'}):</Label>
+                                                    <Label htmlFor="raffle-number-input">Número de rifa ({raffleMode === 'two-digit' ? '00-99' : raffleMode === 'three-digit' ? '000-999' : 'Cualquier número'}):</Label>
                                                     <Input
                                                         id="raffle-number-input"
                                                         type="text"
@@ -1377,7 +1409,7 @@ const App = () => {
                                                         onChange={handleRaffleNumberChange}
                                                         placeholder={`Ej: ${raffleMode === 'two-digit' ? '05' : '142'}`}
                                                         className="w-full mt-1"
-                                                        maxLength={numberLength}
+                                                        maxLength={raffleMode === 'infinite' ? undefined : numberLength}
                                                     />
                                                     {raffleState?.raffleNumber && allAssignedNumbers.has(parseInt(raffleState.raffleNumber)) && (
                                                         <p className="text-red-500 text-sm mt-1">Este número ya está asignado.</p>
