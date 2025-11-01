@@ -191,77 +191,91 @@ const App = () => {
 
 
     useEffect(() => {
+        if ('serviceWorker' in navigator) {
+          window.addEventListener('load', () => {
+            navigator.serviceWorker
+              .register('/sw.js')
+              .then(registration => {
+                console.log('Service Worker registrado con éxito:', registration);
+              })
+              .catch(error => {
+                console.log('Error al registrar el Service Worker:', error);
+              });
+          });
+        }
+    
         const handleBeforeInstallPrompt = (e: Event) => {
-            e.preventDefault();
-            setInstallPromptEvent(e);
+          e.preventDefault();
+          setInstallPromptEvent(e);
         };
         window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-
+    
         const initialize = async () => {
-            setLoading(true);
-            if (persistenceEnabled) {
-                await persistenceEnabled;
-            }
-
-            if (typeof window !== 'undefined') {
-                setAppUrl(window.location.origin);
-            }
-
-            const adminIdFromStorage = localStorage.getItem('rifaAdminId');
-            if (adminIdFromStorage) {
-                setCurrentAdminId(adminIdFromStorage);
-            }
-
-            const urlParams = new URLSearchParams(window.location.search);
-            const refFromUrl = urlParams.get('ref');
-            const statusFromUrl = urlParams.get('status');
-
-            // For post-payment registration
-            const pName = urlParams.get('pName');
-            const pPhone = urlParams.get('pPhone');
-            const pNum = urlParams.get('pNum');
-
-
-            if (refFromUrl) {
-                 if (statusFromUrl === 'APPROVED') {
-                    if (pName && pPhone && pNum) {
-                        // New flow: Register participant after payment confirmation
-                        const registeredParticipant = await confirmParticipantPayment(refFromUrl, '', { name: pName, phoneNumber: pPhone, raffleNumber: pNum });
-                         if (registeredParticipant) {
-                            showNotification('¡Pago exitoso! Tu número ha sido registrado. Puedes generar tu tiquete en la pestaña "Participantes".', 'success');
-                        }
-                    } else {
-                        // Board activation confirmation - this flow might be deprecated/unused if activation is direct
-                        showNotification('Activación confirmada por pago.', 'info');
-                    }
-                 }
-                await handleAdminSearch(refFromUrl, true);
-
-            } else {
-                setRaffleState(null);
-                setLoading(false);
-            }
-            
+          setLoading(true);
+          if (persistenceEnabled) {
+            await persistenceEnabled;
+          }
     
-            const handlePopState = (event: PopStateEvent) => {
-                const newUrlParams = new URLSearchParams(window.location.search);
-                const newRefFromUrl = newUrlParams.get('ref');
-                if (newRefFromUrl && newUrlParams.get('ref') !== (raffleState?.raffleRef || '')) {
-                    handleAdminSearch(newRefFromUrl, true);
-                } else if (!newRefFromUrl) {
-                    raffleSubscription.current?.();
-                    setRaffleState(null);
-                    setLoading(false);
+          if (typeof window !== 'undefined') {
+            setAppUrl(window.location.origin);
+          }
+    
+          const adminIdFromStorage = localStorage.getItem('rifaAdminId');
+          if (adminIdFromStorage) {
+            setCurrentAdminId(adminIdFromStorage);
+          }
+    
+          const urlParams = new URLSearchParams(window.location.search);
+          const refFromUrl = urlParams.get('ref');
+          const statusFromUrl = urlParams.get('status');
+    
+          const pName = urlParams.get('pName');
+          const pPhone = urlParams.get('pPhone');
+          const pNum = urlParams.get('pNum');
+    
+          if (refFromUrl) {
+            if (statusFromUrl === 'APPROVED') {
+              if (pName && pPhone && pNum) {
+                const registeredParticipant = await confirmParticipantPayment(refFromUrl, '', {
+                  name: pName,
+                  phoneNumber: pPhone,
+                  raffleNumber: pNum,
+                });
+                if (registeredParticipant) {
+                  showNotification(
+                    '¡Pago exitoso! Tu número ha sido registrado. Puedes generar tu tiquete en la pestaña "Participantes".',
+                    'success'
+                  );
                 }
-            };
-            
-            window.addEventListener('popstate', handlePopState);
+              } else {
+                showNotification('Activación confirmada por pago.', 'info');
+              }
+            }
+            await handleAdminSearch(refFromUrl, true);
+          } else {
+            setRaffleState(null);
+            setLoading(false);
+          }
     
-            return () => {
-                window.removeEventListener('popstate', handlePopState);
-                window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-                raffleSubscription.current?.();
-            };
+          const handlePopState = (event: PopStateEvent) => {
+            const newUrlParams = new URLSearchParams(window.location.search);
+            const newRefFromUrl = newUrlParams.get('ref');
+            if (newRefFromUrl && newUrlParams.get('ref') !== (raffleState?.raffleRef || '')) {
+              handleAdminSearch(newRefFromUrl, true);
+            } else if (!newRefFromUrl) {
+              raffleSubscription.current?.();
+              setRaffleState(null);
+              setLoading(false);
+            }
+          };
+    
+          window.addEventListener('popstate', handlePopState);
+    
+          return () => {
+            window.removeEventListener('popstate', handlePopState);
+            window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+            raffleSubscription.current?.();
+          };
         };
     
         initialize();
