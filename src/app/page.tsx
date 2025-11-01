@@ -1237,7 +1237,7 @@ const App = () => {
                                         </div>
                                         <div className="p-6 pt-0 space-y-2">
                                             <Button onClick={() => handleActivateBoard('two-digit')} size="lg" className="w-full bg-green-500 hover:bg-green-600 text-white font-bold">
-                                                $1.500 COP
+                                                Precio
                                             </Button>
                                         </div>
                                     </div>
@@ -1257,7 +1257,7 @@ const App = () => {
                                         </div>
                                         <div className="p-6 pt-0 space-y-2">
                                             <Button onClick={() => handleActivateBoard('three-digit')} size="lg" className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold">
-                                                $15.000 COP
+                                                Precio
                                             </Button>
                                         </div>
                                     </div>
@@ -1277,7 +1277,7 @@ const App = () => {
                                         </div>
                                         <div className="p-6 pt-0 space-y-2">
                                             <Button onClick={() => handleActivateBoard('infinite')} size="lg" className="w-full bg-red-500 hover:bg-red-600 text-white font-bold">
-                                                $1.500 COP
+                                                Precio
                                             </Button>
                                         </div>
                                     </div>
