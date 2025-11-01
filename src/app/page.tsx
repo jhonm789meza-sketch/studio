@@ -1196,13 +1196,10 @@ const App = () => {
                                         <span>Compartir</span>
                                     </DropdownMenuItem>
                                     {installPromptEvent && (
-                                    <>
-                                        <DropdownMenuSeparator />
                                         <DropdownMenuItem onSelect={handleInstallClick}>
                                             <Download className="mr-2 h-4 w-4" />
                                             <span>Instalar Aplicación</span>
                                         </DropdownMenuItem>
-                                    </>
                                     )}
                                 </DropdownMenuContent>
                             </DropdownMenu>
@@ -1774,3 +1771,5 @@ const App = () => {
 };
 
 export default App;
+
+    
