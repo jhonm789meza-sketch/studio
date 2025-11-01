@@ -63,12 +63,12 @@ export function InstallPwaDialog({ isOpen, onClose, installPromptEvent }: Instal
         ) : (
           <div className="py-4 text-center">
             <p className="mb-4">Haz clic en el botón de abajo para comenzar la instalación.</p>
-            <Button onClick={handleInstallClick} disabled={!installPromptEvent}>
+            <Button onClick={handleInstallClick}>
               <Download className="mr-2 h-4 w-4" />
               Instalar Ahora
             </Button>
             {!installPromptEvent && (
-                 <p className="text-xs text-muted-foreground mt-4">Si el botón no está activo, es posible que tu navegador no sea compatible o la aplicación ya esté instalada.</p>
+                 <p className="text-xs text-muted-foreground mt-4">Si el botón no funciona, es posible que tu navegador no sea compatible o la aplicación ya esté instalada.</p>
             )}
           </div>
         )}
