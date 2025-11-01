@@ -1082,7 +1082,7 @@ const App = () => {
         if (!ticketData) return null;
     
         const receiptDate = ticketData.timestamp?.toDate ? format(ticketData.timestamp.toDate(), "d 'de' MMMM 'de' yyyy - h:mm a", { locale: es }) : format(new Date(), "d 'de' MMMM 'de' yyyy - h:mm a", { locale: es });
-        const gameDateFormatted = ticketData.gameDate ? format(new Date(ticketData.gameDate), "d 'de' MMMM 'de' yyyy", { locale: es }) : 'N/A';
+        const gameDateFormatted = ticketData.gameDate ? format(new Date(ticketData.gameDate + 'T00:00:00'), "d 'de' MMMM 'de' yyyy", { locale: es }) : 'N/A';
     
         return (
             <div className="mt-8 max-w-xs mx-auto">
@@ -1662,7 +1662,7 @@ const App = () => {
                                     <div className="space-y-1">
                                         <div className="flex justify-between"><span>PREMIO:</span><span className="font-semibold text-right">{formatValue(ticketInfo.raffleName)}</span></div>
                                         <div className="flex justify-between"><span>VALOR BOLETA:</span><span className="font-semibold text-right">{formatValue(ticketInfo.value)}</span></div>
-                                        <div className="flex justify-between"><span>FECHA SORTEO:</span><span className="font-semibold text-right">{ticketInfo.gameDate ? format(new Date(ticketInfo.gameDate), "d 'de' MMMM 'de' yyyy", { locale: es }) : 'N/A'}</span></div>
+                                        <div className="flex justify-between"><span>FECHA SORTEO:</span><span className="font-semibold text-right">{ticketInfo.gameDate ? format(new Date(ticketInfo.gameDate + 'T00:00:00'), "d 'de' MMMM 'de' yyyy", { locale: es }) : 'N/A'}</span></div>
                                         <div className="flex justify-between"><span>JUEGA CON:</span><span className="font-semibold text-right">{ticketInfo.lottery}</span></div>
                                         <div className="flex justify-between"><span>QUIEN ORGANIZA:</span><span className="font-semibold text-right">{ticketInfo.organizerName}</span></div>
                                     </div>
