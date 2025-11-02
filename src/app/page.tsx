@@ -9,13 +9,13 @@ import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } f
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House, Clock, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Upload, Wand2, Search, Download, Infinity as InfinityIcon } from 'lucide-react';
+import { Menu, Award, Lock, House, Clock, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Upload, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Confetti } from '@/components/confetti';
 import { Switch } from '@/components/ui/switch';
-import type { Participant } from '@/lib/types';
+import type { Participant, Raffle } from '@/lib/types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Textarea } from '@/components/ui/textarea';
@@ -26,7 +26,7 @@ import { CountrySelectionDialog } from '@/components/country-selection-dialog';
 type RaffleMode = 'two-digit' | 'three-digit' | 'infinite';
 type Tab = 'board' | 'register' | 'participants' | 'pending' | 'recaudado';
 
-const initialRaffleData = {
+const initialRaffleData: Omit<Raffle, 'participants' | 'drawnNumbers'> & { participants: Participant[], drawnNumbers: any[] } = {
     drawnNumbers: [],
     lastDrawnNumber: null,
     prize: '',
@@ -45,6 +45,7 @@ const initialRaffleData = {
     customLottery: '',
     organizerName: '',
     organizerPhoneNumber: '',
+    password: '',
     participants: [] as Participant[],
     raffleRef: '',
     winner: null,
@@ -74,7 +75,7 @@ const App = () => {
     const ticketModalRef = useRef<HTMLDivElement>(null);
     const raffleSubscription = useRef<Unsubscribe | null>(null);
     
-    const [raffleState, setRaffleState] = useState<any>(null);
+    const [raffleState, setRaffleState] = useState<Raffle | null>(null);
     
     const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
     const [isPublicSearchOpen, setIsPublicSearchOpen] = useState(false);
@@ -82,6 +83,7 @@ const App = () => {
     const [isSalesModalOpen, setIsSalesModalOpen] = useState(false);
     const [adminRefSearch, setAdminRefSearch] = useState('');
     const [adminPhoneSearch, setAdminPhoneSearch] = useState('');
+    const [adminPasswordSearch, setAdminPasswordSearch] = useState('');
     const [showConfetti, setShowConfetti] = useState(false);
     const [currentAdminId, setCurrentAdminId] = useState<string | null>(null);
     const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
@@ -364,8 +366,8 @@ const App = () => {
 
     const handleConfirmDetails = async () => {
         if (!raffleState || !raffleState.raffleRef) return;
-        if (!raffleState.organizerName.trim() || !raffleState.prize.trim() || !raffleState.value.trim() || !raffleState.gameDate || !raffleState.lottery || (raffleState.lottery === 'Otro' && !raffleState.customLottery.trim())) {
-            showNotification('Por favor, completa todos los campos de configuración del premio.', 'warning');
+        if (!raffleState.organizerName.trim() || !raffleState.prize.trim() || !raffleState.value.trim() || !raffleState.gameDate || !raffleState.lottery || (raffleState.lottery === 'Otro' && !raffleState.customLottery.trim()) || !raffleState.password.trim()) {
+            showNotification('Por favor, completa todos los campos de configuración del premio, incluyendo la contraseña.', 'warning');
             return;
         }
         
@@ -529,12 +531,13 @@ const App = () => {
         }
     };
     
-    const handleAdminSearch = ({ refToSearch, isInitialLoad = false, phoneToSearch, isPublicSearch = false }: { refToSearch?: string, isInitialLoad?: boolean, phoneToSearch?: string, isPublicSearch?: boolean }) => {
+    const handleAdminSearch = ({ refToSearch, isInitialLoad = false, phoneToSearch, passwordToSearch, isPublicSearch = false }: { refToSearch?: string, isInitialLoad?: boolean, phoneToSearch?: string, passwordToSearch?: string, isPublicSearch?: boolean }) => {
         return new Promise<void>(async (resolve) => {
             if (!isInitialLoad) setLoading(true);
             
             const aRef = (refToSearch || (isPublicSearch ? publicRefSearch : adminRefSearch)).trim().toUpperCase();
             const aPhone = (phoneToSearch || adminPhoneSearch).trim();
+            const aPassword = (passwordToSearch || adminPasswordSearch).trim();
 
             if (!aRef) {
                 showNotification('Por favor, ingresa una referencia.', 'warning');
@@ -542,8 +545,8 @@ const App = () => {
                 resolve();
                 return;
             }
-            if (!isInitialLoad && !isPublicSearch && !aPhone) {
-                 showNotification('Por favor, ingresa el teléfono del organizador.', 'warning');
+            if (!isInitialLoad && !isPublicSearch && (!aPhone || !aPassword)) {
+                 showNotification('Por favor, ingresa el teléfono del organizador y la contraseña.', 'warning');
                  setLoading(false);
                  resolve();
                  return;
@@ -562,14 +565,13 @@ const App = () => {
                 try {
                     const docSnap = await getDoc(raffleDocRef);
                     if (docSnap.exists()) {
-                        const data = docSnap.data();
-                        if (data.organizerPhoneNumber === aPhone) {
-                            // Phone matches, grant admin access
-                            localStorage.setItem('rifaAdminId', data.adminId);
+                        const data = docSnap.data() as Raffle;
+                        if (data.organizerPhoneNumber === aPhone && data.password === aPassword) {
+                            localStorage.setItem('rifaAdminId', data.adminId!);
                             setCurrentAdminId(data.adminId);
                             showNotification('¡Administración recuperada con éxito!', 'success');
                         } else {
-                            showNotification('El número de teléfono no coincide con el del organizador.', 'error');
+                            showNotification('El número de teléfono o la contraseña no coinciden.', 'error');
                             setLoading(false);
                             resolve();
                             return;
@@ -592,7 +594,7 @@ const App = () => {
 
             raffleSubscription.current = onSnapshot(raffleDocRef, (docSnapshot) => {
                 if (docSnapshot.exists()) {
-                    const data = docSnapshot.data();
+                    const data = docSnapshot.data() as Raffle;
                     
                     const adminIdFromStorage = localStorage.getItem('rifaAdminId');
                     if (adminIdFromStorage && data.adminId === adminIdFromStorage) {
@@ -607,6 +609,7 @@ const App = () => {
                     setIsPublicSearchOpen(false);
                     setAdminRefSearch('');
                     setAdminPhoneSearch('');
+                    setAdminPasswordSearch('');
                     setPublicRefSearch('');
                     handleTabClick('board');
                     if (window.location.search !== `?ref=${aRef}`) {
@@ -821,6 +824,19 @@ const App = () => {
                                     />
                                 </div>
                             </div>
+                            <div>
+                                <Label htmlFor="password-input">Contraseña de Administrador:</Label>
+                                <Input
+                                    id="password-input"
+                                    type="password"
+                                    value={raffleState.password}
+                                    onChange={(e) => handleLocalFieldChange('password', e.target.value)}
+                                    onBlur={(e) => handleFieldChange('password', e.target.value)}
+                                    placeholder="Crea una contraseña segura"
+                                    disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
+                                    className="w-full mt-1"
+                                />
+                           </div>
                            <div>
                                <Label htmlFor="prize-input">Premio:</Label>
                                <Input
@@ -1244,10 +1260,12 @@ const App = () => {
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent>
                                     <DropdownMenuItem onSelect={() => setIsPublicSearchOpen(true)}>
-                                        Buscar Rifa por Referencia
+                                        <Search className="mr-2 h-4 w-4" />
+                                        <span>Buscar Rifa por Referencia</span>
                                     </DropdownMenuItem>
                                     <DropdownMenuItem onSelect={() => setIsAdminLoginOpen(true)}>
-                                        Recuperar Administración del Juego
+                                        <KeyRound className="mr-2 h-4 w-4" />
+                                        <span>Recuperar Administración</span>
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem onSelect={() => setIsShareDialogOpen(true)}>
@@ -1337,7 +1355,7 @@ const App = () => {
                                     </div>
                                     
                                 </div>
-                                <Button onClick={() => setIsAdminLoginOpen(true)} size="lg" variant="outline">
+                                <Button onClick={() => setIsPublicSearchOpen(true)} size="lg" variant="outline">
                                     o Buscar por Referencia
                                 </Button>
                             </div>
@@ -1762,7 +1780,7 @@ const App = () => {
                     <DialogHeader>
                         <DialogTitle>Recuperar Administración del Juego</DialogTitle>
                         <DialogDescription>
-                            Ingresa la referencia y el teléfono del organizador para recuperar el acceso.
+                            Ingresa los datos para recuperar el acceso de administrador.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
@@ -1796,10 +1814,23 @@ const App = () => {
                                 />
                             </div>
                         </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="admin-password-search" className="text-right">
+                                Contraseña
+                            </Label>
+                            <Input
+                                id="admin-password-search"
+                                type="password"
+                                value={adminPasswordSearch}
+                                onChange={(e) => setAdminPasswordSearch(e.target.value)}
+                                className="col-span-3"
+                                placeholder="Tu contraseña"
+                            />
+                        </div>
                     </div>
                     <DialogFooter>
                         <Button type="button" variant="outline" onClick={() => setIsAdminLoginOpen(false)}>Cancelar</Button>
-                        <Button type="submit" onClick={() => handleAdminSearch({ isPublicSearch: false })}>Buscar Juego</Button>
+                        <Button type="submit" onClick={() => handleAdminSearch({ passwordToSearch: adminPasswordSearch })}>Recuperar</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

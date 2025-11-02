@@ -29,6 +29,7 @@ export interface Raffle {
     customLottery: string;
     organizerName: string;
     organizerPhoneNumber: string;
+    password?: string;
     participants: Participant[];
     raffleRef: string;
     winner: null | Participant;
