@@ -79,6 +79,7 @@ const App = () => {
     const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
     const [isSalesModalOpen, setIsSalesModalOpen] = useState(false);
     const [adminRefSearch, setAdminRefSearch] = useState('');
+    const [adminPhoneSearch, setAdminPhoneSearch] = useState('');
     const [showConfetti, setShowConfetti] = useState(false);
     const [currentAdminId, setCurrentAdminId] = useState<string | null>(null);
     const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
@@ -526,26 +527,66 @@ const App = () => {
         }
     };
     
-    const handleAdminSearch = (refToSearch?: string, isInitialLoad = false) => {
+    const handleAdminSearch = (refToSearch?: string, isInitialLoad = false, phoneToSearch?: string) => {
         return new Promise<void>(async (resolve) => {
-            setLoading(true);
+            if (!isInitialLoad) setLoading(true);
             
             const aRef = (refToSearch || adminRefSearch).trim().toUpperCase();
+            const aPhone = (phoneToSearch || adminPhoneSearch).trim();
+
             if (!aRef) {
                 showNotification('Por favor, ingresa una referencia.', 'warning');
                 if(!isInitialLoad) setLoading(false);
                 resolve();
                 return;
             }
+            if (!isInitialLoad && !aPhone) {
+                 showNotification('Por favor, ingresa el teléfono del organizador.', 'warning');
+                 setLoading(false);
+                 resolve();
+                 return;
+            }
 
             raffleSubscription.current?.();
-            setRaffleState(null);
             
             const raffleDocRef = doc(db, 'raffles', aRef);
 
             if (persistenceEnabled) {
                 await persistenceEnabled;
             }
+
+            // For recovery, we need to get the doc once first.
+            if (!isInitialLoad) {
+                try {
+                    const docSnap = await getDoc(raffleDocRef);
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        if (data.organizerPhoneNumber === aPhone) {
+                            // Phone matches, grant admin access
+                            localStorage.setItem('rifaAdminId', data.adminId);
+                            setCurrentAdminId(data.adminId);
+                            showNotification('¡Administración recuperada con éxito!', 'success');
+                        } else {
+                            showNotification('El número de teléfono no coincide con el del organizador.', 'error');
+                            setLoading(false);
+                            resolve();
+                            return;
+                        }
+                    } else {
+                         showNotification('No se encontró ninguna rifa con esa referencia.', 'error');
+                         setLoading(false);
+                         resolve();
+                         return;
+                    }
+                } catch (error) {
+                    console.error("Error fetching raffle for recovery:", error);
+                    showNotification('Error al verificar la rifa.', 'error');
+                    setLoading(false);
+                    resolve();
+                    return;
+                }
+            }
+
 
             raffleSubscription.current = onSnapshot(raffleDocRef, (docSnapshot) => {
                 if (docSnapshot.exists()) {
@@ -558,15 +599,16 @@ const App = () => {
 
                     setRaffleState(data);
                     if (!isInitialLoad) { 
-                        showNotification(`Cargando rifa con referencia: ${aRef}`, 'success');
+                        showNotification(`Cargando rifa con referencia: ${aRef}`, 'info');
                     }
                     setIsAdminLoginOpen(false);
                     setAdminRefSearch('');
+                    setAdminPhoneSearch('');
                     handleTabClick('board');
                     if (window.location.search !== `?ref=${aRef}`) {
                         window.history.pushState({}, '', `?ref=${aRef}`);
                     }
-                } else {
+                } else if (!isInitialLoad) {
                     showNotification('No se encontró ninguna rifa con esa referencia.', 'error');
                     setRaffleState(null);
                     setCurrentAdminId(null);
@@ -1711,9 +1753,9 @@ const App = () => {
             <Dialog open={isAdminLoginOpen} onOpenChange={setIsAdminLoginOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Buscar Juego por Referencia</DialogTitle>
+                        <DialogTitle>Recuperar Administración del Juego</DialogTitle>
                         <DialogDescription>
-                            Ingresa la referencia del juego para cargarlo y recuperar la administración.
+                            Ingresa la referencia y el teléfono del organizador para recuperar el acceso.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
@@ -1728,6 +1770,24 @@ const App = () => {
                                 className="col-span-3"
                                 placeholder="Ej: JM1"
                             />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="admin-phone-search" className="text-right">
+                                Teléfono
+                            </Label>
+                             <div className="relative col-span-3">
+                                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                                    <span className="text-gray-500 sm:text-sm">+57</span>
+                                </div>
+                                <Input
+                                    id="admin-phone-search"
+                                    type="tel"
+                                    value={adminPhoneSearch}
+                                    onChange={(e) => setAdminPhoneSearch(e.target.value.replace(/\D/g, ''))}
+                                    className="pl-12"
+                                    placeholder="3001234567"
+                                />
+                            </div>
                         </div>
                     </div>
                     <DialogFooter>
@@ -1805,5 +1865,3 @@ const App = () => {
 };
 
 export default App;
-
-    
