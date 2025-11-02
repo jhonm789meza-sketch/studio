@@ -552,13 +552,9 @@ const App = () => {
                 if (docSnapshot.exists()) {
                     const data = docSnapshot.data();
                     
-                    if (isInitialLoad && !localStorage.getItem('rifaAdminId')) {
-                        // This is a player viewing the raffle, do not set adminId
-                    } else {
-                        const adminIdFromStorage = localStorage.getItem('rifaAdminId');
-                        if (adminIdFromStorage && data.adminId === adminIdFromStorage) {
-                            setCurrentAdminId(adminIdFromStorage);
-                        }
+                    const adminIdFromStorage = localStorage.getItem('rifaAdminId');
+                    if (adminIdFromStorage && data.adminId === adminIdFromStorage) {
+                        setCurrentAdminId(adminIdFromStorage);
                     }
 
                     setRaffleState(data);
@@ -1203,7 +1199,7 @@ const App = () => {
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent>
                                     <DropdownMenuItem onSelect={() => setIsAdminLoginOpen(true)}>
-                                        Buscar por Referencia
+                                        Recuperar Administración del Juego
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem onSelect={() => setIsShareDialogOpen(true)}>
@@ -1718,7 +1714,7 @@ const App = () => {
                     <DialogHeader>
                         <DialogTitle>Buscar Juego por Referencia</DialogTitle>
                         <DialogDescription>
-                            Ingresa la referencia del juego para cargarlo.
+                            Ingresa la referencia del juego para cargarlo y recuperar la administración.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
@@ -1810,3 +1806,5 @@ const App = () => {
 };
 
 export default App;
+
+    
