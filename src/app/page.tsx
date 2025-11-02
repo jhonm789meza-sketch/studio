@@ -77,6 +77,8 @@ const App = () => {
     const [raffleState, setRaffleState] = useState<any>(null);
     
     const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
+    const [isPublicSearchOpen, setIsPublicSearchOpen] = useState(false);
+    const [publicRefSearch, setPublicRefSearch] = useState('');
     const [isSalesModalOpen, setIsSalesModalOpen] = useState(false);
     const [adminRefSearch, setAdminRefSearch] = useState('');
     const [adminPhoneSearch, setAdminPhoneSearch] = useState('');
@@ -184,7 +186,7 @@ const App = () => {
                 window.history.replaceState({}, '', url.toString());
     
                 if (raffleRef) {
-                    await handleAdminSearch(raffleRef, true);
+                    await handleAdminSearch({ refToSearch: raffleRef, isInitialLoad: true });
                 }
             }
             if (activeTab !== 'pending') {
@@ -249,7 +251,7 @@ const App = () => {
                 showNotification('Activación confirmada por pago.', 'info');
               }
             }
-            await handleAdminSearch(refFromUrl, true);
+            await handleAdminSearch({ refToSearch: refFromUrl, isInitialLoad: true });
           } else {
             setRaffleState(null);
             setLoading(false);
@@ -259,7 +261,7 @@ const App = () => {
             const newUrlParams = new URLSearchParams(window.location.search);
             const newRefFromUrl = newUrlParams.get('ref');
             if (newRefFromUrl && newUrlParams.get('ref') !== (raffleState?.raffleRef || '')) {
-              handleAdminSearch(newRefFromUrl, true);
+              handleAdminSearch({ refToSearch: newRefFromUrl, isInitialLoad: true });
             } else if (!newRefFromUrl) {
               raffleSubscription.current?.();
               setRaffleState(null);
@@ -527,11 +529,11 @@ const App = () => {
         }
     };
     
-    const handleAdminSearch = (refToSearch?: string, isInitialLoad = false, phoneToSearch?: string) => {
+    const handleAdminSearch = ({ refToSearch, isInitialLoad = false, phoneToSearch, isPublicSearch = false }: { refToSearch?: string, isInitialLoad?: boolean, phoneToSearch?: string, isPublicSearch?: boolean }) => {
         return new Promise<void>(async (resolve) => {
             if (!isInitialLoad) setLoading(true);
             
-            const aRef = (refToSearch || adminRefSearch).trim().toUpperCase();
+            const aRef = (refToSearch || (isPublicSearch ? publicRefSearch : adminRefSearch)).trim().toUpperCase();
             const aPhone = (phoneToSearch || adminPhoneSearch).trim();
 
             if (!aRef) {
@@ -540,7 +542,7 @@ const App = () => {
                 resolve();
                 return;
             }
-            if (!isInitialLoad && !aPhone) {
+            if (!isInitialLoad && !isPublicSearch && !aPhone) {
                  showNotification('Por favor, ingresa el teléfono del organizador.', 'warning');
                  setLoading(false);
                  resolve();
@@ -556,7 +558,7 @@ const App = () => {
             }
 
             // For recovery, we need to get the doc once first.
-            if (!isInitialLoad) {
+            if (!isInitialLoad && !isPublicSearch) {
                 try {
                     const docSnap = await getDoc(raffleDocRef);
                     if (docSnap.exists()) {
@@ -602,8 +604,10 @@ const App = () => {
                         showNotification(`Cargando rifa con referencia: ${aRef}`, 'info');
                     }
                     setIsAdminLoginOpen(false);
+                    setIsPublicSearchOpen(false);
                     setAdminRefSearch('');
                     setAdminPhoneSearch('');
+                    setPublicRefSearch('');
                     handleTabClick('board');
                     if (window.location.search !== `?ref=${aRef}`) {
                         window.history.pushState({}, '', `?ref=${aRef}`);
@@ -682,7 +686,7 @@ const App = () => {
             
             await setDoc(doc(db, "raffles", newRef), newRaffleData);
 
-            await handleAdminSearch(newRef, true);
+            await handleAdminSearch({ refToSearch: newRef, isInitialLoad: true });
         } catch (error) {
             console.error("Error activating board:", error);
             showNotification("Error al activar el tablero.", "error");
@@ -1239,6 +1243,9 @@ const App = () => {
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent>
+                                    <DropdownMenuItem onSelect={() => setIsPublicSearchOpen(true)}>
+                                        Buscar Rifa por Referencia
+                                    </DropdownMenuItem>
                                     <DropdownMenuItem onSelect={() => setIsAdminLoginOpen(true)}>
                                         Recuperar Administración del Juego
                                     </DropdownMenuItem>
@@ -1792,7 +1799,36 @@ const App = () => {
                     </div>
                     <DialogFooter>
                         <Button type="button" variant="outline" onClick={() => setIsAdminLoginOpen(false)}>Cancelar</Button>
-                        <Button type="submit" onClick={() => handleAdminSearch()}>Buscar Juego</Button>
+                        <Button type="submit" onClick={() => handleAdminSearch({ isPublicSearch: false })}>Buscar Juego</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={isPublicSearchOpen} onOpenChange={setIsPublicSearchOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Buscar Rifa por Referencia</DialogTitle>
+                        <DialogDescription>
+                            Ingresa la referencia de la rifa que quieres encontrar.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="public-ref-search" className="text-right">
+                                Referencia
+                            </Label>
+                            <Input
+                                id="public-ref-search"
+                                value={publicRefSearch}
+                                onChange={(e) => setPublicRefSearch(e.target.value)}
+                                className="col-span-3"
+                                placeholder="Ej: JM1"
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button type="button" variant="outline" onClick={() => setIsPublicSearchOpen(false)}>Cancelar</Button>
+                        <Button type="submit" onClick={() => handleAdminSearch({ isPublicSearch: true })}>Buscar</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
