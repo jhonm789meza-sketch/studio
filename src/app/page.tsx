@@ -545,12 +545,19 @@ const App = () => {
                 resolve();
                 return;
             }
-            if (!isInitialLoad && !isPublicSearch && (!aPhone || !aPassword)) {
-                 showNotification('Por favor, ingresa el teléfono del organizador y la contraseña.', 'warning');
+            if (!isInitialLoad && !isPublicSearch && !aPhone ) {
+                 showNotification('Por favor, ingresa el teléfono del organizador.', 'warning');
                  setLoading(false);
                  resolve();
                  return;
             }
+             if (!isInitialLoad && !isPublicSearch && !aPassword ) {
+                 showNotification('Por favor, ingresa la contraseña.', 'warning');
+                 setLoading(false);
+                 resolve();
+                 return;
+            }
+
 
             raffleSubscription.current?.();
             
@@ -669,26 +676,39 @@ const App = () => {
         setIsCountrySelectionOpen(true);
     };
 
-    const handleActivateBoard = async (mode: RaffleMode) => {
+    const handleActivateBoard = async (mode: RaffleMode, countryCode: string) => {
         setIsCountrySelectionOpen(false);
         setLoading(true);
+    
+        let price = '0';
+        if (countryCode === 'CO') {
+            if (mode === 'two-digit') {
+                price = '10000';
+            } else if (mode === 'three-digit') {
+                price = '15000';
+            } else if (mode === 'infinite') {
+                price = '1500';
+            }
+        }
+    
         try {
             const adminId = `admin_${Date.now()}_${Math.random()}`;
             localStorage.setItem('rifaAdminId', adminId);
             setCurrentAdminId(adminId);
-
+    
             const newRef = await raffleManager.createNewRaffleRef();
-            const newRaffleData = {
+            const newRaffleData: Raffle = {
                 ...initialRaffleData,
                 raffleMode: mode,
                 raffleRef: newRef,
                 adminId: adminId,
-                isPaid: true, 
+                isPaid: true,
                 prizeImageUrl: '',
+                value: price,
             };
             
             await setDoc(doc(db, "raffles", newRef), newRaffleData);
-
+    
             await handleAdminSearch({ refToSearch: newRef, isInitialLoad: true });
         } catch (error) {
             console.error("Error activating board:", error);
@@ -1280,7 +1300,7 @@ const App = () => {
                                     </DropdownMenuItem>
                                     <DropdownMenuItem onSelect={() => setIsAdminLoginOpen(true)}>
                                         <KeyRound className="mr-2 h-4 w-4" />
-                                        <span>Administración</span>
+                                        <span>Recuperar Administración</span>
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem onSelect={() => setIsShareDialogOpen(true)}>
@@ -1845,7 +1865,7 @@ const App = () => {
                     </div>
                     <DialogFooter>
                         <Button type="button" variant="outline" onClick={() => setIsAdminLoginOpen(false)}>Cancelar</Button>
-                        <Button type="submit" onClick={() => handleAdminSearch({ passwordToSearch: adminPasswordSearch })}>Recuperar</Button>
+                        <Button type="submit" onClick={() => handleAdminSearch({ phoneToSearch: adminPhoneSearch, passwordToSearch: adminPasswordSearch })}>Recuperar</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
@@ -1936,9 +1956,9 @@ const App = () => {
             <CountrySelectionDialog
               isOpen={isCountrySelectionOpen}
               onClose={() => setIsCountrySelectionOpen(false)}
-              onSelectCountry={() => {
+              onSelectCountry={(countryCode) => {
                 if (selectedRaffleMode) {
-                  handleActivateBoard(selectedRaffleMode);
+                  handleActivateBoard(selectedRaffleMode, countryCode);
                 }
               }}
             />
@@ -1947,5 +1967,3 @@ const App = () => {
 };
 
 export default App;
-
-    
