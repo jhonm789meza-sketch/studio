@@ -1961,6 +1961,7 @@ const App = () => {
                   handleActivateBoard(selectedRaffleMode, countryCode);
                 }
               }}
+              raffleMode={selectedRaffleMode}
             />
         </div>
     );
