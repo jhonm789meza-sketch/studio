@@ -722,6 +722,17 @@ const App = () => {
         window.open(facebookUrl, '_blank');
         setIsShareDialogOpen(false);
     };
+
+    const handleGoToHome = () => {
+        raffleSubscription.current?.();
+        setRaffleState(null);
+        setCurrentAdminId(null);
+        localStorage.removeItem('rifaAdminId');
+        if (window.location.search) {
+            window.history.pushState({}, '', window.location.pathname);
+        }
+        showNotification('Has vuelto a la pantalla de inicio.', 'info');
+    };
     
     const allNumbers = Array.from({ length: totalNumbers }, (_, i) => i);
     
@@ -1259,13 +1270,17 @@ const App = () => {
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent>
+                                     <DropdownMenuItem onSelect={() => handleGoToHome()}>
+                                        <House className="mr-2 h-4 w-4" />
+                                        <span>Ir al Inicio</span>
+                                    </DropdownMenuItem>
                                     <DropdownMenuItem onSelect={() => setIsPublicSearchOpen(true)}>
                                         <Search className="mr-2 h-4 w-4" />
                                         <span>Buscar Rifa por Referencia</span>
                                     </DropdownMenuItem>
                                     <DropdownMenuItem onSelect={() => setIsAdminLoginOpen(true)}>
                                         <KeyRound className="mr-2 h-4 w-4" />
-                                        <span>Recuperar Administración</span>
+                                        <span>Administración</span>
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem onSelect={() => setIsShareDialogOpen(true)}>
@@ -1778,7 +1793,7 @@ const App = () => {
             <Dialog open={isAdminLoginOpen} onOpenChange={setIsAdminLoginOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Recuperar Administración del Juego</DialogTitle>
+                        <DialogTitle>Recuperar Administración</DialogTitle>
                         <DialogDescription>
                             Ingresa los datos para recuperar el acceso de administrador.
                         </DialogDescription>
@@ -1932,3 +1947,5 @@ const App = () => {
 };
 
 export default App;
+
+    
