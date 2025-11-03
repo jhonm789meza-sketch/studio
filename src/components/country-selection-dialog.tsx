@@ -68,6 +68,10 @@ const getPriceForCountry = (raffleMode: RaffleMode | null, countryCode: string):
         if (raffleMode === 'two-digit') return '4,000 CLP';
         if (raffleMode === 'three-digit') return '5,000 CLP';
     }
+    if (countryCode === 'CR') {
+        if (raffleMode === 'two-digit') return '1,902 CRC';
+        if (raffleMode === 'three-digit') return '2,338 CRC';
+    }
     // Add other countries and prices here
     return null;
 }

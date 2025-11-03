@@ -713,6 +713,12 @@ const App = () => {
             } else if (mode === 'three-digit') {
                 price = '5000';
             }
+        } else if (countryCode === 'CR') {
+            if (mode === 'two-digit') {
+                price = '1902';
+            } else if (mode === 'three-digit') {
+                price = '2338';
+            }
         }
     
         try {
