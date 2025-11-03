@@ -52,6 +52,10 @@ const getPriceForCountry = (raffleMode: RaffleMode | null, countryCode: string):
         if (raffleMode === 'three-digit') return '15,000 COP';
         if (raffleMode === 'infinite') return '1,500 COP';
     }
+    if (countryCode === 'BR') {
+        if (raffleMode === 'two-digit') return '20 BRL';
+        if (raffleMode === 'three-digit') return '24 BRL';
+    }
     // Add other countries and prices here
     return null;
 }

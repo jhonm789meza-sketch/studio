@@ -689,6 +689,12 @@ const App = () => {
             } else if (mode === 'infinite') {
                 price = '1500';
             }
+        } else if (countryCode === 'BR') {
+            if (mode === 'two-digit') {
+                price = '20';
+            } else if (mode === 'three-digit') {
+                price = '24';
+            }
         }
     
         try {
