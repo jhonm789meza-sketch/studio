@@ -92,6 +92,8 @@ const App = () => {
     const [selectedRaffleMode, setSelectedRaffleMode] = useState<RaffleMode | null>(null);
 
     const [theme, setTheme] = useState('light');
+    const [installPromptEvent, setInstallPromptEvent] = useState<any>(null);
+
 
     const raffleManager = new RaffleManager(db);
     
@@ -213,7 +215,31 @@ const App = () => {
               });
           });
         }
+        
+        const handleBeforeInstallPrompt = (e: Event) => {
+            e.preventDefault();
+            setInstallPromptEvent(e);
+        };
+        window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+        return () => {
+            window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+        };
       }, []);
+
+    const handleInstallClick = () => {
+        if (installPromptEvent) {
+            installPromptEvent.prompt();
+            installPromptEvent.userChoice.then((choiceResult: { outcome: string }) => {
+                if (choiceResult.outcome === 'accepted') {
+                    console.log('User accepted the install prompt');
+                } else {
+                    console.log('User dismissed the install prompt');
+                }
+                setInstallPromptEvent(null);
+            });
+        }
+    };
 
     useEffect(() => {
         const storedTheme = localStorage.getItem('theme');
@@ -715,13 +741,21 @@ const App = () => {
         let price = '0';
         const currencySymbol = getCurrencySymbol(countryCode);
         
+        const isUSDCountry = ['AR', 'PE', 'EC', 'MX', 'DO', 'CR', 'UY', 'PR', 'VE', 'US', 'SV', 'GT', 'HN', 'NI', 'PA', 'CL'].includes(countryCode);
+
         if (countryCode === 'CO') {
             if (mode === 'two-digit') price = '10000';
             else if (mode === 'three-digit') price = '15000';
             else if (mode === 'infinite') price = '1500';
-        } else { // For all other countries (USD based)
+        } else if (isUSDCountry) {
             if (mode === 'two-digit') price = '10';
             else if (mode === 'three-digit') price = '15';
+        } else if (countryCode === 'CA') {
+             if (mode === 'two-digit') price = '10';
+             if (mode === 'three-digit') price = '15';
+        } else if (countryCode === 'BR') {
+            if (mode === 'two-digit') price = '20';
+            if (mode === 'three-digit') price = '24';
         }
     
         try {
@@ -1345,6 +1379,12 @@ const App = () => {
                                         <Share2 className="mr-2 h-4 w-4" />
                                         <span>Compartir</span>
                                     </DropdownMenuItem>
+                                     {installPromptEvent && (
+                                        <DropdownMenuItem onSelect={handleInstallClick}>
+                                            <Download className="mr-2 h-4 w-4" />
+                                            <span>Instalar Aplicación</span>
+                                        </DropdownMenuItem>
+                                    )}
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         </div>
