@@ -22,30 +22,44 @@ interface CountrySelectionDialogProps {
 }
 
 const countries = [
-  { name: 'Argentina', flag: '🇦🇷', code: 'AR' },
-  { name: 'Brasil', flag: '🇧🇷', code: 'BR' },
-  { name: 'Canadá', flag: '🇨🇦', code: 'CA' },
-  { name: 'Chile', flag: '🇨🇱', code: 'CL' },
-  { name: 'Colombia', flag: '🇨🇴', code: 'CO' },
-  { name: 'Costa Rica', flag: '🇨🇷', code: 'CR' },
-  { name: 'Ecuador', flag: '🇪🇨', code: 'EC' },
-  { name: 'El Salvador', flag: '🇸🇻', code: 'SV' },
-  { name: 'España', flag: '🇪🇸', code: 'ES' },
-  { name: 'Estados Unidos', flag: '🇺🇸', code: 'US' },
-  { name: 'Guatemala', flag: '🇬🇹', code: 'GT' },
-  { name: 'Honduras', flag: '🇭🇳', code: 'HN' },
-  { name: 'México', flag: '🇲🇽', code: 'MX' },
-  { name: 'Nicaragua', flag: '🇳🇮', code: 'NI' },
-  { name: 'Panamá', flag: '🇵🇦', code: 'PA' },
-  { name: 'Perú', flag: '🇵🇪', code: 'PE' },
-  { name: 'Puerto Rico', flag: '🇵🇷', code: 'PR' },
-  { name: 'República Dominicana', flag: '🇩🇴', code: 'DO' },
-  { name: 'Uruguay', flag: '🇺🇾', code: 'UY' },
-  { name: 'Venezuela', flag: '🇻🇪', code: 'VE' },
+    { name: 'Colombia', flag: '🇨🇴', code: 'CO' },
 ];
+
+export const getCurrencySymbol = (countryCode: string): string => {
+    switch (countryCode) {
+        case 'CO': return 'COP';
+        case 'BR': return 'BRL';
+        case 'AR': return 'ARS';
+        case 'CL': return 'CLP';
+        case 'CA': return 'CAD';
+        case 'MX':
+        case 'US':
+        case 'PE':
+        case 'EC':
+        case 'DO':
+        case 'CR':
+        case 'UY':
+        case 'PR':
+        case 'VE':
+        case 'SV':
+        case 'GT':
+        case 'HN':
+        case 'NI':
+        case 'PA':
+             return '$';
+        default: return '$';
+    }
+}
 
 const getPriceForCountry = (raffleMode: RaffleMode | null, countryCode: string): string | null => {
     if (!raffleMode) return null;
+
+    const isUSDCountry = ['AR', 'PE', 'EC', 'MX', 'DO', 'CR', 'UY', 'PR', 'VE', 'US', 'SV', 'GT', 'HN', 'NI', 'PA'].includes(countryCode);
+
+    if (isUSDCountry) {
+        if (raffleMode === 'two-digit') return '10 USD';
+        if (raffleMode === 'three-digit') return '15 USD';
+    }
 
     if (countryCode === 'CO') {
         if (raffleMode === 'two-digit') return '10,000 COP';
@@ -56,10 +70,6 @@ const getPriceForCountry = (raffleMode: RaffleMode | null, countryCode: string):
         if (raffleMode === 'two-digit') return '20 BRL';
         if (raffleMode === 'three-digit') return '24 BRL';
     }
-    if (countryCode === 'AR') {
-        if (raffleMode === 'two-digit') return '5,416.70 ARS';
-        if (raffleMode === 'three-digit') return '6,275.90 ARS';
-    }
     if (countryCode === 'CA') {
         if (raffleMode === 'two-digit') return '10 CAD';
         if (raffleMode === 'three-digit') return '15 CAD';
@@ -68,11 +78,7 @@ const getPriceForCountry = (raffleMode: RaffleMode | null, countryCode: string):
         if (raffleMode === 'two-digit') return '4,000 CLP';
         if (raffleMode === 'three-digit') return '5,000 CLP';
     }
-    if (countryCode === 'CR') {
-        if (raffleMode === 'two-digit') return '1,902 CRC';
-        if (raffleMode === 'three-digit') return '2,338 CRC';
-    }
-    // Add other countries and prices here
+    
     return null;
 }
 

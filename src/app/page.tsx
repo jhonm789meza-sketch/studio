@@ -9,7 +9,7 @@ import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } f
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House, Clock, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Upload, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound } from 'lucide-react';
+import { Menu, Award, Lock, House, Clock, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Upload, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Sun, Moon } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,7 +20,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
-import { CountrySelectionDialog } from '@/components/country-selection-dialog';
+import { CountrySelectionDialog, getCurrencySymbol } from '@/components/country-selection-dialog';
 
 
 type RaffleMode = 'two-digit' | 'three-digit' | 'infinite';
@@ -55,13 +55,13 @@ const initialRaffleData: Omit<Raffle, 'participants' | 'drawnNumbers'> & { parti
     raffleMode: 'two-digit' as RaffleMode,
     prizeImageUrl: '',
     imageGenPrompt: '',
+    currencySymbol: '$',
 };
 
 
 const App = () => {
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<Tab>('board');
-    const [currencySymbol] = useState('$');
     const [appUrl, setAppUrl] = useState('');
 
     const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
@@ -91,6 +91,8 @@ const App = () => {
     const [isCountrySelectionOpen, setIsCountrySelectionOpen] = useState(false);
     const [selectedRaffleMode, setSelectedRaffleMode] = useState<RaffleMode | null>(null);
 
+    const [theme, setTheme] = useState('light');
+
     const raffleManager = new RaffleManager(db);
     
     const raffleMode = raffleState?.raffleMode || 'two-digit';
@@ -119,6 +121,7 @@ const App = () => {
             prizeImageUrl: raffleState.prizeImageUrl,
             raffleRef: raffleState.raffleRef,
             value: raffleState.value,
+            currencySymbol: raffleState.currencySymbol,
         };
 
         setTicketInfo(ticketData);
@@ -195,6 +198,31 @@ const App = () => {
                 setLoading(false);
             }
         }
+    };
+
+    useEffect(() => {
+        const storedTheme = localStorage.getItem('theme');
+        const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const initialTheme = storedTheme || (prefersDark ? 'dark' : 'light');
+        setTheme(initialTheme);
+        if (initialTheme === 'dark') {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+    }, []);
+
+    const toggleTheme = () => {
+        setTheme(prevTheme => {
+            const newTheme = prevTheme === 'light' ? 'dark' : 'light';
+            localStorage.setItem('theme', newTheme);
+            if (newTheme === 'dark') {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+            return newTheme;
+        });
     };
 
 
@@ -293,9 +321,10 @@ const App = () => {
         setShowConfirmation(true);
     };
     
-    const formatValue = (rawValue: string | number) => {
+    const formatValue = (rawValue: string | number, symbol?: string) => {
+        const currencySymbol = symbol || raffleState?.currencySymbol || '$';
         if (!rawValue) return '';
-        const numericValue = rawValue.toString().replace(/[^\d]/g, '');
+        const numericValue = rawValue.toString().replace(/[^\d.,]/g, '').replace(',', '.');
         if (numericValue === '') return '';
         
         const number = parseFloat(numericValue);
@@ -334,7 +363,7 @@ const App = () => {
     const pendingParticipants = raffleState?.participants.filter((p: Participant) => p.paymentStatus === 'pending') || [];
     const confirmedParticipants = raffleState?.participants.filter((p: Participant) => p.paymentStatus === 'confirmed') || [];
 
-    const totalCollected = confirmedParticipants.length * (raffleState?.value ? parseFloat(String(raffleState.value).replace(/[^\d]/g, '')) : 0);
+    const totalCollected = confirmedParticipants.length * (raffleState?.value ? parseFloat(String(raffleState.value).replace(/[^\d.,]/g, '').replace(',', '.')) : 0);
 
     const toggleNumber = (number: number) => {
         if (!raffleState) return;
@@ -465,6 +494,7 @@ const App = () => {
                     lottery: raffleState.lottery === 'Otro' ? raffleState.customLottery : raffleState.lottery,
                     raffleRef: raffleState.raffleRef,
                     value: raffleState.value,
+                    currencySymbol: raffleState.currencySymbol,
                 };
                 setGeneratedTicketData(ticketData);
              }
@@ -681,44 +711,26 @@ const App = () => {
         setLoading(true);
     
         let price = '0';
-        if (countryCode === 'CO') {
-            if (mode === 'two-digit') {
-                price = '10000';
-            } else if (mode === 'three-digit') {
-                price = '15000';
-            } else if (mode === 'infinite') {
-                price = '1500';
-            }
+        const currencySymbol = getCurrencySymbol(countryCode);
+        
+        const isUSDCountry = ['AR', 'PE', 'EC', 'MX', 'DO', 'CR', 'UY', 'PR', 'VE', 'US', 'SV', 'GT', 'HN', 'NI', 'PA'].includes(countryCode);
+    
+        if (isUSDCountry) {
+            if (mode === 'two-digit') price = '10';
+            else if (mode === 'three-digit') price = '15';
+        } else if (countryCode === 'CO') {
+            if (mode === 'two-digit') price = '10000';
+            else if (mode === 'three-digit') price = '15000';
+            else if (mode === 'infinite') price = '1500';
         } else if (countryCode === 'BR') {
-            if (mode === 'two-digit') {
-                price = '20';
-            } else if (mode === 'three-digit') {
-                price = '24';
-            }
-        } else if (countryCode === 'AR') {
-            if (mode === 'two-digit') {
-                price = '5416.70';
-            } else if (mode === 'three-digit') {
-                price = '6275.90';
-            }
+            if (mode === 'two-digit') price = '20';
+            else if (mode === 'three-digit') price = '24';
         } else if (countryCode === 'CA') {
-            if (mode === 'two-digit') {
-                price = '10';
-            } else if (mode === 'three-digit') {
-                price = '15';
-            }
+            if (mode === 'two-digit') price = '10';
+            else if (mode === 'three-digit') price = '15';
         } else if (countryCode === 'CL') {
-            if (mode === 'two-digit') {
-                price = '4000';
-            } else if (mode === 'three-digit') {
-                price = '5000';
-            }
-        } else if (countryCode === 'CR') {
-            if (mode === 'two-digit') {
-                price = '1902';
-            } else if (mode === 'three-digit') {
-                price = '2338';
-            }
+            if (mode === 'two-digit') price = '4000';
+            else if (mode === 'three-digit') price = '5000';
         }
     
         try {
@@ -735,6 +747,7 @@ const App = () => {
                 isPaid: true,
                 prizeImageUrl: '',
                 value: price,
+                currencySymbol: currencySymbol,
             };
             
             await setDoc(doc(db, "raffles", newRef), newRaffleData);
@@ -940,8 +953,8 @@ const App = () => {
                                    id="value-input"
                                    type="text"
                                    value={formatValue(raffleState.value)}
-                                   onChange={(e) => handleLocalFieldChange('value', e.target.value.replace(/[^\d]/g, ''))}
-                                   onBlur={(e) => handleFieldChange('value', e.target.value.replace(/[^\d]/g, ''))}
+                                   onChange={(e) => handleLocalFieldChange('value', e.target.value.replace(/[^\d.,]/g, ''))}
+                                   onBlur={(e) => handleFieldChange('value', e.target.value.replace(/[^\d.,]/g, ''))}
                                    placeholder="Ej: 5000"
                                    disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
                                    className="w-full mt-1"
@@ -1245,8 +1258,8 @@ const App = () => {
                         <div className="border-t border-dashed border-gray-400 my-4"></div>
                         <h4 className="font-bold text-center mb-2">DETALLES DE LA RIFA</h4>
                         <div className="space-y-1">
-                            <div className="flex justify-between"><span>PREMIO:</span><span className="font-semibold text-right">{formatValue(ticketData.raffleName)}</span></div>
-                            <div className="flex justify-between"><span>VALOR BOLETA:</span><span className="font-semibold text-right">{formatValue(ticketData.value)}</span></div>
+                            <div className="flex justify-between"><span>PREMIO:</span><span className="font-semibold text-right">{formatValue(ticketData.raffleName, ticketData.currencySymbol)}</span></div>
+                            <div className="flex justify-between"><span>VALOR BOLETA:</span><span className="font-semibold text-right">{formatValue(ticketData.value, ticketData.currencySymbol)}</span></div>
                             <div className="flex justify-between"><span>FECHA SORTEO:</span><span className="font-semibold text-right">{gameDateFormatted}</span></div>
                             <div className="flex justify-between"><span>JUEGA CON:</span><span className="font-semibold text-right">{ticketData.lottery}</span></div>
                             <div className="flex justify-between"><span>QUIEN ORGANIZA:</span><span className="font-semibold text-right">{ticketData.organizerName}</span></div>
@@ -1333,6 +1346,10 @@ const App = () => {
                                         <span>Recuperar Administración</span>
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
+                                     <DropdownMenuItem onSelect={toggleTheme}>
+                                        {theme === 'light' ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}
+                                        <span>{theme === 'light' ? 'Tema Oscuro' : 'Tema Claro'}</span>
+                                    </DropdownMenuItem>
                                     <DropdownMenuItem onSelect={() => setIsShareDialogOpen(true)}>
                                         <Share2 className="mr-2 h-4 w-4" />
                                         <span>Compartir</span>
@@ -1798,8 +1815,8 @@ const App = () => {
                                     <div className="border-t border-dashed border-gray-400 my-4"></div>
                                     <h4 className="font-bold text-center mb-2">DETALLES DE LA RIFA</h4>
                                     <div className="space-y-1">
-                                        <div className="flex justify-between"><span>PREMIO:</span><span className="font-semibold text-right">{formatValue(ticketInfo.raffleName)}</span></div>
-                                        <div className="flex justify-between"><span>VALOR BOLETA:</span><span className="font-semibold text-right">{formatValue(ticketInfo.value)}</span></div>
+                                        <div className="flex justify-between"><span>PREMIO:</span><span className="font-semibold text-right">{formatValue(ticketInfo.raffleName, ticketInfo.currencySymbol)}</span></div>
+                                        <div className="flex justify-between"><span>VALOR BOLETA:</span><span className="font-semibold text-right">{formatValue(ticketInfo.value, ticketInfo.currencySymbol)}</span></div>
                                         <div className="flex justify-between"><span>FECHA SORTEO:</span><span className="font-semibold text-right">{ticketInfo.gameDate ? format(new Date(ticketInfo.gameDate + 'T00:00:00'), "d 'de' MMMM 'de' yyyy", { locale: es }) : 'N/A'}</span></div>
                                         <div className="flex justify-between"><span>JUEGA CON:</span><span className="font-semibold text-right">{ticketInfo.lottery}</span></div>
                                         <div className="flex justify-between"><span>QUIEN ORGANIZA:</span><span className="font-semibold text-right">{ticketInfo.organizerName}</span></div>

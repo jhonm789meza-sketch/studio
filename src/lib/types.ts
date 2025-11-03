@@ -39,4 +39,5 @@ export interface Raffle {
     raffleMode: 'two-digit' | 'three-digit' | 'infinite';
     prizeImageUrl: string;
     imageGenPrompt: string;
+    currencySymbol: string;
 }
