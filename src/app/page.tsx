@@ -707,6 +707,12 @@ const App = () => {
             } else if (mode === 'three-digit') {
                 price = '15';
             }
+        } else if (countryCode === 'CL') {
+            if (mode === 'two-digit') {
+                price = '4000';
+            } else if (mode === 'three-digit') {
+                price = '5000';
+            }
         }
     
         try {
