@@ -238,6 +238,8 @@ const App = () => {
                 }
                 setInstallPromptEvent(null);
             });
+        } else {
+            showNotification('La aplicación no se puede instalar en este navegador o ya está instalada.', 'info');
         }
     };
 
@@ -1379,12 +1381,10 @@ const App = () => {
                                         <Share2 className="mr-2 h-4 w-4" />
                                         <span>Compartir</span>
                                     </DropdownMenuItem>
-                                     {installPromptEvent && (
-                                        <DropdownMenuItem onSelect={handleInstallClick}>
-                                            <Download className="mr-2 h-4 w-4" />
-                                            <span>Instalar Aplicación</span>
-                                        </DropdownMenuItem>
-                                    )}
+                                     <DropdownMenuItem onSelect={handleInstallClick}>
+                                        <Download className="mr-2 h-4 w-4" />
+                                        <span>Instalar Aplicación</span>
+                                    </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         </div>
