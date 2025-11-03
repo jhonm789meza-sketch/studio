@@ -695,6 +695,12 @@ const App = () => {
             } else if (mode === 'three-digit') {
                 price = '24';
             }
+        } else if (countryCode === 'AR') {
+            if (mode === 'two-digit') {
+                price = '5416.70';
+            } else if (mode === 'three-digit') {
+                price = '6275.90';
+            }
         }
     
         try {

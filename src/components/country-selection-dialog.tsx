@@ -56,6 +56,10 @@ const getPriceForCountry = (raffleMode: RaffleMode | null, countryCode: string):
         if (raffleMode === 'two-digit') return '20 BRL';
         if (raffleMode === 'three-digit') return '24 BRL';
     }
+    if (countryCode === 'AR') {
+        if (raffleMode === 'two-digit') return '5,416.70 ARS';
+        if (raffleMode === 'three-digit') return '6,275.90 ARS';
+    }
     // Add other countries and prices here
     return null;
 }
