@@ -47,7 +47,6 @@ export const getCurrencySymbol = (countryCode: string): string => {
     switch (countryCode) {
         case 'CO': return 'COP';
         case 'BR': return 'BRL';
-        case 'CL': return 'CLP';
         case 'CA': return 'CAD';
         case 'AR':
         case 'PE':
@@ -64,6 +63,7 @@ export const getCurrencySymbol = (countryCode: string): string => {
         case 'HN':
         case 'NI':
         case 'PA':
+        case 'CL':
              return '$';
         default: return '$';
     }
@@ -72,7 +72,7 @@ export const getCurrencySymbol = (countryCode: string): string => {
 const getPriceForCountry = (raffleMode: RaffleMode | null, countryCode: string): string | null => {
     if (!raffleMode) return null;
 
-    const isUSDCountry = ['AR', 'PE', 'EC', 'MX', 'DO', 'CR', 'UY', 'PR', 'VE', 'US', 'SV', 'GT', 'HN', 'NI', 'PA'].includes(countryCode);
+    const isUSDCountry = ['AR', 'PE', 'EC', 'MX', 'DO', 'CR', 'UY', 'PR', 'VE', 'US', 'SV', 'GT', 'HN', 'NI', 'PA', 'CL'].includes(countryCode);
 
     if (isUSDCountry) {
         if (raffleMode === 'two-digit') return '10 USD';
@@ -91,10 +91,6 @@ const getPriceForCountry = (raffleMode: RaffleMode | null, countryCode: string):
     if (countryCode === 'CA') {
         if (raffleMode === 'two-digit') return '10 CAD';
         if (raffleMode === 'three-digit') return '15 CAD';
-    }
-    if (countryCode === 'CL') {
-        if (raffleMode === 'two-digit') return '4,000 CLP';
-        if (raffleMode === 'three-digit') return '5,000 CLP';
     }
     
     return null;

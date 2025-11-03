@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect, useRef, useTransition } from 'react';
 import jsPDF from 'jspdf';
@@ -713,7 +714,7 @@ const App = () => {
         let price = '0';
         const currencySymbol = getCurrencySymbol(countryCode);
         
-        const isUSDCountry = ['AR', 'PE', 'EC', 'MX', 'DO', 'CR', 'UY', 'PR', 'VE', 'US', 'SV', 'GT', 'HN', 'NI', 'PA'].includes(countryCode);
+        const isUSDCountry = ['AR', 'PE', 'EC', 'MX', 'DO', 'CR', 'UY', 'PR', 'VE', 'US', 'SV', 'GT', 'HN', 'NI', 'PA', 'CL'].includes(countryCode);
     
         if (isUSDCountry) {
             if (mode === 'two-digit') price = '10';
@@ -728,9 +729,6 @@ const App = () => {
         } else if (countryCode === 'CA') {
             if (mode === 'two-digit') price = '10';
             else if (mode === 'three-digit') price = '15';
-        } else if (countryCode === 'CL') {
-            if (mode === 'two-digit') price = '4000';
-            else if (mode === 'three-digit') price = '5000';
         }
     
         try {
