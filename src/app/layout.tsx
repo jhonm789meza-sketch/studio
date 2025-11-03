@@ -31,6 +31,7 @@ export default function RootLayout({
     <html lang="es">
       <head>
           <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+          <link rel="manifest" href="/manifest.json" />
       </head>
       <body className={`${inter.variable} ${anton.variable} ${libreBaskerville.variable}`}>
         {children}

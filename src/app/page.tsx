@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect, useRef, useTransition } from 'react';
 import jsPDF from 'jspdf';
@@ -202,6 +201,21 @@ const App = () => {
     };
 
     useEffect(() => {
+        if ('serviceWorker' in navigator) {
+          window.addEventListener('load', () => {
+            navigator.serviceWorker
+              .register('/sw.js')
+              .then(registration => {
+                console.log('Service Worker registrado con éxito:', registration);
+              })
+              .catch(error => {
+                console.log('Error al registrar el Service Worker:', error);
+              });
+          });
+        }
+      }, []);
+
+    useEffect(() => {
         const storedTheme = localStorage.getItem('theme');
         const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
         const initialTheme = storedTheme || (prefersDark ? 'dark' : 'light');
@@ -228,19 +242,6 @@ const App = () => {
 
 
     useEffect(() => {
-        if ('serviceWorker' in navigator) {
-          window.addEventListener('load', () => {
-            navigator.serviceWorker
-              .register('/sw.js')
-              .then(registration => {
-                console.log('Service Worker registrado con éxito:', registration);
-              })
-              .catch(error => {
-                console.log('Error al registrar el Service Worker:', error);
-              });
-          });
-        }
-    
         const initialize = async () => {
           setLoading(true);
           if (persistenceEnabled) {
@@ -714,19 +715,11 @@ const App = () => {
         let price = '0';
         const currencySymbol = getCurrencySymbol(countryCode);
         
-        const isUSDCountry = ['AR', 'PE', 'EC', 'MX', 'DO', 'CR', 'UY', 'PR', 'VE', 'US', 'SV', 'GT', 'HN', 'NI', 'PA', 'CL'].includes(countryCode);
-    
-        if (isUSDCountry) {
-            if (mode === 'two-digit') price = '10';
-            else if (mode === 'three-digit') price = '15';
-        } else if (countryCode === 'CO') {
+        if (countryCode === 'CO') {
             if (mode === 'two-digit') price = '10000';
             else if (mode === 'three-digit') price = '15000';
             else if (mode === 'infinite') price = '1500';
-        } else if (countryCode === 'BR') {
-            if (mode === 'two-digit') price = '20';
-            else if (mode === 'three-digit') price = '24';
-        } else if (countryCode === 'CA') {
+        } else { // For all other countries (USD based)
             if (mode === 'two-digit') price = '10';
             else if (mode === 'three-digit') price = '15';
         }

@@ -1,11 +1,11 @@
 {
-  "name": "Rifa Express",
-  "short_name": "RifaExpress",
-  "start_url": ".",
+  "name": "Tablero de Rifas",
+  "short_name": "Rifas",
+  "description": "Aplicación de Rifas con Firebase",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#8B5CF6",
-  "description": "Aplicación de Rifas con Firebase.",
+  "theme_color": "#A855F7",
   "icons": [
     {
       "src": "/icon.svg",
