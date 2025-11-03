@@ -701,6 +701,12 @@ const App = () => {
             } else if (mode === 'three-digit') {
                 price = '6275.90';
             }
+        } else if (countryCode === 'CA') {
+            if (mode === 'two-digit') {
+                price = '10';
+            } else if (mode === 'three-digit') {
+                price = '15';
+            }
         }
     
         try {
