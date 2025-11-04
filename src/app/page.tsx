@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Confetti } from '@/components/confetti';
 import { Switch } from '@/components/ui/switch';
-import type { Participant, Raffle, PrizePlanItem } from '@/lib/types';
+import type { Participant, Raffle } from '@/lib/types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Textarea } from '@/components/ui/textarea';
@@ -948,19 +948,21 @@ const App = () => {
                                     />
                                 </div>
                             </div>
-                            <div>
-                                <Label htmlFor="password-input">Contraseña de Administrador:</Label>
-                                <Input
-                                    id="password-input"
-                                    type="password"
-                                    value={raffleState.password}
-                                    onChange={(e) => handleLocalFieldChange('password', e.target.value)}
-                                    onBlur={(e) => handleFieldChange('password', e.target.value)}
-                                    placeholder="Crea una contraseña segura"
-                                    disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
-                                    className="w-full mt-1"
-                                />
-                           </div>
+                            {isCurrentUserAdmin && (
+                                <div>
+                                    <Label htmlFor="password-input">Contraseña de Administrador:</Label>
+                                    <Input
+                                        id="password-input"
+                                        type="password"
+                                        value={raffleState.password}
+                                        onChange={(e) => handleLocalFieldChange('password', e.target.value)}
+                                        onBlur={(e) => handleFieldChange('password', e.target.value)}
+                                        placeholder="Crea una contraseña segura"
+                                        disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
+                                        className="w-full mt-1"
+                                    />
+                               </div>
+                            )}
                            <div>
                                <Label htmlFor="prize-input">Premio:</Label>
                                <Input
