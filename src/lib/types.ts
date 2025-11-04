@@ -41,6 +41,7 @@ export interface Raffle {
     imageGenPrompt: string;
     currencySymbol: string;
     infiniteModeDigits?: number;
+    gameMethodDescription?: string;
 }
 
     
