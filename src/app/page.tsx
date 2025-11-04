@@ -724,6 +724,30 @@ const App = () => {
         }
     };
 
+    const handleFindPartialWinners = (numLastDigits: 2 | 3) => {
+        if (!raffleState || !raffleState.manualWinnerNumber) {
+            showNotification('Por favor, ingresa primero el número ganador principal.', 'warning');
+            return;
+        }
+
+        const winningNumberStr = raffleState.manualWinnerNumber;
+        if (winningNumberStr.length < numLastDigits) {
+            showNotification(`El número ganador es muy corto para buscar ${numLastDigits} últimas cifras.`, 'warning');
+            return;
+        }
+        
+        const lastDigits = winningNumberStr.slice(-numLastDigits);
+        const winners = confirmedParticipants.filter(p => p.raffleNumber.endsWith(lastDigits));
+
+        if (winners.length > 0) {
+            const winnerMessage = winners.map(w => `${w.name} (${w.raffleNumber})`).join(', ');
+            showNotification(`Ganadores con las últimas ${numLastDigits} cifras (${lastDigits}): ${winnerMessage}`, 'success');
+        } else {
+            showNotification(`No se encontraron ganadores para las últimas ${numLastDigits} cifras (${lastDigits}).`, 'info');
+        }
+    };
+
+
     const handlePaymentMethodToggle = async (field: string, value: boolean) => {
         if (!raffleState || !raffleState.raffleRef || !isCurrentUserAdmin) return;
         handleLocalFieldChange(field, value);
@@ -1099,12 +1123,12 @@ const App = () => {
                    <div className="lg:w-3/5 flex-grow">
                        {isCurrentUserAdmin && (
                          <div className="mb-6 p-4 border rounded-lg bg-gray-50">
-                             <h2 className="text-2xl font-bold text-gray-800 mb-4">Sorteo</h2>
-                             <div className="flex flex-wrap gap-3 items-center">
+                            <h2 className="text-2xl font-bold text-gray-800 mb-4">Sorteo</h2>
+                             <div className="space-y-4">
                                  {!raffleState.isWinnerConfirmed && (
-                                     <>
-                                         <div className="flex items-center gap-2">
-                                             <Label htmlFor="manual-winner-input" className="sr-only">Número Ganador</Label>
+                                     <div className="flex flex-wrap gap-3 items-end">
+                                         <div className="flex-grow">
+                                             <Label htmlFor="manual-winner-input">Número Ganador</Label>
                                              <Input
                                                  id="manual-winner-input"
                                                  type="text"
@@ -1113,32 +1137,82 @@ const App = () => {
                                                  onChange={(e) => handleLocalFieldChange('manualWinnerNumber', e.target.value.replace(/\D/g, ''))}
                                                  maxLength={raffleMode === 'infinite' ? raffleState.infiniteModeDigits : numberLength}
                                                  disabled={raffleState.isWinnerConfirmed || !!raffleState.winner}
-                                                 className="w-36"
+                                                 className="w-full"
                                              />
-                                             <Button
-                                                 onClick={handleDrawWinner}
-                                                 disabled={raffleState.isWinnerConfirmed || !!raffleState.winner}
-                                                 className="bg-yellow-500 text-white font-medium rounded-lg hover:bg-yellow-600 transition-colors disabled:bg-gray-300"
-                                             >
-                                                 Buscar Ganador
-                                             </Button>
                                          </div>
-                                     </>
+                                         <Button
+                                             onClick={handleDrawWinner}
+                                             disabled={raffleState.isWinnerConfirmed || !!raffleState.winner}
+                                             className="bg-yellow-500 text-white font-medium rounded-lg hover:bg-yellow-600 transition-colors disabled:bg-gray-300"
+                                         >
+                                             Buscar Ganador
+                                         </Button>
+                                     </div>
                                  )}
-                                 {raffleState.winner && !raffleState.isWinnerConfirmed && (
+
+                                {raffleMode === 'infinite' && !raffleState.isWinnerConfirmed && (
+                                    <>
+                                        <div className="flex flex-wrap gap-3 items-end">
+                                            <div className="flex-grow">
+                                                <Label htmlFor="partial-winner-3-input">Número (3 últimas cifras)</Label>
+                                                <Input
+                                                    id="partial-winner-3-input"
+                                                    type="text"
+                                                    placeholder="Últimas 3 cifras"
+                                                    value={raffleState.manualWinnerNumber.slice(-3)}
+                                                    readOnly
+                                                    disabled
+                                                    className="w-full bg-gray-100"
+                                                />
+                                            </div>
+                                            <Button
+                                                onClick={() => handleFindPartialWinners(3)}
+                                                disabled={raffleState.isWinnerConfirmed || !raffleState.manualWinnerNumber}
+                                                className="bg-blue-500 text-white font-medium rounded-lg hover:bg-blue-600 transition-colors disabled:bg-gray-300"
+                                            >
+                                                Buscar Ganador
+                                            </Button>
+                                        </div>
+                                        <div className="flex flex-wrap gap-3 items-end">
+                                            <div className="flex-grow">
+                                                <Label htmlFor="partial-winner-2-input">Número (2 últimas cifras)</Label>
+                                                <Input
+                                                    id="partial-winner-2-input"
+                                                    type="text"
+                                                    placeholder="Últimas 2 cifras"
+                                                    value={raffleState.manualWinnerNumber.slice(-2)}
+                                                    readOnly
+                                                    disabled
+                                                    className="w-full bg-gray-100"
+                                                />
+                                            </div>
+                                            <Button
+                                                onClick={() => handleFindPartialWinners(2)}
+                                                disabled={raffleState.isWinnerConfirmed || !raffleState.manualWinnerNumber}
+                                                className="bg-blue-500 text-white font-medium rounded-lg hover:bg-blue-600 transition-colors disabled:bg-gray-300"
+                                            >
+                                                Buscar Ganador
+                                            </Button>
+                                        </div>
+                                    </>
+                                )}
+
+                                 <div className="flex flex-wrap gap-3 items-center">
+                                     {raffleState.winner && !raffleState.isWinnerConfirmed && (
+                                         <Button
+                                             onClick={handleConfirmWinner}
+                                             className="bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 transition-colors"
+                                         >
+                                             Confirmar Resultado
+                                         </Button>
+                                     )}
                                      <Button
-                                         onClick={handleConfirmWinner}
-                                         className="bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 transition-colors"
+                                         onClick={resetBoard}
+                                         className="bg-red-500 text-white font-medium rounded-lg hover:bg-red-600 transition-colors"
                                      >
-                                         Confirmar Resultado
+                                         Reiniciar Tablero
                                      </Button>
-                                 )}
-                                 <Button
-                                     onClick={resetBoard}
-                                     className="bg-red-500 text-white font-medium rounded-lg hover:bg-red-600 transition-colors"
-                                 >
-                                     Reiniciar Tablero
-                                 </Button>
+                                 </div>
                              </div>
                              {raffleState.isWinnerConfirmed && (
                                  <p className="mt-4 text-green-600 font-semibold">El resultado ha sido confirmado y el tablero está cerrado.</p>
@@ -1602,7 +1676,7 @@ const App = () => {
                                                         type="text"
                                                         value={raffleState?.raffleNumber || ''}
                                                         onChange={handleRaffleNumberChange}
-                                                        placeholder={`Ej: ${raffleMode === 'two-digit' ? '05' : '142'}`}
+                                                        placeholder={`Ej: ${raffleMode === 'two-digit' ? '05' : raffleMode === 'three-digit' ? '142' : '2025'}`}
                                                         className="w-full mt-1"
                                                         maxLength={raffleMode === 'infinite' ? (raffleState?.infiniteModeDigits || 4) : numberLength}
                                                     />
