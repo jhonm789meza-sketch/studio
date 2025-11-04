@@ -88,6 +88,7 @@ const App = () => {
     const [showConfetti, setShowConfetti] = useState(false);
     const [currentAdminId, setCurrentAdminId] = useState<string | null>(null);
     const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
+    const [isQrDialogOpen, setIsQrDialogOpen] = useState(false);
     
     const [isCountrySelectionOpen, setIsCountrySelectionOpen] = useState(false);
     const [selectedRaffleMode, setSelectedRaffleMode] = useState<RaffleMode | null>(null);
@@ -1428,24 +1429,6 @@ const App = () => {
                 </div>
             )}
             <div className="relative z-10 p-4">
-                {appUrl && (
-                    <div className="absolute top-4 right-4 z-20">
-                         <div className="relative inline-block">
-                             <Image
-                                 src={`https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent(appUrl)}&qzone=1&ecc=H`}
-                                 alt="Código QR de la aplicación"
-                                 width={80}
-                                 height={80}
-                                 className="rounded-lg shadow-md"
-                             />
-                             <div className="absolute inset-0 flex items-center justify-center">
-                                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-md">
-                                    <Image src="/icon.svg" alt="Rifa Express Logo" width={24} height={24} />
-                                 </div>
-                             </div>
-                         </div>
-                     </div>
-                )}
                 {showConfetti && <Confetti />}
                 <div className="max-w-6xl mx-auto bg-card/90 rounded-2xl shadow-2xl overflow-hidden border">
                     <div className="bg-gradient-to-r from-purple-600/80 to-blue-600/80 text-white p-6 flex justify-between items-center">
@@ -1473,6 +1456,10 @@ const App = () => {
                                     <DropdownMenuItem onSelect={() => setIsShareDialogOpen(true)}>
                                         <Share2 className="mr-2 h-4 w-4" />
                                         <span>Compartir</span>
+                                    </DropdownMenuItem>
+                                     <DropdownMenuItem onSelect={() => setIsQrDialogOpen(true)}>
+                                        <QrCode className="mr-2 h-4 w-4" />
+                                        <span>Mostrar QR</span>
                                     </DropdownMenuItem>
                                      <DropdownMenuItem onSelect={handleInstallClick}>
                                         <Download className="mr-2 h-4 w-4" />
@@ -2131,6 +2118,34 @@ const App = () => {
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setIsShareDialogOpen(false)}>Cerrar</Button>
                     </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={isQrDialogOpen} onOpenChange={setIsQrDialogOpen}>
+                <DialogContent className="max-w-xs">
+                    <DialogHeader>
+                        <DialogTitle className="text-center">Compartir con QR</DialogTitle>
+                        <DialogDescription className="text-center">
+                            Escanea este código para abrir la aplicación.
+                        </DialogDescription>
+                    </DialogHeader>
+                    {appUrl && (
+                        <div className="flex justify-center items-center p-4">
+                            <div className="relative inline-block p-4 bg-white rounded-lg shadow-md">
+                                <Image
+                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(appUrl)}&qzone=1&ecc=H`}
+                                    alt="Código QR de la aplicación"
+                                    width={200}
+                                    height={200}
+                                />
+                                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                     <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-md">
+                                        <Image src="/icon.svg" alt="Rifa Express Logo" width={32} height={32} />
+                                     </div>
+                                 </div>
+                            </div>
+                        </div>
+                    )}
                 </DialogContent>
             </Dialog>
             
