@@ -1604,7 +1604,7 @@ const App = () => {
                                                         onChange={handleRaffleNumberChange}
                                                         placeholder={`Ej: ${raffleMode === 'two-digit' ? '05' : '142'}`}
                                                         className="w-full mt-1"
-                                                        maxLength={raffleMode === 'infinite' ? raffleState?.infiniteModeDigits : numberLength}
+                                                        maxLength={raffleMode === 'infinite' ? (raffleState?.infiniteModeDigits || 4) : numberLength}
                                                     />
                                                     {raffleState?.raffleNumber && allAssignedNumbers.has(parseInt(raffleState.raffleNumber)) && (
                                                         <p className="text-red-500 text-sm mt-1">Este número ya está asignado.</p>
