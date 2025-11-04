@@ -711,7 +711,7 @@ const App = () => {
         if (winner) {
             await setDoc(doc(db, "raffles", raffleState.raffleRef), { winner }, { merge: true });
             setShowConfetti(true);
-            showNotification(`¡El ganador es ${winner.name} con el número ${winner.raffleNumber}!`, 'success');
+            showNotification(`¡El ganador es ${winner.name} con el número ${winner.raffleNumber}! (100% del premio)`, 'success');
             setTimeout(() => setShowConfetti(false), 8000);
         } else {
              const houseWinner = {
@@ -724,13 +724,20 @@ const App = () => {
         }
     };
 
-    const handleFindPartialWinners = (numLastDigits: 2 | 3) => {
-        if (!raffleState || !raffleState.manualWinnerNumber) {
-            showNotification('Por favor, ingresa primero el número ganador principal.', 'warning');
+    const handleFindPartialWinners = (numLastDigits: 2 | 3, prizePercentage: number) => {
+        if (!raffleState || !raffleState.manualWinnerNumber || !raffleState.value) {
+            showNotification('Por favor, ingresa primero el número ganador principal y asegura que el valor de la boleta esté definido.', 'warning');
             return;
         }
-
+    
         const winningNumberStr = raffleState.manualWinnerNumber;
+        const ticketValue = parseFloat(String(raffleState.value).replace(/\D/g, ''));
+    
+        if (isNaN(ticketValue) || ticketValue <= 0) {
+            showNotification('El valor de la boleta no es válido para calcular el premio.', 'warning');
+            return;
+        }
+    
         if (winningNumberStr.length < numLastDigits) {
             showNotification(`El número ganador es muy corto para buscar ${numLastDigits} últimas cifras.`, 'warning');
             return;
@@ -738,10 +745,11 @@ const App = () => {
         
         const lastDigits = winningNumberStr.slice(-numLastDigits);
         const winners = confirmedParticipants.filter(p => p.raffleNumber.endsWith(lastDigits));
-
+        const prizeAmount = ticketValue * (prizePercentage / 100);
+    
         if (winners.length > 0) {
             const winnerMessage = winners.map(w => `${w.name} (${w.raffleNumber})`).join(', ');
-            showNotification(`Ganadores con las últimas ${numLastDigits} cifras (${lastDigits}): ${winnerMessage}`, 'success');
+            showNotification(`Ganadores con las últimas ${numLastDigits} cifras (${lastDigits}): ${winnerMessage} - Premio: ${formatValue(prizeAmount)} c/u`, 'success');
         } else {
             showNotification(`No se encontraron ganadores para las últimas ${numLastDigits} cifras (${lastDigits}).`, 'info');
         }
@@ -1168,11 +1176,11 @@ const App = () => {
                                                 />
                                             </div>
                                             <Button
-                                                onClick={() => handleFindPartialWinners(3)}
+                                                onClick={() => handleFindPartialWinners(3, 10)}
                                                 disabled={raffleState.isWinnerConfirmed || !raffleState.manualWinnerNumber}
                                                 className="bg-blue-500 text-white font-medium rounded-lg hover:bg-blue-600 transition-colors disabled:bg-gray-300"
                                             >
-                                                Buscar Ganador
+                                                Buscar Ganador (10%)
                                             </Button>
                                         </div>
                                         <div className="flex flex-wrap gap-3 items-end">
@@ -1189,11 +1197,11 @@ const App = () => {
                                                 />
                                             </div>
                                             <Button
-                                                onClick={() => handleFindPartialWinners(2)}
+                                                onClick={() => handleFindPartialWinners(2, 5)}
                                                 disabled={raffleState.isWinnerConfirmed || !raffleState.manualWinnerNumber}
                                                 className="bg-blue-500 text-white font-medium rounded-lg hover:bg-blue-600 transition-colors disabled:bg-gray-300"
                                             >
-                                                Buscar Ganador
+                                                Buscar Ganador (5%)
                                             </Button>
                                         </div>
                                     </>
