@@ -9,7 +9,7 @@ import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } f
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House, Clock, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Upload, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Sun, Moon } from 'lucide-react';
+import { Menu, Award, Lock, House, Clock, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Upload, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -325,10 +325,17 @@ const App = () => {
         setShowConfirmation(true);
     };
     
+    const formatValueForDisplay = (value: string | number) => {
+        if (value === null || value === undefined) return '';
+        const stringValue = String(value).replace(/\D/g, '');
+        if (stringValue === '') return '';
+        return new Intl.NumberFormat('es-CO').format(parseInt(stringValue, 10));
+    };
+
     const formatValue = (rawValue: string | number) => {
         const currencySymbol = raffleState?.currencySymbol || '$';
         if (!rawValue) return '';
-        const numericValue = String(rawValue).replace(/[^\d.,]/g, '').replace(',', '.');
+        const numericValue = String(rawValue).replace(/\D/g, '');
         if (numericValue === '') return '';
         
         const number = parseFloat(numericValue);
@@ -347,14 +354,21 @@ const App = () => {
     };
     
     const handleLocalFieldChange = (field: string, value: any) => {
-        setRaffleState((s: any) => ({ ...s, [field]: value }));
+        if (field === 'value') {
+            const numericValue = String(value).replace(/\D/g, '');
+            setRaffleState((s: any) => ({ ...s, [field]: numericValue }));
+        } else {
+            setRaffleState((s: any) => ({ ...s, [field]: value }));
+        }
     };
 
     const handleFieldChange = async (field: string, value: any) => {
         if (!raffleState || !raffleState.raffleRef || !isCurrentUserAdmin) return;
         
+        const valueToSave = field === 'value' ? String(value).replace(/\D/g, '') : value;
+
         try {
-            await setDoc(doc(db, "raffles", raffleState.raffleRef), { [field]: value }, { merge: true });
+            await setDoc(doc(db, "raffles", raffleState.raffleRef), { [field]: valueToSave }, { merge: true });
         } catch (error) {
             console.error(`Error updating field ${field}:`, error);
             showNotification(`Error al actualizar el campo ${field}.`, 'error');
@@ -952,10 +966,10 @@ const App = () => {
                                 <Label htmlFor="value-input">Valor:</Label>
                                 <Input
                                     id="value-input"
-                                    type="number"
-                                    value={raffleState.value}
-                                    onChange={(e) => handleLocalFieldChange('value', e.target.value.replace(/\D/g, ''))}
-                                    onBlur={(e) => handleFieldChange('value', e.target.value.replace(/\D/g, ''))}
+                                    type="text"
+                                    value={formatValueForDisplay(raffleState.value)}
+                                    onChange={(e) => handleLocalFieldChange('value', e.target.value)}
+                                    onBlur={(e) => handleFieldChange('value', raffleState.value)}
                                     placeholder="Ej: 5000"
                                     disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
                                     className="w-full mt-1"
@@ -1315,9 +1329,7 @@ const App = () => {
                              />
                              <div className="absolute inset-0 flex items-center justify-center">
                                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-md">
-                                     <span className="text-center text-[5px] font-bold leading-tight text-gray-800">
-                                         RIFA<span className="text-purple-600">⚡</span><br/>EXPRESS
-                                     </span>
+                                    <Image src="/icon.svg" alt="Rifa Express Logo" width={24} height={24} />
                                  </div>
                              </div>
                          </div>
