@@ -56,6 +56,7 @@ const initialRaffleData: Omit<Raffle, 'participants' | 'drawnNumbers'> & { parti
     prizeImageUrl: '',
     imageGenPrompt: '',
     currencySymbol: '$',
+    infiniteModeDigits: 4,
 };
 
 
@@ -446,6 +447,7 @@ const App = () => {
         const name = raffleState.name?.trim();
         const phoneNumber = raffleState.phoneNumber?.trim();
         const raffleNumber = raffleState.raffleNumber?.trim();
+        const infiniteDigits = raffleState.infiniteModeDigits || 4;
     
         if (!name) {
             showNotification('Por favor ingresa el nombre', 'warning');
@@ -462,7 +464,12 @@ const App = () => {
     
         const num = parseInt(raffleNumber, 10);
     
-        if (raffleMode !== 'infinite' && raffleNumber.length !== numberLength) {
+        if (raffleMode === 'infinite') {
+            if (raffleNumber.length !== infiniteDigits) {
+                showNotification(`El número para esta modalidad debe ser de ${infiniteDigits} cifras`, 'warning');
+                return false;
+            }
+        } else if (raffleNumber.length !== numberLength) {
              showNotification(`El número para esta modalidad debe ser de ${numberLength} cifras`, 'warning');
              return false;
         }
@@ -690,8 +697,12 @@ const App = () => {
     const handleDrawWinner = async () => {
         if (!raffleState || !raffleState.raffleRef) return;
         const winningNumberStr = raffleState.manualWinnerNumber;
-        if (!winningNumberStr || (raffleMode !== 'infinite' && winningNumberStr.length !== numberLength)) {
-            showNotification(`Por favor, ingresa un número ganador válido de ${numberLength} cifras.`, 'warning');
+        const infiniteDigits = raffleState.infiniteModeDigits || 4;
+        
+        const winningNumberLength = raffleMode === 'infinite' ? infiniteDigits : numberLength;
+
+        if (!winningNumberStr || winningNumberStr.length !== winningNumberLength) {
+            showNotification(`Por favor, ingresa un número ganador válido de ${winningNumberLength} cifras.`, 'warning');
             return;
         }
 
@@ -975,6 +986,22 @@ const App = () => {
                                     className="w-full mt-1"
                                 />
                             </div>
+                           {raffleState.raffleMode === 'infinite' && (
+                                <div>
+                                    <Label htmlFor="infinite-digits-input">Cifras para Rifa Infinita:</Label>
+                                    <Input
+                                        id="infinite-digits-input"
+                                        type="number"
+                                        min="4"
+                                        value={raffleState.infiniteModeDigits || 4}
+                                        onChange={(e) => handleLocalFieldChange('infiniteModeDigits', parseInt(e.target.value, 10))}
+                                        onBlur={(e) => handleFieldChange('infiniteModeDigits', parseInt(e.target.value, 10))}
+                                        placeholder="Mínimo 4 cifras"
+                                        disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
+                                        className="w-full mt-1"
+                                    />
+                                </div>
+                            )}
                            <div>
                                <Label htmlFor="game-date-input">Fecha de juego:</Label>
                                <Input
@@ -1081,10 +1108,10 @@ const App = () => {
                                              <Input
                                                  id="manual-winner-input"
                                                  type="text"
-                                                 placeholder={raffleMode === 'infinite' ? 'Número ganador' : `Número (${numberLength} cifras)`}
+                                                 placeholder={raffleMode === 'infinite' ? `Número (${raffleState.infiniteModeDigits || 4} cifras)`: `Número (${numberLength} cifras)`}
                                                  value={raffleState.manualWinnerNumber}
                                                  onChange={(e) => handleLocalFieldChange('manualWinnerNumber', e.target.value.replace(/\D/g, ''))}
-                                                 maxLength={raffleMode === 'infinite' ? undefined : numberLength}
+                                                 maxLength={raffleMode === 'infinite' ? raffleState.infiniteModeDigits : numberLength}
                                                  disabled={raffleState.isWinnerConfirmed || !!raffleState.winner}
                                                  className="w-36"
                                              />
@@ -1569,7 +1596,7 @@ const App = () => {
                                                     </div>
                                                 </div>
                                                 <div>
-                                                    <Label htmlFor="raffle-number-input">Número de rifa ({raffleMode === 'two-digit' ? '00-99' : raffleMode === 'three-digit' ? '000-999' : 'Cualquier número'}):</Label>
+                                                    <Label htmlFor="raffle-number-input">Número de rifa ({raffleMode === 'two-digit' ? '00-99' : raffleMode === 'three-digit' ? '000-999' : `${raffleState?.infiniteModeDigits || 4} cifras`}):</Label>
                                                     <Input
                                                         id="raffle-number-input"
                                                         type="text"
@@ -1577,7 +1604,7 @@ const App = () => {
                                                         onChange={handleRaffleNumberChange}
                                                         placeholder={`Ej: ${raffleMode === 'two-digit' ? '05' : '142'}`}
                                                         className="w-full mt-1"
-                                                        maxLength={raffleMode === 'infinite' ? undefined : numberLength}
+                                                        maxLength={raffleMode === 'infinite' ? raffleState?.infiniteModeDigits : numberLength}
                                                     />
                                                     {raffleState?.raffleNumber && allAssignedNumbers.has(parseInt(raffleState.raffleNumber)) && (
                                                         <p className="text-red-500 text-sm mt-1">Este número ya está asignado.</p>
@@ -2028,3 +2055,5 @@ const App = () => {
 };
 
 export default App;
+
+    
