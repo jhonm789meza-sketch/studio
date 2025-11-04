@@ -23,24 +23,6 @@ interface CountrySelectionDialogProps {
 
 const countries = [
     { name: 'Colombia', flag: '🇨🇴', code: 'CO' },
-    { name: 'Argentina', flag: '🇦🇷', code: 'AR' },
-    { name: 'Perú', flag: '🇵🇪', code: 'PE' },
-    { name: 'Ecuador', flag: '🇪🇨', code: 'EC' },
-    { name: 'México', flag: '🇲🇽', code: 'MX' },
-    { name: 'República Dominicana', flag: '🇩🇴', code: 'DO' },
-    { name: 'Costa Rica', flag: '🇨🇷', code: 'CR' },
-    { name: 'Uruguay', flag: '🇺🇾', code: 'UY' },
-    { name: 'Puerto Rico', flag: '🇵🇷', code: 'PR' },
-    { name: 'Venezuela', flag: '🇻🇪', code: 'VE' },
-    { name: 'Estados Unidos', flag: '🇺🇸', code: 'US' },
-    { name: 'El Salvador', flag: '🇸🇻', code: 'SV' },
-    { name: 'Guatemala', flag: '🇬🇹', code: 'GT' },
-    { name: 'Honduras', flag: '🇭🇳', code: 'HN' },
-    { name: 'Nicaragua', flag: '🇳🇮', code: 'NI' },
-    { name: 'Panamá', flag: '🇵🇦', code: 'PA' },
-    { name: 'Brasil', flag: '🇧🇷', code: 'BR' },
-    { name: 'Canadá', flag: '🇨🇦', code: 'CA' },
-    { name: 'Chile', flag: '🇨🇱', code: 'CL' },
 ];
 
 export const getCurrencySymbol = (countryCode: string): string => {

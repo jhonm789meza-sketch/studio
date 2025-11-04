@@ -325,16 +325,16 @@ const App = () => {
         setShowConfirmation(true);
     };
     
-    const formatValue = (rawValue: string | number, symbol?: string) => {
-        const currencySymbol = symbol || raffleState?.currencySymbol || '$';
+    const formatValue = (rawValue: string | number) => {
+        const currencySymbol = raffleState?.currencySymbol || '$';
         if (!rawValue) return '';
-        const numericValue = rawValue.toString().replace(/[^\d.,]/g, '').replace(',', '.');
+        const numericValue = String(rawValue).replace(/[^\d.,]/g, '').replace(',', '.');
         if (numericValue === '') return '';
         
         const number = parseFloat(numericValue);
         if (isNaN(number)) return '';
         
-        return currencySymbol + ' ' + number.toLocaleString('es-CO');
+        return `${currencySymbol} ${number.toLocaleString('es-CO')}`;
     };
 
     const handleRaffleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -949,18 +949,18 @@ const App = () => {
                                 </div>
                            )}
                            <div>
-                               <Label htmlFor="value-input">Valor:</Label>
-                               <Input
-                                   id="value-input"
-                                   type="text"
-                                   value={formatValue(raffleState.value)}
-                                   onChange={(e) => handleLocalFieldChange('value', e.target.value.replace(/[^\d.,]/g, ''))}
-                                   onBlur={(e) => handleFieldChange('value', e.target.value.replace(/[^\d.,]/g, ''))}
-                                   placeholder="Ej: 5000"
-                                   disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
-                                   className="w-full mt-1"
-                               />
-                           </div>
+                                <Label htmlFor="value-input">Valor:</Label>
+                                <Input
+                                    id="value-input"
+                                    type="number"
+                                    value={raffleState.value}
+                                    onChange={(e) => handleLocalFieldChange('value', e.target.value.replace(/\D/g, ''))}
+                                    onBlur={(e) => handleFieldChange('value', e.target.value.replace(/\D/g, ''))}
+                                    placeholder="Ej: 5000"
+                                    disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
+                                    className="w-full mt-1"
+                                />
+                            </div>
                            <div>
                                <Label htmlFor="game-date-input">Fecha de juego:</Label>
                                <Input
@@ -1259,8 +1259,8 @@ const App = () => {
                         <div className="border-t border-dashed border-gray-400 my-4"></div>
                         <h4 className="font-bold text-center mb-2">DETALLES DE LA RIFA</h4>
                         <div className="space-y-1">
-                            <div className="flex justify-between"><span>PREMIO:</span><span className="font-semibold text-right">{formatValue(ticketData.raffleName, ticketData.currencySymbol)}</span></div>
-                            <div className="flex justify-between"><span>VALOR BOLETA:</span><span className="font-semibold text-right">{formatValue(ticketData.value, ticketData.currencySymbol)}</span></div>
+                            <div className="flex justify-between"><span>PREMIO:</span><span className="font-semibold text-right">{formatValue(ticketData.raffleName)}</span></div>
+                            <div className="flex justify-between"><span>VALOR BOLETA:</span><span className="font-semibold text-right">{formatValue(ticketData.value)}</span></div>
                             <div className="flex justify-between"><span>FECHA SORTEO:</span><span className="font-semibold text-right">{gameDateFormatted}</span></div>
                             <div className="flex justify-between"><span>JUEGA CON:</span><span className="font-semibold text-right">{ticketData.lottery}</span></div>
                             <div className="flex justify-between"><span>QUIEN ORGANIZA:</span><span className="font-semibold text-right">{ticketData.organizerName}</span></div>
@@ -1816,8 +1816,8 @@ const App = () => {
                                     <div className="border-t border-dashed border-gray-400 my-4"></div>
                                     <h4 className="font-bold text-center mb-2">DETALLES DE LA RIFA</h4>
                                     <div className="space-y-1">
-                                        <div className="flex justify-between"><span>PREMIO:</span><span className="font-semibold text-right">{formatValue(ticketInfo.raffleName, ticketInfo.currencySymbol)}</span></div>
-                                        <div className="flex justify-between"><span>VALOR BOLETA:</span><span className="font-semibold text-right">{formatValue(ticketInfo.value, ticketInfo.currencySymbol)}</span></div>
+                                        <div className="flex justify-between"><span>PREMIO:</span><span className="font-semibold text-right">{formatValue(ticketInfo.raffleName)}</span></div>
+                                        <div className="flex justify-between"><span>VALOR BOLETA:</span><span className="font-semibold text-right">{formatValue(ticketInfo.value)}</span></div>
                                         <div className="flex justify-between"><span>FECHA SORTEO:</span><span className="font-semibold text-right">{ticketInfo.gameDate ? format(new Date(ticketInfo.gameDate + 'T00:00:00'), "d 'de' MMMM 'de' yyyy", { locale: es }) : 'N/A'}</span></div>
                                         <div className="flex justify-between"><span>JUEGA CON:</span><span className="font-semibold text-right">{ticketInfo.lottery}</span></div>
                                         <div className="flex justify-between"><span>QUIEN ORGANIZA:</span><span className="font-semibold text-right">{ticketInfo.organizerName}</span></div>
@@ -2016,5 +2016,3 @@ const App = () => {
 };
 
 export default App;
-
-    
