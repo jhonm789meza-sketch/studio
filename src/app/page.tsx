@@ -91,7 +91,6 @@ const App = () => {
     const [isCountrySelectionOpen, setIsCountrySelectionOpen] = useState(false);
     const [selectedRaffleMode, setSelectedRaffleMode] = useState<RaffleMode | null>(null);
 
-    const [theme, setTheme] = useState('light');
     const [installPromptEvent, setInstallPromptEvent] = useState<any>(null);
 
 
@@ -241,31 +240,6 @@ const App = () => {
         } else {
             showNotification('La aplicación no se puede instalar en este navegador o ya está instalada.', 'info');
         }
-    };
-
-    useEffect(() => {
-        const storedTheme = localStorage.getItem('theme');
-        const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-        const initialTheme = storedTheme || (prefersDark ? 'dark' : 'light');
-        setTheme(initialTheme);
-        if (initialTheme === 'dark') {
-          document.documentElement.classList.add('dark');
-        } else {
-          document.documentElement.classList.remove('dark');
-        }
-    }, []);
-
-    const toggleTheme = () => {
-        setTheme(prevTheme => {
-            const newTheme = prevTheme === 'light' ? 'dark' : 'light';
-            localStorage.setItem('theme', newTheme);
-            if (newTheme === 'dark') {
-                document.documentElement.classList.add('dark');
-            } else {
-                document.documentElement.classList.remove('dark');
-            }
-            return newTheme;
-        });
     };
 
 
@@ -1373,10 +1347,6 @@ const App = () => {
                                         <span>Recuperar Administración</span>
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
-                                     <DropdownMenuItem onSelect={toggleTheme}>
-                                        {theme === 'light' ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}
-                                        <span>{theme === 'light' ? 'Tema Oscuro' : 'Tema Claro'}</span>
-                                    </DropdownMenuItem>
                                     <DropdownMenuItem onSelect={() => setIsShareDialogOpen(true)}>
                                         <Share2 className="mr-2 h-4 w-4" />
                                         <span>Compartir</span>
@@ -2046,3 +2016,5 @@ const App = () => {
 };
 
 export default App;
+
+    
