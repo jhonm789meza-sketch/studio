@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Confetti } from '@/components/confetti';
 import { Switch } from '@/components/ui/switch';
-import type { Participant, Raffle } from '@/lib/types';
+import type { Participant, Raffle, PrizePlanItem } from '@/lib/types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Textarea } from '@/components/ui/textarea';
@@ -1777,10 +1777,20 @@ const App = () => {
                                                         <tr key={p.id}>
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-purple-600">{p.raffleNumber}</td>
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{p.name}</td>
-                                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{p.phoneNumber}</td>
-                                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                                    {p.timestamp && p.timestamp.toDate ? format(p.timestamp.toDate(), 'PPpp', { locale: es }) : 'N/A'}
-                                                                </td>
+                                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                                <a
+                                                                    href={`https://wa.me/57${p.phoneNumber}`}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="flex items-center gap-2 text-blue-600 hover:underline"
+                                                                >
+                                                                    <WhatsappIcon className="h-4 w-4 text-green-500" />
+                                                                    {p.phoneNumber}
+                                                                </a>
+                                                            </td>
+                                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                                {p.timestamp && p.timestamp.toDate ? format(p.timestamp.toDate(), 'PPpp', { locale: es }) : 'N/A'}
+                                                            </td>
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm">
                                                                 <Button onClick={() => handleConfirmPayment(p.id)} size="sm" className="bg-green-500 hover:bg-green-600 text-white">
                                                                     Confirmar Pago
