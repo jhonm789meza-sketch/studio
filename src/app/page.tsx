@@ -58,7 +58,6 @@ const initialRaffleData: Omit<Raffle, 'participants' | 'drawnNumbers'> & { parti
     imageGenPrompt: '',
     currencySymbol: '$',
     infiniteModeDigits: 4,
-    gameMethodDescription: '',
 };
 
 
@@ -1120,21 +1119,6 @@ const App = () => {
                                    className="w-full mt-1"
                                />
                             </div>
-                             {raffleState.raffleMode === 'infinite' && (
-                                <div>
-                                    <Label htmlFor="game-method-description-input">Método de Juego (Opcional):</Label>
-                                    <Textarea
-                                        id="game-method-description-input"
-                                        value={raffleState.gameMethodDescription}
-                                        onChange={(e) => handleLocalFieldChange('gameMethodDescription', e.target.value)}
-                                        onBlur={(e) => handleFieldChange('gameMethodDescription', e.target.value)}
-                                        placeholder="Ej: por conjunto de residencia torre y piso para calcular los números a jugar"
-                                        disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
-                                        className="w-full mt-1"
-                                        rows={3}
-                                    />
-                                </div>
-                            )}
                             {isCurrentUserAdmin && !raffleState.isDetailsConfirmed && (
                                 <div className="col-span-1 md:col-span-2 mt-4">
                                     <Button
