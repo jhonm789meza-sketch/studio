@@ -369,9 +369,6 @@ const App = () => {
         if (field === 'value') {
             const numericValue = String(value).replace(/\D/g, '');
             setRaffleState((s: any) => ({ ...s, [field]: numericValue }));
-        } else if (field === 'prize' && raffleMode === 'infinite') {
-            const numericValue = String(value).replace(/\D/g, '');
-            setRaffleState((s: any) => ({ ...s, [field]: numericValue }));
         } else if (field === 'partialWinnerPercentage3' || field === 'partialWinnerPercentage2') {
             let numericValue = parseInt(String(value).replace(/\D/g, ''), 10);
             if (isNaN(numericValue)) {
@@ -389,9 +386,7 @@ const App = () => {
         if (!raffleState || !raffleState.raffleRef || !isCurrentUserAdmin) return;
         
         let valueToSave = value;
-        if (field === 'value' || (field === 'prize' && raffleMode === 'infinite')) {
-            valueToSave = String(value).replace(/\D/g, '');
-        } else if (field === 'partialWinnerPercentage3' || field === 'partialWinnerPercentage2') {
+        if (field === 'value' || field === 'partialWinnerPercentage3' || field === 'partialWinnerPercentage2') {
             valueToSave = String(value).replace(/\D/g, '');
         }
 
@@ -1005,7 +1000,7 @@ const App = () => {
                                <Input
                                    id="prize-input"
                                    type="text"
-                                   value={raffleMode === 'infinite' ? formatValueForDisplay(raffleState.prize) : raffleState.prize}
+                                   value={raffleMode === 'infinite' ? raffleState.prize : raffleState.prize}
                                    onChange={(e) => handleLocalFieldChange('prize', e.target.value)}
                                    onBlur={(e) => handleFieldChange('prize', e.target.value)}
                                    placeholder={raffleMode === 'infinite' ? t('prizePlaceholderInfinite') : t('prizePlaceholderFinite')}
