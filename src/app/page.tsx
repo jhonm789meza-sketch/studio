@@ -366,7 +366,7 @@ const App = () => {
     };
     
     const handleLocalFieldChange = (field: string, value: any) => {
-        if (field === 'value' || field === 'prize') {
+        if (field === 'value') {
             const numericValue = String(value).replace(/\D/g, '');
             setRaffleState((s: any) => ({ ...s, [field]: numericValue }));
         } else if (field === 'partialWinnerPercentage3' || field === 'partialWinnerPercentage2') {
@@ -385,7 +385,7 @@ const App = () => {
     const handleFieldChange = async (field: string, value: any) => {
         if (!raffleState || !raffleState.raffleRef || !isCurrentUserAdmin) return;
         
-        const valueToSave = (field === 'value' || field === 'prize' || field === 'partialWinnerPercentage3' || field === 'partialWinnerPercentage2') ? String(value).replace(/\D/g, '') : value;
+        const valueToSave = (field === 'value' || field === 'partialWinnerPercentage3' || field === 'partialWinnerPercentage2') ? String(value).replace(/\D/g, '') : value;
 
         try {
             await setDoc(doc(db, "raffles", raffleState.raffleRef), { [field]: valueToSave }, { merge: true });
@@ -999,7 +999,7 @@ const App = () => {
                                    type="text"
                                    value={raffleMode === 'infinite' ? formatValueForDisplay(raffleState.prize) : raffleState.prize}
                                    onChange={(e) => handleLocalFieldChange('prize', e.target.value)}
-                                   onBlur={(e) => handleFieldChange('prize', raffleState.prize)}
+                                   onBlur={(e) => handleFieldChange('prize', e.target.value)}
                                    placeholder={raffleMode === 'infinite' ? t('prizePlaceholderInfinite') : t('prizePlaceholderFinite')}
                                    disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
                                    className="w-full mt-1"
