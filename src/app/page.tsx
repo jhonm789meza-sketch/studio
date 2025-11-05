@@ -1415,7 +1415,7 @@ const App = () => {
                             </DropdownMenu>
                         </div>
                         <div className="text-center">
-                            <h1 className="text-4xl font-bold">Tablero de Rifa</h1>
+                            <h1 className="text-4xl font-bold">RIFA EXPRESS</h1>
                         </div>
                         <div className="w-10">
                             {/* Placeholder for symmetry */}
