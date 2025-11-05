@@ -359,7 +359,7 @@ const App = () => {
     };
     
     const handleLocalFieldChange = (field: string, value: any) => {
-        if (field === 'value') {
+        if (field === 'value' || field === 'prize') {
             const numericValue = String(value).replace(/\D/g, '');
             setRaffleState((s: any) => ({ ...s, [field]: numericValue }));
         } else if (field === 'partialWinnerPercentage3' || field === 'partialWinnerPercentage2') {
@@ -378,7 +378,7 @@ const App = () => {
     const handleFieldChange = async (field: string, value: any) => {
         if (!raffleState || !raffleState.raffleRef || !isCurrentUserAdmin) return;
         
-        const valueToSave = (field === 'value' || field === 'partialWinnerPercentage3' || field === 'partialWinnerPercentage2') ? String(value).replace(/\D/g, '') : value;
+        const valueToSave = (field === 'value' || field === 'prize' || field === 'partialWinnerPercentage3' || field === 'partialWinnerPercentage2') ? String(value).replace(/\D/g, '') : value;
 
         try {
             await setDoc(doc(db, "raffles", raffleState.raffleRef), { [field]: valueToSave }, { merge: true });
@@ -737,20 +737,18 @@ const App = () => {
     };
 
     const handleFindPartialWinners = (numLastDigits: number, prizePercentage: number) => {
-        if (!raffleState || !raffleState.manualWinnerNumber || !raffleState.value) {
-            showNotification('Por favor, ingresa primero el número ganador principal y asegura que el valor de la boleta esté definido.', 'warning');
+        if (!raffleState || !raffleState.manualWinnerNumber || !raffleState.prize) {
+            showNotification('Por favor, ingresa primero el número ganador principal y asegura que el valor del premio esté definido.', 'warning');
             return;
         }
 
         const winningNumberStr = raffleState.manualWinnerNumber;
         
-        // Calculate prize based on total collected from confirmed participants
-        const confirmedParticipants = raffleState.participants.filter(p => p.paymentStatus === 'confirmed');
-        const ticketValue = parseFloat(String(raffleState.value).replace(/\D/g, ''));
-        const totalCollected = confirmedParticipants.length * ticketValue;
+        // Calculate prize based on total prize amount
+        const prizeValue = parseFloat(String(raffleState.prize).replace(/\D/g, ''));
 
-        if (isNaN(totalCollected) || totalCollected <= 0) {
-            showNotification('No hay recaudo para calcular el premio. Asegúrate de que haya participantes confirmados y que el valor de la boleta sea válido.', 'warning');
+        if (isNaN(prizeValue) || prizeValue <= 0) {
+            showNotification('No hay valor de premio para calcular el premio. Asegúrate de que el valor del premio sea válido.', 'warning');
             return;
         }
 
@@ -761,7 +759,7 @@ const App = () => {
         
         const lastDigits = winningNumberStr.slice(-numLastDigits);
         const winners = confirmedParticipants.filter(p => p.raffleNumber.endsWith(lastDigits));
-        const prizeAmount = totalCollected * (prizePercentage / 100);
+        const prizeAmount = prizeValue * (prizePercentage / 100);
 
         if (winners.length > 0) {
             const winnerMessage = winners.map(w => `${w.name} (${w.raffleNumber})`).join(', ');
@@ -993,10 +991,10 @@ const App = () => {
                                <Input
                                    id="prize-input"
                                    type="text"
-                                   value={raffleState.prize}
+                                   value={raffleMode === 'infinite' ? formatValueForDisplay(raffleState.prize) : raffleState.prize}
                                    onChange={(e) => handleLocalFieldChange('prize', e.target.value)}
-                                   onBlur={(e) => handleFieldChange('prize', e.target.value)}
-                                   placeholder="Ej: Carro o una bicicleta"
+                                   onBlur={(e) => handleFieldChange('prize', raffleState.prize)}
+                                   placeholder={raffleMode === 'infinite' ? "Ej: 1000000 (solo números)" : "Ej: Carro o una bicicleta"}
                                    disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
                                    className="w-full mt-1"
                                />
@@ -1025,7 +1023,7 @@ const App = () => {
                                 </div>
                            )}
                            <div>
-                                <Label htmlFor="value-input">Valor:</Label>
+                                <Label htmlFor="value-input">Valor Boleta:</Label>
                                 <Input
                                     id="value-input"
                                     type="text"
@@ -1209,7 +1207,7 @@ const App = () => {
                                                 />
                                             </div>
                                             <div className="flex flex-col items-end">
-                                                <span className="text-sm font-bold text-green-600 mb-1">{formatValue(totalCollected * (raffleState.partialWinnerPercentage3 || 0) / 100)}</span>
+                                                <span className="text-sm font-bold text-green-600 mb-1">{formatValue(parseFloat(String(raffleState.prize).replace(/\D/g, '')) * (raffleState.partialWinnerPercentage3 || 0) / 100)}</span>
                                                 <Button
                                                     onClick={() => handleFindPartialWinners(3, raffleState.partialWinnerPercentage3 || 0)}
                                                     disabled={raffleState.isWinnerConfirmed || !raffleState.manualWinnerNumber}
@@ -1246,7 +1244,7 @@ const App = () => {
                                                  />
                                             </div>
                                             <div className="flex flex-col items-end">
-                                                <span className="text-sm font-bold text-green-600 mb-1">{formatValue(totalCollected * (raffleState.partialWinnerPercentage2 || 0) / 100)}</span>
+                                                <span className="text-sm font-bold text-green-600 mb-1">{formatValue(parseFloat(String(raffleState.prize).replace(/\D/g, '')) * (raffleState.partialWinnerPercentage2 || 0) / 100)}</span>
                                                 <Button
                                                     onClick={() => handleFindPartialWinners(2, raffleState.partialWinnerPercentage2 || 0)}
                                                     disabled={raffleState.isWinnerConfirmed || !raffleState.manualWinnerNumber}
@@ -1885,7 +1883,7 @@ const App = () => {
                                     <div className="border-t border-dashed border-gray-400 my-4"></div>
                                     <h4 className="font-bold text-center mb-2">DETALLES DE LA RIFA</h4>
                                     <div className="space-y-1">
-                                        <div className="flex justify-between"><span>PREMIO:</span><span className="font-semibold text-right">{formatValue(ticketInfo.raffleName)}</span></div>
+                                        <div className="flex justify-between"><span>PREMIO:</span><span className="font-semibold text-right">{raffleMode === 'infinite' ? formatValue(ticketInfo.raffleName) : ticketInfo.raffleName}</span></div>
                                         <div className="flex justify-between"><span>VALOR BOLETA:</span><span className="font-semibold text-right">{formatValue(ticketInfo.value)}</span></div>
                                         <div className="flex justify-between"><span>FECHA SORTEO:</span><span className="font-semibold text-right">{ticketInfo.gameDate ? format(new Date(ticketInfo.gameDate + 'T00:00:00'), "d 'de' MMMM 'de' yyyy", { locale: es }) : 'N/A'}</span></div>
                                         <div className="flex justify-between"><span>JUEGA CON:</span><span className="font-semibold text-right">{ticketInfo.lottery}</span></div>
