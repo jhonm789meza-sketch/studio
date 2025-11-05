@@ -1181,7 +1181,7 @@ const App = () => {
                                                 />
                                             </div>
                                             <div className="flex flex-col">
-                                                <span className="text-sm font-bold text-green-600">{formatValue(parseFloat(raffleState.value) * 0.10)}</span>
+                                                <span className="text-sm font-bold text-green-600">{`${(parseFloat(raffleState.value) * 0.10).toLocaleString('es-CO', { style: 'currency', currency: raffleState.currencySymbol || 'COP', minimumFractionDigits: 0 })}`}</span>
                                                 <Button
                                                     onClick={() => handleFindPartialWinners(3, 10)}
                                                     disabled={raffleState.isWinnerConfirmed || !raffleState.manualWinnerNumber}
@@ -1205,7 +1205,7 @@ const App = () => {
                                                 />
                                             </div>
                                             <div className="flex flex-col">
-                                                <span className="text-sm font-bold text-green-600">{formatValue(parseFloat(raffleState.value) * 0.05)}</span>
+                                                <span className="text-sm font-bold text-green-600">{`${(parseFloat(raffleState.value) * 0.05).toLocaleString('es-CO', { style: 'currency', currency: raffleState.currencySymbol || 'COP', minimumFractionDigits: 0 })}`}</span>
                                                 <Button
                                                     onClick={() => handleFindPartialWinners(2, 5)}
                                                     disabled={raffleState.isWinnerConfirmed || !raffleState.manualWinnerNumber}
