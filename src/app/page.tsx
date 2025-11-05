@@ -359,8 +359,16 @@ const App = () => {
     };
     
     const handleLocalFieldChange = (field: string, value: any) => {
-        if (field === 'value' || field === 'partialWinnerPercentage3' || field === 'partialWinnerPercentage2') {
+        if (field === 'value') {
             const numericValue = String(value).replace(/\D/g, '');
+            setRaffleState((s: any) => ({ ...s, [field]: numericValue }));
+        } else if (field === 'partialWinnerPercentage3' || field === 'partialWinnerPercentage2') {
+            let numericValue = parseInt(String(value).replace(/\D/g, ''), 10);
+            if (isNaN(numericValue)) {
+                numericValue = 1;
+            }
+            if (numericValue < 1) numericValue = 1;
+            if (numericValue > 100) numericValue = 100;
             setRaffleState((s: any) => ({ ...s, [field]: numericValue }));
         } else {
             setRaffleState((s: any) => ({ ...s, [field]: value }));
@@ -1191,9 +1199,11 @@ const App = () => {
                                                 <Label>Porcentaje</Label>
                                                 <Input
                                                     type="number"
+                                                    min="1"
+                                                    max="100"
                                                     value={raffleState.partialWinnerPercentage3}
                                                     onChange={(e) => handleLocalFieldChange('partialWinnerPercentage3', e.target.value)}
-                                                    onBlur={(e) => handleFieldChange('partialWinnerPercentage3', e.target.value)}
+                                                    onBlur={(e) => handleFieldChange('partialWinnerPercentage3', raffleState.partialWinnerPercentage3)}
                                                     className="w-full"
                                                     placeholder="%"
                                                 />
@@ -1226,9 +1236,11 @@ const App = () => {
                                                  <Label>Porcentaje</Label>
                                                  <Input
                                                      type="number"
+                                                     min="1"
+                                                     max="100"
                                                      value={raffleState.partialWinnerPercentage2}
                                                      onChange={(e) => handleLocalFieldChange('partialWinnerPercentage2', e.target.value)}
-                                                     onBlur={(e) => handleFieldChange('partialWinnerPercentage2', e.target.value)}
+                                                     onBlur={(e) => handleFieldChange('partialWinnerPercentage2', raffleState.partialWinnerPercentage2)}
                                                      className="w-full"
                                                      placeholder="%"
                                                  />
