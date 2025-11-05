@@ -744,7 +744,6 @@ const App = () => {
 
         const winningNumberStr = raffleState.manualWinnerNumber;
         
-        // Calculate prize based on total prize amount
         const prizeValue = parseFloat(String(raffleState.prize).replace(/\D/g, ''));
 
         if (isNaN(prizeValue) || prizeValue <= 0) {
