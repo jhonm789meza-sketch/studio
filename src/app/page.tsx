@@ -1195,23 +1195,21 @@ const App = () => {
                                                     className="w-full bg-gray-100"
                                                 />
                                             </div>
-                                            <div className="flex-grow flex items-end gap-2">
-                                                <div className="w-24">
-                                                    <Label>Porcentaje</Label>
-                                                    <Input
-                                                        type="number"
-                                                        min="1"
-                                                        max="100"
-                                                        value={raffleState.partialWinnerPercentage3}
-                                                        onChange={(e) => handleLocalFieldChange('partialWinnerPercentage3', e.target.value)}
-                                                        onBlur={(e) => handleFieldChange('partialWinnerPercentage3', raffleState.partialWinnerPercentage3)}
-                                                        className="w-full"
-                                                        placeholder="%"
-                                                    />
-                                                </div>
-                                                <span className="text-sm font-bold text-green-600 pb-2">{formatValue(totalCollected * (raffleState.partialWinnerPercentage3 || 0) / 100)}</span>
+                                            <div className="w-24">
+                                                <Label>Porcentaje</Label>
+                                                <Input
+                                                    type="number"
+                                                    min="1"
+                                                    max="100"
+                                                    value={raffleState.partialWinnerPercentage3}
+                                                    onChange={(e) => handleLocalFieldChange('partialWinnerPercentage3', e.target.value)}
+                                                    onBlur={(e) => handleFieldChange('partialWinnerPercentage3', raffleState.partialWinnerPercentage3)}
+                                                    className="w-full"
+                                                    placeholder="%"
+                                                />
                                             </div>
-                                            <div className="flex flex-col">
+                                            <div className="flex flex-col items-end">
+                                                <span className="text-sm font-bold text-green-600 mb-1">{formatValue(totalCollected * (raffleState.partialWinnerPercentage3 || 0) / 100)}</span>
                                                 <Button
                                                     onClick={() => handleFindPartialWinners(3, raffleState.partialWinnerPercentage3 || 0)}
                                                     disabled={raffleState.isWinnerConfirmed || !raffleState.manualWinnerNumber}
@@ -1234,23 +1232,21 @@ const App = () => {
                                                     className="w-full bg-gray-100"
                                                 />
                                             </div>
-                                            <div className="flex-grow flex items-end gap-2">
-                                                 <div className="w-24">
-                                                     <Label>Porcentaje</Label>
-                                                     <Input
-                                                         type="number"
-                                                         min="1"
-                                                         max="100"
-                                                         value={raffleState.partialWinnerPercentage2}
-                                                         onChange={(e) => handleLocalFieldChange('partialWinnerPercentage2', e.target.value)}
-                                                         onBlur={(e) => handleFieldChange('partialWinnerPercentage2', raffleState.partialWinnerPercentage2)}
-                                                         className="w-full"
-                                                         placeholder="%"
-                                                     />
-                                                 </div>
-                                                 <span className="text-sm font-bold text-green-600 pb-2">{formatValue(totalCollected * (raffleState.partialWinnerPercentage2 || 0) / 100)}</span>
+                                            <div className="w-24">
+                                                 <Label>Porcentaje</Label>
+                                                 <Input
+                                                     type="number"
+                                                     min="1"
+                                                     max="100"
+                                                     value={raffleState.partialWinnerPercentage2}
+                                                     onChange={(e) => handleLocalFieldChange('partialWinnerPercentage2', e.target.value)}
+                                                     onBlur={(e) => handleFieldChange('partialWinnerPercentage2', raffleState.partialWinnerPercentage2)}
+                                                     className="w-full"
+                                                     placeholder="%"
+                                                 />
                                             </div>
-                                            <div className="flex flex-col">
+                                            <div className="flex flex-col items-end">
+                                                <span className="text-sm font-bold text-green-600 mb-1">{formatValue(totalCollected * (raffleState.partialWinnerPercentage2 || 0) / 100)}</span>
                                                 <Button
                                                     onClick={() => handleFindPartialWinners(2, raffleState.partialWinnerPercentage2 || 0)}
                                                     disabled={raffleState.isWinnerConfirmed || !raffleState.manualWinnerNumber}
