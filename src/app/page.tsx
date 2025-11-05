@@ -6,6 +6,7 @@ import { db, storage, persistenceEnabled } from '@/lib/firebase';
 import { doc, onSnapshot, setDoc, getDoc, deleteDoc, Unsubscribe } from 'firebase/firestore';
 import Image from 'next/image';
 import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+import { useLanguage } from '@/hooks/use-language';
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
@@ -17,7 +18,7 @@ import { Confetti } from '@/components/confetti';
 import { Switch } from '@/components/ui/switch';
 import type { Participant, Raffle } from '@/lib/types';
 import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { es, enUS } from 'date-fns/locale';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { CountrySelectionDialog, getCurrencySymbol } from '@/components/country-selection-dialog';
@@ -64,6 +65,7 @@ const initialRaffleData: Omit<Raffle, 'participants' | 'drawnNumbers'> & { parti
 
 
 const App = () => {
+    const { t, toggleLanguage, language } = useLanguage();
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<Tab>('board');
     const [appUrl, setAppUrl] = useState('');
@@ -105,6 +107,12 @@ const App = () => {
     const totalNumbers = raffleMode === 'two-digit' ? 100 : 1000;
     const numberLength = raffleMode === 'two-digit' ? 2 : 3;
 
+     useEffect(() => {
+        if (typeof document !== 'undefined') {
+            document.documentElement.lang = language;
+        }
+    }, [language]);
+
     const handleTabClick = (tab: Tab) => {
         setActiveTab(tab);
         if (tab !== 'register') {
@@ -114,7 +122,7 @@ const App = () => {
 
     const handleGenerateTicket = async (participant: Participant) => {
         if (!raffleState?.prize) {
-            showNotification('El premio debe estar definido para generar un tiquete.', 'warning');
+            showNotification(t('generateTicketPrizeWarning'), 'warning');
             return;
         }
 
@@ -177,14 +185,14 @@ const App = () => {
                 }
     
                 if (participantToReturn && participantToReturn.name) {
-                     showNotification(`Pago para ${participantToReturn.name} (${participantToReturn.raffleNumber}) confirmado.`, 'success');
+                     showNotification(t('paymentConfirmedNotification', { name: participantToReturn.name, number: participantToReturn.raffleNumber }), 'success');
                 }
                  return participantToReturn;
             }
             return null;
         } catch (error) {
             console.error("Error confirming participant payment:", error);
-            showNotification('Error al confirmar el pago del participante.', 'error');
+            showNotification(t('paymentConfirmationError'), 'error');
             return null;
         } finally {
             if (window.location.search.includes('status=APPROVED')) {
@@ -212,10 +220,10 @@ const App = () => {
             navigator.serviceWorker
               .register('/sw.js')
               .then(registration => {
-                console.log('Service Worker registrado con éxito:', registration);
+                console.log('Service Worker registered successfully:', registration);
               })
               .catch(error => {
-                console.log('Error al registrar el Service Worker:', error);
+                console.log('Error registering Service Worker:', error);
               });
           });
         }
@@ -243,7 +251,7 @@ const App = () => {
                 setInstallPromptEvent(null);
             });
         } else {
-            showNotification('La aplicación no se puede instalar en este navegador o ya está instalada.', 'info');
+            showNotification(t('installAppInfo'), 'info');
         }
     };
 
@@ -281,13 +289,10 @@ const App = () => {
                   raffleNumber: pNum,
                 });
                 if (registeredParticipant) {
-                  showNotification(
-                    '¡Pago exitoso! Tu número ha sido registrado. Puedes generar tu tiquete en la pestaña "Participantes".',
-                    'success'
-                  );
+                  showNotification(t('successfulPaymentNotification'), 'success');
                 }
               } else {
-                showNotification('Activación confirmada por pago.', 'info');
+                showNotification(t('paymentActivationConfirmed'), 'info');
               }
             }
             await handleAdminSearch({ refToSearch: refFromUrl, isInitialLoad: true });
@@ -334,7 +339,8 @@ const App = () => {
         if (value === null || value === undefined) return '';
         const stringValue = String(value).replace(/\D/g, '');
         if (stringValue === '') return '';
-        return new Intl.NumberFormat('es-CO').format(parseInt(stringValue, 10));
+        const locale = language === 'es' ? 'es-CO' : 'en-US';
+        return new Intl.NumberFormat(locale).format(parseInt(stringValue, 10));
     };
 
     const formatValue = (rawValue: string | number) => {
@@ -346,7 +352,8 @@ const App = () => {
         const number = parseFloat(numericValue);
         if (isNaN(number)) return '';
         
-        return `${currencySymbol} ${number.toLocaleString('es-CO')}`;
+        const locale = language === 'es' ? 'es-CO' : 'en-US';
+        return `${currencySymbol} ${number.toLocaleString(locale)}`;
     };
 
     const handleRaffleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -354,7 +361,7 @@ const App = () => {
         handleLocalFieldChange('raffleNumber', inputValue);
 
         if (raffleMode !== 'infinite' && inputValue.length === numberLength && allAssignedNumbers.has(parseInt(inputValue))) {
-             showNotification('Este número ya ha sido asignado.', 'warning');
+             showNotification(t('numberAlreadyAssignedWarning'), 'warning');
         }
     };
     
@@ -384,7 +391,7 @@ const App = () => {
             await setDoc(doc(db, "raffles", raffleState.raffleRef), { [field]: valueToSave }, { merge: true });
         } catch (error) {
             console.error(`Error updating field ${field}:`, error);
-            showNotification(`Error al actualizar el campo ${field}.`, 'error');
+            showNotification(t('fieldUpdateError', { field }), 'error');
         }
     };
     
@@ -399,15 +406,15 @@ const App = () => {
     const toggleNumber = (number: number) => {
         if (!raffleState) return;
         if (!raffleState.isDetailsConfirmed) {
-            showNotification('Primero debes confirmar los detalles del premio para seleccionar un número.', 'info');
+            showNotification(t('confirmDetailsFirstWarning'), 'info');
             return;
         }
         if (raffleState.isWinnerConfirmed || !!raffleState.winner) {
-            showNotification('El juego ha terminado. Reinicia el tablero para comenzar de nuevo.', 'info');
+            showNotification(t('gameFinishedWarning'), 'info');
             return;
         }
         if (allAssignedNumbers.has(number)) {
-            showNotification('Este número ya está asignado.', 'warning');
+            showNotification(t('numberAlreadyAssignedWarning'), 'warning');
             return;
         }
         setRaffleState((s:any) => ({ ...s, raffleNumber: String(number).padStart(numberLength, '0')}));
@@ -417,28 +424,28 @@ const App = () => {
     const handleConfirmWinner = async () => {
         if (!raffleState || !raffleState.raffleRef) return;
         if (!raffleState.winner) {
-            showNotification('Primero debes sortear un ganador.', 'warning');
+            showNotification(t('drawWinnerFirstWarning'), 'warning');
             return;
         }
         await setDoc(doc(db, "raffles", raffleState.raffleRef), { isWinnerConfirmed: true }, { merge: true });
-        showNotification('¡Resultado confirmado! El tablero ha sido bloqueado.', 'success');
+        showNotification(t('resultConfirmedNotification'), 'success');
     };
 
     const handleConfirmDetails = async () => {
         if (!raffleState || !raffleState.raffleRef) return;
         if (!raffleState.organizerName.trim() || !raffleState.prize.trim() || !raffleState.value.trim() || !raffleState.gameDate || !raffleState.lottery || (raffleState.lottery === 'Otro' && !raffleState.customLottery.trim()) || !raffleState.password.trim()) {
-            showNotification('Por favor, completa todos los campos de configuración del premio, incluyendo la contraseña.', 'warning');
+            showNotification(t('completeAllFieldsWarning'), 'warning');
             return;
         }
         
         await setDoc(doc(db, "raffles", raffleState.raffleRef), { isDetailsConfirmed: true }, { merge: true });
-        showNotification('Detalles del premio confirmados', 'success');
+        showNotification(t('prizeDetailsConfirmed'), 'success');
     };
 
     const resetBoard = () => {
         if (!raffleState || !raffleState.raffleRef) return;
         showConfirmationDialog(
-            '¿Estás seguro de que deseas reiniciar el tablero? Esta acción eliminará la rifa actual y deberás realizar otro pago para crear una nueva.',
+            t('resetBoardConfirmation'),
             async () => {
                 const oldRaffleRef = raffleState.raffleRef;
                 await deleteDoc(doc(db, "raffles", oldRaffleRef));
@@ -447,7 +454,7 @@ const App = () => {
                 setCurrentAdminId(null);
                 localStorage.removeItem('rifaAdminId');
                 window.history.pushState({}, '', window.location.pathname);
-                showNotification('Tablero reiniciado. Ahora puedes activar una nueva rifa.', 'success');
+                showNotification(t('boardResetSuccess'), 'success');
                 setShowConfetti(false);
             }
         );
@@ -462,15 +469,15 @@ const App = () => {
         const infiniteDigits = raffleState.infiniteModeDigits || 4;
     
         if (!name) {
-            showNotification('Por favor ingresa el nombre', 'warning');
+            showNotification(t('enterNameWarning'), 'warning');
             return false;
         }
         if (!phoneNumber) {
-            showNotification('Por favor ingresa el celular', 'warning');
+            showNotification(t('enterPhoneWarning'), 'warning');
             return false;
         }
         if (!raffleNumber) {
-            showNotification('Por favor ingresa el número de rifa', 'warning');
+            showNotification(t('enterRaffleNumberWarning'), 'warning');
             return false;
         }
     
@@ -478,16 +485,16 @@ const App = () => {
     
         if (raffleMode === 'infinite') {
             if (raffleNumber.length !== infiniteDigits) {
-                showNotification(`El número para esta modalidad debe ser de ${infiniteDigits} cifras`, 'warning');
+                showNotification(t('infiniteModeDigitsWarning', { count: infiniteDigits }), 'warning');
                 return false;
             }
         } else if (raffleNumber.length !== numberLength) {
-             showNotification(`El número para esta modalidad debe ser de ${numberLength} cifras`, 'warning');
+             showNotification(t('numberLengthWarning', { count: numberLength }), 'warning');
              return false;
         }
     
         if (allAssignedNumbers.has(num)) {
-            showNotification('Este número ya está asignado', 'warning');
+            showNotification(t('numberAlreadyAssignedWarning'), 'warning');
             return false;
         }
     
@@ -519,9 +526,9 @@ const App = () => {
         }));
         
         if (isNequiPayment && !confirmPayment) {
-            showNotification(`¡Número ${formattedRaffleNumber} registrado para ${participantName}! Tu pago está pendiente de confirmación por el administrador.`, 'success');
+            showNotification(t('nequiPaymentPendingNotification', { number: formattedRaffleNumber, name: participantName }), 'success');
         } else if (confirmPayment) {
-            showNotification(`¡Participante ${participantName} (${formattedRaffleNumber}) registrado y confirmado!`, 'success');
+            showNotification(t('participantRegisteredNotification', { name: participantName, number: formattedRaffleNumber }), 'success');
              if (raffleState.prize) {
                 const ticketData = {
                     ...newParticipant,
@@ -577,7 +584,7 @@ const App = () => {
                 });
                 pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
                 pdf.save(`tiquete_${targetInfo.raffleNumber}.pdf`);
-                showNotification('Tiquete PDF descargado', 'success');
+                showNotification(t('ticketDownloaded'), 'success');
             });
         });
     };
@@ -586,7 +593,7 @@ const App = () => {
         const targetInfo = generatedTicketData || ticketInfo;
         if (!targetInfo || !targetInfo.phoneNumber) return;
 
-        const message = encodeURIComponent(`¡Hola! Aquí tienes tu tiquete para la rifa "${raffleState?.prize}". ¡Mucha suerte!`);
+        const message = encodeURIComponent(t('shareTicketMessage', { prize: raffleState?.prize || '' }));
         const whatsappUrl = `https://wa.me/57${targetInfo.phoneNumber}?text=${message}`;
         window.open(whatsappUrl, '_blank');
         
@@ -607,19 +614,19 @@ const App = () => {
             const aPassword = (passwordToSearch || adminPasswordSearch).trim();
 
             if (!aRef) {
-                showNotification('Por favor, ingresa una referencia.', 'warning');
+                showNotification(t('enterReferenceWarning'), 'warning');
                 if(!isInitialLoad) setLoading(false);
                 resolve();
                 return;
             }
             if (!isInitialLoad && !isPublicSearch && !aPhone ) {
-                 showNotification('Por favor, ingresa el teléfono del organizador.', 'warning');
+                 showNotification(t('enterOrganizerPhoneWarning'), 'warning');
                  setLoading(false);
                  resolve();
                  return;
             }
              if (!isInitialLoad && !isPublicSearch && !aPassword ) {
-                 showNotification('Por favor, ingresa la contraseña.', 'warning');
+                 showNotification(t('enterPasswordWarning'), 'warning');
                  setLoading(false);
                  resolve();
                  return;
@@ -643,22 +650,22 @@ const App = () => {
                         if (data.organizerPhoneNumber === aPhone && data.password === aPassword) {
                             localStorage.setItem('rifaAdminId', data.adminId!);
                             setCurrentAdminId(data.adminId);
-                            showNotification('¡Administración recuperada con éxito!', 'success');
+                            showNotification(t('adminAccessRestored'), 'success');
                         } else {
-                            showNotification('El número de teléfono o la contraseña no coinciden.', 'error');
+                            showNotification(t('phoneOrPasswordMismatch'), 'error');
                             setLoading(false);
                             resolve();
                             return;
                         }
                     } else {
-                         showNotification('No se encontró ninguna rifa con esa referencia.', 'error');
+                         showNotification(t('raffleNotFound'), 'error');
                          setLoading(false);
                          resolve();
                          return;
                     }
                 } catch (error) {
                     console.error("Error fetching raffle for recovery:", error);
-                    showNotification('Error al verificar la rifa.', 'error');
+                    showNotification(t('raffleVerificationError'), 'error');
                     setLoading(false);
                     resolve();
                     return;
@@ -677,7 +684,7 @@ const App = () => {
 
                     setRaffleState(data);
                     if (!isInitialLoad) { 
-                        showNotification(`Cargando rifa con referencia: ${aRef}`, 'info');
+                        showNotification(t('loadingRaffle', { ref: aRef }), 'info');
                     }
                     setIsAdminLoginOpen(false);
                     setIsPublicSearchOpen(false);
@@ -690,7 +697,7 @@ const App = () => {
                         window.history.pushState({}, '', `?ref=${aRef}`);
                     }
                 } else if (!isInitialLoad) {
-                    showNotification('No se encontró ninguna rifa con esa referencia.', 'error');
+                    showNotification(t('raffleNotFound'), 'error');
                     setRaffleState(null);
                     setCurrentAdminId(null);
                     window.history.pushState({}, '', window.location.pathname);
@@ -699,7 +706,7 @@ const App = () => {
                 resolve();
             }, (error) => {
                 console.error("Error subscribing to raffle:", error);
-                showNotification('Error al cargar la rifa.', 'error');
+                showNotification(t('raffleLoadError'), 'error');
                 setLoading(false);
                 resolve();
             });
@@ -714,7 +721,7 @@ const App = () => {
         const winningNumberLength = raffleMode === 'infinite' ? infiniteDigits : numberLength;
 
         if (!winningNumberStr || winningNumberStr.length !== winningNumberLength) {
-            showNotification(`Por favor, ingresa un número ganador válido de ${winningNumberLength} cifras.`, 'warning');
+            showNotification(t('enterValidWinningNumber', { count: winningNumberLength }), 'warning');
             return;
         }
 
@@ -723,22 +730,22 @@ const App = () => {
         if (winner) {
             await setDoc(doc(db, "raffles", raffleState.raffleRef), { winner }, { merge: true });
             setShowConfetti(true);
-            showNotification(`¡El ganador es ${winner.name} con el número ${winner.raffleNumber}! (100% del premio)`, 'success');
+            showNotification(t('winnerNotification', { name: winner.name, number: winner.raffleNumber }), 'success');
             setTimeout(() => setShowConfetti(false), 8000);
         } else {
              const houseWinner = {
-                name: "El Premio Queda en Casa",
+                name: t('housePrize'),
                 raffleNumber: winningNumberStr,
                 isHouse: true,
             };
             await setDoc(doc(db, "raffles", raffleState.raffleRef), { winner: houseWinner }, { merge: true });
-            showNotification(`El número ${winningNumberStr} no fue vendido. El premio queda en casa.`, 'info');
+            showNotification(t('housePrizeNotification', { number: winningNumberStr }), 'info');
         }
     };
 
     const handleFindPartialWinners = (numLastDigits: number, prizePercentage: number) => {
         if (!raffleState || !raffleState.manualWinnerNumber || !raffleState.prize) {
-            showNotification('Por favor, ingresa primero el número ganador principal y asegura que el valor del premio esté definido.', 'warning');
+            showNotification(t('enterWinningNumberAndPrizeWarning'), 'warning');
             return;
         }
 
@@ -747,12 +754,12 @@ const App = () => {
         const prizeValue = parseFloat(String(raffleState.prize).replace(/\D/g, ''));
 
         if (isNaN(prizeValue) || prizeValue <= 0) {
-            showNotification('No hay valor de premio para calcular el premio. Asegúrate de que el valor del premio sea válido.', 'warning');
+            showNotification(t('noPrizeValueWarning'), 'warning');
             return;
         }
 
         if (winningNumberStr.length < numLastDigits) {
-            showNotification(`El número ganador es muy corto para buscar ${numLastDigits} últimas cifras.`, 'warning');
+            showNotification(t('winningNumberTooShortWarning', { count: numLastDigits }), 'warning');
             return;
         }
         
@@ -762,10 +769,10 @@ const App = () => {
 
         if (winners.length > 0) {
             const winnerMessage = winners.map(w => `${w.name} (${w.raffleNumber})`).join(', ');
-            const formattedPrize = `${raffleState.currencySymbol || '$'} ${prizeAmount.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
-            showNotification(`Ganadores con las últimas ${numLastDigits} cifras (${lastDigits}): ${winnerMessage} - Premio Total: ${formattedPrize}`, 'success');
+            const formattedPrize = `${raffleState.currencySymbol || '$'} ${prizeAmount.toLocaleString(language === 'es' ? 'es-CO' : 'en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+            showNotification(t('partialWinnersNotification', { count: numLastDigits, digits: lastDigits, winners: winnerMessage, prize: formattedPrize }), 'success');
         } else {
-            showNotification(`No se encontraron ganadores para las últimas ${numLastDigits} cifras (${lastDigits}).`, 'info');
+            showNotification(t('noPartialWinnersNotification', { count: numLastDigits, digits: lastDigits }), 'info');
         }
     };
 
@@ -827,7 +834,7 @@ const App = () => {
             await handleAdminSearch({ refToSearch: newRef, isInitialLoad: true });
         } catch (error) {
             console.error("Error activating board:", error);
-            showNotification("Error al activar el tablero.", "error");
+            showNotification(t('errorActivatingBoard'), "error");
         } finally {
             setLoading(false);
         }
@@ -835,17 +842,17 @@ const App = () => {
 
     const handleTalkToAdmin = () => {
         if (!raffleState || !raffleState.organizerPhoneNumber) {
-            showNotification('El número del administrador no está configurado.', 'warning');
+            showNotification(t('adminNumberNotSet'), 'warning');
             return;
         }
-        const message = encodeURIComponent('Hola, te contacto sobre la rifa.');
+        const message = encodeURIComponent(t('contactAdminMessage'));
         const whatsappUrl = `https://wa.me/57${raffleState.organizerPhoneNumber}?text=${message}`;
         window.open(whatsappUrl, '_blank');
     };
     
     const handleShareToWhatsApp = () => {
         const urlToShare = window.location.href;
-        const message = encodeURIComponent(`¡Participa en esta increíble rifa!\n`);
+        const message = encodeURIComponent(t('shareRaffleMessage'));
         const whatsappUrl = `https://wa.me/?text=${message}${encodeURIComponent(urlToShare)}`;
         window.open(whatsappUrl, '_blank');
         setIsShareDialogOpen(false);
@@ -866,7 +873,7 @@ const App = () => {
         if (window.location.search) {
             window.history.pushState({}, '', window.location.pathname);
         }
-        showNotification('Has vuelto a la pantalla de inicio.', 'info');
+        showNotification(t('backToHome'), 'info');
     };
     
     const allNumbers = Array.from({ length: totalNumbers }, (_, i) => i);
@@ -880,7 +887,7 @@ const App = () => {
 
 
     if (loading && !raffleState) {
-        return <div className="flex justify-center items-center h-screen text-xl font-semibold">Cargando...</div>;
+        return <div className="flex justify-center items-center h-screen text-xl font-semibold">{t('loading')}...</div>;
     }
     
     const isRegisterFormValidForSubmit = raffleState?.name && raffleState?.phoneNumber && raffleState?.raffleNumber && !allAssignedNumbers.has(parseInt(raffleState.raffleNumber));
@@ -892,7 +899,7 @@ const App = () => {
             <>
                 {isCurrentUserAdmin && (
                     <div className="mb-4 p-3 bg-green-100 border border-green-300 text-green-800 rounded-lg text-center font-semibold">
-                        Eres el administrador de este juego
+                        {t('adminMessage')}
                     </div>
                 )}
                 <div className="flex flex-col lg:flex-row gap-8">
@@ -900,15 +907,15 @@ const App = () => {
                         {raffleState.winner && (
                             <div className="mb-6 p-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 rounded-lg">
                                 {raffleState.winner.isHouse ? (
-                                    <p className="font-bold text-lg flex items-center"><House className="mr-2"/>¡El premio queda en casa!</p>
+                                    <p className="font-bold text-lg flex items-center"><House className="mr-2"/>{t('housePrizeTitle')}</p>
                                 ) : (
-                                    <p className="font-bold text-lg flex items-center"><Award className="mr-2"/>¡Tenemos un ganador!</p>
+                                    <p className="font-bold text-lg flex items-center"><Award className="mr-2"/>{t('winnerFoundTitle')}</p>
                                 )}
-                                <p><strong>Número:</strong> {raffleState.winner.raffleNumber}</p>
+                                <p><strong>{t('number')}:</strong> {raffleState.winner.raffleNumber}</p>
                                 {!raffleState.winner.isHouse && (
                                 <>
-                                    <p><strong>Nombre:</strong> {raffleState.winner.name}</p>
-                                    <p><strong>Teléfono:</strong> {isCurrentUserAdmin ? 
+                                    <p><strong>{t('name')}:</strong> {raffleState.winner.name}</p>
+                                    <p><strong>{t('phone')}:</strong> {isCurrentUserAdmin ? 
                                         <a href={`https://wa.me/57${raffleState.winner.phoneNumber}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{`+57 ${raffleState.winner.phoneNumber}`}</a>
                                         : <span>******</span>
                                     }</p>
@@ -917,10 +924,10 @@ const App = () => {
                             </div>
                         )}
                         
-                        <h2 className="text-2xl font-bold text-gray-800 mb-4">Configuración del Premio</h2>
+                        <h2 className="text-2xl font-bold text-gray-800 mb-4">{t('prizeSettings')}</h2>
                         {raffleState.raffleRef && (
                             <div className="mb-4">
-                                <p className="text-sm text-gray-500">Referencia del Juego</p>
+                                <p className="text-sm text-gray-500">{t('gameReference')}</p>
                                 <div className="flex items-center gap-2">
                                     <p className="text-2xl font-bold text-gray-800 tracking-wider">{raffleState.raffleRef}</p>
                                     <button onClick={handleTalkToAdmin} className="p-2 rounded-full hover:bg-gray-100">
@@ -932,28 +939,28 @@ const App = () => {
                         
                         <div className="mb-6 rounded-lg overflow-hidden relative aspect-video max-w-2xl mx-auto shadow-lg bg-gray-200 flex items-center justify-center">
                              {raffleState?.prizeImageUrl ? (
-                                <Image src={raffleState.prizeImageUrl} alt="Premio de la rifa" layout="fill" objectFit="cover" unoptimized key={raffleState.prizeImageUrl}/>
+                                <Image src={raffleState.prizeImageUrl} alt={t('rafflePrizeAlt')} layout="fill" objectFit="cover" unoptimized key={raffleState.prizeImageUrl}/>
                             ) : (
-                                <span className="text-gray-500">Sin imagen de premio</span>
+                                <span className="text-gray-500">{t('noPrizeImage')}</span>
                             )}
                         </div>
 
                         <div className="space-y-4 mb-6">
                            <div>
-                               <Label htmlFor="organizer-name-input">Quien Organiza:</Label>
+                               <Label htmlFor="organizer-name-input">{t('whoOrganizes')}:</Label>
                                <Input
                                    id="organizer-name-input"
                                    type="text"
                                    value={raffleState.organizerName}
                                    onChange={(e) => handleLocalFieldChange('organizerName', e.target.value)}
                                    onBlur={(e) => handleFieldChange('organizerName', e.target.value)}
-                                   placeholder="Nombre del organizador"
+                                   placeholder={t('organizerNamePlaceholder')}
                                    disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
                                    className="w-full mt-1"
                                />
                            </div>
                            <div>
-                                <Label htmlFor="organizer-phone-input">Teléfono del Organizador:</Label>
+                                <Label htmlFor="organizer-phone-input">{t('organizerPhone')}:</Label>
                                 <div className="relative mt-1">
                                     <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                                         <span className="text-gray-500 sm:text-sm">+57</span>
@@ -972,40 +979,40 @@ const App = () => {
                             </div>
                             {isCurrentUserAdmin && !raffleState.isDetailsConfirmed && (
                                 <div>
-                                    <Label htmlFor="password-input">Contraseña de Administrador:</Label>
+                                    <Label htmlFor="password-input">{t('adminPassword')}:</Label>
                                     <Input
                                         id="password-input"
                                         type="password"
                                         value={raffleState.password}
                                         onChange={(e) => handleLocalFieldChange('password', e.target.value)}
                                         onBlur={(e) => handleFieldChange('password', e.target.value)}
-                                        placeholder="Crea una contraseña segura"
+                                        placeholder={t('adminPasswordPlaceholder')}
                                         disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
                                         className="w-full mt-1"
                                     />
                                </div>
                             )}
                            <div>
-                               <Label htmlFor="prize-input">Premio:</Label>
+                               <Label htmlFor="prize-input">{t('prize')}:</Label>
                                <Input
                                    id="prize-input"
                                    type="text"
                                    value={raffleMode === 'infinite' ? formatValueForDisplay(raffleState.prize) : raffleState.prize}
                                    onChange={(e) => handleLocalFieldChange('prize', e.target.value)}
                                    onBlur={(e) => handleFieldChange('prize', raffleState.prize)}
-                                   placeholder={raffleMode === 'infinite' ? "Ej: 1000000 (solo números)" : "Ej: Carro o una bicicleta"}
+                                   placeholder={raffleMode === 'infinite' ? t('prizePlaceholderInfinite') : t('prizePlaceholderFinite')}
                                    disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
                                    className="w-full mt-1"
                                />
                            </div>
                            {isCurrentUserAdmin && !raffleState.isDetailsConfirmed && (
                                 <div>
-                                    <Label htmlFor="prize-image-url-input">Imagen del Premio</Label>
+                                    <Label htmlFor="prize-image-url-input">{t('prizeImage')}</Label>
                                     <div className="flex gap-2 mt-1">
                                         <a href="https://www.google.com/imghp" target="_blank" rel="noopener noreferrer" className="flex-shrink-0">
                                             <Button type="button" variant="outline">
                                                 <Search className="h-4 w-4 mr-2" />
-                                                Buscar en Google
+                                                {t('searchOnGoogle')}
                                             </Button>
                                         </a>
                                         <Input
@@ -1014,7 +1021,7 @@ const App = () => {
                                             value={raffleState.prizeImageUrl}
                                             onChange={(e) => handleLocalFieldChange('prizeImageUrl', e.target.value)}
                                             onBlur={(e) => handleFieldChange('prizeImageUrl', e.target.value)}
-                                            placeholder="Pegar enlace directo de la imagen"
+                                            placeholder={t('pasteImageLinkPlaceholder')}
                                             disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
                                             className="w-full"
                                         />
@@ -1022,7 +1029,7 @@ const App = () => {
                                 </div>
                            )}
                            <div>
-                                <Label htmlFor="value-input">Valor Boleta:</Label>
+                                <Label htmlFor="value-input">{t('ticketValue')}:</Label>
                                 <Input
                                     id="value-input"
                                     type="text"
@@ -1036,7 +1043,7 @@ const App = () => {
                             </div>
                            {raffleState.raffleMode === 'infinite' && (
                                 <div>
-                                    <Label htmlFor="infinite-digits-input">Cifras para Rifa Infinita:</Label>
+                                    <Label htmlFor="infinite-digits-input">{t('infiniteRaffleDigits')}:</Label>
                                     <Input
                                         id="infinite-digits-input"
                                         type="number"
@@ -1044,14 +1051,14 @@ const App = () => {
                                         value={raffleState.infiniteModeDigits || 4}
                                         onChange={(e) => handleLocalFieldChange('infiniteModeDigits', parseInt(e.target.value, 10))}
                                         onBlur={(e) => handleFieldChange('infiniteModeDigits', parseInt(e.target.value, 10))}
-                                        placeholder="Mínimo 4 cifras"
+                                        placeholder={t('min4Digits')}
                                         disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
                                         className="w-full mt-1"
                                     />
                                 </div>
                             )}
                            <div>
-                               <Label htmlFor="game-date-input">Fecha de juego:</Label>
+                               <Label htmlFor="game-date-input">{t('gameDate')}:</Label>
                                <Input
                                    id="game-date-input"
                                    type="date"
@@ -1064,7 +1071,7 @@ const App = () => {
                                />
                            </div>
                            <div>
-                               <Label htmlFor="lottery-input">Lotería:</Label>
+                               <Label htmlFor="lottery-input">{t('lottery')}:</Label>
                                <select
                                    id="lottery-input"
                                    value={raffleState.lottery}
@@ -1075,33 +1082,33 @@ const App = () => {
                                    disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
                                    className="w-full mt-1 px-3 py-2 text-base border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                                >
-                                   <option value="">Selecciona una lotería</option>
-                                   <option value="Lotería de Bogotá">Lotería de Bogotá</option>
-                                   <option value="Lotería de Medellín">Lotería de Medellín</option>
-                                   <option value="Lotería de Cundinamarca">Lotería de Cundinamarca</option>
-                                   <option value="Lotería del Valle">Lotería del Valle</option>
-                                   <option value="Lotería del Tolima">Lotería del Tolima</option>
-                                   <option value="Lotería de la Cruz Roja">Lotería de la Cruz Roja</option>
-                                   <option value="Otro">Otro</option>
+                                   <option value="">{t('selectLottery')}</option>
+                                   <option value="Lotería de Bogotá">{t('lotteryBogota')}</option>
+                                   <option value="Lotería de Medellín">{t('lotteryMedellin')}</option>
+                                   <option value="Lotería de Cundinamarca">{t('lotteryCundinamarca')}</option>
+                                   <option value="Lotería del Valle">{t('lotteryValle')}</option>
+                                   <option value="Lotería del Tolima">{t('lotteryTolima')}</option>
+                                   <option value="Lotería de la Cruz Roja">{t('lotteryRedCross')}</option>
+                                   <option value="Otro">{t('other')}</option>
                                </select>
                            </div>
                            {raffleState.lottery === 'Otro' && (
                                 <div>
-                                    <Label htmlFor="custom-lottery-input">Especificar Lotería:</Label>
+                                    <Label htmlFor="custom-lottery-input">{t('specifyLottery')}:</Label>
                                     <Input
                                         id="custom-lottery-input"
                                         type="text"
                                         value={raffleState.customLottery}
                                         onChange={(e) => handleLocalFieldChange('customLottery', e.target.value)}
                                         onBlur={(e) => handleFieldChange('customLottery', e.target.value)}
-                                        placeholder="Nombre de la lotería"
+                                        placeholder={t('lotteryNamePlaceholder')}
                                         disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
                                         className="w-full mt-1"
                                     />
                                 </div>
                             )}
                             <div>
-                                <Label htmlFor="nequi-account-input">Cuenta Nequi:</Label>
+                                <Label htmlFor="nequi-account-input">{t('nequiAccount')}:</Label>
                                 <div className="relative mt-1">
                                     <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                                         <span className="text-gray-500 sm:text-sm">+57</span>
@@ -1119,7 +1126,7 @@ const App = () => {
                                 </div>
                             </div>
                             <div>
-                               <Label htmlFor="payment-link-input">Link de Pagos:</Label>
+                               <Label htmlFor="payment-link-input">{t('paymentLink')}:</Label>
                                <Input
                                    id="payment-link-input"
                                    type="text"
@@ -1137,7 +1144,7 @@ const App = () => {
                                         onClick={handleConfirmDetails}
                                         className="w-full bg-purple-500 text-white font-medium rounded-lg hover:bg-purple-600 transition-colors"
                                     >
-                                        Confirmar Detalles del Premio
+                                        {t('confirmPrizeDetails')}
                                     </Button>
                                 </div>
                             )}
@@ -1147,16 +1154,16 @@ const App = () => {
                    <div className="lg:w-3/5 flex-grow">
                        {isCurrentUserAdmin && (
                          <div className="mb-6 p-4 border rounded-lg bg-gray-50">
-                            <h2 className="text-2xl font-bold text-gray-800 mb-4">Sorteo</h2>
+                            <h2 className="text-2xl font-bold text-gray-800 mb-4">{t('draw')}</h2>
                              <div className="space-y-4">
                                  {!raffleState.isWinnerConfirmed && (
                                      <div className="flex flex-wrap gap-3 items-end">
                                          <div className="flex-grow">
-                                             <Label htmlFor="manual-winner-input">Número Ganador</Label>
+                                             <Label htmlFor="manual-winner-input">{t('winningNumber')}</Label>
                                              <Input
                                                  id="manual-winner-input"
                                                  type="text"
-                                                 placeholder={raffleMode === 'infinite' ? `Número (${raffleState.infiniteModeDigits || 4} cifras)`: `Número (${numberLength} cifras)`}
+                                                 placeholder={t('winningNumberPlaceholder', { count: raffleMode === 'infinite' ? (raffleState.infiniteModeDigits || 4) : numberLength })}
                                                  value={raffleState.manualWinnerNumber}
                                                  onChange={(e) => handleLocalFieldChange('manualWinnerNumber', e.target.value.replace(/\D/g, ''))}
                                                  maxLength={raffleMode === 'infinite' ? raffleState.infiniteModeDigits : numberLength}
@@ -1171,7 +1178,7 @@ const App = () => {
                                                 disabled={raffleState.isWinnerConfirmed || !!raffleState.winner}
                                                 className="bg-yellow-500 text-white font-medium rounded-lg hover:bg-yellow-600 transition-colors disabled:bg-gray-300"
                                             >
-                                                Buscar Ganador
+                                                {t('findWinner')}
                                             </Button>
                                          </div>
                                      </div>
@@ -1181,11 +1188,11 @@ const App = () => {
                                     <>
                                         <div className="flex flex-wrap gap-3 items-end">
                                             <div className="flex-grow">
-                                                <Label htmlFor="partial-winner-3-input">Número (3 últimas cifras)</Label>
+                                                <Label htmlFor="partial-winner-3-input">{t('last3DigitsNumber')}</Label>
                                                 <Input
                                                     id="partial-winner-3-input"
                                                     type="text"
-                                                    placeholder="Últimas 3 cifras"
+                                                    placeholder={t('last3Digits')}
                                                     value={raffleState.manualWinnerNumber.slice(-3)}
                                                     readOnly
                                                     disabled
@@ -1193,7 +1200,7 @@ const App = () => {
                                                 />
                                             </div>
                                             <div className="w-24">
-                                                <Label>Porcentaje</Label>
+                                                <Label>{t('percentage')}</Label>
                                                 <Input
                                                     type="number"
                                                     min="1"
@@ -1212,17 +1219,17 @@ const App = () => {
                                                     disabled={raffleState.isWinnerConfirmed || !raffleState.manualWinnerNumber}
                                                     className="bg-blue-500 text-white font-medium rounded-lg hover:bg-blue-600 transition-colors disabled:bg-gray-300"
                                                 >
-                                                    Buscar Ganador ({raffleState.partialWinnerPercentage3 || 0}%)
+                                                    {t('findWinnerPercentage', { percentage: raffleState.partialWinnerPercentage3 || 0 })}
                                                 </Button>
                                             </div>
                                         </div>
                                         <div className="flex flex-wrap gap-3 items-end">
                                             <div className="flex-grow">
-                                                <Label htmlFor="partial-winner-2-input">Número (2 últimas cifras)</Label>
+                                                <Label htmlFor="partial-winner-2-input">{t('last2DigitsNumber')}</Label>
                                                 <Input
                                                     id="partial-winner-2-input"
                                                     type="text"
-                                                    placeholder="Últimas 2 cifras"
+                                                    placeholder={t('last2Digits')}
                                                     value={raffleState.manualWinnerNumber.slice(-2)}
                                                     readOnly
                                                     disabled
@@ -1230,7 +1237,7 @@ const App = () => {
                                                 />
                                             </div>
                                             <div className="w-24">
-                                                 <Label>Porcentaje</Label>
+                                                 <Label>{t('percentage')}</Label>
                                                  <Input
                                                      type="number"
                                                      min="1"
@@ -1249,7 +1256,7 @@ const App = () => {
                                                     disabled={raffleState.isWinnerConfirmed || !raffleState.manualWinnerNumber}
                                                     className="bg-blue-500 text-white font-medium rounded-lg hover:bg-blue-600 transition-colors disabled:bg-gray-300"
                                                 >
-                                                    Buscar Ganador ({raffleState.partialWinnerPercentage2 || 0}%)
+                                                    {t('findWinnerPercentage', { percentage: raffleState.partialWinnerPercentage2 || 0 })}
                                                 </Button>
                                             </div>
                                         </div>
@@ -1262,19 +1269,19 @@ const App = () => {
                                              onClick={handleConfirmWinner}
                                              className="bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 transition-colors"
                                          >
-                                             Confirmar Resultado
+                                             {t('confirmResult')}
                                          </Button>
                                      )}
                                      <Button
                                          onClick={resetBoard}
                                          className="bg-red-500 text-white font-medium rounded-lg hover:bg-red-600 transition-colors"
                                      >
-                                         Reiniciar Tablero
+                                         {t('resetBoard')}
                                      </Button>
                                  </div>
                              </div>
                              {raffleState.isWinnerConfirmed && (
-                                 <p className="mt-4 text-green-600 font-semibold">El resultado ha sido confirmado y el tablero está cerrado.</p>
+                                 <p className="mt-4 text-green-600 font-semibold">{t('resultConfirmedAndBoardClosed')}</p>
                              )}
                          </div>
                        )}
@@ -1283,11 +1290,11 @@ const App = () => {
                            <div>
                                <div className="flex justify-between items-center mb-4">
                                    <h2 className="text-2xl font-bold text-gray-800 flex items-center">
-                                       Tablero de Números
+                                       {t('numberBoard')}
                                    </h2>
                                    {raffleState.raffleRef && (
                                         <div className="font-semibold text-gray-700">
-                                            Modo: {raffleMode === 'two-digit' ? '2 Cifras' : '3 Cifras'}
+                                            {t('mode')}: {raffleMode === 'two-digit' ? t('2digitMode') : t('3digitMode')}
                                         </div>
                                    )}
                                </div>
@@ -1324,27 +1331,27 @@ const App = () => {
                                 <div className="flex flex-wrap gap-4 mt-4 text-sm">
                                     <div className="flex items-center gap-2">
                                         <div className="w-4 h-4 rounded-full bg-green-200"></div>
-                                        <span>Disponible</span>
+                                        <span>{t('available')}</span>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <div className="w-4 h-4 rounded-full bg-yellow-400"></div>
-                                        <span>Pendiente</span>
+                                        <span>{t('pending')}</span>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <div className="w-4 h-4 rounded-full bg-red-600"></div>
-                                        <span>Vendido</span>
+                                        <span>{t('sold')}</span>
                                     </div>
                                 </div>
                                {!!raffleState.winner && !raffleState.isWinnerConfirmed && (
                                     <div className="mt-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4" role="alert">
-                                        <p className="font-bold">Tablero Bloqueado</p>
-                                        <p>Se ha encontrado un ganador. Confirma el resultado o reinicia el tablero para continuar.</p>
+                                        <p className="font-bold">{t('boardLocked')}</p>
+                                        <p>{t('boardLockedWinnerFound')}</p>
                                     </div>
                                 )}
                                {!raffleState.isDetailsConfirmed && (
                                     <div className="mt-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4" role="alert">
-                                        <p className="font-bold">Tablero Bloqueado</p>
-                                        <p>Debes completar y confirmar los detalles del premio para poder seleccionar números.</p>
+                                        <p className="font-bold">{t('boardLocked')}</p>
+                                        <p>{t('boardLockedConfirmDetails')}</p>
                                     </div>
                                 )}
                            </div>
@@ -1352,10 +1359,10 @@ const App = () => {
                             <div className="text-center p-8 bg-gray-50 rounded-lg">
                                  <h2 className="text-2xl font-bold text-gray-800 flex items-center justify-center gap-2">
                                     <InfinityIcon className="h-6 w-6"/>
-                                    Rifa Infinita
+                                    {t('infiniteRaffle')}
                                 </h2>
                                 <p className="text-gray-600 mt-2">
-                                    Esta rifa no tiene un tablero de números. Registra a los participantes directamente en la pestaña "Registrar".
+                                    {t('infiniteRaffleDescription')}
                                 </p>
                             </div>
                         )}
@@ -1370,7 +1377,7 @@ const App = () => {
         <div className="min-h-screen bg-background font-sans relative">
             {backgroundImage && (
                 <div className="fixed inset-0 z-0 pointer-events-none">
-                    <Image src={backgroundImage} alt="Fondo de la rifa" layout="fill" objectFit="cover" unoptimized />
+                    <Image src={backgroundImage} alt={t('raffleBackgroundAlt')} layout="fill" objectFit="cover" unoptimized />
                     <div className="absolute inset-0 bg-black/30" />
                 </div>
             )}
@@ -1388,32 +1395,32 @@ const App = () => {
                                 <DropdownMenuContent>
                                      <DropdownMenuItem onSelect={() => handleGoToHome()}>
                                         <House className="mr-2 h-4 w-4" />
-                                        <span>Ir al Inicio</span>
+                                        <span>{t('goToHome')}</span>
                                     </DropdownMenuItem>
                                     <DropdownMenuItem onSelect={() => setIsPublicSearchOpen(true)}>
                                         <Search className="mr-2 h-4 w-4" />
-                                        <span>Buscar Rifa por Referencia</span>
+                                        <span>{t('searchRaffleByRef')}</span>
                                     </DropdownMenuItem>
                                     <DropdownMenuItem onSelect={() => setIsAdminLoginOpen(true)}>
                                         <KeyRound className="mr-2 h-4 w-4" />
-                                        <span>Recuperar Administración</span>
+                                        <span>{t('recoverAdminAccess')}</span>
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem onSelect={() => setIsShareDialogOpen(true)}>
                                         <Share2 className="mr-2 h-4 w-4" />
-                                        <span>Compartir</span>
+                                        <span>{t('share')}</span>
                                     </DropdownMenuItem>
                                      <DropdownMenuItem onSelect={() => setIsQrDialogOpen(true)}>
                                         <QrCode className="mr-2 h-4 w-4" />
-                                        <span>Mostrar QR</span>
+                                        <span>{t('showQR')}</span>
                                     </DropdownMenuItem>
                                      <DropdownMenuItem onSelect={handleInstallClick}>
                                         <Download className="mr-2 h-4 w-4" />
-                                        <span>Instalar Aplicación</span>
+                                        <span>{t('installApp')}</span>
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem>
+                                    <DropdownMenuItem onSelect={toggleLanguage}>
                                         <Languages className="mr-2 h-4 w-4" />
-                                        <span>Idiomas</span>
+                                        <span>{t('languages')}</span>
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
@@ -1430,9 +1437,9 @@ const App = () => {
                         <div className="p-8">
                             <div className="text-center">
                                 <Lock className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                                <h2 className="text-2xl font-bold text-gray-800 mb-2">Tablero Bloqueado</h2>
+                                <h2 className="text-2xl font-bold text-gray-800 mb-2">{t('boardLocked')}</h2>
                                 <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                                    Busca una rifa por su referencia o crea una nueva para empezar.
+                                    {t('boardLockedDescription')}
                                 </p>
                                 
                                 <div className="flex flex-col justify-center items-center gap-8 my-8">
@@ -1443,16 +1450,16 @@ const App = () => {
                                             <div className="bg-purple-100 p-4 flex flex-col items-center justify-center rounded-l-2xl border-r-2 border-dashed border-purple-300">
                                                 <TicketIcon className="h-10 w-10 text-purple-600 mb-2" />
                                                 <span className="text-purple-800 font-bold text-lg">2</span>
-                                                <span className="text-purple-600 text-xs">CIFRAS</span>
+                                                <span className="text-purple-600 text-xs">{t('digits')}</span>
                                             </div>
                                             <div className="p-6 flex-grow">
-                                                <h5 className="mb-1 text-xl font-bold tracking-tight text-gray-900">Rifa de 2 Cifras</h5>
-                                                <p className="font-normal text-gray-600 mb-4 text-sm">Para números del 00 al 99.</p>
+                                                <h5 className="mb-1 text-xl font-bold tracking-tight text-gray-900">{t('2digitRaffle')}</h5>
+                                                <p className="font-normal text-gray-600 mb-4 text-sm">{t('2digitRaffleDescription')}</p>
                                             </div>
                                         </div>
                                         <div className="p-6 pt-0 space-y-2">
                                             <Button onClick={() => handlePriceButtonClick('two-digit')} size="lg" className="w-full bg-green-500 hover:bg-green-600 text-white font-bold">
-                                                Precio
+                                                {t('price')}
                                             </Button>
                                         </div>
                                     </div>
@@ -1463,16 +1470,16 @@ const App = () => {
                                             <div className="bg-blue-100 p-4 flex flex-col items-center justify-center rounded-l-2xl border-r-2 border-dashed border-blue-300">
                                                 <TicketIcon className="h-10 w-10 text-blue-600 mb-2" />
                                                 <span className="text-blue-800 font-bold text-lg">3</span>
-                                                <span className="text-blue-600 text-xs">CIFRAS</span>
+                                                <span className="text-blue-600 text-xs">{t('digits')}</span>
                                             </div>
                                             <div className="p-6 flex-grow">
-                                                <h5 className="mb-1 text-xl font-bold tracking-tight text-gray-900">Rifa de 3 Cifras</h5>
-                                                <p className="font-normal text-gray-600 mb-4 text-sm">Para números del 000 al 999.</p>
+                                                <h5 className="mb-1 text-xl font-bold tracking-tight text-gray-900">{t('3digitRaffle')}</h5>
+                                                <p className="font-normal text-gray-600 mb-4 text-sm">{t('3digitRaffleDescription')}</p>
                                             </div>
                                         </div>
                                         <div className="p-6 pt-0 space-y-2">
                                             <Button onClick={() => handlePriceButtonClick('three-digit')} size="lg" className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold">
-                                                Precio
+                                                {t('price')}
                                             </Button>
                                         </div>
                                     </div>
@@ -1483,23 +1490,23 @@ const App = () => {
                                             <div className="bg-red-100 p-4 flex flex-col items-center justify-center rounded-l-2xl border-r-2 border-dashed border-red-300">
                                                 <InfinityIcon className="h-10 w-10 text-red-600 mb-2" />
                                                 <span className="text-red-800 font-bold text-lg">∞</span>
-                                                <span className="text-red-600 text-xs">INFINITA</span>
+                                                <span className="text-red-600 text-xs">{t('infinite_caps')}</span>
                                             </div>
                                             <div className="p-6 flex-grow">
-                                                <h5 className="mb-1 text-xl font-bold tracking-tight text-gray-900">Rifa Infinita</h5>
-                                                <p className="font-normal text-gray-600 mb-4 text-sm">Sin límite de números. Ideal para sorteos.</p>
+                                                <h5 className="mb-1 text-xl font-bold tracking-tight text-gray-900">{t('infiniteRaffle')}</h5>
+                                                <p className="font-normal text-gray-600 mb-4 text-sm">{t('infiniteRaffleHomeDescription')}</p>
                                             </div>
                                         </div>
                                         <div className="p-6 pt-0 space-y-2">
                                             <Button onClick={() => handlePriceButtonClick('infinite')} size="lg" className="w-full bg-red-500 hover:bg-red-600 text-white font-bold">
-                                                Precio
+                                                {t('price')}
                                             </Button>
                                         </div>
                                     </div>
                                     
                                 </div>
                                 <Button onClick={() => setIsPublicSearchOpen(true)} size="lg" variant="outline">
-                                    o Buscar por Referencia
+                                    {t('orSearchByReference')}
                                 </Button>
                             </div>
                         </div>
@@ -1511,21 +1518,21 @@ const App = () => {
                                         className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'board' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
                                         onClick={() => handleTabClick('board')}
                                     >
-                                        <TicketIcon className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">Tablero</span>
+                                        <TicketIcon className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">{t('board')}</span>
                                     </button>
                                     <button 
                                         className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'register' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
                                         onClick={() => handleTabClick('register')}
                                         disabled={!raffleState}
                                     >
-                                        <span className="md:hidden">✏️</span> <span className="hidden md:inline">Registrar</span>
+                                        <span className="md:hidden">✏️</span> <span className="hidden md:inline">{t('register')}</span>
                                     </button>
                                     {isCurrentUserAdmin && (
                                     <button 
                                         className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'pending' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
                                         onClick={() => handleTabClick('pending')}
                                     >
-                                        <Clock className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">Pendientes ({pendingParticipants.length})</span>
+                                        <Clock className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">{t('pendingTab', { count: pendingParticipants.length })}</span>
                                     </button>
                                     )}
                                     <button 
@@ -1533,14 +1540,14 @@ const App = () => {
                                         onClick={() => handleTabClick('participants')}
                                         disabled={!raffleState}
                                     >
-                                        <Users className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">Participantes</span>
+                                        <Users className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">{t('participants')}</span>
                                     </button>
                                     {isCurrentUserAdmin && (
                                     <button 
                                         className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'recaudado' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
                                         onClick={() => setIsSalesModalOpen(true)}
                                     >
-                                        <DollarSign className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">Recaudado</span>
+                                        <DollarSign className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">{t('collected')}</span>
                                     </button>
                                     )}
                                 </div>
@@ -1551,15 +1558,15 @@ const App = () => {
                                 </div>
                                 <div className={activeTab === 'register' ? 'tab-content active' : 'tab-content'}>
                                     <div className="mb-6">
-                                        <h2 className="text-2xl font-bold text-gray-800 mb-4">Registrar Número</h2>
+                                        <h2 className="text-2xl font-bold text-gray-800 mb-4">{t('registerNumber')}</h2>
                                         {isCurrentUserAdmin && (
                                             <div className="bg-gray-100 p-4 rounded-lg mb-6 space-y-4">
-                                                <h3 className="font-semibold text-lg text-gray-800">Controles de Administrador</h3>
+                                                <h3 className="font-semibold text-lg text-gray-800">{t('adminControls')}</h3>
                                                 <div className="flex items-center justify-between">
                                                     <Label htmlFor="enable-nequi" className="flex flex-col space-y-1">
-                                                        <span>Habilitar Pago con Nequi</span>
+                                                        <span>{t('enableNequiPayment')}</span>
                                                         <span className="font-normal leading-snug text-muted-foreground text-sm">
-                                                            Permite a los usuarios pagar usando el botón de Nequi.
+                                                            {t('enableNequiPaymentDescription')}
                                                         </span>
                                                     </Label>
                                                     <Switch
@@ -1571,9 +1578,9 @@ const App = () => {
                                                 </div>
                                                 <div className="flex items-center justify-between">
                                                     <Label htmlFor="enable-payment-link" className="flex flex-col space-y-1">
-                                                        <span>Habilitar Pago con Link</span>
+                                                        <span>{t('enablePaymentLink')}</span>
                                                         <span className="font-normal leading-snug text-muted-foreground text-sm">
-                                                            Permite a los usuarios pagar usando el link de pagos.
+                                                            {t('enablePaymentLinkDescription')}
                                                         </span>
                                                     </Label>
                                                     <Switch
@@ -1589,18 +1596,18 @@ const App = () => {
                                             <div className="flex flex-col gap-4">
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                     <div>
-                                                        <Label htmlFor="name-input">Nombre completo:</Label>
+                                                        <Label htmlFor="name-input">{t('fullName')}:</Label>
                                                         <Input
                                                             id="name-input"
                                                             type="text"
                                                             value={raffleState?.name || ''}
                                                             onChange={(e) => handleLocalFieldChange('name', e.target.value)}
-                                                            placeholder="Ej: Juan Pérez"
+                                                            placeholder={t('namePlaceholder')}
                                                             className="w-full mt-1"
                                                         />
                                                     </div>
                                                     <div>
-                                                        <Label htmlFor="phone-input">Celular:</Label>
+                                                        <Label htmlFor="phone-input">{t('phone')}:</Label>
                                                         <div className="relative mt-1">
                                                             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                                                                 <span className="text-gray-500 sm:text-sm">+57</span>
@@ -1617,18 +1624,18 @@ const App = () => {
                                                     </div>
                                                 </div>
                                                 <div>
-                                                    <Label htmlFor="raffle-number-input">Número de rifa ({raffleMode === 'two-digit' ? '00-99' : raffleMode === 'three-digit' ? '000-999' : `${raffleState?.infiniteModeDigits || 4} cifras`}):</Label>
+                                                    <Label htmlFor="raffle-number-input">{t('raffleNumberLabel', { range: raffleMode === 'two-digit' ? '00-99' : raffleMode === 'three-digit' ? '000-999' : t('infiniteDigits', { count: raffleState?.infiniteModeDigits || 4 }) })}:</Label>
                                                     <Input
                                                         id="raffle-number-input"
                                                         type="text"
                                                         value={raffleState?.raffleNumber || ''}
                                                         onChange={handleRaffleNumberChange}
-                                                        placeholder={`Ej: ${raffleMode === 'two-digit' ? '05' : raffleMode === 'three-digit' ? '142' : '2025'}`}
+                                                        placeholder={t('raffleNumberPlaceholder', { example: raffleMode === 'two-digit' ? '05' : raffleMode === 'three-digit' ? '142' : '2025' })}
                                                         className="w-full mt-1"
                                                         maxLength={raffleMode === 'infinite' ? (raffleState?.infiniteModeDigits || 4) : numberLength}
                                                     />
                                                     {raffleState?.raffleNumber && allAssignedNumbers.has(parseInt(raffleState.raffleNumber)) && (
-                                                        <p className="text-red-500 text-sm mt-1">Este número ya está asignado.</p>
+                                                        <p className="text-red-500 text-sm mt-1">{t('numberAlreadyAssignedWarning')}</p>
                                                     )}
                                                 </div>
                                                 <div className="flex flex-wrap gap-2">
@@ -1650,7 +1657,7 @@ const App = () => {
                                                         >
                                                             <Button className="w-full bg-[#A454C4] hover:bg-[#8e49a8] text-white" disabled={!isRegisterFormValidForSubmit}>
                                                                 <NequiIcon />
-                                                                <span className="ml-2">Pagar con Nequi</span>
+                                                                <span className="ml-2">{t('payWithNequi')}</span>
                                                             </Button>
                                                         </a>
                                                     )}
@@ -1669,7 +1676,7 @@ const App = () => {
                                                         >
                                                             <Button className="w-full bg-blue-500 hover:bg-blue-600 text-white" disabled={!isRegisterFormValidForSubmit}>
                                                                 <LinkIcon className="mr-2 h-4 w-4" />
-                                                                <span>Pagar con Link</span>
+                                                                <span>{t('payWithLink')}</span>
                                                             </Button>
                                                         </a>
                                                     )}
@@ -1679,7 +1686,7 @@ const App = () => {
                                                             onClick={() => handleRegisterParticipant(false, true)}
                                                             disabled={!isRegisterFormValidForSubmit}
                                                         >
-                                                            Registrar y Confirmar Pago
+                                                            {t('registerAndConfirmPayment')}
                                                         </Button>
                                                     )}
                                                 </div>
@@ -1688,35 +1695,35 @@ const App = () => {
                                     </div>
 
                                     {generatedTicketData && (
-                                        <InlineTicket ticketModalRef={ticketModalRef} ticketData={generatedTicketData} setGeneratedTicketData={setGeneratedTicketData} handleDownloadTicket={handleDownloadTicket} handleShareTicket={handleShareTicket} formatValue={formatValue} />
+                                        <InlineTicket ticketModalRef={ticketModalRef} ticketData={generatedTicketData} setGeneratedTicketData={setGeneratedTicketData} handleDownloadTicket={handleDownloadTicket} handleShareTicket={handleShareTicket} formatValue={formatValue} t={t} language={language}/>
                                     )}
 
                                     {(!raffleState || !raffleState.isDetailsConfirmed) && (
                                         <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-6" role="alert">
-                                            <p className="font-bold">Aviso</p>
-                                            <p>Debes activar o buscar una rifa y confirmar los detalles del premio en la pestaña "Tablero" para poder participar.</p>
+                                            <p className="font-bold">{t('notice')}</p>
+                                            <p>{t('activateRaffleWarning')}</p>
                                         </div>
                                     )}
                                     {raffleState?.isWinnerConfirmed && (
                                         <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-6" role="alert">
-                                            <p className="font-bold">Juego terminado</p>
-                                            <p>El registro de nuevos participantes está deshabilitado porque ya se ha confirmado un ganador. Reinicia el tablero para comenzar una nueva rifa.</p>
+                                            <p className="font-bold">{t('gameFinished')}</p>
+                                            <p>{t('gameFinishedRegistrationDisabled')}</p>
                                         </div>
                                     )}
                                 </div>
                                 {isCurrentUserAdmin && (
                                 <div className={activeTab === 'pending' ? 'tab-content active' : 'tab-content'}>
-                                    <h2 className="text-2xl font-bold text-gray-800 mb-4">Pagos Pendientes</h2>
+                                    <h2 className="text-2xl font-bold text-gray-800 mb-4">{t('pendingPayments')}</h2>
                                     {pendingParticipants.length > 0 ? (
                                         <div className="overflow-x-auto">
                                             <table className="min-w-full divide-y divide-gray-200">
                                                 <thead className="bg-gray-50">
                                                     <tr>
-                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Número</th>
-                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
-                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Celular</th>
-                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha Registro</th>
-                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acción</th>
+                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('number')}</th>
+                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('name')}</th>
+                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('phone')}</th>
+                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('registrationDate')}</th>
+                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('action')}</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody className="bg-white divide-y divide-gray-200">
@@ -1736,11 +1743,11 @@ const App = () => {
                                                                 </a>
                                                             </td>
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                                {p.timestamp && p.timestamp.toDate ? format(p.timestamp.toDate(), 'PPpp', { locale: es }) : 'N/A'}
+                                                                {p.timestamp && p.timestamp.toDate ? format(p.timestamp.toDate(), 'PPpp', { locale: language === 'es' ? es : enUS }) : 'N/A'}
                                                             </td>
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm">
                                                                 <Button onClick={() => handleConfirmPayment(p.id)} size="sm" className="bg-green-500 hover:bg-green-600 text-white">
-                                                                    Confirmar Pago
+                                                                    {t('confirmPayment')}
                                                                 </Button>
                                                             </td>
                                                         </tr>
@@ -1749,20 +1756,20 @@ const App = () => {
                                             </table>
                                         </div>
                                     ) : (
-                                        <p className="text-gray-500">No hay pagos pendientes de confirmación.</p>
+                                        <p className="text-gray-500">{t('noPendingPayments')}</p>
                                     )}
                                 </div>
                                 )}
                                 <div className={activeTab === 'participants' ? 'tab-content active' : 'tab-content'}>
                                     <div className="flex justify-between items-center mb-4">
-                                            <h2 className="text-2xl font-bold text-gray-800">Participantes Confirmados</h2>
+                                            <h2 className="text-2xl font-bold text-gray-800">{t('confirmedParticipants')}</h2>
                                             
                                     </div>
 
                                     {!raffleState ? (
                                         <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-6" role="alert">
-                                            <p className="font-bold">Aviso</p>
-                                            <p>Debes activar o buscar una rifa en la pestaña "Tablero" para poder ver los participantes.</p>
+                                            <p className="font-bold">{t('notice')}</p>
+                                            <p>{t('activateRaffleToSeeParticipants')}</p>
                                         </div>
                                     ) : confirmedParticipants.length > 0 ? (
                                         <div className="overflow-x-auto">
@@ -1770,10 +1777,10 @@ const App = () => {
                                                 <thead className="bg-gray-50">
                                                     <tr>
                                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
-                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
-                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Celular</th>
-                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Número</th>
-                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acción</th>
+                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('name')}</th>
+                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('phone')}</th>
+                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('number')}</th>
+                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('action')}</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody className="bg-white divide-y divide-gray-200">
@@ -1801,7 +1808,7 @@ const App = () => {
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-purple-600">{p.raffleNumber}</td>
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm">
                                                                 <Button onClick={() => handleGenerateTicket(p)} size="sm" variant="outline" disabled={!raffleState.prize}>
-                                                                    Generar Tiquete
+                                                                    {t('generateTicket')}
                                                                 </Button>
                                                             </td>
                                                         </tr>
@@ -1810,7 +1817,7 @@ const App = () => {
                                             </table>
                                         </div>
                                     ) : (
-                                        <p className="text-gray-500">No hay participantes con pago confirmado.</p>
+                                        <p className="text-gray-500">{t('noConfirmedParticipants')}</p>
                                     )}
                                 </div>
                             </div>
@@ -1834,14 +1841,14 @@ const App = () => {
             {showConfirmation && (
                 <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-[101]">
                     <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full">
-                        <h3 className="text-lg font-medium text-gray-900 mb-4">Confirmar acción</h3>
+                        <h3 className="text-lg font-medium text-gray-900 mb-4">{t('confirmAction')}</h3>
                         <p className="text-gray-500 mb-6">{confirmationMessage}</p>
                         <div className="flex justify-end space-x-3">
                             <button
                                 onClick={() => setShowConfirmation(false)}
                                 className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
                             >
-                                Cancelar
+                                {t('cancel')}
                             </button>
                             <button
                                 onClick={() => {
@@ -1850,7 +1857,7 @@ const App = () => {
                                 }}
                                 className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
                             >
-                                Confirmar
+                                {t('confirm')}
                             </button>
                         </div>
                     </div>
@@ -1860,7 +1867,7 @@ const App = () => {
             <Dialog open={isTicketModalOpen} onOpenChange={closeTicketModal}>
                 <DialogContent className="w-auto max-w-xs p-0 border-0 bg-transparent shadow-none font-sans">
                      <DialogHeader>
-                        <DialogTitle className="sr-only">Tiquete de Rifa</DialogTitle>
+                        <DialogTitle className="sr-only">{t('raffleTicket')}</DialogTitle>
                      </DialogHeader>
                      {ticketInfo && (
                         <div>
@@ -1875,30 +1882,30 @@ const App = () => {
                                 <div className="relative z-10">
                                     <div className="text-center mb-4">
                                         <h3 className="text-xl font-bold">RIFA EXPRESS</h3>
-                                        <p>Referencia: {ticketInfo.raffleRef}</p>
-                                        <p className="font-semibold">COMPROBANTE DE COMPRA</p>
+                                        <p>{t('reference')}: {ticketInfo.raffleRef}</p>
+                                        <p className="font-semibold">{t('purchaseReceipt')}</p>
                                     </div>
-                                    <p className="text-center text-xs mb-4">{ticketInfo.timestamp?.toDate ? format(ticketInfo.timestamp.toDate(), "d 'de' MMMM 'de' yyyy - h:mm a", { locale: es }) : 'Fecha no disponible'}</p>
+                                    <p className="text-center text-xs mb-4">{ticketInfo.timestamp?.toDate ? format(ticketInfo.timestamp.toDate(), "d 'de' MMMM 'de' yyyy - h:mm a", { locale: language === 'es' ? es : enUS }) : t('dateNotAvailable')}</p>
                                     <div className="border-t border-dashed border-gray-400 my-4"></div>
                                     <div className="space-y-1">
-                                        <div className="flex justify-between"><span>CLIENTE:</span><span className="font-semibold text-right">{ticketInfo.name}</span></div>
+                                        <div className="flex justify-between"><span>{t('client')}:</span><span className="font-semibold text-right">{ticketInfo.name}</span></div>
                                     </div>
                                     <div className="border-t border-dashed border-gray-400 my-4"></div>
-                                    <h4 className="font-bold text-center mb-2">DETALLES DE LA RIFA</h4>
+                                    <h4 className="font-bold text-center mb-2">{t('raffleDetails')}</h4>
                                     <div className="space-y-1">
-                                        <div className="flex justify-between"><span>PREMIO:</span><span className="font-semibold text-right">{raffleMode === 'infinite' ? formatValue(ticketInfo.raffleName) : ticketInfo.raffleName}</span></div>
-                                        <div className="flex justify-between"><span>VALOR BOLETA:</span><span className="font-semibold text-right">{formatValue(ticketInfo.value)}</span></div>
-                                        <div className="flex justify-between"><span>FECHA SORTEO:</span><span className="font-semibold text-right">{ticketInfo.gameDate ? format(new Date(ticketInfo.gameDate + 'T00:00:00'), "d 'de' MMMM 'de' yyyy", { locale: es }) : 'N/A'}</span></div>
-                                        <div className="flex justify-between"><span>JUEGA CON:</span><span className="font-semibold text-right">{ticketInfo.lottery}</span></div>
-                                        <div className="flex justify-between"><span>QUIEN ORGANIZA:</span><span className="font-semibold text-right">{ticketInfo.organizerName}</span></div>
+                                        <div className="flex justify-between"><span>{t('prize_caps')}:</span><span className="font-semibold text-right">{raffleMode === 'infinite' ? formatValue(ticketInfo.raffleName) : ticketInfo.raffleName}</span></div>
+                                        <div className="flex justify-between"><span>{t('ticketValue_caps')}:</span><span className="font-semibold text-right">{formatValue(ticketInfo.value)}</span></div>
+                                        <div className="flex justify-between"><span>{t('drawDate_caps')}:</span><span className="font-semibold text-right">{ticketInfo.gameDate ? format(new Date(ticketInfo.gameDate + 'T00:00:00'), "d 'de' MMMM 'de' yyyy", { locale: language === 'es' ? es : enUS }) : 'N/A'}</span></div>
+                                        <div className="flex justify-between"><span>{t('playedWith_caps')}:</span><span className="font-semibold text-right">{ticketInfo.lottery}</span></div>
+                                        <div className="flex justify-between"><span>{t('organizedBy_caps')}:</span><span className="font-semibold text-right">{ticketInfo.organizerName}</span></div>
                                     </div>
                                     <div className="border-t border-dashed border-gray-400 my-4"></div>
                                     <div className="text-center my-4">
-                                        <p className="font-bold">NÚMERO ASIGNADO</p>
+                                        <p className="font-bold">{t('assignedNumber_caps')}</p>
                                         <p className="text-5xl font-bold text-violet-600 tracking-wider">{ticketInfo.raffleNumber}</p>
                                     </div>
                                     <div className="border-t border-dashed border-gray-400 my-4"></div>
-                                    <p className="text-center font-semibold">¡Gracias por participar!</p>
+                                    <p className="text-center font-semibold">{t('thanksForParticipating')}</p>
                                 </div>
                             </div>
                             <DialogFooter className="flex-col sm:flex-col sm:space-x-0 gap-2 w-full pt-4">
@@ -1906,21 +1913,21 @@ const App = () => {
                                     onClick={handleDownloadTicket}
                                     className="w-full bg-purple-500 text-white"
                                 >
-                                    Descargar Tiquete
+                                    {t('downloadTicket')}
                                 </Button>
                                 <Button
                                     onClick={handleShareTicket}
                                     className="w-full bg-green-500 text-white flex items-center justify-center gap-2"
                                 >
                                     <WhatsappIcon/>
-                                    Compartir
+                                    {t('share')}
                                 </Button>
                                 <Button
                                     onClick={closeTicketModal}
                                     variant="outline"
                                     className="w-full bg-white/80"
                                 >
-                                    Cerrar
+                                    {t('close')}
                                 </Button>
                             </DialogFooter>
                         </div>
@@ -1931,15 +1938,15 @@ const App = () => {
             <Dialog open={isAdminLoginOpen} onOpenChange={setIsAdminLoginOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Recuperar Administración</DialogTitle>
+                        <DialogTitle>{t('recoverAdminAccess')}</DialogTitle>
                         <DialogDescription>
-                            Ingresa los datos para recuperar el acceso de administrador.
+                            {t('recoverAdminAccessDescription')}
                         </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="admin-ref-search" className="text-right">
-                                Referencia
+                                {t('reference')}
                             </Label>
                             <Input
                                 id="admin-ref-search"
@@ -1951,7 +1958,7 @@ const App = () => {
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="admin-phone-search" className="text-right">
-                                Teléfono
+                                {t('phone')}
                             </Label>
                              <div className="relative col-span-3">
                                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
@@ -1969,7 +1976,7 @@ const App = () => {
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="admin-password-search" className="text-right">
-                                Contraseña
+                                {t('password')}
                             </Label>
                             <Input
                                 id="admin-password-search"
@@ -1977,13 +1984,13 @@ const App = () => {
                                 value={adminPasswordSearch}
                                 onChange={(e) => setAdminPasswordSearch(e.target.value)}
                                 className="col-span-3"
-                                placeholder="Tu contraseña"
+                                placeholder={t('yourPassword')}
                             />
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button type="button" variant="outline" onClick={() => setIsAdminLoginOpen(false)}>Cancelar</Button>
-                        <Button type="submit" onClick={() => handleAdminSearch({ phoneToSearch: adminPhoneSearch, passwordToSearch: adminPasswordSearch })}>Recuperar</Button>
+                        <Button type="button" variant="outline" onClick={() => setIsAdminLoginOpen(false)}>{t('cancel')}</Button>
+                        <Button type="submit" onClick={() => handleAdminSearch({ phoneToSearch: adminPhoneSearch, passwordToSearch: adminPasswordSearch })}>{t('recover')}</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
@@ -1991,15 +1998,15 @@ const App = () => {
             <Dialog open={isPublicSearchOpen} onOpenChange={setIsPublicSearchOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Buscar Rifa por Referencia</DialogTitle>
+                        <DialogTitle>{t('searchRaffleByRef')}</DialogTitle>
                         <DialogDescription>
-                            Ingresa la referencia de la rifa que quieres encontrar.
+                            {t('searchRaffleByRefDescription')}
                         </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="public-ref-search" className="text-right">
-                                Referencia
+                                {t('reference')}
                             </Label>
                             <Input
                                 id="public-ref-search"
@@ -2011,8 +2018,8 @@ const App = () => {
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button type="button" variant="outline" onClick={() => setIsPublicSearchOpen(false)}>Cancelar</Button>
-                        <Button type="submit" onClick={() => handleAdminSearch({ isPublicSearch: true })}>Buscar</Button>
+                        <Button type="button" variant="outline" onClick={() => setIsPublicSearchOpen(false)}>{t('cancel')}</Button>
+                        <Button type="submit" onClick={() => handleAdminSearch({ isPublicSearch: true })}>{t('search')}</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
@@ -2020,23 +2027,23 @@ const App = () => {
              <Dialog open={isSalesModalOpen} onOpenChange={setIsSalesModalOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Recaudo de Ventas</DialogTitle>
+                        <DialogTitle>{t('salesCollection')}</DialogTitle>
                         <DialogDescription>
-                            Aquí puedes ver el total recaudado hasta ahora.
+                            {t('salesCollectionDescription')}
                         </DialogDescription>
                     </DialogHeader>
                     <div className="py-4">
                         <div className="flex justify-between items-center bg-gray-100 p-4 rounded-lg">
-                            <p className="font-semibold text-gray-600">Boletas Vendidas:</p>
+                            <p className="font-semibold text-gray-600">{t('ticketsSold')}:</p>
                             <p className="font-bold text-xl text-gray-800">{confirmedParticipants.length}</p>
                         </div>
                         <div className="flex justify-between items-center bg-green-100 p-4 rounded-lg mt-4">
-                            <p className="font-semibold text-green-800">Total Recaudado:</p>
+                            <p className="font-semibold text-green-800">{t('totalCollected')}:</p>
                             <p className="font-bold text-2xl text-green-800">{formatValue(totalCollected)}</p>
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button type="button" variant="outline" onClick={() => setIsSalesModalOpen(false)}>Cerrar</Button>
+                        <Button type="button" variant="outline" onClick={() => setIsSalesModalOpen(false)}>{t('close')}</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
@@ -2044,9 +2051,9 @@ const App = () => {
             <Dialog open={isShareDialogOpen} onOpenChange={setIsShareDialogOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Compartir Rifa</DialogTitle>
+                        <DialogTitle>{t('shareRaffle')}</DialogTitle>
                         <DialogDescription>
-                            Comparte esta aplicación de rifas con tus amigos.
+                            {t('shareRaffleAppDescription')}
                         </DialogDescription>
                     </DialogHeader>
                     <div className="flex flex-col space-y-4 py-4">
@@ -2055,18 +2062,18 @@ const App = () => {
                             className="w-full bg-green-500 text-white hover:bg-green-600 flex items-center justify-center gap-2"
                         >
                             <WhatsappIcon />
-                            <span>Compartir en WhatsApp</span>
+                            <span>{t('shareOnWhatsApp')}</span>
                         </Button>
                         <Button
                             onClick={() => handleShareToFacebook()}
                             className="w-full bg-blue-600 text-white hover:bg-blue-700 flex items-center justify-center gap-2"
                         >
                             <FacebookIcon />
-                            <span>Compartir en Facebook</span>
+                            <span>{t('shareOnFacebook')}</span>
                         </Button>
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsShareDialogOpen(false)}>Cerrar</Button>
+                        <Button variant="outline" onClick={() => setIsShareDialogOpen(false)}>{t('close')}</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
@@ -2074,9 +2081,9 @@ const App = () => {
             <Dialog open={isQrDialogOpen} onOpenChange={setIsQrDialogOpen}>
                 <DialogContent className="max-w-xs">
                     <DialogHeader>
-                        <DialogTitle className="text-center">Compartir con QR</DialogTitle>
+                        <DialogTitle className="text-center">{t('shareWithQR')}</DialogTitle>
                         <DialogDescription className="text-center">
-                            Escanea este código para abrir la aplicación.
+                            {t('shareWithQRDescription')}
                         </DialogDescription>
                     </DialogHeader>
                     {appUrl && (
@@ -2084,7 +2091,7 @@ const App = () => {
                             <div className="relative inline-block p-4 bg-white rounded-lg shadow-md">
                                 <Image
                                     src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(appUrl)}&qzone=1&ecc=H`}
-                                    alt="Código QR de la aplicación"
+                                    alt={t('appQRCodeAlt')}
                                     width={200}
                                     height={200}
                                 />
@@ -2108,6 +2115,7 @@ const App = () => {
                 }
               }}
               raffleMode={selectedRaffleMode}
+              t={t}
             />
         </div>
     );

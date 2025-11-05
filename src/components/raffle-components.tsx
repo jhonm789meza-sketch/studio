@@ -1,7 +1,7 @@
 'use client';
 
 import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { es, enUS } from 'date-fns/locale';
 import { Button } from './ui/button';
 import { X } from 'lucide-react';
 
@@ -42,13 +42,16 @@ interface InlineTicketProps {
     handleDownloadTicket: () => void;
     handleShareTicket: () => void;
     formatValue: (value: string | number) => string;
+    t: (key: string, params?: any) => string;
+    language: string;
 }
 
-export const InlineTicket = ({ ticketModalRef, ticketData, setGeneratedTicketData, handleDownloadTicket, handleShareTicket, formatValue }: InlineTicketProps) => {
+export const InlineTicket = ({ ticketModalRef, ticketData, setGeneratedTicketData, handleDownloadTicket, handleShareTicket, formatValue, t, language }: InlineTicketProps) => {
     if (!ticketData) return null;
 
-    const receiptDate = ticketData.timestamp?.toDate ? format(ticketData.timestamp.toDate(), "d 'de' MMMM 'de' yyyy - h:mm a", { locale: es }) : format(new Date(), "d 'de' MMMM 'de' yyyy - h:mm a", { locale: es });
-    const gameDateFormatted = ticketData.gameDate ? format(new Date(ticketData.gameDate + 'T00:00:00'), "d 'de' MMMM 'de' yyyy", { locale: es }) : 'N/A';
+    const locale = language === 'es' ? es : enUS;
+    const receiptDate = ticketData.timestamp?.toDate ? format(ticketData.timestamp.toDate(), "d 'de' MMMM 'de' yyyy - h:mm a", { locale }) : format(new Date(), "d 'de' MMMM 'de' yyyy - h:mm a", { locale });
+    const gameDateFormatted = ticketData.gameDate ? format(new Date(ticketData.gameDate + 'T00:00:00'), "d 'de' MMMM 'de' yyyy", { locale }) : 'N/A';
 
     return (
         <div className="mt-8 max-w-xs mx-auto">
@@ -68,33 +71,33 @@ export const InlineTicket = ({ ticketModalRef, ticketData, setGeneratedTicketDat
                            className="absolute -top-2 -right-2 z-20 h-8 w-8 p-1 rounded-full bg-gray-100 hover:bg-gray-200"
                        >
                            <X className="h-4 w-4" />
-                           <span className="sr-only">Cerrar</span>
+                           <span className="sr-only">{t('close')}</span>
                        </Button>
                         <h3 className="text-xl font-bold">RIFA EXPRESS</h3>
-                        <p>Referencia: {ticketData.raffleRef}</p>
-                        <p className="font-semibold">COMPROBANTE DE COMPRA</p>
+                        <p>{t('reference')}: {ticketData.raffleRef}</p>
+                        <p className="font-semibold">{t('purchaseReceipt')}</p>
                     </div>
                     <p className="text-center text-xs mb-4">{receiptDate}</p>
                     <div className="border-t border-dashed border-gray-400 my-4"></div>
                     <div className="space-y-1">
-                        <div className="flex justify-between"><span>CLIENTE:</span><span className="font-semibold text-right">{ticketData.name}</span></div>
+                        <div className="flex justify-between"><span>{t('client')}:</span><span className="font-semibold text-right">{ticketData.name}</span></div>
                     </div>
                     <div className="border-t border-dashed border-gray-400 my-4"></div>
-                    <h4 className="font-bold text-center mb-2">DETALLES DE LA RIFA</h4>
+                    <h4 className="font-bold text-center mb-2">{t('raffleDetails')}</h4>
                     <div className="space-y-1">
-                        <div className="flex justify-between"><span>PREMIO:</span><span className="font-semibold text-right">{formatValue(ticketData.raffleName)}</span></div>
-                        <div className="flex justify-between"><span>VALOR BOLETA:</span><span className="font-semibold text-right">{formatValue(ticketData.value)}</span></div>
-                        <div className="flex justify-between"><span>FECHA SORTEO:</span><span className="font-semibold text-right">{gameDateFormatted}</span></div>
-                        <div className="flex justify-between"><span>JUEGA CON:</span><span className="font-semibold text-right">{ticketData.lottery}</span></div>
-                        <div className="flex justify-between"><span>QUIEN ORGANIZA:</span><span className="font-semibold text-right">{ticketData.organizerName}</span></div>
+                        <div className="flex justify-between"><span>{t('prize_caps')}:</span><span className="font-semibold text-right">{formatValue(ticketData.raffleName)}</span></div>
+                        <div className="flex justify-between"><span>{t('ticketValue_caps')}:</span><span className="font-semibold text-right">{formatValue(ticketData.value)}</span></div>
+                        <div className="flex justify-between"><span>{t('drawDate_caps')}:</span><span className="font-semibold text-right">{gameDateFormatted}</span></div>
+                        <div className="flex justify-between"><span>{t('playedWith_caps')}:</span><span className="font-semibold text-right">{ticketData.lottery}</span></div>
+                        <div className="flex justify-between"><span>{t('organizedBy_caps')}:</span><span className="font-semibold text-right">{ticketData.organizerName}</span></div>
                     </div>
                     <div className="border-t border-dashed border-gray-400 my-4"></div>
                     <div className="text-center my-4">
-                        <p className="font-bold">NÚMERO ASIGNADO</p>
+                        <p className="font-bold">{t('assignedNumber_caps')}</p>
                         <p className="text-5xl font-bold text-violet-600 tracking-wider">{ticketData.raffleNumber}</p>
                     </div>
                     <div className="border-t border-dashed border-gray-400 my-4"></div>
-                    <p className="text-center font-semibold">¡Gracias por participar!</p>
+                    <p className="text-center font-semibold">{t('thanksForParticipating')}</p>
                 </div>
             </div>
            <div className="p-4 bg-gray-50 rounded-b-lg flex flex-col items-center justify-center gap-2 mt-auto">
@@ -102,14 +105,14 @@ export const InlineTicket = ({ ticketModalRef, ticketData, setGeneratedTicketDat
                    onClick={handleDownloadTicket}
                    className="w-full bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors font-semibold shadow-md"
                >
-                   Descargar Tiquete
+                   {t('downloadTicket')}
                </Button>
                <Button
                    onClick={handleShareTicket}
                    className="w-full bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-semibold shadow-md flex items-center gap-2"
                >
                    <WhatsappIcon/>
-                   Compartir
+                   {t('share')}
                </Button>
            </div>
        </div>

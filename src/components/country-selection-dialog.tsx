@@ -19,6 +19,7 @@ interface CountrySelectionDialogProps {
   onClose: () => void;
   onSelectCountry: (countryCode: string) => void;
   raffleMode: RaffleMode | null;
+  t: (key: string, params?: any) => string;
 }
 
 const countries = [
@@ -78,14 +79,14 @@ const getPriceForCountry = (raffleMode: RaffleMode | null, countryCode: string):
     return null;
 }
 
-export function CountrySelectionDialog({ isOpen, onClose, onSelectCountry, raffleMode }: CountrySelectionDialogProps) {
+export function CountrySelectionDialog({ isOpen, onClose, onSelectCountry, raffleMode, t }: CountrySelectionDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Selecciona tu país</DialogTitle>
+          <DialogTitle>{t('selectYourCountry')}</DialogTitle>
           <DialogDescription>
-            Elige tu país para continuar con la activación de la rifa. El precio puede variar.
+            {t('selectCountryDescription')}
           </DialogDescription>
         </DialogHeader>
         <ScrollArea className="h-72 w-full mt-4">
