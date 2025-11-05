@@ -58,6 +58,8 @@ const initialRaffleData: Omit<Raffle, 'participants' | 'drawnNumbers'> & { parti
     imageGenPrompt: '',
     currencySymbol: '$',
     infiniteModeDigits: 4,
+    partialWinnerPercentage3: 10,
+    partialWinnerPercentage2: 5,
 };
 
 
@@ -357,7 +359,7 @@ const App = () => {
     };
     
     const handleLocalFieldChange = (field: string, value: any) => {
-        if (field === 'value') {
+        if (field === 'value' || field === 'partialWinnerPercentage3' || field === 'partialWinnerPercentage2') {
             const numericValue = String(value).replace(/\D/g, '');
             setRaffleState((s: any) => ({ ...s, [field]: numericValue }));
         } else {
@@ -368,7 +370,7 @@ const App = () => {
     const handleFieldChange = async (field: string, value: any) => {
         if (!raffleState || !raffleState.raffleRef || !isCurrentUserAdmin) return;
         
-        const valueToSave = field === 'value' ? String(value).replace(/\D/g, '') : value;
+        const valueToSave = (field === 'value' || field === 'partialWinnerPercentage3' || field === 'partialWinnerPercentage2') ? String(value).replace(/\D/g, '') : value;
 
         try {
             await setDoc(doc(db, "raffles", raffleState.raffleRef), { [field]: valueToSave }, { merge: true });
@@ -726,7 +728,7 @@ const App = () => {
         }
     };
 
-    const handleFindPartialWinners = (numLastDigits: 2 | 3, prizePercentage: number) => {
+    const handleFindPartialWinners = (numLastDigits: number, prizePercentage: number) => {
         if (!raffleState || !raffleState.manualWinnerNumber || !raffleState.value) {
             showNotification('Por favor, ingresa primero el número ganador principal y asegura que el valor de la boleta esté definido.', 'warning');
             return;
@@ -751,7 +753,8 @@ const App = () => {
     
         if (winners.length > 0) {
             const winnerMessage = winners.map(w => `${w.name} (${w.raffleNumber})`).join(', ');
-            showNotification(`Ganadores con las últimas ${numLastDigits} cifras (${lastDigits}): ${winnerMessage} - Premio: ${formatValue(prizeAmount)} c/u`, 'success');
+            const formattedPrize = (raffleState.currencySymbol || 'COP') + ' ' + prizeAmount.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+            showNotification(`Ganadores con las últimas ${numLastDigits} cifras (${lastDigits}): ${winnerMessage} - Premio: ${formattedPrize} c/u`, 'success');
         } else {
             showNotification(`No se encontraron ganadores para las últimas ${numLastDigits} cifras (${lastDigits}).`, 'info');
         }
@@ -1180,14 +1183,25 @@ const App = () => {
                                                     className="w-full bg-gray-100"
                                                 />
                                             </div>
+                                            <div className="w-20">
+                                                <Label>Porcentaje</Label>
+                                                <Input
+                                                    type="number"
+                                                    value={raffleState.partialWinnerPercentage3}
+                                                    onChange={(e) => handleLocalFieldChange('partialWinnerPercentage3', e.target.value)}
+                                                    onBlur={(e) => handleFieldChange('partialWinnerPercentage3', e.target.value)}
+                                                    className="w-full"
+                                                    placeholder="%"
+                                                />
+                                            </div>
                                             <div className="flex flex-col">
-                                                <span className="text-sm font-bold text-green-600">{`${(parseFloat(raffleState.value) * 0.10).toLocaleString('es-CO', { style: 'currency', currency: raffleState.currencySymbol || 'COP', minimumFractionDigits: 0 })}`}</span>
+                                                <span className="text-sm font-bold text-green-600">{raffleState.currencySymbol} {(parseFloat(raffleState.value) * (raffleState.partialWinnerPercentage3 || 0) / 100).toLocaleString('es-CO', { minimumFractionDigits: 0 })}</span>
                                                 <Button
-                                                    onClick={() => handleFindPartialWinners(3, 10)}
+                                                    onClick={() => handleFindPartialWinners(3, raffleState.partialWinnerPercentage3 || 0)}
                                                     disabled={raffleState.isWinnerConfirmed || !raffleState.manualWinnerNumber}
                                                     className="bg-blue-500 text-white font-medium rounded-lg hover:bg-blue-600 transition-colors disabled:bg-gray-300"
                                                 >
-                                                    Buscar Ganador (10%)
+                                                    Buscar Ganador ({raffleState.partialWinnerPercentage3 || 0}%)
                                                 </Button>
                                             </div>
                                         </div>
@@ -1204,14 +1218,25 @@ const App = () => {
                                                     className="w-full bg-gray-100"
                                                 />
                                             </div>
+                                            <div className="w-20">
+                                                 <Label>Porcentaje</Label>
+                                                 <Input
+                                                     type="number"
+                                                     value={raffleState.partialWinnerPercentage2}
+                                                     onChange={(e) => handleLocalFieldChange('partialWinnerPercentage2', e.target.value)}
+                                                     onBlur={(e) => handleFieldChange('partialWinnerPercentage2', e.target.value)}
+                                                     className="w-full"
+                                                     placeholder="%"
+                                                 />
+                                            </div>
                                             <div className="flex flex-col">
-                                                <span className="text-sm font-bold text-green-600">{`${(parseFloat(raffleState.value) * 0.05).toLocaleString('es-CO', { style: 'currency', currency: raffleState.currencySymbol || 'COP', minimumFractionDigits: 0 })}`}</span>
+                                                <span className="text-sm font-bold text-green-600">{raffleState.currencySymbol} {(parseFloat(raffleState.value) * (raffleState.partialWinnerPercentage2 || 0) / 100).toLocaleString('es-CO', { minimumFractionDigits: 0 })}</span>
                                                 <Button
-                                                    onClick={() => handleFindPartialWinners(2, 5)}
+                                                    onClick={() => handleFindPartialWinners(2, raffleState.partialWinnerPercentage2 || 0)}
                                                     disabled={raffleState.isWinnerConfirmed || !raffleState.manualWinnerNumber}
                                                     className="bg-blue-500 text-white font-medium rounded-lg hover:bg-blue-600 transition-colors disabled:bg-gray-300"
                                                 >
-                                                    Buscar Ganador (5%)
+                                                    Buscar Ganador ({raffleState.partialWinnerPercentage2 || 0}%)
                                                 </Button>
                                             </div>
                                         </div>

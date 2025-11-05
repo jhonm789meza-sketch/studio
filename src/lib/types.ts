@@ -41,6 +41,8 @@ export interface Raffle {
     imageGenPrompt: string;
     currencySymbol: string;
     infiniteModeDigits?: number;
+    partialWinnerPercentage3?: number;
+    partialWinnerPercentage2?: number;
 }
 
     
