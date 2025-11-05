@@ -718,7 +718,7 @@ const App = () => {
             return;
         }
 
-        const winner = raffleState.participants.find((p: Participant) => p.raffleNumber === winningNumberStr && p.paymentStatus === 'confirmed');
+        const winner = confirmedParticipants.find((p: Participant) => p.raffleNumber === winningNumberStr);
 
         if (winner) {
             await setDoc(doc(db, "raffles", raffleState.raffleRef), { winner }, { merge: true });
@@ -1791,7 +1791,7 @@ const App = () => {
                                                                         {p.phoneNumber}
                                                                     </a>
                                                                 ) : (
-                                                                    <span>{p.phoneNumber}</span>
+                                                                    <span>******</span>
                                                                 )}
                                                             </td>
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-purple-600">{p.raffleNumber}</td>
