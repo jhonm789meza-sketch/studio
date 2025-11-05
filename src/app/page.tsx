@@ -369,6 +369,9 @@ const App = () => {
         if (field === 'value') {
             const numericValue = String(value).replace(/\D/g, '');
             setRaffleState((s: any) => ({ ...s, [field]: numericValue }));
+        } else if (field === 'prize' && raffleMode === 'infinite') {
+            const numericValue = String(value).replace(/\D/g, '');
+            setRaffleState((s: any) => ({ ...s, [field]: numericValue }));
         } else if (field === 'partialWinnerPercentage3' || field === 'partialWinnerPercentage2') {
             let numericValue = parseInt(String(value).replace(/\D/g, ''), 10);
             if (isNaN(numericValue)) {
@@ -385,7 +388,12 @@ const App = () => {
     const handleFieldChange = async (field: string, value: any) => {
         if (!raffleState || !raffleState.raffleRef || !isCurrentUserAdmin) return;
         
-        const valueToSave = (field === 'value' || field === 'partialWinnerPercentage3' || field === 'partialWinnerPercentage2') ? String(value).replace(/\D/g, '') : value;
+        let valueToSave = value;
+        if (field === 'value' || (field === 'prize' && raffleMode === 'infinite')) {
+            valueToSave = String(value).replace(/\D/g, '');
+        } else if (field === 'partialWinnerPercentage3' || field === 'partialWinnerPercentage2') {
+            valueToSave = String(value).replace(/\D/g, '');
+        }
 
         try {
             await setDoc(doc(db, "raffles", raffleState.raffleRef), { [field]: valueToSave }, { merge: true });
@@ -803,7 +811,7 @@ const App = () => {
             else if (mode === 'infinite') price = '1500';
         } else if (isUSDCountry) {
             if (mode === 'two-digit') price = '10';
-            else if (mode === 'three-digit') price = '15';
+            if (mode === 'three-digit') price = '15';
         } else if (countryCode === 'CA') {
              if (mode === 'two-digit') price = '10';
              if (mode === 'three-digit') price = '15';
