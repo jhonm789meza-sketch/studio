@@ -9,7 +9,7 @@ import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } f
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House, Clock, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Upload, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound } from 'lucide-react';
+import { Menu, Award, Lock, House, Clock, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Upload, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -910,7 +910,7 @@ const App = () => {
                                     <p><strong>Nombre:</strong> {raffleState.winner.name}</p>
                                     <p><strong>Teléfono:</strong> {isCurrentUserAdmin ? 
                                         <a href={`https://wa.me/57${raffleState.winner.phoneNumber}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{`+57 ${raffleState.winner.phoneNumber}`}</a>
-                                        : <span>{`+57 ${raffleState.winner.phoneNumber}`}</span>
+                                        : <span>******</span>
                                     }</p>
                                 </>
                                 )}
@@ -1410,6 +1410,10 @@ const App = () => {
                                      <DropdownMenuItem onSelect={handleInstallClick}>
                                         <Download className="mr-2 h-4 w-4" />
                                         <span>Instalar Aplicación</span>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem>
+                                        <Languages className="mr-2 h-4 w-4" />
+                                        <span>Idiomas</span>
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
