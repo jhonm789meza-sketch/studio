@@ -386,7 +386,9 @@ const App = () => {
         if (!raffleState || !raffleState.raffleRef || !isCurrentUserAdmin) return;
         
         let valueToSave = value;
-        if (field === 'value' || field === 'partialWinnerPercentage3' || field === 'partialWinnerPercentage2') {
+        if (field === 'value') {
+            valueToSave = String(value).replace(/\D/g, '');
+        } else if (field === 'partialWinnerPercentage3' || field === 'partialWinnerPercentage2') {
             valueToSave = String(value).replace(/\D/g, '');
         }
 
@@ -751,25 +753,31 @@ const App = () => {
             showNotification(t('enterWinningNumberAndPrizeWarning'), 'warning');
             return;
         }
-
+    
         const winningNumberStr = raffleState.manualWinnerNumber;
-        
         const prizeValue = parseFloat(String(raffleState.prize).replace(/\D/g, ''));
-
+    
         if (isNaN(prizeValue) || prizeValue <= 0) {
             showNotification(t('noPrizeValueWarning'), 'warning');
             return;
         }
-
+    
         if (winningNumberStr.length < numLastDigits) {
             showNotification(t('winningNumberTooShortWarning', { count: numLastDigits }), 'warning');
             return;
         }
         
         const lastDigits = winningNumberStr.slice(-numLastDigits);
-        const winners = confirmedParticipants.filter(p => p.raffleNumber.endsWith(lastDigits));
-        const prizeAmount = prizeValue * (prizePercentage / 100);
+        
+        // Exclude the main winner from the partial winner search
+        let searchableParticipants = confirmedParticipants;
+        if (raffleState.winner && !raffleState.winner.isHouse) {
+            searchableParticipants = confirmedParticipants.filter(p => p.id !== raffleState.winner?.id);
+        }
 
+        const winners = searchableParticipants.filter(p => p.raffleNumber.endsWith(lastDigits));
+        const prizeAmount = prizeValue * (prizePercentage / 100);
+    
         if (winners.length > 0) {
             const winnerMessage = winners.map(w => `${w.name} (${w.raffleNumber})`).join(', ');
             const formattedPrize = `${raffleState.currencySymbol || '$'} ${prizeAmount.toLocaleString(language === 'es' ? 'es-CO' : 'en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
@@ -1000,7 +1008,7 @@ const App = () => {
                                <Input
                                    id="prize-input"
                                    type="text"
-                                   value={raffleMode === 'infinite' ? raffleState.prize : raffleState.prize}
+                                   value={raffleState.prize}
                                    onChange={(e) => handleLocalFieldChange('prize', e.target.value)}
                                    onBlur={(e) => handleFieldChange('prize', e.target.value)}
                                    placeholder={raffleMode === 'infinite' ? t('prizePlaceholderInfinite') : t('prizePlaceholderFinite')}
@@ -1216,7 +1224,7 @@ const App = () => {
                                                 />
                                             </div>
                                             <div className="flex flex-col items-end">
-                                                <span className="text-sm font-bold text-green-600 mb-1">{formatValue(parseFloat(String(raffleState.prize).replace(/\D/g, '')) * (raffleState.partialWinnerPercentage3 || 0) / 100)}</span>
+                                                <span className="text-sm font-bold text-green-600 mb-1">{formatValue(parseFloat(String(raffleState.prize).replace(/\D/g, '') || '0') * (raffleState.partialWinnerPercentage3 || 0) / 100)}</span>
                                                 <Button
                                                     onClick={() => handleFindPartialWinners(3, raffleState.partialWinnerPercentage3 || 0)}
                                                     disabled={raffleState.isWinnerConfirmed || !raffleState.manualWinnerNumber}
@@ -1253,7 +1261,7 @@ const App = () => {
                                                  />
                                             </div>
                                             <div className="flex flex-col items-end">
-                                                <span className="text-sm font-bold text-green-600 mb-1">{formatValue(parseFloat(String(raffleState.prize).replace(/\D/g, '')) * (raffleState.partialWinnerPercentage2 || 0) / 100)}</span>
+                                                <span className="text-sm font-bold text-green-600 mb-1">{formatValue(parseFloat(String(raffleState.prize).replace(/\D/g, '') || '0') * (raffleState.partialWinnerPercentage2 || 0) / 100)}</span>
                                                 <Button
                                                     onClick={() => handleFindPartialWinners(2, raffleState.partialWinnerPercentage2 || 0)}
                                                     disabled={raffleState.isWinnerConfirmed || !raffleState.manualWinnerNumber}
