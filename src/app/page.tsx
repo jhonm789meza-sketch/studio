@@ -26,7 +26,7 @@ import { WhatsappIcon, FacebookIcon, TicketIcon, NequiIcon, InlineTicket } from 
 
 
 type RaffleMode = 'two-digit' | 'three-digit' | 'infinite';
-type Tab = 'board' | 'register' | 'participants' | 'pending' | 'recaudado' | 'vendidos';
+type Tab = 'board' | 'register' | 'participants' | 'pending' | 'recaudado';
 
 const initialRaffleData: Omit<Raffle, 'participants' | 'drawnNumbers'> & { participants: Participant[], drawnNumbers: any[] } = {
     drawnNumbers: [],
@@ -384,6 +384,12 @@ const App = () => {
             if (numericValue < 0) numericValue = 0;
             if (numericValue > 100) numericValue = 100;
             newState[field as keyof Raffle] = numericValue;
+        } else if (field === 'infiniteModeDigits') {
+            let numericValue = parseInt(String(value).replace(/\D/g, ''), 10);
+            if (isNaN(numericValue) || value === '') {
+                numericValue = 0; // Set to 0 or some other indicator of 'empty'
+            }
+            newState[field as keyof Raffle] = numericValue;
         } else if (field === 'manualWinnerNumber') {
             const sanitizedValue = value.replace(/\D/g, '');
             newState.manualWinnerNumber = sanitizedValue;
@@ -404,10 +410,12 @@ const App = () => {
         if (!raffleState || !raffleState.raffleRef || !isCurrentUserAdmin) return;
         
         let valueToSave = value;
-        if (field === 'value') {
+        if (field === 'value' || field === 'infiniteModeDigits' || field === 'partialWinnerPercentage3' || field === 'partialWinnerPercentage2') {
             valueToSave = String(value).replace(/\D/g, '');
-        } else if (field === 'partialWinnerPercentage3' || field === 'partialWinnerPercentage2') {
-            valueToSave = String(value).replace(/\D/g, '');
+            if (valueToSave === '') {
+                if (field === 'infiniteModeDigits') valueToSave = 4; // Default if empty
+                else valueToSave = 0;
+            }
         }
 
         try {
@@ -456,7 +464,7 @@ const App = () => {
 
     const handleConfirmDetails = async () => {
         if (!raffleState || !raffleState.raffleRef) return;
-        if (!raffleState.organizerName.trim() || !raffleState.prize.trim() || !raffleState.value.trim() || !raffleState.gameDate || (!raffleState.automaticDraw && (!raffleState.lottery || (raffleState.lottery === 'Otro' && !raffleState.customLottery.trim()))) || !raffleState.password.trim()) {
+        if (!raffleState.organizerName.trim() || !raffleState.prize.trim() || !raffleState.value.trim() || !raffleState.gameDate || (!raffleState.automaticDraw && (!raffleState.lottery || (raffleState.lottery === 'Otro' && !raffleState.customLottery.trim()))) || !raffleState.password?.trim()) {
             showNotification(t('completeAllFieldsWarning'), 'warning');
             return;
         }
@@ -856,6 +864,7 @@ const App = () => {
                 prizeImageUrl: '',
                 value: price,
                 currencySymbol: currencySymbol,
+                infiniteModeDigits: mode === 'infinite' ? 4 : 0, // Set default for infinite, 0 for others
             };
             
             await setDoc(doc(db, "raffles", newRef), newRaffleData);
@@ -1012,7 +1021,7 @@ const App = () => {
                                     <Input
                                         id="password-input"
                                         type="password"
-                                        value={raffleState.password}
+                                        value={raffleState.password || ''}
                                         onChange={(e) => handleLocalFieldChange('password', e.target.value)}
                                         onBlur={(e) => handleFieldChange('password', e.target.value)}
                                         placeholder={t('adminPasswordPlaceholder')}
@@ -1077,9 +1086,9 @@ const App = () => {
                                         id="infinite-digits-input"
                                         type="number"
                                         min="4"
-                                        value={raffleState.infiniteModeDigits || 4}
-                                        onChange={(e) => handleLocalFieldChange('infiniteModeDigits', parseInt(e.target.value, 10))}
-                                        onBlur={(e) => handleFieldChange('infiniteModeDigits', parseInt(e.target.value, 10))}
+                                        value={raffleState.infiniteModeDigits || ''}
+                                        onChange={(e) => handleLocalFieldChange('infiniteModeDigits', e.target.value)}
+                                        onBlur={(e) => handleFieldChange('infiniteModeDigits', raffleState.infiniteModeDigits)}
                                         placeholder={t('min4Digits')}
                                         disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
                                         className="w-full mt-1"
@@ -1224,16 +1233,16 @@ const App = () => {
                                             <Input
                                                 id="manual-winner-input"
                                                 type="text"
-                                                placeholder={t('winningNumberPlaceholder', { count: raffleMode === 'infinite' ? (raffleState.infiniteModeDigits || 4) : numberLength })}
+                                                placeholder={t('winningNumberPlaceholder', { count: raffleState.raffleMode === 'infinite' ? (raffleState.infiniteModeDigits || 4) : numberLength })}
                                                 value={raffleState.manualWinnerNumber}
                                                 onChange={(e) => handleLocalFieldChange('manualWinnerNumber', e.target.value)}
-                                                maxLength={raffleMode === 'infinite' ? raffleState.infiniteModeDigits : numberLength}
+                                                maxLength={raffleState.raffleMode === 'infinite' ? raffleState.infiniteModeDigits : numberLength}
                                                 disabled={raffleState.isWinnerConfirmed || !!raffleState.winner}
                                                 className="w-full"
                                             />
                                          </div>
                                          <div className="flex flex-col items-end">
-                                            {raffleMode === 'infinite' && (
+                                            {raffleState.raffleMode === 'infinite' && (
                                                 <div className="text-center mb-1">
                                                     <span className="text-sm font-bold text-green-600">{formatValue(raffleState.prize)}</span>
                                                     <p className="text-xs text-gray-500">Un solo ganador</p>
@@ -1698,15 +1707,15 @@ const App = () => {
                                                     </div>
                                                 </div>
                                                 <div>
-                                                    <Label htmlFor="raffle-number-input">{t('raffleNumberLabel', { range: raffleMode === 'two-digit' ? '00-99' : raffleMode === 'three-digit' ? '000-999' : t('infiniteDigits', { count: raffleState?.infiniteModeDigits || 4 }) })}:</Label>
+                                                    <Label htmlFor="raffle-number-input">{t('raffleNumberLabel', { range: raffleState.raffleMode === 'two-digit' ? '00-99' : raffleState.raffleMode === 'three-digit' ? '000-999' : t('infiniteDigits', { count: raffleState?.infiniteModeDigits || 4 }) })}:</Label>
                                                     <Input
                                                         id="raffle-number-input"
                                                         type="text"
                                                         value={raffleState?.raffleNumber || ''}
                                                         onChange={handleRaffleNumberChange}
-                                                        placeholder={t('raffleNumberPlaceholder', { example: raffleMode === 'two-digit' ? '05' : raffleMode === 'three-digit' ? '142' : '2025' })}
+                                                        placeholder={t('raffleNumberPlaceholder', { example: raffleState.raffleMode === 'two-digit' ? '05' : raffleState.raffleMode === 'three-digit' ? '142' : '2025' })}
                                                         className="w-full mt-1"
-                                                        maxLength={raffleMode === 'infinite' ? (raffleState?.infiniteModeDigits || 4) : numberLength}
+                                                        maxLength={raffleState.raffleMode === 'infinite' ? (raffleState?.infiniteModeDigits || 4) : numberLength}
                                                     />
                                                     {raffleState?.raffleNumber && allAssignedNumbers.has(parseInt(raffleState.raffleNumber)) && (
                                                         <p className="text-red-500 text-sm mt-1">{t('numberAlreadyAssignedWarning')}</p>
