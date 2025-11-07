@@ -1644,7 +1644,7 @@ const App = () => {
                                         <Trophy className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">{t('winnersTab')}</span>
                                     </button>
                                     )}
-                                    {isCurrentUserAdmin && (
+                                    {isCurrentUserAdmin && raffleMode !== 'infinite' && (
                                     <button 
                                         className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'recaudado' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
                                         onClick={() => setIsSalesModalOpen(true)}
@@ -1924,7 +1924,7 @@ const App = () => {
                                 </div>
                                 <div className={activeTab === 'winners' ? 'tab-content active' : 'tab-content'}>
                                     <h2 className="text-2xl font-bold text-gray-800 mb-6">{t('winnersTab')}</h2>
-                                    {raffleState.winner && raffleState.raffleMode !== 'infinite' && (
+                                    {raffleState.winner && (
                                         <div className="mb-6 p-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 rounded-lg">
                                             {raffleState.winner.isHouse ? (
                                                 <p className="font-bold text-lg flex items-center"><House className="mr-2"/>{t('housePrizeTitle')}</p>
