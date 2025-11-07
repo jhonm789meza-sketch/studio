@@ -764,7 +764,7 @@ const App = () => {
         
         const winningNumberLength = raffleMode === 'infinite' ? infiniteDigits : numberLength;
 
-        if (!winningNumberStr || winningNumberStr.length !== winningNumberLength) {
+        if (!winningNumberStr || winningNumberStr.length < 4 || winningNumberStr.length !== winningNumberLength) {
             showNotification(t('enterValidWinningNumber', { count: winningNumberLength }), 'warning');
             return;
         }
@@ -2218,5 +2218,3 @@ const App = () => {
 };
 
 export default App;
-
-    
