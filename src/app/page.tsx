@@ -1924,7 +1924,7 @@ const App = () => {
                                 </div>
                                 <div className={activeTab === 'winners' ? 'tab-content active' : 'tab-content'}>
                                     <h2 className="text-2xl font-bold text-gray-800 mb-6">{t('winnersTab')}</h2>
-                                    {raffleState.winner && (
+                                    {raffleState.winner && raffleState.raffleMode !== 'infinite' && (
                                         <div className="mb-6 p-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 rounded-lg">
                                             {raffleState.winner.isHouse ? (
                                                 <p className="font-bold text-lg flex items-center"><House className="mr-2"/>{t('housePrizeTitle')}</p>
