@@ -26,7 +26,7 @@ import { WhatsappIcon, FacebookIcon, TicketIcon, NequiIcon, InlineTicket } from 
 
 
 type RaffleMode = 'two-digit' | 'three-digit' | 'infinite';
-type Tab = 'board' | 'register' | 'participants' | 'pending' | 'recaudado';
+type Tab = 'board' | 'register' | 'participants' | 'pending' | 'recaudado' | 'vendidos';
 
 const initialRaffleData: Omit<Raffle, 'participants' | 'drawnNumbers'> & { participants: Participant[], drawnNumbers: any[] } = {
     drawnNumbers: [],
@@ -52,6 +52,8 @@ const initialRaffleData: Omit<Raffle, 'participants' | 'drawnNumbers'> & { parti
     raffleRef: '',
     winner: null,
     manualWinnerNumber: '',
+    manualWinnerNumber3: '',
+    manualWinnerNumber2: '',
     isPaid: false,
     adminId: null,
     raffleMode: 'two-digit' as RaffleMode,
@@ -59,8 +61,11 @@ const initialRaffleData: Omit<Raffle, 'participants' | 'drawnNumbers'> & { parti
     imageGenPrompt: '',
     currencySymbol: '$',
     infiniteModeDigits: 4,
-    partialWinnerPercentage3: 10,
-    partialWinnerPercentage2: 5,
+    partialWinnerPercentage3: 0,
+    partialWinnerPercentage2: 0,
+    sharePrize: false,
+    automaticDraw: false,
+    allowPartialWinners: false,
 };
 
 
@@ -81,7 +86,7 @@ const App = () => {
     const ticketModalRef = useRef<HTMLDivElement>(null);
     const raffleSubscription = useRef<Unsubscribe | null>(null);
     
-    const [raffleState, setRaffleState] = useState<Raffle | null>(null);
+    const [raffleState, setRaffleState] = useState<Raffle>({ ...initialRaffleData });
     
     const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
     const [isPublicSearchOpen, setIsPublicSearchOpen] = useState(false);
@@ -297,7 +302,7 @@ const App = () => {
             }
             await handleAdminSearch({ refToSearch: refFromUrl, isInitialLoad: true });
           } else {
-            setRaffleState(null);
+            setRaffleState({ ...initialRaffleData });
             setLoading(false);
           }
     
@@ -308,7 +313,7 @@ const App = () => {
               handleAdminSearch({ refToSearch: newRefFromUrl, isInitialLoad: true });
             } else if (!newRefFromUrl) {
               raffleSubscription.current?.();
-              setRaffleState(null);
+              setRaffleState({ ...initialRaffleData });
               setLoading(false);
             }
           };
@@ -345,12 +350,12 @@ const App = () => {
 
     const formatValue = (rawValue: string | number) => {
         const currencySymbol = raffleState?.currencySymbol || '$';
-        if (!rawValue) return '';
+        if (!rawValue) return `${currencySymbol} 0`;
         const numericValue = String(rawValue).replace(/\D/g, '');
-        if (numericValue === '') return '';
+        if (numericValue === '') return `${currencySymbol} 0`;
         
         const number = parseFloat(numericValue);
-        if (isNaN(number)) return '';
+        if (isNaN(number)) return `${currencySymbol} 0`;
         
         const locale = language === 'es' ? 'es-CO' : 'en-US';
         return `${currencySymbol} ${number.toLocaleString(locale)}`;
@@ -372,9 +377,9 @@ const App = () => {
         } else if (field === 'partialWinnerPercentage3' || field === 'partialWinnerPercentage2') {
             let numericValue = parseInt(String(value).replace(/\D/g, ''), 10);
             if (isNaN(numericValue)) {
-                numericValue = 1;
+                numericValue = 0;
             }
-            if (numericValue < 1) numericValue = 1;
+            if (numericValue < 0) numericValue = 0;
             if (numericValue > 100) numericValue = 100;
             setRaffleState((s: any) => ({ ...s, [field]: numericValue }));
         } else {
@@ -438,7 +443,7 @@ const App = () => {
 
     const handleConfirmDetails = async () => {
         if (!raffleState || !raffleState.raffleRef) return;
-        if (!raffleState.organizerName.trim() || !raffleState.prize.trim() || !raffleState.value.trim() || !raffleState.gameDate || !raffleState.lottery || (raffleState.lottery === 'Otro' && !raffleState.customLottery.trim()) || !raffleState.password.trim()) {
+        if (!raffleState.organizerName.trim() || !raffleState.prize.trim() || !raffleState.value.trim() || !raffleState.gameDate || (!raffleState.automaticDraw && (!raffleState.lottery || (raffleState.lottery === 'Otro' && !raffleState.customLottery.trim()))) || !raffleState.password.trim()) {
             showNotification(t('completeAllFieldsWarning'), 'warning');
             return;
         }
@@ -455,7 +460,7 @@ const App = () => {
                 const oldRaffleRef = raffleState.raffleRef;
                 await deleteDoc(doc(db, "raffles", oldRaffleRef));
 
-                setRaffleState(null);
+                setRaffleState({ ...initialRaffleData });
                 setCurrentAdminId(null);
                 localStorage.removeItem('rifaAdminId');
                 window.history.pushState({}, '', window.location.pathname);
@@ -703,7 +708,7 @@ const App = () => {
                     }
                 } else if (!isInitialLoad) {
                     showNotification(t('raffleNotFound'), 'error');
-                    setRaffleState(null);
+                    setRaffleState({ ...initialRaffleData });
                     setCurrentAdminId(null);
                     window.history.pushState({}, '', window.location.pathname);
                 }
@@ -749,12 +754,18 @@ const App = () => {
     };
 
     const handleFindPartialWinners = (numLastDigits: number, prizePercentage: number) => {
-        if (!raffleState || !raffleState.manualWinnerNumber || !raffleState.prize) {
+        if (!raffleState || !raffleState.prize) {
             showNotification(t('enterWinningNumberAndPrizeWarning'), 'warning');
             return;
         }
+
+        const winningNumberStr = numLastDigits === 3 ? raffleState.manualWinnerNumber3 : raffleState.manualWinnerNumber2;
     
-        const winningNumberStr = raffleState.manualWinnerNumber;
+        if (!winningNumberStr || winningNumberStr.length !== numLastDigits) {
+            showNotification(t('enterValidWinningNumber', { count: numLastDigits }), 'warning');
+            return;
+        }
+
         const prizeValue = parseFloat(String(raffleState.prize).replace(/\D/g, ''));
     
         if (isNaN(prizeValue) || prizeValue <= 0) {
@@ -762,17 +773,11 @@ const App = () => {
             return;
         }
     
-        if (winningNumberStr.length < numLastDigits) {
-            showNotification(t('winningNumberTooShortWarning', { count: numLastDigits }), 'warning');
-            return;
-        }
+        const lastDigits = winningNumberStr;
         
-        const lastDigits = winningNumberStr.slice(-numLastDigits);
-        
-        // Exclude the main winner from the partial winner search
         let searchableParticipants = confirmedParticipants;
         if (raffleState.winner && !raffleState.winner.isHouse) {
-            searchableParticipants = confirmedParticipants.filter(p => p.id !== raffleState.winner?.id);
+            searchableParticipants = confirmedParticipants.filter(p => p.raffleNumber !== raffleState.winner?.raffleNumber);
         }
 
         const winners = searchableParticipants.filter(p => p.raffleNumber.endsWith(lastDigits));
@@ -878,7 +883,7 @@ const App = () => {
 
     const handleGoToHome = () => {
         raffleSubscription.current?.();
-        setRaffleState(null);
+        setRaffleState({ ...initialRaffleData });
         setCurrentAdminId(null);
         localStorage.removeItem('rifaAdminId');
         if (window.location.search) {
@@ -897,14 +902,14 @@ const App = () => {
     };
 
 
-    if (loading && !raffleState) {
+    if (loading && !raffleState.raffleRef) {
         return <div className="flex justify-center items-center h-screen text-xl font-semibold">{t('loading')}...</div>;
     }
     
-    const isRegisterFormValidForSubmit = raffleState?.name && raffleState?.phoneNumber && raffleState?.raffleNumber && !allAssignedNumbers.has(parseInt(raffleState.raffleNumber));
+    const isRegisterFormValidForSubmit = raffleState?.name && raffleState?.phoneNumber && raffleState?.raffleNumber && !allAssignedNumbers.has(parseInt(raffleState.raffleNumber || '0'));
 
     const renderBoardContent = () => {
-        if (!raffleState) return null;
+        if (!raffleState?.raffleRef) return null;
         
         return (
             <>
@@ -1068,6 +1073,25 @@ const App = () => {
                                     />
                                 </div>
                             )}
+                            {raffleState.raffleMode === 'infinite' && isCurrentUserAdmin && !raffleState.isDetailsConfirmed && (
+                               <div className="flex items-center justify-between mt-2 p-3 bg-gray-50 rounded-lg">
+                                    <Label htmlFor="allow-partial-winners" className="flex flex-col space-y-1">
+                                        <span>Permitir ganadores parciales</span>
+                                        <span className="font-normal leading-snug text-muted-foreground text-sm">
+                                            Activa para premiar 2 y 3 últimas cifras.
+                                        </span>
+                                    </Label>
+                                    <Switch
+                                        id="allow-partial-winners"
+                                        checked={raffleState.allowPartialWinners}
+                                        onCheckedChange={(checked) => {
+                                            handleLocalFieldChange('allowPartialWinners', checked);
+                                            handleFieldChange('allowPartialWinners', checked);
+                                        }}
+                                        disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
+                                    />
+                                </div>
+                            )}
                            <div>
                                <Label htmlFor="game-date-input">{t('gameDate')}:</Label>
                                <Input
@@ -1081,6 +1105,19 @@ const App = () => {
                                    className="w-full mt-1"
                                />
                            </div>
+                           {raffleMode === 'infinite' && isCurrentUserAdmin && !raffleState.isDetailsConfirmed && (
+                               <div className="flex items-center space-x-2">
+                                   <Switch
+                                       id="automatic-draw"
+                                       checked={raffleState.automaticDraw}
+                                       onCheckedChange={(checked) => {
+                                          handleLocalFieldChange('automaticDraw', checked)
+                                          handleFieldChange('automaticDraw', checked)
+                                       }}
+                                   />
+                                   <Label htmlFor="automatic-draw">Sorteo automático</Label>
+                               </div>
+                            )}
                            <div>
                                <Label htmlFor="lottery-input">{t('lottery')}:</Label>
                                <select
@@ -1090,7 +1127,7 @@ const App = () => {
                                        const value = e.target.value;
                                        handleFieldChange('lottery', value);
                                    }}
-                                   disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
+                                   disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed || (raffleMode === 'infinite' && raffleState.automaticDraw)}
                                    className="w-full mt-1 px-3 py-2 text-base border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                                >
                                    <option value="">{t('selectLottery')}</option>
@@ -1170,20 +1207,25 @@ const App = () => {
                                  {!raffleState.isWinnerConfirmed && (
                                      <div className="flex flex-wrap gap-3 items-end">
                                          <div className="flex-grow">
-                                             <Label htmlFor="manual-winner-input">{t('winningNumber')}</Label>
-                                             <Input
-                                                 id="manual-winner-input"
-                                                 type="text"
-                                                 placeholder={t('winningNumberPlaceholder', { count: raffleMode === 'infinite' ? (raffleState.infiniteModeDigits || 4) : numberLength })}
-                                                 value={raffleState.manualWinnerNumber}
-                                                 onChange={(e) => handleLocalFieldChange('manualWinnerNumber', e.target.value.replace(/\D/g, ''))}
-                                                 maxLength={raffleMode === 'infinite' ? raffleState.infiniteModeDigits : numberLength}
-                                                 disabled={raffleState.isWinnerConfirmed || !!raffleState.winner}
-                                                 className="w-full"
-                                             />
+                                            <Label htmlFor="manual-winner-input">{t('winningNumber')}</Label>
+                                            <Input
+                                                id="manual-winner-input"
+                                                type="text"
+                                                placeholder={t('winningNumberPlaceholder', { count: raffleMode === 'infinite' ? (raffleState.infiniteModeDigits || 4) : numberLength })}
+                                                value={raffleState.manualWinnerNumber}
+                                                onChange={(e) => handleLocalFieldChange('manualWinnerNumber', e.target.value.replace(/\D/g, ''))}
+                                                maxLength={raffleMode === 'infinite' ? raffleState.infiniteModeDigits : numberLength}
+                                                disabled={raffleState.isWinnerConfirmed || !!raffleState.winner}
+                                                className="w-full"
+                                            />
                                          </div>
                                          <div className="flex flex-col items-end">
-                                            {raffleMode === 'infinite' && <span className="text-sm font-bold text-green-600 mb-1">{formatValue(raffleState.prize)}</span>}
+                                            {raffleMode === 'infinite' && (
+                                                <div className="text-center mb-1">
+                                                    <span className="text-sm font-bold text-green-600">{formatValue(raffleState.prize)}</span>
+                                                    <p className="text-xs text-gray-500">Un solo ganador</p>
+                                                </div>
+                                            )}
                                             <Button
                                                 onClick={handleDrawWinner}
                                                 disabled={raffleState.isWinnerConfirmed || !!raffleState.winner}
@@ -1195,26 +1237,27 @@ const App = () => {
                                      </div>
                                  )}
 
-                                {raffleMode === 'infinite' && !raffleState.isWinnerConfirmed && (
+                                {raffleMode === 'infinite' && raffleState.allowPartialWinners && !raffleState.isWinnerConfirmed && (
                                     <>
                                         <div className="flex flex-wrap gap-3 items-end">
                                             <div className="flex-grow">
-                                                <Label htmlFor="partial-winner-3-input">{t('last3DigitsNumber')}</Label>
+                                                <Label htmlFor="manual-winner-3-input">{t('last3DigitsNumber')}</Label>
                                                 <Input
-                                                    id="partial-winner-3-input"
+                                                    id="manual-winner-3-input"
                                                     type="text"
                                                     placeholder={t('last3Digits')}
-                                                    value={raffleState.manualWinnerNumber.slice(-3)}
-                                                    readOnly
-                                                    disabled
-                                                    className="w-full bg-gray-100"
+                                                    value={raffleState.manualWinnerNumber3}
+                                                    onChange={(e) => handleLocalFieldChange('manualWinnerNumber3', e.target.value.replace(/\D/g, ''))}
+                                                    maxLength={3}
+                                                    disabled={raffleState.isWinnerConfirmed || !!raffleState.winner}
+                                                    className="w-full"
                                                 />
                                             </div>
                                             <div className="w-24">
                                                 <Label>{t('percentage')}</Label>
                                                 <Input
                                                     type="number"
-                                                    min="1"
+                                                    min="0"
                                                     max="100"
                                                     value={raffleState.partialWinnerPercentage3}
                                                     onChange={(e) => handleLocalFieldChange('partialWinnerPercentage3', e.target.value)}
@@ -1224,34 +1267,38 @@ const App = () => {
                                                 />
                                             </div>
                                             <div className="flex flex-col items-end">
-                                                <span className="text-sm font-bold text-green-600 mb-1">{formatValue(parseFloat(String(raffleState.prize).replace(/\D/g, '') || '0') * (raffleState.partialWinnerPercentage3 || 0) / 100)}</span>
+                                                <div className="text-center mb-1">
+                                                    <span className="text-sm font-bold text-green-600">{formatValue(parseFloat(String(raffleState.prize).replace(/\D/g, '') || '0') * (raffleState.partialWinnerPercentage3 || 0) / 100)}</span>
+                                                    <p className="text-xs text-gray-500">Otros ganadores</p>
+                                                 </div>
                                                 <Button
                                                     onClick={() => handleFindPartialWinners(3, raffleState.partialWinnerPercentage3 || 0)}
-                                                    disabled={raffleState.isWinnerConfirmed || !raffleState.manualWinnerNumber}
+                                                    disabled={raffleState.isWinnerConfirmed || !!raffleState.winner}
                                                     className="bg-blue-500 text-white font-medium rounded-lg hover:bg-blue-600 transition-colors disabled:bg-gray-300"
                                                 >
-                                                    {t('findWinnerPercentage', { percentage: raffleState.partialWinnerPercentage3 || 0 })}
+                                                    {t('findWinner')}
                                                 </Button>
                                             </div>
                                         </div>
                                         <div className="flex flex-wrap gap-3 items-end">
                                             <div className="flex-grow">
-                                                <Label htmlFor="partial-winner-2-input">{t('last2DigitsNumber')}</Label>
+                                                <Label htmlFor="manual-winner-2-input">{t('last2DigitsNumber')}</Label>
                                                 <Input
-                                                    id="partial-winner-2-input"
+                                                    id="manual-winner-2-input"
                                                     type="text"
                                                     placeholder={t('last2Digits')}
-                                                    value={raffleState.manualWinnerNumber.slice(-2)}
-                                                    readOnly
-                                                    disabled
-                                                    className="w-full bg-gray-100"
+                                                    value={raffleState.manualWinnerNumber2}
+                                                    onChange={(e) => handleLocalFieldChange('manualWinnerNumber2', e.target.value.replace(/\D/g, ''))}
+                                                    maxLength={2}
+                                                    disabled={raffleState.isWinnerConfirmed || !!raffleState.winner}
+                                                    className="w-full"
                                                 />
                                             </div>
                                             <div className="w-24">
                                                  <Label>{t('percentage')}</Label>
                                                  <Input
                                                      type="number"
-                                                     min="1"
+                                                     min="0"
                                                      max="100"
                                                      value={raffleState.partialWinnerPercentage2}
                                                      onChange={(e) => handleLocalFieldChange('partialWinnerPercentage2', e.target.value)}
@@ -1261,13 +1308,16 @@ const App = () => {
                                                  />
                                             </div>
                                             <div className="flex flex-col items-end">
-                                                <span className="text-sm font-bold text-green-600 mb-1">{formatValue(parseFloat(String(raffleState.prize).replace(/\D/g, '') || '0') * (raffleState.partialWinnerPercentage2 || 0) / 100)}</span>
+                                                 <div className="text-center mb-1">
+                                                    <span className="text-sm font-bold text-green-600">{formatValue(parseFloat(String(raffleState.prize).replace(/\D/g, '') || '0') * (raffleState.partialWinnerPercentage2 || 0) / 100)}</span>
+                                                    <p className="text-xs text-gray-500">Otros ganadores</p>
+                                                 </div>
                                                 <Button
                                                     onClick={() => handleFindPartialWinners(2, raffleState.partialWinnerPercentage2 || 0)}
-                                                    disabled={raffleState.isWinnerConfirmed || !raffleState.manualWinnerNumber}
+                                                    disabled={raffleState.isWinnerConfirmed || !!raffleState.winner}
                                                     className="bg-blue-500 text-white font-medium rounded-lg hover:bg-blue-600 transition-colors disabled:bg-gray-300"
                                                 >
-                                                    {t('findWinnerPercentage', { percentage: raffleState.partialWinnerPercentage2 || 0 })}
+                                                    {t('findWinner')}
                                                 </Button>
                                             </div>
                                         </div>
@@ -1444,7 +1494,7 @@ const App = () => {
                         </div>
                     </div>
 
-                    {!raffleState ? (
+                    {!raffleState.raffleRef ? (
                         <div className="p-8">
                             <div className="text-center">
                                 <Lock className="mx-auto h-12 w-12 text-gray-400 mb-4" />
@@ -1534,7 +1584,7 @@ const App = () => {
                                     <button 
                                         className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'register' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
                                         onClick={() => handleTabClick('register')}
-                                        disabled={!raffleState}
+                                        disabled={!raffleState.raffleRef}
                                     >
                                         <span className="md:hidden">✏️</span> <span className="hidden md:inline">{t('register')}</span>
                                     </button>
@@ -1549,7 +1599,7 @@ const App = () => {
                                     <button 
                                         className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'participants' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
                                         onClick={() => handleTabClick('participants')}
-                                        disabled={!raffleState}
+                                        disabled={!raffleState.raffleRef}
                                     >
                                         <Users className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">{t('participants')}</span>
                                     </button>
@@ -1560,6 +1610,14 @@ const App = () => {
                                     >
                                         <DollarSign className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">{t('collected')}</span>
                                     </button>
+                                    )}
+                                    {isCurrentUserAdmin && raffleMode === 'infinite' && (
+                                     <button
+                                        className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'vendidos' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
+                                        onClick={() => setIsSalesModalOpen(true)}
+                                     >
+                                         <span className="hidden md:inline">Vendidos ({confirmedParticipants.length})</span>
+                                     </button>
                                     )}
                                 </div>
                             </div>
@@ -1603,7 +1661,7 @@ const App = () => {
                                                 </div>
                                             </div>
                                         )}
-                                        <fieldset disabled={!raffleState || raffleState?.isWinnerConfirmed || !raffleState?.isDetailsConfirmed} className="disabled:opacity-50 space-y-4">
+                                        <fieldset disabled={!raffleState.raffleRef || raffleState?.isWinnerConfirmed || !raffleState?.isDetailsConfirmed} className="disabled:opacity-50 space-y-4">
                                             <div className="flex flex-col gap-4">
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                     <div>
@@ -1709,7 +1767,7 @@ const App = () => {
                                         <InlineTicket ticketModalRef={ticketModalRef} ticketData={generatedTicketData} setGeneratedTicketData={setGeneratedTicketData} handleDownloadTicket={handleDownloadTicket} handleShareTicket={handleShareTicket} formatValue={formatValue} t={t} language={language}/>
                                     )}
 
-                                    {(!raffleState || !raffleState.isDetailsConfirmed) && (
+                                    {(!raffleState.raffleRef || !raffleState.isDetailsConfirmed) && (
                                         <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-6" role="alert">
                                             <p className="font-bold">{t('notice')}</p>
                                             <p>{t('activateRaffleWarning')}</p>
@@ -1777,7 +1835,7 @@ const App = () => {
                                             
                                     </div>
 
-                                    {!raffleState ? (
+                                    {!raffleState.raffleRef ? (
                                         <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-6" role="alert">
                                             <p className="font-bold">{t('notice')}</p>
                                             <p>{t('activateRaffleToSeeParticipants')}</p>
@@ -1904,7 +1962,7 @@ const App = () => {
                                     <div className="border-t border-dashed border-gray-400 my-4"></div>
                                     <h4 className="font-bold text-center mb-2">{t('raffleDetails')}</h4>
                                     <div className="space-y-1">
-                                        <div className="flex justify-between"><span>{t('prize_caps')}:</span><span className="font-semibold text-right">{raffleMode === 'infinite' ? formatValue(ticketInfo.raffleName) : ticketInfo.raffleName}</span></div>
+                                        <div className="flex justify-between"><span>{t('prize_caps')}:</span><span className="font-semibold text-right">{formatValue(ticketInfo.raffleName)}</span></div>
                                         <div className="flex justify-between"><span>{t('ticketValue_caps')}:</span><span className="font-semibold text-right">{formatValue(ticketInfo.value)}</span></div>
                                         <div className="flex justify-between"><span>{t('drawDate_caps')}:</span><span className="font-semibold text-right">{ticketInfo.gameDate ? format(new Date(ticketInfo.gameDate + 'T00:00:00'), "d 'de' MMMM 'de' yyyy", { locale: language === 'es' ? es : enUS }) : 'N/A'}</span></div>
                                         <div className="flex justify-between"><span>{t('playedWith_caps')}:</span><span className="font-semibold text-right">{ticketInfo.lottery}</span></div>

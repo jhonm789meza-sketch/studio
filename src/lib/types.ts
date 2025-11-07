@@ -34,6 +34,8 @@ export interface Raffle {
     raffleRef: string;
     winner: null | Participant;
     manualWinnerNumber: string;
+    manualWinnerNumber3: string;
+    manualWinnerNumber2: string;
     isPaid: boolean;
     adminId: null | string;
     raffleMode: 'two-digit' | 'three-digit' | 'infinite';
@@ -43,6 +45,9 @@ export interface Raffle {
     infiniteModeDigits?: number;
     partialWinnerPercentage3?: number;
     partialWinnerPercentage2?: number;
+    sharePrize?: boolean;
+    automaticDraw?: boolean;
+    allowPartialWinners?: boolean;
 }
 
     
