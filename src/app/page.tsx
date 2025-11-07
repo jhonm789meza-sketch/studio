@@ -28,7 +28,7 @@ import { WhatsappIcon, FacebookIcon, TicketIcon, NequiIcon, InlineTicket } from 
 type RaffleMode = 'two-digit' | 'three-digit' | 'infinite';
 type Tab = 'board' | 'register' | 'participants' | 'pending' | 'recaudado';
 
-const initialRaffleData: Omit<Raffle, 'participants' | 'drawnNumbers'> & { participants: Participant[], drawnNumbers: any[] } = {
+const initialRaffleData: Raffle = {
     drawnNumbers: [],
     lastDrawnNumber: null,
     prize: '',
@@ -60,7 +60,7 @@ const initialRaffleData: Omit<Raffle, 'participants' | 'drawnNumbers'> & { parti
     prizeImageUrl: '',
     imageGenPrompt: '',
     currencySymbol: '$',
-    infiniteModeDigits: 4,
+    infiniteModeDigits: 0,
     partialWinnerPercentage3: 0,
     partialWinnerPercentage2: 0,
     sharePrize: false,
@@ -86,7 +86,7 @@ const App = () => {
     const ticketModalRef = useRef<HTMLDivElement>(null);
     const raffleSubscription = useRef<Unsubscribe | null>(null);
     
-    const [raffleState, setRaffleState] = useState<Raffle>({ ...initialRaffleData });
+    const [raffleState, setRaffleState] = useState<Raffle>(initialRaffleData);
     
     const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
     const [isPublicSearchOpen, setIsPublicSearchOpen] = useState(false);
@@ -108,7 +108,7 @@ const App = () => {
 
     const raffleManager = new RaffleManager(db);
     
-    const raffleMode = raffleState?.raffleMode || 'two-digit';
+    const raffleMode = raffleState.raffleMode;
     const totalNumbers = raffleMode === 'two-digit' ? 100 : 1000;
     const numberLength = raffleMode === 'two-digit' ? 2 : 3;
 
@@ -126,7 +126,7 @@ const App = () => {
     };
 
     const handleGenerateTicket = async (participant: Participant) => {
-        if (!raffleState?.prize) {
+        if (!raffleState.prize) {
             showNotification(t('generateTicketPrizeWarning'), 'warning');
             return;
         }
@@ -302,18 +302,18 @@ const App = () => {
             }
             await handleAdminSearch({ refToSearch: refFromUrl, isInitialLoad: true });
           } else {
-            setRaffleState({ ...initialRaffleData, raffleRef: '' });
+            setRaffleState(initialRaffleData);
             setLoading(false);
           }
     
           const handlePopState = (event: PopStateEvent) => {
             const newUrlParams = new URLSearchParams(window.location.search);
             const newRefFromUrl = newUrlParams.get('ref');
-            if (newRefFromUrl && newUrlParams.get('ref') !== (raffleState?.raffleRef || '')) {
+            if (newRefFromUrl && newUrlParams.get('ref') !== (raffleState.raffleRef)) {
               handleAdminSearch({ refToSearch: newRefFromUrl, isInitialLoad: true });
             } else if (!newRefFromUrl) {
               raffleSubscription.current?.();
-              setRaffleState({ ...initialRaffleData, raffleRef: '' });
+              setRaffleState(initialRaffleData);
               setLoading(false);
             }
           };
@@ -349,7 +349,7 @@ const App = () => {
     };
 
     const formatValue = (rawValue: string | number) => {
-        const currencySymbol = raffleState?.currencySymbol || '$';
+        const currencySymbol = raffleState.currencySymbol || '$';
         if (!rawValue) return `${currencySymbol} 0`;
         const numericValue = String(rawValue).replace(/\D/g, '');
         if (numericValue === '') return `${currencySymbol} 0`;
@@ -387,7 +387,7 @@ const App = () => {
         } else if (field === 'infiniteModeDigits') {
             let numericValue = parseInt(String(value).replace(/\D/g, ''), 10);
             if (isNaN(numericValue) || value === '') {
-                numericValue = 0; // Set to 0 or some other indicator of 'empty'
+                numericValue = 0; 
             }
             newState[field as keyof Raffle] = numericValue;
         } else if (field === 'manualWinnerNumber') {
@@ -411,14 +411,17 @@ const App = () => {
     };
 
     const handleFieldChange = async (field: string, value: any) => {
-        if (!raffleState || !raffleState.raffleRef || !isCurrentUserAdmin) return;
+        if (!raffleState.raffleRef || !isCurrentUserAdmin) return;
         
         let valueToSave = value;
-        if (field === 'value' || field === 'infiniteModeDigits' || field === 'partialWinnerPercentage3' || field === 'partialWinnerPercentage2') {
+        if (field === 'value' || field === 'partialWinnerPercentage3' || field === 'partialWinnerPercentage2') {
             valueToSave = String(value).replace(/\D/g, '');
-            if (valueToSave === '') {
-                if (field === 'infiniteModeDigits') valueToSave = 4; // Default if empty
-                else valueToSave = 0;
+            if (valueToSave === '') valueToSave = 0;
+        } else if (field === 'infiniteModeDigits') {
+            valueToSave = parseInt(String(value).replace(/\D/g, ''), 10) || 0;
+             if (valueToSave !== 0 && valueToSave < 4) {
+                showNotification(t('min4Digits'), 'warning');
+                return;
             }
         }
 
@@ -430,13 +433,13 @@ const App = () => {
         }
     };
     
-    const isCurrentUserAdmin = !!raffleState?.adminId && !!currentAdminId && raffleState.adminId === currentAdminId;
+    const isCurrentUserAdmin = !!raffleState.adminId && !!currentAdminId && raffleState.adminId === currentAdminId;
     
-    const allAssignedNumbers = new Set(raffleState?.participants.map((p: Participant) => parseInt(p.raffleNumber, 10)) || []);
-    const pendingParticipants = raffleState?.participants.filter((p: Participant) => p.paymentStatus === 'pending') || [];
-    const confirmedParticipants = raffleState?.participants.filter((p: Participant) => p.paymentStatus === 'confirmed') || [];
+    const allAssignedNumbers = new Set(raffleState.participants.map((p: Participant) => parseInt(p.raffleNumber, 10)) || []);
+    const pendingParticipants = raffleState.participants.filter((p: Participant) => p.paymentStatus === 'pending') || [];
+    const confirmedParticipants = raffleState.participants.filter((p: Participant) => p.paymentStatus === 'confirmed') || [];
 
-    const totalCollected = confirmedParticipants.length * (raffleState?.value ? parseFloat(String(raffleState.value).replace(/[^\d.,]/g, '').replace(',', '.')) : 0);
+    const totalCollected = confirmedParticipants.length * (raffleState.value ? parseFloat(String(raffleState.value).replace(/[^\d.,]/g, '').replace(',', '.')) : 0);
 
     const toggleNumber = (number: number) => {
         if (!raffleState) return;
@@ -457,7 +460,7 @@ const App = () => {
     };
 
     const handleConfirmWinner = async () => {
-        if (!raffleState || !raffleState.raffleRef) return;
+        if (!raffleState.raffleRef) return;
         if (!raffleState.winner) {
             showNotification(t('drawWinnerFirstWarning'), 'warning');
             return;
@@ -467,7 +470,7 @@ const App = () => {
     };
 
     const handleConfirmDetails = async () => {
-        if (!raffleState || !raffleState.raffleRef) return;
+        if (!raffleState.raffleRef) return;
         if (!raffleState.organizerName.trim() || !raffleState.prize.trim() || !raffleState.value.trim() || !raffleState.gameDate || (!raffleState.automaticDraw && (!raffleState.lottery || (raffleState.lottery === 'Otro' && !raffleState.customLottery.trim()))) || !raffleState.password?.trim()) {
             showNotification(t('completeAllFieldsWarning'), 'warning');
             return;
@@ -478,14 +481,14 @@ const App = () => {
     };
 
     const resetBoard = () => {
-        if (!raffleState || !raffleState.raffleRef) return;
+        if (!raffleState.raffleRef) return;
         showConfirmationDialog(
             t('resetBoardConfirmation'),
             async () => {
                 const oldRaffleRef = raffleState.raffleRef;
                 await deleteDoc(doc(db, "raffles", oldRaffleRef));
 
-                setRaffleState({ ...initialRaffleData, raffleRef: '' });
+                setRaffleState(initialRaffleData);
                 setCurrentAdminId(null);
                 localStorage.removeItem('rifaAdminId');
                 window.history.pushState({}, '', window.location.pathname);
@@ -496,7 +499,7 @@ const App = () => {
     };
 
     const handleRegisterParticipant = async (isNequiPayment = false, confirmPayment = false) => {
-        if (!raffleState || !raffleState.raffleRef) return false;
+        if (!raffleState.raffleRef) return false;
     
         const name = raffleState.name?.trim();
         const phoneNumber = raffleState.phoneNumber?.trim();
@@ -519,6 +522,10 @@ const App = () => {
         const num = parseInt(raffleNumber, 10);
     
         if (raffleMode === 'infinite') {
+            if (infiniteDigits < 4) {
+                 showNotification(t('min4Digits'), 'warning');
+                 return false;
+            }
             if (raffleNumber.length !== infiniteDigits) {
                 showNotification(t('infiniteModeDigitsWarning', { count: infiniteDigits }), 'warning');
                 return false;
@@ -587,7 +594,7 @@ const App = () => {
     };
 
     const handleConfirmPayment = async (participantId: number) => {
-        if (!raffleState || !raffleState.raffleRef || !isCurrentUserAdmin) return;
+        if (!raffleState.raffleRef || !isCurrentUserAdmin) return;
         await confirmParticipantPayment(raffleState.raffleRef, String(participantId));
     };
     
@@ -628,7 +635,7 @@ const App = () => {
         const targetInfo = generatedTicketData || ticketInfo;
         if (!targetInfo || !targetInfo.phoneNumber) return;
 
-        const message = encodeURIComponent(t('shareTicketMessage', { prize: raffleState?.prize || '' }));
+        const message = encodeURIComponent(t('shareTicketMessage', { prize: raffleState.prize || '' }));
         const whatsappUrl = `https://wa.me/57${targetInfo.phoneNumber}?text=${message}`;
         window.open(whatsappUrl, '_blank');
         
@@ -733,7 +740,7 @@ const App = () => {
                     }
                 } else if (!isInitialLoad) {
                     showNotification(t('raffleNotFound'), 'error');
-                    setRaffleState({ ...initialRaffleData, raffleRef: '' });
+                    setRaffleState(initialRaffleData);
                     setCurrentAdminId(null);
                     window.history.pushState({}, '', window.location.pathname);
                 }
@@ -749,7 +756,7 @@ const App = () => {
     };
     
     const handleDrawWinner = async () => {
-        if (!raffleState || !raffleState.raffleRef) return;
+        if (!raffleState.raffleRef) return;
         const winningNumberStr = raffleState.manualWinnerNumber;
         const infiniteDigits = raffleState.infiniteModeDigits || 4;
         
@@ -779,7 +786,7 @@ const App = () => {
     };
 
     const handleFindPartialWinners = (numLastDigits: number, prizePercentage: number) => {
-        if (!raffleState || !raffleState.prize) {
+        if (!raffleState.prize) {
             showNotification(t('enterWinningNumberAndPrizeWarning'), 'warning');
             return;
         }
@@ -819,7 +826,7 @@ const App = () => {
 
 
     const handlePaymentMethodToggle = async (field: string, value: boolean) => {
-        if (!raffleState || !raffleState.raffleRef || !isCurrentUserAdmin) return;
+        if (!raffleState.raffleRef || !isCurrentUserAdmin) return;
         handleLocalFieldChange(field, value);
         await setDoc(doc(db, "raffles", raffleState.raffleRef), { [field]: value }, { merge: true });
     };
@@ -868,7 +875,7 @@ const App = () => {
                 prizeImageUrl: '',
                 value: price,
                 currencySymbol: currencySymbol,
-                infiniteModeDigits: mode === 'infinite' ? 0 : 0, // Set default for infinite, 0 for others
+                infiniteModeDigits: 0,
             };
             
             await setDoc(doc(db, "raffles", newRef), newRaffleData);
@@ -883,7 +890,7 @@ const App = () => {
     };
 
     const handleTalkToAdmin = () => {
-        if (!raffleState || !raffleState.organizerPhoneNumber) {
+        if (!raffleState.organizerPhoneNumber) {
             showNotification(t('adminNumberNotSet'), 'warning');
             return;
         }
@@ -909,7 +916,7 @@ const App = () => {
 
     const handleGoToHome = () => {
         raffleSubscription.current?.();
-        setRaffleState({ ...initialRaffleData, raffleRef: '' });
+        setRaffleState(initialRaffleData);
         setCurrentAdminId(null);
         localStorage.removeItem('rifaAdminId');
         if (window.location.search) {
@@ -920,7 +927,7 @@ const App = () => {
     
     const allNumbers = Array.from({ length: totalNumbers }, (_, i) => i);
     
-    const backgroundImage = raffleState?.prizeImageUrl;
+    const backgroundImage = raffleState.prizeImageUrl;
 
     const closeTicketModal = () => {
         setIsTicketModalOpen(false);
@@ -932,10 +939,10 @@ const App = () => {
         return <div className="flex justify-center items-center h-screen text-xl font-semibold">{t('loading')}...</div>;
     }
     
-    const isRegisterFormValidForSubmit = raffleState?.name && raffleState?.phoneNumber && raffleState?.raffleNumber && !allAssignedNumbers.has(parseInt(raffleState.raffleNumber || '0'));
+    const isRegisterFormValidForSubmit = raffleState.name && raffleState.phoneNumber && raffleState.raffleNumber && !allAssignedNumbers.has(parseInt(raffleState.raffleNumber || '0'));
 
     const renderBoardContent = () => {
-        if (!raffleState?.raffleRef) return null;
+        if (!raffleState.raffleRef) return null;
         
         return (
             <>
@@ -980,7 +987,7 @@ const App = () => {
                         )}
                         
                         <div className="mb-6 rounded-lg overflow-hidden relative aspect-video max-w-2xl mx-auto shadow-lg bg-gray-200 flex items-center justify-center">
-                             {raffleState?.prizeImageUrl ? (
+                             {raffleState.prizeImageUrl ? (
                                 <Image src={raffleState.prizeImageUrl} alt={t('rafflePrizeAlt')} layout="fill" objectFit="cover" unoptimized key={raffleState.prizeImageUrl}/>
                             ) : (
                                 <span className="text-gray-500">{t('noPrizeImage')}</span>
@@ -1658,9 +1665,9 @@ const App = () => {
                                                     </Label>
                                                     <Switch
                                                         id="enable-nequi"
-                                                        checked={raffleState?.isNequiEnabled ?? true}
+                                                        checked={raffleState.isNequiEnabled}
                                                         onCheckedChange={(checked) => handlePaymentMethodToggle('isNequiEnabled', checked)}
-                                                        disabled={!raffleState?.nequiAccountNumber}
+                                                        disabled={!raffleState.nequiAccountNumber}
                                                     />
                                                 </div>
                                                 <div className="flex items-center justify-between">
@@ -1672,14 +1679,14 @@ const App = () => {
                                                     </Label>
                                                     <Switch
                                                         id="enable-payment-link"
-                                                        checked={raffleState?.isPaymentLinkEnabled ?? true}
+                                                        checked={raffleState.isPaymentLinkEnabled}
                                                         onCheckedChange={(checked) => handlePaymentMethodToggle('isPaymentLinkEnabled', checked)}
-                                                        disabled={!raffleState?.paymentLink}
+                                                        disabled={!raffleState.paymentLink}
                                                     />
                                                 </div>
                                             </div>
                                         )}
-                                        <fieldset disabled={!raffleState.raffleRef || raffleState?.isWinnerConfirmed || !raffleState?.isDetailsConfirmed} className="disabled:opacity-50 space-y-4">
+                                        <fieldset disabled={!raffleState.raffleRef || raffleState.isWinnerConfirmed || !raffleState.isDetailsConfirmed} className="disabled:opacity-50 space-y-4">
                                             <div className="flex flex-col gap-4">
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                     <div>
@@ -1687,7 +1694,7 @@ const App = () => {
                                                         <Input
                                                             id="name-input"
                                                             type="text"
-                                                            value={raffleState?.name || ''}
+                                                            value={raffleState.name}
                                                             onChange={(e) => handleLocalFieldChange('name', e.target.value)}
                                                             placeholder={t('namePlaceholder')}
                                                             className="w-full mt-1"
@@ -1702,7 +1709,7 @@ const App = () => {
                                                             <Input
                                                                 id="phone-input"
                                                                 type="tel"
-                                                                value={raffleState?.phoneNumber || ''}
+                                                                value={raffleState.phoneNumber}
                                                                 onChange={(e) => handleLocalFieldChange('phoneNumber', e.target.value.replace(/\D/g, ''))}
                                                                 placeholder="3001234567"
                                                                 className="w-full pl-12"
@@ -1711,22 +1718,22 @@ const App = () => {
                                                     </div>
                                                 </div>
                                                 <div>
-                                                    <Label htmlFor="raffle-number-input">{t('raffleNumberLabel', { range: raffleState.raffleMode === 'two-digit' ? '00-99' : raffleState.raffleMode === 'three-digit' ? '000-999' : t('infiniteDigits', { count: raffleState?.infiniteModeDigits || 4 }) })}:</Label>
+                                                    <Label htmlFor="raffle-number-input">{t('raffleNumberLabel', { range: raffleState.raffleMode === 'two-digit' ? '00-99' : raffleState.raffleMode === 'three-digit' ? '000-999' : t('infiniteDigits', { count: raffleState.infiniteModeDigits || 4 }) })}:</Label>
                                                     <Input
                                                         id="raffle-number-input"
                                                         type="text"
-                                                        value={raffleState?.raffleNumber || ''}
+                                                        value={raffleState.raffleNumber}
                                                         onChange={handleRaffleNumberChange}
                                                         placeholder={t('raffleNumberPlaceholder', { example: raffleState.raffleMode === 'two-digit' ? '05' : raffleState.raffleMode === 'three-digit' ? '142' : '2025' })}
                                                         className="w-full mt-1"
-                                                        maxLength={raffleState.raffleMode === 'infinite' ? (raffleState?.infiniteModeDigits || 4) : numberLength}
+                                                        maxLength={raffleState.raffleMode === 'infinite' ? (raffleState.infiniteModeDigits || 4) : numberLength}
                                                     />
-                                                    {raffleState?.raffleNumber && allAssignedNumbers.has(parseInt(raffleState.raffleNumber)) && (
+                                                    {raffleState.raffleNumber && allAssignedNumbers.has(parseInt(raffleState.raffleNumber)) && (
                                                         <p className="text-red-500 text-sm mt-1">{t('numberAlreadyAssignedWarning')}</p>
                                                     )}
                                                 </div>
                                                 <div className="flex flex-wrap gap-2">
-                                                    {raffleState?.isNequiEnabled && raffleState?.nequiAccountNumber && raffleState?.value && (
+                                                    {raffleState.isNequiEnabled && raffleState.nequiAccountNumber && raffleState.value && (
                                                         <a
                                                             href={`nequi://app/pay?phoneNumber=${raffleState.nequiAccountNumber}&value=${String(raffleState.value).replace(/\D/g, '')}&currency=COP&description=Pago Rifa`}
                                                             target="_blank"
@@ -1748,7 +1755,7 @@ const App = () => {
                                                             </Button>
                                                         </a>
                                                     )}
-                                                    {raffleState?.isPaymentLinkEnabled && raffleState?.paymentLink && (
+                                                    {raffleState.isPaymentLinkEnabled && raffleState.paymentLink && (
                                                         <a
                                                             href={`${raffleState.paymentLink}${raffleState.paymentLink.includes('?') ? '&' : '?'}pName=${encodeURIComponent(raffleState.name || '')}&pPhone=${encodeURIComponent(raffleState.phoneNumber || '')}&pNum=${encodeURIComponent(raffleState.raffleNumber || '')}`}
                                                             target="_blank"
@@ -1791,7 +1798,7 @@ const App = () => {
                                             <p>{t('activateRaffleWarning')}</p>
                                         </div>
                                     )}
-                                    {raffleState?.isWinnerConfirmed && (
+                                    {raffleState.isWinnerConfirmed && (
                                         <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-6" role="alert">
                                             <p className="font-bold">{t('gameFinished')}</p>
                                             <p>{t('gameFinishedRegistrationDisabled')}</p>
