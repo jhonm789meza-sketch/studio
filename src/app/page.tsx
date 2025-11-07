@@ -302,7 +302,7 @@ const App = () => {
             }
             await handleAdminSearch({ refToSearch: refFromUrl, isInitialLoad: true });
           } else {
-            setRaffleState({ ...initialRaffleData });
+            setRaffleState({ ...initialRaffleData, raffleRef: '' });
             setLoading(false);
           }
     
@@ -313,7 +313,7 @@ const App = () => {
               handleAdminSearch({ refToSearch: newRefFromUrl, isInitialLoad: true });
             } else if (!newRefFromUrl) {
               raffleSubscription.current?.();
-              setRaffleState({ ...initialRaffleData });
+              setRaffleState({ ...initialRaffleData, raffleRef: '' });
               setLoading(false);
             }
           };
@@ -395,9 +395,13 @@ const App = () => {
             newState.manualWinnerNumber = sanitizedValue;
             if (sanitizedValue.length >= 3) {
                 newState.manualWinnerNumber3 = sanitizedValue.slice(-3);
+            } else {
+                newState.manualWinnerNumber3 = '';
             }
             if (sanitizedValue.length >= 2) {
                 newState.manualWinnerNumber2 = sanitizedValue.slice(-2);
+            } else {
+                newState.manualWinnerNumber2 = '';
             }
         } else {
             newState[field as keyof Raffle] = value;
@@ -481,7 +485,7 @@ const App = () => {
                 const oldRaffleRef = raffleState.raffleRef;
                 await deleteDoc(doc(db, "raffles", oldRaffleRef));
 
-                setRaffleState({ ...initialRaffleData });
+                setRaffleState({ ...initialRaffleData, raffleRef: '' });
                 setCurrentAdminId(null);
                 localStorage.removeItem('rifaAdminId');
                 window.history.pushState({}, '', window.location.pathname);
@@ -729,7 +733,7 @@ const App = () => {
                     }
                 } else if (!isInitialLoad) {
                     showNotification(t('raffleNotFound'), 'error');
-                    setRaffleState({ ...initialRaffleData });
+                    setRaffleState({ ...initialRaffleData, raffleRef: '' });
                     setCurrentAdminId(null);
                     window.history.pushState({}, '', window.location.pathname);
                 }
@@ -864,7 +868,7 @@ const App = () => {
                 prizeImageUrl: '',
                 value: price,
                 currencySymbol: currencySymbol,
-                infiniteModeDigits: mode === 'infinite' ? 4 : 0, // Set default for infinite, 0 for others
+                infiniteModeDigits: mode === 'infinite' ? 0 : 0, // Set default for infinite, 0 for others
             };
             
             await setDoc(doc(db, "raffles", newRef), newRaffleData);
@@ -905,7 +909,7 @@ const App = () => {
 
     const handleGoToHome = () => {
         raffleSubscription.current?.();
-        setRaffleState({ ...initialRaffleData });
+        setRaffleState({ ...initialRaffleData, raffleRef: '' });
         setCurrentAdminId(null);
         localStorage.removeItem('rifaAdminId');
         if (window.location.search) {
