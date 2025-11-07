@@ -10,7 +10,7 @@ import { useLanguage } from '@/hooks/use-language';
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House, Clock, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Upload, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages } from 'lucide-react';
+import { Menu, Award, Lock, House, Clock, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Upload, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages, Trophy } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -26,7 +26,7 @@ import { WhatsappIcon, FacebookIcon, TicketIcon, NequiIcon, InlineTicket } from 
 
 
 type RaffleMode = 'two-digit' | 'three-digit' | 'infinite';
-type Tab = 'board' | 'register' | 'participants' | 'pending' | 'recaudado';
+type Tab = 'board' | 'register' | 'participants' | 'pending' | 'recaudado' | 'winners';
 
 const initialRaffleData: Raffle = {
     drawnNumbers: [],
@@ -794,6 +794,7 @@ const App = () => {
             await setDoc(doc(db, "raffles", raffleState.raffleRef), { winner: houseWinner }, { merge: true });
             showNotification(t('housePrizeNotification', { number: winningNumberStr }), 'info');
         }
+        handleTabClick('winners');
     };
 
     const handleFindPartialWinners = (numLastDigits: number, prizePercentage: number) => {
@@ -835,7 +836,7 @@ const App = () => {
                 const otherWinners = prev.filter(w => w.digits !== numLastDigits);
                 return [...otherWinners, { winners, digits: numLastDigits, prize: formattedPrize }];
             });
-
+            handleTabClick('winners');
         } else {
             showNotification(t('noPartialWinnersNotification', { count: numLastDigits, digits: lastDigits }), 'info');
             setPartialWinners(prev => prev.filter(w => w.digits !== numLastDigits));
@@ -972,47 +973,6 @@ const App = () => {
                 )}
                 <div className="flex flex-col lg:flex-row gap-8">
                     <div className="lg:w-2/5 flex-shrink-0">
-                        {raffleState.winner && (
-                            <div className="mb-6 p-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 rounded-lg">
-                                {raffleState.winner.isHouse ? (
-                                    <p className="font-bold text-lg flex items-center"><House className="mr-2"/>{t('housePrizeTitle')}</p>
-                                ) : (
-                                    <p className="font-bold text-lg flex items-center"><Award className="mr-2"/>{t('winnerFoundTitle')}</p>
-                                )}
-                                <p><strong>{t('number')}:</strong> {raffleState.winner.raffleNumber}</p>
-                                {!raffleState.winner.isHouse && (
-                                <>
-                                    <p><strong>{t('name')}:</strong> {raffleState.winner.name}</p>
-                                    <p><strong>{t('phone')}:</strong> {isCurrentUserAdmin ? 
-                                        <a href={`https://wa.me/57${raffleState.winner.phoneNumber}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{`+57 ${raffleState.winner.phoneNumber}`}</a>
-                                        : <span>******</span>
-                                    }</p>
-                                </>
-                                )}
-                            </div>
-                        )}
-
-                        {partialWinners.length > 0 && (
-                            <div className="mb-6 p-4 bg-blue-100 border-l-4 border-blue-500 text-blue-800 rounded-lg space-y-4">
-                                <h3 className="font-bold text-lg">{t('partialWinnersTitle')}</h3>
-                                {partialWinners.map((group, index) => (
-                                    <div key={index}>
-                                        <p className="font-semibold">{t('partialWinnersSubtitle', { count: group.digits, prize: group.prize })}</p>
-                                        <ul className="list-disc list-inside text-sm">
-                                            {group.winners.map(winner => (
-                                                <li key={winner.id}>
-                                                    {winner.name} ({winner.raffleNumber})
-                                                    {isCurrentUserAdmin && (
-                                                         <a href={`https://wa.me/57${winner.phoneNumber}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline ml-2">{`+57 ${winner.phoneNumber}`}</a>
-                                                    )}
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                        
                         <h2 className="text-2xl font-bold text-gray-800 mb-4">{t('prizeSettings')}</h2>
                         {raffleState.raffleRef && (
                             <div className="mb-4">
@@ -1676,6 +1636,14 @@ const App = () => {
                                     >
                                         <Users className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">{t('participants')}</span>
                                     </button>
+                                    {(raffleState.winner || partialWinners.length > 0) && (
+                                    <button 
+                                        className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'winners' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
+                                        onClick={() => handleTabClick('winners')}
+                                    >
+                                        <Trophy className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">{t('winnersTab')}</span>
+                                    </button>
+                                    )}
                                     {isCurrentUserAdmin && (
                                     <button 
                                         className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'recaudado' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
@@ -1952,6 +1920,53 @@ const App = () => {
                                         </div>
                                     ) : (
                                         <p className="text-gray-500">{t('noConfirmedParticipants')}</p>
+                                    )}
+                                </div>
+                                <div className={activeTab === 'winners' ? 'tab-content active' : 'tab-content'}>
+                                    <h2 className="text-2xl font-bold text-gray-800 mb-6">{t('winnersTab')}</h2>
+                                    {raffleState.winner && (
+                                        <div className="mb-6 p-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 rounded-lg">
+                                            {raffleState.winner.isHouse ? (
+                                                <p className="font-bold text-lg flex items-center"><House className="mr-2"/>{t('housePrizeTitle')}</p>
+                                            ) : (
+                                                <p className="font-bold text-lg flex items-center"><Award className="mr-2"/>{t('winnerFoundTitle')}</p>
+                                            )}
+                                            <p><strong>{t('number')}:</strong> {raffleState.winner.raffleNumber}</p>
+                                            {!raffleState.winner.isHouse && (
+                                            <>
+                                                <p><strong>{t('name')}:</strong> {raffleState.winner.name}</p>
+                                                <p><strong>{t('phone')}:</strong> {isCurrentUserAdmin ? 
+                                                    <a href={`https://wa.me/57${raffleState.winner.phoneNumber}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{`+57 ${raffleState.winner.phoneNumber}`}</a>
+                                                    : <span>******</span>
+                                                }</p>
+                                            </>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {partialWinners.length > 0 && (
+                                        <div className="p-4 bg-blue-100 border-l-4 border-blue-500 text-blue-800 rounded-lg space-y-4">
+                                            <h3 className="font-bold text-lg">{t('partialWinnersTitle')}</h3>
+                                            {partialWinners.map((group, index) => (
+                                                <div key={index}>
+                                                    <p className="font-semibold">{t('partialWinnersSubtitle', { count: group.digits, prize: group.prize })}</p>
+                                                    <ul className="list-disc list-inside text-sm">
+                                                        {group.winners.map(winner => (
+                                                            <li key={winner.id}>
+                                                                {winner.name} ({winner.raffleNumber})
+                                                                {isCurrentUserAdmin && (
+                                                                     <a href={`https://wa.me/57${winner.phoneNumber}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline ml-2">{`+57 ${winner.phoneNumber}`}</a>
+                                                                )}
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+
+                                    {!raffleState.winner && partialWinners.length === 0 && (
+                                        <p className="text-gray-500">{t('noWinnersYet')}</p>
                                     )}
                                 </div>
                             </div>

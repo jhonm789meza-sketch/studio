@@ -87,6 +87,8 @@
     "pendingTab": "Pendientes ({count})",
     "participants": "Participantes",
     "collected": "Recaudado",
+    "winnersTab": "Ganadores",
+    "noWinnersYet": "Aún no se han sorteado ganadores.",
     "registerNumber": "Registrar Número",
     "adminControls": "Controles de Administrador",
     "enableNequiPayment": "Habilitar Pago con Nequi",
