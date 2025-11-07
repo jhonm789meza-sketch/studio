@@ -376,7 +376,7 @@ const App = () => {
             setRaffleState((s: any) => ({ ...s, [field]: numericValue }));
         } else if (field === 'partialWinnerPercentage3' || field === 'partialWinnerPercentage2') {
             let numericValue = parseInt(String(value).replace(/\D/g, ''), 10);
-            if (isNaN(numericValue)) {
+            if (isNaN(numericValue) || value === '') {
                 numericValue = 0;
             }
             if (numericValue < 0) numericValue = 0;
@@ -1259,7 +1259,7 @@ const App = () => {
                                                     type="number"
                                                     min="0"
                                                     max="100"
-                                                    value={raffleState.partialWinnerPercentage3}
+                                                    value={raffleState.partialWinnerPercentage3 || ''}
                                                     onChange={(e) => handleLocalFieldChange('partialWinnerPercentage3', e.target.value)}
                                                     onBlur={(e) => handleFieldChange('partialWinnerPercentage3', raffleState.partialWinnerPercentage3)}
                                                     className="w-full"
@@ -1300,7 +1300,7 @@ const App = () => {
                                                      type="number"
                                                      min="0"
                                                      max="100"
-                                                     value={raffleState.partialWinnerPercentage2}
+                                                     value={raffleState.partialWinnerPercentage2 || ''}
                                                      onChange={(e) => handleLocalFieldChange('partialWinnerPercentage2', e.target.value)}
                                                      onBlur={(e) => handleFieldChange('partialWinnerPercentage2', raffleState.partialWinnerPercentage2)}
                                                      className="w-full"
