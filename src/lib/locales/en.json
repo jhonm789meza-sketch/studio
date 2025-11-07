@@ -198,5 +198,12 @@
     "adminNumberNotSet": "The administrator's number is not configured.",
     "contactAdminMessage": "Hello, I am contacting you about the raffle.",
     "shareRaffleMessage": "Participate in this incredible raffle!\\n",
-    "backToHome": "You have returned to the home screen."
+    "backToHome": "You have returned to the home screen.",
+    "allowPartialWinners": "Allow partial winners",
+    "allowPartialWinnersDescription": "Enable to award prizes for the last 2 and 3 digits.",
+    "automaticDraw": "Automatic draw",
+    "singleWinner": "Single winner",
+    "otherWinners": "Other winners"
 }
+
+    

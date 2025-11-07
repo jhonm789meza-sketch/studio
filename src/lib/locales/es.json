@@ -198,5 +198,12 @@
     "adminNumberNotSet": "El número del administrador no está configurado.",
     "contactAdminMessage": "Hola, te contacto sobre la rifa.",
     "shareRaffleMessage": "¡Participa en esta increíble rifa!\\n",
-    "backToHome": "Has vuelto a la pantalla de inicio."
+    "backToHome": "Has vuelto a la pantalla de inicio.",
+    "allowPartialWinners": "Permitir ganadores parciales",
+    "allowPartialWinnersDescription": "Activa para premiar 2 y 3 últimas cifras.",
+    "automaticDraw": "Sorteo automático",
+    "singleWinner": "Un solo ganador",
+    "otherWinners": "Otros ganadores"
 }
+
+    

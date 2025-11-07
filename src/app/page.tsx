@@ -314,6 +314,7 @@ const App = () => {
             } else if (!newRefFromUrl) {
               raffleSubscription.current?.();
               setRaffleState(initialRaffleData);
+              setCurrentAdminId(null);
               setLoading(false);
             }
           };
@@ -327,6 +328,7 @@ const App = () => {
         };
     
         initialize();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const showNotification = (message: string, type = 'info') => {
@@ -1109,9 +1111,9 @@ const App = () => {
                             {raffleState.raffleMode === 'infinite' && isCurrentUserAdmin && !raffleState.isDetailsConfirmed && (
                                <div className="flex items-center justify-between mt-2 p-3 bg-gray-50 rounded-lg">
                                     <Label htmlFor="allow-partial-winners" className="flex flex-col space-y-1">
-                                        <span>Permitir ganadores parciales</span>
+                                        <span>{t('allowPartialWinners')}</span>
                                         <span className="font-normal leading-snug text-muted-foreground text-sm">
-                                            Activa para premiar 2 y 3 últimas cifras.
+                                            {t('allowPartialWinnersDescription')}
                                         </span>
                                     </Label>
                                     <Switch
@@ -1148,7 +1150,7 @@ const App = () => {
                                           handleFieldChange('automaticDraw', checked)
                                        }}
                                    />
-                                   <Label htmlFor="automatic-draw">Sorteo automático</Label>
+                                   <Label htmlFor="automatic-draw">{t('automaticDraw')}</Label>
                                </div>
                             )}
                            <div>
@@ -1256,7 +1258,7 @@ const App = () => {
                                             {raffleState.raffleMode === 'infinite' && (
                                                 <div className="text-center mb-1">
                                                     <span className="text-sm font-bold text-green-600">{formatValue(raffleState.prize)}</span>
-                                                    <p className="text-xs text-gray-500">Un solo ganador</p>
+                                                    <p className="text-xs text-gray-500">{t('singleWinner')}</p>
                                                 </div>
                                             )}
                                             <Button
@@ -1302,7 +1304,7 @@ const App = () => {
                                             <div className="flex flex-col items-end">
                                                 <div className="text-center mb-1">
                                                     <span className="text-sm font-bold text-green-600">{formatValue(parseFloat(String(raffleState.prize).replace(/\D/g, '') || '0') * (raffleState.partialWinnerPercentage3 || 0) / 100)}</span>
-                                                    <p className="text-xs text-gray-500">Otros ganadores</p>
+                                                    <p className="text-xs text-gray-500">{t('otherWinners')}</p>
                                                  </div>
                                                 <Button
                                                     onClick={() => handleFindPartialWinners(3, raffleState.partialWinnerPercentage3 || 0)}
@@ -1343,7 +1345,7 @@ const App = () => {
                                             <div className="flex flex-col items-end">
                                                  <div className="text-center mb-1">
                                                     <span className="text-sm font-bold text-green-600">{formatValue(parseFloat(String(raffleState.prize).replace(/\D/g, '') || '0') * (raffleState.partialWinnerPercentage2 || 0) / 100)}</span>
-                                                    <p className="text-xs text-gray-500">Otros ganadores</p>
+                                                    <p className="text-xs text-gray-500">{t('otherWinners')}</p>
                                                  </div>
                                                 <Button
                                                     onClick={() => handleFindPartialWinners(2, raffleState.partialWinnerPercentage2 || 0)}
@@ -2216,3 +2218,5 @@ const App = () => {
 };
 
 export default App;
+
+    
