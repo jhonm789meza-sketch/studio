@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect, useRef, useTransition } from 'react';
 import jsPDF from 'jspdf';
@@ -1644,7 +1645,7 @@ const App = () => {
                                         <Trophy className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">{t('winnersTab')}</span>
                                     </button>
                                     )}
-                                    {isCurrentUserAdmin && raffleMode !== 'infinite' && (
+                                    {isCurrentUserAdmin && (
                                     <button 
                                         className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'recaudado' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
                                         onClick={() => setIsSalesModalOpen(true)}
@@ -2271,3 +2272,5 @@ const App = () => {
 };
 
 export default App;
+
+    
