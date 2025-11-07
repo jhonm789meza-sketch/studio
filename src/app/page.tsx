@@ -773,7 +773,7 @@ const App = () => {
         
         const winningNumberLength = raffleMode === 'infinite' ? infiniteDigits : numberLength;
 
-        if (!winningNumberStr || winningNumberStr.length !== winningNumberLength) {
+        if (!winningNumberStr || winningNumberStr.length < winningNumberLength) {
             showNotification(t('enterValidWinningNumber', { count: winningNumberLength }), 'warning');
             return;
         }
@@ -1694,7 +1694,7 @@ const App = () => {
                                                 </div>
                                             </div>
                                         )}
-                                        <fieldset disabled={!raffleState.raffleRef || raffleState.isWinnerConfirmed || !raffleState.isDetailsConfirmed} className="disabled:opacity-50 space-y-4">
+                                        <fieldset disabled={!raffleState.raffleRef || raffleState.isWinnerConfirmed || !raffleState.isDetailsConfirmed || !!raffleState.winner} className="disabled:opacity-50 space-y-4">
                                             <div className="flex flex-col gap-4">
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                     <div>
@@ -1806,7 +1806,7 @@ const App = () => {
                                             <p>{t('activateRaffleWarning')}</p>
                                         </div>
                                     )}
-                                    {raffleState.isWinnerConfirmed && (
+                                    {(raffleState.isWinnerConfirmed || !!raffleState.winner) && (
                                         <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-6" role="alert">
                                             <p className="font-bold">{t('gameFinished')}</p>
                                             <p>{t('gameFinishedRegistrationDisabled')}</p>
