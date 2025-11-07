@@ -400,19 +400,8 @@ const App = () => {
                 numericValue = 0; 
             }
             newState[field as keyof Raffle] = numericValue;
-        } else if (field === 'manualWinnerNumber') {
-            const sanitizedValue = value.replace(/\D/g, '');
-            newState.manualWinnerNumber = sanitizedValue;
-            if (sanitizedValue.length >= 3) {
-                newState.manualWinnerNumber3 = sanitizedValue.slice(-3);
-            } else {
-                newState.manualWinnerNumber3 = '';
-            }
-            if (sanitizedValue.length >= 2) {
-                newState.manualWinnerNumber2 = sanitizedValue.slice(-2);
-            } else {
-                newState.manualWinnerNumber2 = '';
-            }
+        } else if (field === 'manualWinnerNumber' || field === 'manualWinnerNumber2' || field === 'manualWinnerNumber3') {
+            newState[field as keyof Raffle] = value.replace(/\D/g, '');
         } else {
             newState[field as keyof Raffle] = value;
         }
@@ -1281,7 +1270,7 @@ const App = () => {
                                                     type="text"
                                                     placeholder={t('last3Digits')}
                                                     value={raffleState.manualWinnerNumber3}
-                                                    onChange={(e) => handleLocalFieldChange('manualWinnerNumber3', e.target.value.replace(/\D/g, ''))}
+                                                    onChange={(e) => handleLocalFieldChange('manualWinnerNumber3', e.target.value)}
                                                     maxLength={3}
                                                     disabled={raffleState.isWinnerConfirmed || !!raffleState.winner}
                                                     className="w-full"
@@ -1322,7 +1311,7 @@ const App = () => {
                                                     type="text"
                                                     placeholder={t('last2Digits')}
                                                     value={raffleState.manualWinnerNumber2}
-                                                    onChange={(e) => handleLocalFieldChange('manualWinnerNumber2', e.target.value.replace(/\D/g, ''))}
+                                                    onChange={(e) => handleLocalFieldChange('manualWinnerNumber2', e.target.value)}
                                                     maxLength={2}
                                                     disabled={raffleState.isWinnerConfirmed || !!raffleState.winner}
                                                     className="w-full"
@@ -2273,4 +2262,5 @@ const App = () => {
 
 export default App;
 
+    
     
