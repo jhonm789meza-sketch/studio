@@ -1624,14 +1624,6 @@ const App = () => {
                                         <DollarSign className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">{t('collected')}</span>
                                     </button>
                                     )}
-                                    {isCurrentUserAdmin && raffleMode === 'infinite' && (
-                                     <button
-                                        className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'vendidos' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
-                                        onClick={() => setIsSalesModalOpen(true)}
-                                     >
-                                         <span className="hidden md:inline">Vendidos ({confirmedParticipants.length})</span>
-                                     </button>
-                                    )}
                                 </div>
                             </div>
                             <div className="p-6">
