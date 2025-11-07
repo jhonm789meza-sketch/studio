@@ -371,9 +371,11 @@ const App = () => {
     };
     
     const handleLocalFieldChange = (field: string, value: any) => {
+        const newState: Partial<Raffle> = {};
+        
         if (field === 'value') {
             const numericValue = String(value).replace(/\D/g, '');
-            setRaffleState((s: any) => ({ ...s, [field]: numericValue }));
+            newState[field] = numericValue;
         } else if (field === 'partialWinnerPercentage3' || field === 'partialWinnerPercentage2') {
             let numericValue = parseInt(String(value).replace(/\D/g, ''), 10);
             if (isNaN(numericValue) || value === '') {
@@ -381,10 +383,21 @@ const App = () => {
             }
             if (numericValue < 0) numericValue = 0;
             if (numericValue > 100) numericValue = 100;
-            setRaffleState((s: any) => ({ ...s, [field]: numericValue }));
+            newState[field as keyof Raffle] = numericValue;
+        } else if (field === 'manualWinnerNumber') {
+            const sanitizedValue = value.replace(/\D/g, '');
+            newState.manualWinnerNumber = sanitizedValue;
+            if (sanitizedValue.length >= 3) {
+                newState.manualWinnerNumber3 = sanitizedValue.slice(-3);
+            }
+            if (sanitizedValue.length >= 2) {
+                newState.manualWinnerNumber2 = sanitizedValue.slice(-2);
+            }
         } else {
-            setRaffleState((s: any) => ({ ...s, [field]: value }));
+            newState[field as keyof Raffle] = value;
         }
+    
+        setRaffleState(prevState => ({ ...prevState, ...newState }));
     };
 
     const handleFieldChange = async (field: string, value: any) => {
@@ -1213,7 +1226,7 @@ const App = () => {
                                                 type="text"
                                                 placeholder={t('winningNumberPlaceholder', { count: raffleMode === 'infinite' ? (raffleState.infiniteModeDigits || 4) : numberLength })}
                                                 value={raffleState.manualWinnerNumber}
-                                                onChange={(e) => handleLocalFieldChange('manualWinnerNumber', e.target.value.replace(/\D/g, ''))}
+                                                onChange={(e) => handleLocalFieldChange('manualWinnerNumber', e.target.value)}
                                                 maxLength={raffleMode === 'infinite' ? raffleState.infiniteModeDigits : numberLength}
                                                 disabled={raffleState.isWinnerConfirmed || !!raffleState.winner}
                                                 className="w-full"
