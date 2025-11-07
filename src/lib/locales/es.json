@@ -203,7 +203,7 @@
     "allowPartialWinnersDescription": "Activa para premiar 2 y 3 últimas cifras.",
     "automaticDraw": "Sorteo automático",
     "singleWinner": "Un solo ganador",
-    "otherWinners": "Otros ganadores"
+    "otherWinners": "Otros ganadores",
+    "partialWinnersTitle": "Ganadores Parciales",
+    "partialWinnersSubtitle": "Ganadores con las últimas {count} cifras - Premio: {prize}"
 }
-
-    

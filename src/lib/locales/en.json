@@ -203,7 +203,7 @@
     "allowPartialWinnersDescription": "Enable to award prizes for the last 2 and 3 digits.",
     "automaticDraw": "Automatic draw",
     "singleWinner": "Single winner",
-    "otherWinners": "Other winners"
+    "otherWinners": "Other winners",
+    "partialWinnersTitle": "Partial Winners",
+    "partialWinnersSubtitle": "Winners with last {count} digits - Prize: {prize}"
 }
-
-    

@@ -68,6 +68,12 @@ const initialRaffleData: Raffle = {
     allowPartialWinners: false,
 };
 
+interface PartialWinnerInfo {
+    winners: Participant[];
+    digits: number;
+    prize: string;
+}
+
 
 const App = () => {
     const { t, toggleLanguage, language } = useLanguage();
@@ -102,6 +108,7 @@ const App = () => {
     
     const [isCountrySelectionOpen, setIsCountrySelectionOpen] = useState(false);
     const [selectedRaffleMode, setSelectedRaffleMode] = useState<RaffleMode | null>(null);
+    const [partialWinners, setPartialWinners] = useState<PartialWinnerInfo[]>([]);
 
     const [installPromptEvent, setInstallPromptEvent] = useState<any>(null);
 
@@ -492,6 +499,7 @@ const App = () => {
 
                 setRaffleState(initialRaffleData);
                 setCurrentAdminId(null);
+                setPartialWinners([]);
                 localStorage.removeItem('rifaAdminId');
                 window.history.pushState({}, '', window.location.pathname);
                 showNotification(t('boardResetSuccess'), 'success');
@@ -736,6 +744,7 @@ const App = () => {
                     setAdminPhoneSearch('');
                     setAdminPasswordSearch('');
                     setPublicRefSearch('');
+                    setPartialWinners([]);
                     handleTabClick('board');
                     if (window.location.search !== `?ref=${aRef}`) {
                         window.history.pushState({}, '', `?ref=${aRef}`);
@@ -764,7 +773,7 @@ const App = () => {
         
         const winningNumberLength = raffleMode === 'infinite' ? infiniteDigits : numberLength;
 
-        if (!winningNumberStr || winningNumberStr.length < 4 || winningNumberStr.length !== winningNumberLength) {
+        if (!winningNumberStr || winningNumberStr.length !== winningNumberLength) {
             showNotification(t('enterValidWinningNumber', { count: winningNumberLength }), 'warning');
             return;
         }
@@ -816,13 +825,20 @@ const App = () => {
 
         const winners = searchableParticipants.filter(p => p.raffleNumber.endsWith(lastDigits));
         const prizeAmount = prizeValue * (prizePercentage / 100);
+        const formattedPrize = `${raffleState.currencySymbol || '$'} ${prizeAmount.toLocaleString(language === 'es' ? 'es-CO' : 'en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
     
         if (winners.length > 0) {
             const winnerMessage = winners.map(w => `${w.name} (${w.raffleNumber})`).join(', ');
-            const formattedPrize = `${raffleState.currencySymbol || '$'} ${prizeAmount.toLocaleString(language === 'es' ? 'es-CO' : 'en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
             showNotification(t('partialWinnersNotification', { count: numLastDigits, digits: lastDigits, winners: winnerMessage, prize: formattedPrize }), 'success');
+            
+            setPartialWinners(prev => {
+                const otherWinners = prev.filter(w => w.digits !== numLastDigits);
+                return [...otherWinners, { winners, digits: numLastDigits, prize: formattedPrize }];
+            });
+
         } else {
             showNotification(t('noPartialWinnersNotification', { count: numLastDigits, digits: lastDigits }), 'info');
+            setPartialWinners(prev => prev.filter(w => w.digits !== numLastDigits));
         }
     };
 
@@ -920,6 +936,7 @@ const App = () => {
         raffleSubscription.current?.();
         setRaffleState(initialRaffleData);
         setCurrentAdminId(null);
+        setPartialWinners([]);
         localStorage.removeItem('rifaAdminId');
         if (window.location.search) {
             window.history.pushState({}, '', window.location.pathname);
@@ -972,6 +989,27 @@ const App = () => {
                                     }</p>
                                 </>
                                 )}
+                            </div>
+                        )}
+
+                        {partialWinners.length > 0 && (
+                            <div className="mb-6 p-4 bg-blue-100 border-l-4 border-blue-500 text-blue-800 rounded-lg space-y-4">
+                                <h3 className="font-bold text-lg">{t('partialWinnersTitle')}</h3>
+                                {partialWinners.map((group, index) => (
+                                    <div key={index}>
+                                        <p className="font-semibold">{t('partialWinnersSubtitle', { count: group.digits, prize: group.prize })}</p>
+                                        <ul className="list-disc list-inside text-sm">
+                                            {group.winners.map(winner => (
+                                                <li key={winner.id}>
+                                                    {winner.name} ({winner.raffleNumber})
+                                                    {isCurrentUserAdmin && (
+                                                         <a href={`https://wa.me/57${winner.phoneNumber}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline ml-2">{`+57 ${winner.phoneNumber}`}</a>
+                                                    )}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                ))}
                             </div>
                         )}
                         
