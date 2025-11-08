@@ -45,8 +45,6 @@ const countries = [
 export const getCurrencySymbol = (countryCode: string): string => {
     switch (countryCode) {
         case 'CO': return 'COP';
-        case 'BR': return 'BRL';
-        case 'CA': return 'CAD';
         case 'AR':
         case 'PE':
         case 'EC':
@@ -82,15 +80,7 @@ const getPriceForCountry = (raffleMode: RaffleMode | null, countryCode: string):
     if (countryCode === 'CO') {
         if (raffleMode === 'two-digit') return '10,000 COP';
         if (raffleMode === 'three-digit') return '15,000 COP';
-        if (raffleMode === 'infinite') return '1,500 COP';
-    }
-    if (countryCode === 'BR') {
-        if (raffleMode === 'two-digit') return '20 BRL';
-        if (raffleMode === 'three-digit') return '24 BRL';
-    }
-    if (countryCode === 'CA') {
-        if (raffleMode === 'two-digit') return '10 CAD';
-        if (raffleMode === 'three-digit') return '15 CAD';
+        if (raffleMode === 'infinite') return '30,000 COP';
     }
     
     return null;

@@ -885,7 +885,7 @@ const App = () => {
         if (countryCode === 'CO') {
             if (mode === 'two-digit') price = '10000';
             else if (mode === 'three-digit') price = '15000';
-            else if (mode === 'infinite') price = '1500';
+            else if (mode === 'infinite') price = '30000';
         } else if (isUSDCountry) {
             if (mode === 'two-digit') price = '10';
             else if (mode === 'three-digit') price = '15';
