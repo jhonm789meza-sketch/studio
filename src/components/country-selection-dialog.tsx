@@ -78,7 +78,7 @@ const getPriceForCountry = (raffleMode: RaffleMode | null, countryCode: string):
     }
 
     if (countryCode === 'CO') {
-        if (raffleMode === 'two-digit') return '10,000 COP';
+        if (raffleMode === 'two-digit') return '12,000 COP';
         if (raffleMode === 'three-digit') return '15,000 COP';
         if (raffleMode === 'infinite') return '30,000 COP';
     }

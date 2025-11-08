@@ -883,7 +883,7 @@ const App = () => {
         const isUSDCountry = ['AR', 'PE', 'EC', 'MX', 'DO', 'CR', 'UY', 'PR', 'VE', 'US', 'SV', 'GT', 'HN', 'NI', 'PA', 'CL'].includes(countryCode);
 
         if (countryCode === 'CO') {
-            if (mode === 'two-digit') price = '10000';
+            if (mode === 'two-digit') price = '12000';
             else if (mode === 'three-digit') price = '15000';
             else if (mode === 'infinite') price = '30000';
         } else if (isUSDCountry) {
@@ -1260,7 +1260,7 @@ const App = () => {
                                             value={raffleState.manualWinnerNumber}
                                             onChange={(e) => handleLocalFieldChange('manualWinnerNumber', e.target.value)}
                                             maxLength={raffleState.raffleMode === 'infinite' ? raffleState.infiniteModeDigits : numberLength}
-                                            disabled={raffleState.isWinnerConfirmed || (!!raffleState.winner && !raffleState.winner.isHouse) || raffleState.automaticDraw}
+                                            disabled={raffleState.isWinnerConfirmed || raffleState.automaticDraw}
                                             className="w-full"
                                         />
                                      </div>
@@ -1273,7 +1273,7 @@ const App = () => {
                                         )}
                                         <Button
                                             onClick={handleDrawWinner}
-                                            disabled={raffleState.isWinnerConfirmed || (!!raffleState.winner && !raffleState.winner.isHouse)}
+                                            disabled={raffleState.isWinnerConfirmed}
                                             className="bg-yellow-500 text-white font-medium rounded-lg hover:bg-yellow-600 transition-colors disabled:bg-gray-300"
                                         >
                                             {raffleState.automaticDraw ? t('automaticDraw') : t('findWinner')}
