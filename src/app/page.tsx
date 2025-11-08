@@ -888,14 +888,8 @@ const App = () => {
             else if (mode === 'infinite') price = '1500';
         } else if (isUSDCountry) {
             if (mode === 'two-digit') price = '10';
-            if (mode === 'three-digit') price = '15';
-            if (mode === 'infinite') price = '30';
-        } else if (countryCode === 'CA') {
-             if (mode === 'two-digit') price = '10';
-             if (mode === 'three-digit') price = '15';
-        } else if (countryCode === 'BR') {
-            if (mode === 'two-digit') price = '20';
-            if (mode === 'three-digit') price = '24';
+            else if (mode === 'three-digit') price = '15';
+            else if (mode === 'infinite') price = '30';
         }
     
         try {
@@ -2292,11 +2286,3 @@ const App = () => {
 };
 
 export default App;
-
-    
-    
-
-    
-
-
-

@@ -33,8 +33,6 @@ const countries = [
     { name: 'Uruguay', flag: '🇺🇾', code: 'UY' },
     { name: 'Puerto Rico', flag: '🇵🇷', code: 'PR' },
     { name: 'Venezuela', flag: '🇻🇪', code: 'VE' },
-    { name: 'Brasil', flag: '🇧🇷', code: 'BR' },
-    { name: 'Canadá', flag: '🇨🇦', code: 'CA' },
     { name: 'Estados Unidos', flag: '🇺🇸', code: 'US' },
     { name: 'El Salvador', flag: '🇸🇻', code: 'SV' },
     { name: 'Guatemala', flag: '🇬🇹', code: 'GT' },
