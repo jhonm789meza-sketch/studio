@@ -382,7 +382,7 @@ const App = () => {
     
     const handleLocalFieldChange = (field: string, value: any) => {
         const newState: Partial<Raffle> = {};
-        
+    
         if (field === 'value') {
             const numericValue = String(value).replace(/\D/g, '');
             newState[field] = numericValue;
@@ -395,13 +395,10 @@ const App = () => {
             if (numericValue > 100) numericValue = 100;
             newState[field as keyof Raffle] = numericValue;
         } else if (field === 'infiniteModeDigits') {
-            let numericValue = parseInt(String(value).replace(/\D/g, ''), 10);
-            if (isNaN(numericValue) || value === '') {
-                numericValue = 0; 
-            }
-            newState[field as keyof Raffle] = numericValue;
+            const numericValue = parseInt(String(value).replace(/\D/g, ''), 10);
+            newState[field as keyof Raffle] = isNaN(numericValue) ? '' : numericValue;
         } else if (field === 'manualWinnerNumber' || field === 'manualWinnerNumber2' || field === 'manualWinnerNumber3') {
-            newState[field as keyof Raffle] = value.replace(/\D/g, '');
+             newState[field as keyof Raffle] = value.replace(/\D/g, '');
         } else {
             newState[field as keyof Raffle] = value;
         }
@@ -1260,7 +1257,7 @@ const App = () => {
                                      </div>
                                  )}
 
-                                {raffleMode === 'infinite' && raffleState.allowPartialWinners && !raffleState.isWinnerConfirmed && (
+                                {raffleMode === 'infinite' && raffleState.allowPartialWinners && (
                                     <>
                                         <div className="flex flex-wrap gap-3 items-end">
                                             <div className="flex-grow">
@@ -1272,7 +1269,7 @@ const App = () => {
                                                     value={raffleState.manualWinnerNumber3}
                                                     onChange={(e) => handleLocalFieldChange('manualWinnerNumber3', e.target.value)}
                                                     maxLength={3}
-                                                    disabled={raffleState.isWinnerConfirmed || !!raffleState.winner}
+                                                    disabled={raffleState.isWinnerConfirmed}
                                                     className="w-full"
                                                 />
                                             </div>
@@ -1287,6 +1284,7 @@ const App = () => {
                                                     onBlur={(e) => handleFieldChange('partialWinnerPercentage3', raffleState.partialWinnerPercentage3)}
                                                     className="w-full"
                                                     placeholder="%"
+                                                    disabled={raffleState.isWinnerConfirmed}
                                                 />
                                             </div>
                                             <div className="flex flex-col items-end">
@@ -1296,7 +1294,7 @@ const App = () => {
                                                  </div>
                                                 <Button
                                                     onClick={() => handleFindPartialWinners(3, raffleState.partialWinnerPercentage3 || 0)}
-                                                    disabled={raffleState.isWinnerConfirmed || !!raffleState.winner}
+                                                    disabled={raffleState.isWinnerConfirmed}
                                                     className="bg-blue-500 text-white font-medium rounded-lg hover:bg-blue-600 transition-colors disabled:bg-gray-300"
                                                 >
                                                     {t('findWinner')}
@@ -1313,7 +1311,7 @@ const App = () => {
                                                     value={raffleState.manualWinnerNumber2}
                                                     onChange={(e) => handleLocalFieldChange('manualWinnerNumber2', e.target.value)}
                                                     maxLength={2}
-                                                    disabled={raffleState.isWinnerConfirmed || !!raffleState.winner}
+                                                    disabled={raffleState.isWinnerConfirmed}
                                                     className="w-full"
                                                 />
                                             </div>
@@ -1328,6 +1326,7 @@ const App = () => {
                                                      onBlur={(e) => handleFieldChange('partialWinnerPercentage2', raffleState.partialWinnerPercentage2)}
                                                      className="w-full"
                                                      placeholder="%"
+                                                     disabled={raffleState.isWinnerConfirmed}
                                                  />
                                             </div>
                                             <div className="flex flex-col items-end">
@@ -1337,7 +1336,7 @@ const App = () => {
                                                  </div>
                                                 <Button
                                                     onClick={() => handleFindPartialWinners(2, raffleState.partialWinnerPercentage2 || 0)}
-                                                    disabled={raffleState.isWinnerConfirmed || !!raffleState.winner}
+                                                    disabled={raffleState.isWinnerConfirmed}
                                                     className="bg-blue-500 text-white font-medium rounded-lg hover:bg-blue-600 transition-colors disabled:bg-gray-300"
                                                 >
                                                     {t('findWinner')}
@@ -2263,4 +2262,6 @@ const App = () => {
 export default App;
 
     
+    
+
     
