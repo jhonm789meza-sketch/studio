@@ -789,14 +789,14 @@ const App = () => {
             showNotification(t('enterWinningNumberAndPrizeWarning'), 'warning');
             return;
         }
-
+    
         const winningNumberStr = numLastDigits === 3 ? raffleState.manualWinnerNumber3 : raffleState.manualWinnerNumber2;
     
         if (!winningNumberStr || winningNumberStr.length !== numLastDigits) {
             showNotification(t('enterValidWinningNumber', { count: numLastDigits }), 'warning');
             return;
         }
-
+    
         const prizeValue = parseFloat(String(raffleState.prize).replace(/\D/g, ''));
     
         if (isNaN(prizeValue) || prizeValue <= 0) {
@@ -807,10 +807,20 @@ const App = () => {
         const lastDigits = winningNumberStr;
         
         let searchableParticipants = confirmedParticipants;
+        // Exclude the main winner
         if (raffleState.winner && !raffleState.winner.isHouse) {
-            searchableParticipants = confirmedParticipants.filter(p => p.raffleNumber !== raffleState.winner?.raffleNumber);
+            searchableParticipants = searchableParticipants.filter(p => p.raffleNumber !== raffleState.winner?.raffleNumber);
         }
 
+        // If searching for 2-digit winners, exclude 3-digit winners
+        if (numLastDigits === 2) {
+            const threeDigitWinnerGroup = partialWinners.find(group => group.digits === 3);
+            if (threeDigitWinnerGroup) {
+                const threeDigitWinnerIds = new Set(threeDigitWinnerGroup.winners.map(w => w.id));
+                searchableParticipants = searchableParticipants.filter(p => !threeDigitWinnerIds.has(p.id));
+            }
+        }
+    
         const winners = searchableParticipants.filter(p => p.raffleNumber.endsWith(lastDigits));
         const prizeAmount = prizeValue * (prizePercentage / 100);
         const formattedPrize = `${raffleState.currencySymbol || '$'} ${prizeAmount.toLocaleString(language === 'es' ? 'es-CO' : 'en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
@@ -823,11 +833,11 @@ const App = () => {
                 const otherWinners = prev.filter(w => w.digits !== numLastDigits);
                 return [...otherWinners, { winners, digits: numLastDigits, prize: formattedPrize }];
             });
-            handleTabClick('winners');
         } else {
             showNotification(t('noPartialWinnersNotification', { count: numLastDigits, digits: lastDigits }), 'info');
             setPartialWinners(prev => prev.filter(w => w.digits !== numLastDigits));
         }
+        handleTabClick('winners');
     };
 
 
@@ -1235,7 +1245,7 @@ const App = () => {
                                                 value={raffleState.manualWinnerNumber}
                                                 onChange={(e) => handleLocalFieldChange('manualWinnerNumber', e.target.value)}
                                                 maxLength={raffleState.raffleMode === 'infinite' ? raffleState.infiniteModeDigits : numberLength}
-                                                disabled={raffleState.isWinnerConfirmed || !!raffleState.winner}
+                                                disabled={raffleState.isWinnerConfirmed}
                                                 className="w-full"
                                             />
                                          </div>
@@ -1248,7 +1258,7 @@ const App = () => {
                                             )}
                                             <Button
                                                 onClick={handleDrawWinner}
-                                                disabled={raffleState.isWinnerConfirmed || !!raffleState.winner}
+                                                disabled={raffleState.isWinnerConfirmed}
                                                 className="bg-yellow-500 text-white font-medium rounded-lg hover:bg-yellow-600 transition-colors disabled:bg-gray-300"
                                             >
                                                 {t('findWinner')}
