@@ -1614,7 +1614,7 @@ const App = () => {
                                     </div>
                                     
                                 </div>
-                                <Button onClick={() => setIsPublicSearchOpen(true)} size="lg" variant="outline">
+                                <Button onClick={() => setIsPublicSearchOpen(true)} size="lg" className="w-full max-w-md bg-purple-600 hover:bg-purple-700 text-white font-bold">
                                     {t('orSearchByReference')}
                                 </Button>
                             </div>
@@ -2286,3 +2286,5 @@ const App = () => {
 };
 
 export default App;
+
+    
