@@ -2259,7 +2259,7 @@ const App = () => {
                                 />
                                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                                      <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white/90 shadow-md backdrop-blur-sm">
-                                        <span className="font-bold text-lg text-gray-800 tracking-tighter">REFA<span className="text-yellow-500 text-2xl">⚡</span> EXPRESS</span>
+                                        <span className="font-bold text-5xl text-yellow-500">⚡</span>
                                      </div>
                                  </div>
                             </div>
