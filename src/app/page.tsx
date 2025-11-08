@@ -889,6 +889,7 @@ const App = () => {
         } else if (isUSDCountry) {
             if (mode === 'two-digit') price = '10';
             if (mode === 'three-digit') price = '15';
+            if (mode === 'infinite') price = '30';
         } else if (countryCode === 'CA') {
              if (mode === 'two-digit') price = '10';
              if (mode === 'three-digit') price = '15';
@@ -2296,5 +2297,6 @@ export default App;
     
 
     
+
 
 

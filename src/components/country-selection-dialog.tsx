@@ -78,6 +78,7 @@ const getPriceForCountry = (raffleMode: RaffleMode | null, countryCode: string):
     if (isUSDCountry) {
         if (raffleMode === 'two-digit') return '10 USD';
         if (raffleMode === 'three-digit') return '15 USD';
+        if (raffleMode === 'infinite') return '30 USD';
     }
 
     if (countryCode === 'CO') {
