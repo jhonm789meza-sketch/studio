@@ -461,6 +461,17 @@ const App = () => {
             showNotification(t('drawWinnerFirstWarning'), 'warning');
             return;
         }
+    
+        // Automatically find partial winners if not already found
+        if (raffleMode === 'infinite' && raffleState.allowPartialWinners) {
+            if (raffleState.manualWinnerNumber3 && !partialWinners.some(p => p.digits === 3)) {
+                handleFindPartialWinners(3, raffleState.partialWinnerPercentage3 || 0);
+            }
+            if (raffleState.manualWinnerNumber2 && !partialWinners.some(p => p.digits === 2)) {
+                handleFindPartialWinners(2, raffleState.partialWinnerPercentage2 || 0);
+            }
+        }
+    
         await setDoc(doc(db, "raffles", raffleState.raffleRef), { isWinnerConfirmed: true }, { merge: true });
         showNotification(t('resultConfirmedNotification'), 'success');
     };
@@ -2275,3 +2286,4 @@ export default App;
     
 
     
+
