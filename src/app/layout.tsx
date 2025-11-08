@@ -17,7 +17,7 @@ const libreBaskerville = Libre_Baskerville({
 
 
 export const metadata: Metadata = {
-  title: 'RIFA EXPRESS',
+  title: 'REFA⚡ EXPRESS',
   description: 'Aplicación de Rifas con Firebase',
   manifest: '/manifest.json',
 };
