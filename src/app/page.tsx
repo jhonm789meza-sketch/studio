@@ -1250,38 +1250,36 @@ const App = () => {
                          <div className="mb-6 p-4 border rounded-lg bg-gray-50">
                             <h2 className="text-2xl font-bold text-gray-800 mb-4">{t('draw')}</h2>
                              <div className="space-y-4">
-                                 {!raffleState.isWinnerConfirmed && (
-                                     <div className="flex flex-wrap gap-3 items-end">
-                                         <div className="flex-grow">
-                                            <Label htmlFor="manual-winner-input">{raffleState.automaticDraw ? t('winningNumber') + ' (auto)' : t('winningNumber')}</Label>
-                                            <Input
-                                                id="manual-winner-input"
-                                                type="text"
-                                                placeholder={t('winningNumberPlaceholder', { count: raffleState.raffleMode === 'infinite' ? (raffleState.infiniteModeDigits || 4) : numberLength })}
-                                                value={raffleState.manualWinnerNumber}
-                                                onChange={(e) => handleLocalFieldChange('manualWinnerNumber', e.target.value)}
-                                                maxLength={raffleState.raffleMode === 'infinite' ? raffleState.infiniteModeDigits : numberLength}
-                                                disabled={raffleState.isWinnerConfirmed || raffleState.automaticDraw}
-                                                className="w-full"
-                                            />
-                                         </div>
-                                         <div className="flex flex-col items-end">
-                                            {raffleState.raffleMode === 'infinite' && (
-                                                <div className="text-center mb-1">
-                                                    <span className="text-sm font-bold text-green-600">{formatValue(raffleState.prize)}</span>
-                                                    <p className="text-xs text-gray-500">{t('singleWinner')}</p>
-                                                </div>
-                                            )}
-                                            <Button
-                                                onClick={handleDrawWinner}
-                                                disabled={raffleState.isWinnerConfirmed}
-                                                className="bg-yellow-500 text-white font-medium rounded-lg hover:bg-yellow-600 transition-colors disabled:bg-gray-300"
-                                            >
-                                                {raffleState.automaticDraw ? t('automaticDraw') : t('findWinner')}
-                                            </Button>
-                                         </div>
+                                 <div className="flex flex-wrap gap-3 items-end">
+                                     <div className="flex-grow">
+                                        <Label htmlFor="manual-winner-input">{raffleState.automaticDraw ? t('winningNumber') + ' (auto)' : t('winningNumber')}</Label>
+                                        <Input
+                                            id="manual-winner-input"
+                                            type="text"
+                                            placeholder={t('winningNumberPlaceholder', { count: raffleState.raffleMode === 'infinite' ? (raffleState.infiniteModeDigits || 4) : numberLength })}
+                                            value={raffleState.manualWinnerNumber}
+                                            onChange={(e) => handleLocalFieldChange('manualWinnerNumber', e.target.value)}
+                                            maxLength={raffleState.raffleMode === 'infinite' ? raffleState.infiniteModeDigits : numberLength}
+                                            disabled={raffleState.isWinnerConfirmed || (!!raffleState.winner && !raffleState.winner.isHouse) || raffleState.automaticDraw}
+                                            className="w-full"
+                                        />
                                      </div>
-                                 )}
+                                     <div className="flex flex-col items-end">
+                                        {raffleState.raffleMode === 'infinite' && (
+                                            <div className="text-center mb-1">
+                                                <span className="text-sm font-bold text-green-600">{formatValue(raffleState.prize)}</span>
+                                                <p className="text-xs text-gray-500">{t('singleWinner')}</p>
+                                            </div>
+                                        )}
+                                        <Button
+                                            onClick={handleDrawWinner}
+                                            disabled={raffleState.isWinnerConfirmed || (!!raffleState.winner && !raffleState.winner.isHouse)}
+                                            className="bg-yellow-500 text-white font-medium rounded-lg hover:bg-yellow-600 transition-colors disabled:bg-gray-300"
+                                        >
+                                            {raffleState.automaticDraw ? t('automaticDraw') : t('findWinner')}
+                                        </Button>
+                                     </div>
+                                 </div>
 
                                 {raffleMode === 'infinite' && raffleState.allowPartialWinners && (
                                     <>
@@ -2260,7 +2258,7 @@ const App = () => {
                                     height={200}
                                 />
                                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                     <div className="flex h-16 w-32 items-center justify-center rounded-lg bg-white/90 shadow-md backdrop-blur-sm">
+                                     <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white/90 shadow-md backdrop-blur-sm">
                                         <span className="font-bold text-lg text-gray-800 tracking-tighter">REFA<span className="text-yellow-500 text-2xl">⚡</span> EXPRESS</span>
                                      </div>
                                  </div>
