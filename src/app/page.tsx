@@ -766,11 +766,21 @@ const App = () => {
     
     const handleDrawWinner = async () => {
         if (!raffleState.raffleRef) return;
-        const winningNumberStr = raffleState.manualWinnerNumber;
-        const infiniteDigits = raffleState.infiniteModeDigits || 4;
         
+        const infiniteDigits = raffleState.infiniteModeDigits || 4;
         const winningNumberLength = raffleMode === 'infinite' ? infiniteDigits : numberLength;
 
+        let winningNumberStr = raffleState.manualWinnerNumber;
+
+        // Automatic draw logic
+        if (raffleMode === 'infinite' && raffleState.automaticDraw && !winningNumberStr) {
+            const max = Math.pow(10, winningNumberLength);
+            const randomNumber = Math.floor(Math.random() * max);
+            winningNumberStr = String(randomNumber).padStart(winningNumberLength, '0');
+            // Update state to show the automatically drawn number
+            handleLocalFieldChange('manualWinnerNumber', winningNumberStr);
+        }
+        
         if (!winningNumberStr || winningNumberStr.length < winningNumberLength) {
             showNotification(t('enterValidWinningNumber', { count: winningNumberLength }), 'warning');
             return;
@@ -1248,7 +1258,7 @@ const App = () => {
                                  {!raffleState.isWinnerConfirmed && (
                                      <div className="flex flex-wrap gap-3 items-end">
                                          <div className="flex-grow">
-                                            <Label htmlFor="manual-winner-input">{t('winningNumber')}</Label>
+                                            <Label htmlFor="manual-winner-input">{raffleState.automaticDraw ? t('winningNumber') + ' (auto)' : t('winningNumber')}</Label>
                                             <Input
                                                 id="manual-winner-input"
                                                 type="text"
@@ -1256,7 +1266,7 @@ const App = () => {
                                                 value={raffleState.manualWinnerNumber}
                                                 onChange={(e) => handleLocalFieldChange('manualWinnerNumber', e.target.value)}
                                                 maxLength={raffleState.raffleMode === 'infinite' ? raffleState.infiniteModeDigits : numberLength}
-                                                disabled={raffleState.isWinnerConfirmed}
+                                                disabled={raffleState.isWinnerConfirmed || raffleState.automaticDraw}
                                                 className="w-full"
                                             />
                                          </div>
@@ -1272,7 +1282,7 @@ const App = () => {
                                                 disabled={raffleState.isWinnerConfirmed}
                                                 className="bg-yellow-500 text-white font-medium rounded-lg hover:bg-yellow-600 transition-colors disabled:bg-gray-300"
                                             >
-                                                {t('findWinner')}
+                                                {raffleState.automaticDraw ? t('automaticDraw') : t('findWinner')}
                                             </Button>
                                          </div>
                                      </div>
@@ -2286,4 +2296,5 @@ export default App;
     
 
     
+
 
