@@ -2260,8 +2260,8 @@ const App = () => {
                                     height={200}
                                 />
                                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                     <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-md">
-                                        <Image src="/icon.svg" alt="Rifa Express Logo" width={32} height={32} />
+                                     <div className="flex h-16 w-32 items-center justify-center rounded-lg bg-white/90 shadow-md backdrop-blur-sm">
+                                        <span className="font-bold text-lg text-gray-800 tracking-tighter">REFA<span className="text-yellow-500 text-2xl">⚡</span> EXPRESS</span>
                                      </div>
                                  </div>
                             </div>
