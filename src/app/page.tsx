@@ -903,10 +903,16 @@ const App = () => {
     };
 
     const handlePriceButtonClick = async (mode: RaffleMode) => {
+        let paymentLink = '';
         if (mode === 'two-digit') {
-            const paymentLink = 'https://checkout.nequi.wompi.co/l/GWZUpk';
+            paymentLink = 'https://checkout.nequi.wompi.co/l/GWZUpk';
+        } else if (mode === 'three-digit') {
+            paymentLink = 'https://checkout.nequi.wompi.co/l/9wH9fR';
+        }
+
+        if (paymentLink) {
             const redirectUrl = `${window.location.origin}${window.location.pathname}`;
-            const activationRef = `ACTIVATE_two-digit_CO_${Date.now()}`;
+            const activationRef = `ACTIVATE_${mode}_CO_${Date.now()}`;
             const finalUrl = `${paymentLink}?redirect-url=${encodeURIComponent(redirectUrl)}&reference=${activationRef}`;
             window.location.href = finalUrl;
         } else {
