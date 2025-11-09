@@ -1,3 +1,4 @@
+
 {
     "loading": "Cargando",
     "adminMessage": "Eres el administrador de este juego",
@@ -37,6 +38,7 @@
     "specifyLottery": "Especificar Lotería",
     "lotteryNamePlaceholder": "Nombre de la lotería",
     "nequiAccount": "Cuenta Nequi",
+    "daviplataAccount": "Cuenta DaviPlata",
     "paymentLink": "Link de Pagos",
     "confirmPrizeDetails": "Confirmar Detalles del Premio",
     "draw": "Sorteo",
@@ -93,6 +95,8 @@
     "adminControls": "Controles de Administrador",
     "enableNequiPayment": "Habilitar Pago con Nequi",
     "enableNequiPaymentDescription": "Permite a los usuarios pagar usando el botón de Nequi.",
+    "enableDaviPlataPayment": "Habilitar Pago con DaviPlata",
+    "enableDaviPlataPaymentDescription": "Permite a los usuarios pagar usando el botón de DaviPlata.",
     "enablePaymentLink": "Habilitar Pago con Link",
     "enablePaymentLinkDescription": "Permite a los usuarios pagar usando el link de pagos.",
     "fullName": "Nombre completo",
@@ -101,7 +105,7 @@
     "infiniteDigits": "{count} cifras",
     "raffleNumberPlaceholder": "Ej: {example}",
     "payWithNequi": "Pagar con Nequi",
-    "payWithLink": "Pagar con Link",
+    "payWithDaviPlata": "Pagar con DaviPlata",
     "registerAndConfirmPayment": "Registrar y Confirmar Pago",
     "notice": "Aviso",
     "activateRaffleWarning": "Debes activar o buscar una rifa y confirmar los detalles del premio en la pestaña 'Tablero' para poder participar.",
@@ -175,6 +179,7 @@
     "infiniteModeDigitsWarning": "El número para esta modalidad debe ser de {count} cifras",
     "numberLengthWarning": "El número para esta modalidad debe ser de {count} cifras",
     "nequiPaymentPendingNotification": "¡Número {number} registrado para {name}! Tu pago está pendiente de confirmación por el administrador.",
+    "daviplataPaymentPendingNotification": "¡Número {number} registrado para {name}! Tu pago está pendiente de confirmación por el administrador.",
     "participantRegisteredNotification": "¡Participante {name} ({number}) registrado y confirmado!",
     "ticketDownloaded": "Tiquete PDF descargado",
     "shareTicketMessage": "¡Hola! Aquí tienes tu tiquete para la rifa \"{prize}\". ¡Mucha suerte!",
@@ -209,3 +214,5 @@
     "partialWinnersTitle": "Ganadores Parciales",
     "partialWinnersSubtitle": "Ganadores con las últimas {count} cifras - Premio: {prize}"
 }
+
+    

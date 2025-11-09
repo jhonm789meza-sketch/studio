@@ -41,6 +41,8 @@ const initialRaffleData: Raffle = {
     raffleNumber: '',
     nequiAccountNumber: '',
     isNequiEnabled: true,
+    daviplataAccountNumber: '',
+    isDaviPlataEnabled: false,
     isPaymentLinkEnabled: true,
     paymentLink: '',
     gameDate: '',
@@ -292,10 +294,16 @@ const App = () => {
           const pName = urlParams.get('pName');
           const pPhone = urlParams.get('pPhone');
           const pNum = urlParams.get('pNum');
+          const participantId = urlParams.get('participantId');
     
           if (refFromUrl) {
             if (statusFromUrl === 'APPROVED') {
-              if (pName && pPhone && pNum) {
+              if (participantId) {
+                 const confirmedParticipant = await confirmParticipantPayment(refFromUrl, participantId);
+                 if (confirmedParticipant) {
+                   showNotification(t('successfulPaymentNotification'), 'success');
+                 }
+              } else if (pName && pPhone && pNum) {
                 const registeredParticipant = await confirmParticipantPayment(refFromUrl, '', {
                   name: pName,
                   phoneNumber: pPhone,
@@ -506,8 +514,8 @@ const App = () => {
         );
     };
 
-    const handleRegisterParticipant = async (isNequiPayment = false, confirmPayment = false) => {
-        if (!raffleState.raffleRef) return false;
+    const handleRegisterParticipant = async (isNequiPayment = false, confirmPayment = false, isDaviPlataPayment = false): Promise<number | null> => {
+        if (!raffleState.raffleRef) return null;
     
         const name = raffleState.name?.trim();
         const phoneNumber = raffleState.phoneNumber?.trim();
@@ -516,15 +524,15 @@ const App = () => {
     
         if (!name) {
             showNotification(t('enterNameWarning'), 'warning');
-            return false;
+            return null;
         }
         if (!phoneNumber) {
             showNotification(t('enterPhoneWarning'), 'warning');
-            return false;
+            return null;
         }
         if (!raffleNumber) {
             showNotification(t('enterRaffleNumberWarning'), 'warning');
-            return false;
+            return null;
         }
     
         const num = parseInt(raffleNumber, 10);
@@ -532,20 +540,20 @@ const App = () => {
         if (raffleMode === 'infinite') {
             if (infiniteDigits < 4) {
                  showNotification(t('min4Digits'), 'warning');
-                 return false;
+                 return null;
             }
             if (raffleNumber.length !== infiniteDigits) {
                 showNotification(t('infiniteModeDigitsWarning', { count: infiniteDigits }), 'warning');
-                return false;
+                return null;
             }
         } else if (raffleNumber.length !== numberLength) {
              showNotification(t('numberLengthWarning', { count: numberLength }), 'warning');
-             return false;
+             return null;
         }
     
         if (allAssignedNumbers.has(num)) {
             showNotification(t('numberAlreadyAssignedWarning'), 'warning');
-            return false;
+            return null;
         }
     
         const participantName = name;
@@ -577,6 +585,8 @@ const App = () => {
         
         if (isNequiPayment && !confirmPayment) {
             showNotification(t('nequiPaymentPendingNotification', { number: formattedRaffleNumber, name: participantName }), 'success');
+        } else if (isDaviPlataPayment && !confirmPayment) {
+            showNotification(t('daviplataPaymentPendingNotification', { number: formattedRaffleNumber, name: participantName }), 'success');
         } else if (confirmPayment) {
             showNotification(t('participantRegisteredNotification', { name: participantName, number: formattedRaffleNumber }), 'success');
              if (raffleState.prize) {
@@ -598,7 +608,7 @@ const App = () => {
             handleTabClick('board');
         }
 
-        return true;
+        return participantId;
     };
 
     const handleConfirmPayment = async (participantId: number) => {
@@ -1219,6 +1229,24 @@ const App = () => {
                                     />
                                 </div>
                             </div>
+                             <div>
+                                <Label htmlFor="daviplata-account-input">{t('daviplataAccount')}:</Label>
+                                <div className="relative mt-1">
+                                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                                        <span className="text-gray-500 sm:text-sm">+57</span>
+                                    </div>
+                                    <Input
+                                        id="daviplata-account-input"
+                                        type="tel"
+                                        value={raffleState.daviplataAccountNumber}
+                                        onChange={(e) => handleLocalFieldChange('daviplataAccountNumber', e.target.value.replace(/\D/g, ''))}
+                                        onBlur={(e) => handleFieldChange('daviplataAccountNumber', e.target.value.replace(/\D/g, ''))}
+                                        placeholder="3001234567"
+                                        disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
+                                        className="w-full pl-12 mt-1"
+                                    />
+                                </div>
+                            </div>
                             <div>
                                <Label htmlFor="payment-link-input">{t('paymentLink')}:</Label>
                                <Input
@@ -1692,6 +1720,20 @@ const App = () => {
                                                     />
                                                 </div>
                                                 <div className="flex items-center justify-between">
+                                                    <Label htmlFor="enable-daviplata" className="flex flex-col space-y-1">
+                                                        <span>{t('enableDaviPlataPayment')}</span>
+                                                        <span className="font-normal leading-snug text-muted-foreground text-sm">
+                                                            {t('enableDaviPlataPaymentDescription')}
+                                                        </span>
+                                                    </Label>
+                                                    <Switch
+                                                        id="enable-daviplata"
+                                                        checked={raffleState.isDaviPlataEnabled}
+                                                        onCheckedChange={(checked) => handlePaymentMethodToggle('isDaviPlataEnabled', checked)}
+                                                        disabled={!raffleState.daviplataAccountNumber}
+                                                    />
+                                                </div>
+                                                <div className="flex items-center justify-between">
                                                     <Label htmlFor="enable-payment-link" className="flex flex-col space-y-1">
                                                         <span>{t('enablePaymentLink')}</span>
                                                         <span className="font-normal leading-snug text-muted-foreground text-sm">
@@ -1776,16 +1818,51 @@ const App = () => {
                                                             </Button>
                                                         </a>
                                                     )}
-                                                    {raffleState.isPaymentLinkEnabled && raffleState.paymentLink && (
+                                                    {raffleState.isDaviPlataEnabled && raffleState.daviplataAccountNumber && raffleState.value && (
                                                         <a
-                                                            href={`${raffleState.paymentLink}${raffleState.paymentLink.includes('?') ? '&' : '?'}pName=${encodeURIComponent(raffleState.name || '')}&pPhone=${encodeURIComponent(raffleState.phoneNumber || '')}&pNum=${encodeURIComponent(raffleState.raffleNumber || '')}`}
+                                                            href={`daviplata://app/pagos?valor=${String(raffleState.value).replace(/\D/g, '')}&numeroIdentificacion=${raffleState.daviplataAccountNumber}&tipoDocumento=CC&descripcion=Pago Rifa`}
                                                             target="_blank"
                                                             rel="noopener noreferrer"
                                                             className="flex-1"
-                                                            onClick={(e) => {
+                                                            onClick={async (e) => {
+                                                                if (!isRegisterFormValidForSubmit) {
+                                                                    e.preventDefault();
+                                                                    handleRegisterParticipant(); // Show validation errors
+                                                                } else {
+                                                                    const success = await handleRegisterParticipant(false, false, true);
+                                                                    if (!success) e.preventDefault();
+                                                                }
+                                                            }}
+                                                        >
+                                                            <Button className="w-full bg-red-600 hover:bg-red-700 text-white" disabled={!isRegisterFormValidForSubmit}>
+                                                                <span className="font-bold">D</span>
+                                                                <span className="ml-2">{t('payWithDaviPlata')}</span>
+                                                            </Button>
+                                                        </a>
+                                                    )}
+                                                    {raffleState.isPaymentLinkEnabled && raffleState.paymentLink && (
+                                                        <a
+                                                            href={raffleState.paymentLink}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="flex-1"
+                                                            onClick={async (e) => {
                                                                 if (!isRegisterFormValidForSubmit) {
                                                                     e.preventDefault();
                                                                     handleRegisterParticipant(); // show validation
+                                                                    return;
+                                                                }
+                                                                
+                                                                e.preventDefault(); // Prevent immediate navigation
+                                                                
+                                                                // Register participant as pending first
+                                                                const participantId = await handleRegisterParticipant(false, false);
+                                                                
+                                                                if (participantId) {
+                                                                    // Construct URL and navigate
+                                                                    const url = new URL(raffleState.paymentLink);
+                                                                    url.searchParams.set('participantId', String(participantId));
+                                                                    window.open(url.toString(), '_blank');
                                                                 }
                                                             }}
                                                         >
@@ -2284,5 +2361,7 @@ const App = () => {
 };
 
 export default App;
+
+    
 
     

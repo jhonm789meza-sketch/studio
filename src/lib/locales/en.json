@@ -1,3 +1,4 @@
+
 {
     "loading": "Loading",
     "adminMessage": "You are the administrator of this game",
@@ -37,6 +38,7 @@
     "specifyLottery": "Specify Lottery",
     "lotteryNamePlaceholder": "Name of the lottery",
     "nequiAccount": "Nequi Account",
+    "daviplataAccount": "DaviPlata Account",
     "paymentLink": "Payment Link",
     "confirmPrizeDetails": "Confirm Prize Details",
     "draw": "Draw",
@@ -93,6 +95,8 @@
     "adminControls": "Admin Controls",
     "enableNequiPayment": "Enable Nequi Payment",
     "enableNequiPaymentDescription": "Allows users to pay using the Nequi button.",
+    "enableDaviPlataPayment": "Enable DaviPlata Payment",
+    "enableDaviPlataPaymentDescription": "Allows users to pay using the DaviPlata button.",
     "enablePaymentLink": "Enable Payment Link",
     "enablePaymentLinkDescription": "Allows users to pay using the payment link.",
     "fullName": "Full Name",
@@ -101,7 +105,7 @@
     "infiniteDigits": "{count} digits",
     "raffleNumberPlaceholder": "Ex: {example}",
     "payWithNequi": "Pay with Nequi",
-    "payWithLink": "Pay with Link",
+    "payWithDaviPlata": "Pay with DaviPlata",
     "registerAndConfirmPayment": "Register and Confirm Payment",
     "notice": "Notice",
     "activateRaffleWarning": "You must activate or search for a raffle and confirm the prize details on the 'Board' tab to participate.",
@@ -175,6 +179,7 @@
     "infiniteModeDigitsWarning": "The number for this mode must be {count} digits",
     "numberLengthWarning": "The number for this mode must be {count} digits",
     "nequiPaymentPendingNotification": "Number {number} registered for {name}! Your payment is pending confirmation by the administrator.",
+    "daviplataPaymentPendingNotification": "Number {number} registered for {name}! Your payment is pending confirmation by the administrator.",
     "participantRegisteredNotification": "Participant {name} ({number}) registered and confirmed!",
     "ticketDownloaded": "PDF Ticket downloaded",
     "shareTicketMessage": "Hi! Here is your ticket for the \"{prize}\" raffle. Good luck!",
@@ -209,3 +214,5 @@
     "partialWinnersTitle": "Partial Winners",
     "partialWinnersSubtitle": "Winners with last {count} digits - Prize: {prize}"
 }
+
+    
