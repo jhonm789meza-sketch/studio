@@ -908,6 +908,8 @@ const App = () => {
             paymentLink = 'https://checkout.nequi.wompi.co/l/GWZUpk';
         } else if (mode === 'three-digit') {
             paymentLink = 'https://checkout.nequi.wompi.co/l/9wH9fR';
+        } else if (mode === 'infinite') {
+            paymentLink = 'https://checkout.nequi.wompi.co/l/lwSfQT';
         }
 
         if (paymentLink) {
