@@ -1846,7 +1846,7 @@ const App = () => {
                                                             target="_blank"
                                                             rel="noopener noreferrer"
                                                             className="flex-1"
-                                                            onClick={async (e) => {
+                                                            onClick={(e) => {
                                                                 if (!isRegisterFormValidForSubmit) {
                                                                     e.preventDefault();
                                                                     handleRegisterParticipant(); // show validation
@@ -1855,15 +1855,11 @@ const App = () => {
                                                                 
                                                                 e.preventDefault(); // Prevent immediate navigation
                                                                 
-                                                                // Register participant as pending first
-                                                                const participantId = await handleRegisterParticipant(false, false);
-                                                                
-                                                                if (participantId) {
-                                                                    // Construct URL and navigate
-                                                                    const url = new URL(raffleState.paymentLink);
-                                                                    url.searchParams.set('participantId', String(participantId));
-                                                                    window.open(url.toString(), '_blank');
-                                                                }
+                                                                const url = new URL(raffleState.paymentLink);
+                                                                url.searchParams.set('pName', raffleState.name || '');
+                                                                url.searchParams.set('pPhone', raffleState.phoneNumber || '');
+                                                                url.searchParams.set('pNum', raffleState.raffleNumber || '');
+                                                                window.open(url.toString(), '_blank');
                                                             }}
                                                         >
                                                             <Button className="w-full bg-blue-500 hover:bg-blue-600 text-white" disabled={!isRegisterFormValidForSubmit}>
@@ -2361,6 +2357,8 @@ const App = () => {
 };
 
 export default App;
+
+    
 
     
 
