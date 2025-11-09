@@ -22,8 +22,6 @@ export interface Raffle {
     raffleNumber: string;
     nequiAccountNumber: string;
     isNequiEnabled: boolean;
-    daviplataAccountNumber: string;
-    isDaviPlataEnabled: boolean;
     isPaymentLinkEnabled: boolean;
     paymentLink: string;
     gameDate: string;

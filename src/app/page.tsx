@@ -40,8 +40,6 @@ const initialRaffleData: Raffle = {
     raffleNumber: '',
     nequiAccountNumber: '',
     isNequiEnabled: true,
-    daviplataAccountNumber: '',
-    isDaviPlataEnabled: false,
     isPaymentLinkEnabled: true,
     paymentLink: '',
     gameDate: '',
@@ -538,7 +536,7 @@ const App = () => {
         );
     };
 
-    const handleRegisterParticipant = async (isNequiPayment = false, confirmPayment = false, isDaviPlataPayment = false): Promise<number | null> => {
+    const handleRegisterParticipant = async (isNequiPayment = false, confirmPayment = false): Promise<number | null> => {
         if (!raffleState.raffleRef) return null;
     
         const name = raffleState.name?.trim();
@@ -609,8 +607,6 @@ const App = () => {
         
         if (isNequiPayment && !confirmPayment) {
             showNotification(t('nequiPaymentPendingNotification', { number: formattedRaffleNumber, name: participantName }), 'success');
-        } else if (isDaviPlataPayment && !confirmPayment) {
-            showNotification(t('daviplataPaymentPendingNotification', { number: formattedRaffleNumber, name: participantName }), 'success');
         } else if (confirmPayment) {
             showNotification(t('participantRegisteredNotification', { name: participantName, number: formattedRaffleNumber }), 'success');
              if (raffleState.prize) {
@@ -1269,24 +1265,6 @@ const App = () => {
                                     />
                                 </div>
                             </div>
-                             <div>
-                                <Label htmlFor="daviplata-account-input">{t('daviplataAccount')}:</Label>
-                                <div className="relative mt-1">
-                                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                        <span className="text-gray-500 sm:text-sm">+57</span>
-                                    </div>
-                                    <Input
-                                        id="daviplata-account-input"
-                                        type="tel"
-                                        value={raffleState.daviplataAccountNumber}
-                                        onChange={(e) => handleLocalFieldChange('daviplataAccountNumber', e.target.value.replace(/\D/g, ''))}
-                                        onBlur={(e) => handleFieldChange('daviplataAccountNumber', e.target.value.replace(/\D/g, ''))}
-                                        placeholder="3001234567"
-                                        disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
-                                        className="w-full pl-12 mt-1"
-                                    />
-                                </div>
-                            </div>
                             <div>
                                <Label htmlFor="payment-link-input">{t('paymentLink')}:</Label>
                                <Input
@@ -1760,20 +1738,6 @@ const App = () => {
                                                     />
                                                 </div>
                                                 <div className="flex items-center justify-between">
-                                                    <Label htmlFor="enable-daviplata" className="flex flex-col space-y-1">
-                                                        <span>{t('enableDaviPlataPayment')}</span>
-                                                        <span className="font-normal leading-snug text-muted-foreground text-sm">
-                                                            {t('enableDaviPlataPaymentDescription')}
-                                                        </span>
-                                                    </Label>
-                                                    <Switch
-                                                        id="enable-daviplata"
-                                                        checked={raffleState.isDaviPlataEnabled}
-                                                        onCheckedChange={(checked) => handlePaymentMethodToggle('isDaviPlataEnabled', checked)}
-                                                        disabled={!raffleState.daviplataAccountNumber}
-                                                    />
-                                                </div>
-                                                <div className="flex items-center justify-between">
                                                     <Label htmlFor="enable-payment-link" className="flex flex-col space-y-1">
                                                         <span>{t('enablePaymentLink')}</span>
                                                         <span className="font-normal leading-snug text-muted-foreground text-sm">
@@ -1855,28 +1819,6 @@ const App = () => {
                                                             <Button className="w-full bg-[#A454C4] hover:bg-[#8e49a8] text-white" disabled={!isRegisterFormValidForSubmit}>
                                                                 <NequiIcon />
                                                                 <span className="ml-2">{t('payWithNequi')}</span>
-                                                            </Button>
-                                                        </a>
-                                                    )}
-                                                    {raffleState.isDaviPlataEnabled && raffleState.daviplataAccountNumber && raffleState.value && (
-                                                        <a
-                                                            href={`daviplata://app/pagos?valor=${String(raffleState.value).replace(/\D/g, '')}&numeroIdentificacion=${raffleState.daviplataAccountNumber}&tipoDocumento=CC&descripcion=Pago Rifa`}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className="flex-1"
-                                                            onClick={async (e) => {
-                                                                if (!isRegisterFormValidForSubmit) {
-                                                                    e.preventDefault();
-                                                                    handleRegisterParticipant(); // Show validation errors
-                                                                } else {
-                                                                    const success = await handleRegisterParticipant(false, false, true);
-                                                                    if (!success) e.preventDefault();
-                                                                }
-                                                            }}
-                                                        >
-                                                            <Button className="w-full bg-red-600 hover:bg-red-700 text-white" disabled={!isRegisterFormValidForSubmit}>
-                                                                <span className="font-bold">D</span>
-                                                                <span className="ml-2">{t('payWithDaviPlata')}</span>
                                                             </Button>
                                                         </a>
                                                     )}
