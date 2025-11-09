@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect, useRef, useTransition } from 'react';
 import jsPDF from 'jspdf';
@@ -210,13 +209,25 @@ const App = () => {
             showNotification(t('paymentConfirmationError'), 'error');
             return null;
         } finally {
-            if (window.location.search.includes('status=APPROVED')) {
+            if (window.location.search.includes('status=APPROVED') || window.location.search.includes('transactionState=APPROVED')) {
                 const url = new URL(window.location.href);
                 url.searchParams.delete('status');
                 url.searchParams.delete('participantId');
                 url.searchParams.delete('pName');
                 url.searchParams.delete('pPhone');
                 url.searchParams.delete('pNum');
+                url.searchParams.delete('transactionState');
+                url.searchParams.delete('ref_payco');
+                url.searchParams.delete('signature');
+                url.searchParams.delete('transactionId');
+                url.searchParams.delete('amount');
+                url.searchParams.delete('currency');
+                // wompi params
+                url.searchParams.delete('id')
+                url.searchParams.delete('reference')
+                url.searchParams.delete('state')
+                url.searchParams.delete('env')
+                
                 window.history.replaceState({}, '', url.toString());
     
                 if (raffleRef) {
@@ -290,6 +301,19 @@ const App = () => {
           const urlParams = new URLSearchParams(window.location.search);
           const refFromUrl = urlParams.get('ref');
           const statusFromUrl = urlParams.get('status');
+
+          // Wompi params
+          const wompiState = urlParams.get('state');
+          const wompiReference = urlParams.get('reference');
+
+          // Board activation
+          if (wompiState === 'APPROVED' && wompiReference && wompiReference.startsWith('ACTIVATE_')) {
+              const parts = wompiReference.split('_');
+              const mode = parts[1] as RaffleMode;
+              const country = parts[2];
+              await handleActivateBoard(mode, country);
+              return;
+          }
     
           const pName = urlParams.get('pName');
           const pPhone = urlParams.get('pPhone');
@@ -878,9 +902,17 @@ const App = () => {
         await setDoc(doc(db, "raffles", raffleState.raffleRef), { [field]: value }, { merge: true });
     };
 
-    const handlePriceButtonClick = (mode: RaffleMode) => {
-        setSelectedRaffleMode(mode);
-        setIsCountrySelectionOpen(true);
+    const handlePriceButtonClick = async (mode: RaffleMode) => {
+        if (mode === 'two-digit') {
+            const paymentLink = 'https://checkout.nequi.wompi.co/l/GWZUpk';
+            const redirectUrl = `${window.location.origin}${window.location.pathname}`;
+            const activationRef = `ACTIVATE_two-digit_CO_${Date.now()}`;
+            const finalUrl = `${paymentLink}?redirect-url=${encodeURIComponent(redirectUrl)}&reference=${activationRef}`;
+            window.location.href = finalUrl;
+        } else {
+            setSelectedRaffleMode(mode);
+            setIsCountrySelectionOpen(true);
+        }
     };
 
     const handleActivateBoard = async (mode: RaffleMode, countryCode: string) => {
@@ -1561,7 +1593,7 @@ const App = () => {
                             </DropdownMenu>
                         </div>
                         <div className="text-center">
-                            <h1 className="text-4xl font-bold">RIFA EXPRESS</h1>
+                            <h1 className="text-4xl font-bold">REFA⚡ EXPRESS</h1>
                         </div>
                         <div className="w-10">
                             {/* Placeholder for symmetry */}
@@ -1846,7 +1878,7 @@ const App = () => {
                                                             target="_blank"
                                                             rel="noopener noreferrer"
                                                             className="flex-1"
-                                                            onClick={(e) => {
+                                                            onClick={async (e) => {
                                                                 if (!isRegisterFormValidForSubmit) {
                                                                     e.preventDefault();
                                                                     handleRegisterParticipant(); // show validation
@@ -1855,11 +1887,17 @@ const App = () => {
                                                                 
                                                                 e.preventDefault(); // Prevent immediate navigation
                                                                 
-                                                                const url = new URL(raffleState.paymentLink);
-                                                                url.searchParams.set('pName', raffleState.name || '');
-                                                                url.searchParams.set('pPhone', raffleState.phoneNumber || '');
-                                                                url.searchParams.set('pNum', raffleState.raffleNumber || '');
-                                                                window.open(url.toString(), '_blank');
+                                                                const participantId = await handleRegisterParticipant();
+
+                                                                if (participantId) {
+                                                                    const url = new URL(raffleState.paymentLink);
+                                                                    // Pass info for confirmation
+                                                                    url.searchParams.set('participantId', String(participantId));
+                                                                    url.searchParams.set('pName', raffleState.name || '');
+                                                                    url.searchParams.set('pPhone', raffleState.phoneNumber || '');
+                                                                    url.searchParams.set('pNum', raffleState.raffleNumber || '');
+                                                                    window.open(url.toString(), '_blank');
+                                                                }
                                                             }}
                                                         >
                                                             <Button className="w-full bg-blue-500 hover:bg-blue-600 text-white" disabled={!isRegisterFormValidForSubmit}>

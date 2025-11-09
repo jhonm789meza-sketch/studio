@@ -62,7 +62,7 @@ const getPriceForCountry = (raffleMode: RaffleMode | null, countryCode: string):
     }
 
     if (countryCode === 'CO') {
-        if (raffleMode === 'two-digit') return '12,000 COP';
+        if (raffleMode === 'two-digit') return null; // Price handled by payment link
         if (raffleMode === 'three-digit') return '15,000 COP';
         if (raffleMode === 'infinite') return '30,000 COP';
     }
@@ -84,6 +84,7 @@ export function CountrySelectionDialog({ isOpen, onClose, onSelectCountry, raffl
           <div className="space-y-2">
             {countries.map((country) => {
               const price = getPriceForCountry(raffleMode, country.code);
+              if (!price) return null; // Don't show if no price is configured
               return (
                 <Button
                   key={country.code}
