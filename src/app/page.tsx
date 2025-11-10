@@ -1830,7 +1830,7 @@ const App = () => {
                                                                 
                                                                 e.preventDefault(); // Prevent immediate navigation
                                                                 
-                                                                const participantId = await handleRegisterParticipant();
+                                                                const participantId = await handleRegisterParticipant(false, false);
 
                                                                 if (participantId) {
                                                                     const url = new URL(raffleState.paymentLink);
@@ -2097,7 +2097,7 @@ const App = () => {
                                 </div>
                                 <div className="relative z-10">
                                     <div className="text-center mb-4">
-                                        <h3 className="text-xl font-bold">RIFA EXPRESS</h3>
+                                        <h3 className="text-xl font-bold">REFA⚡ EXPRESS</h3>
                                         <p>{t('reference')}: {ticketInfo.raffleRef}</p>
                                         <p className="font-semibold">{t('purchaseReceipt')}</p>
                                     </div>
