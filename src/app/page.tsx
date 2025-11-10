@@ -919,7 +919,7 @@ const App = () => {
         let price = '0';
         const currencySymbol = getCurrencySymbol(countryCode);
         
-        const isUSDCountry = ['AR', 'PE', 'EC', 'MX', 'DO', 'CR', 'UY', 'PR', 'VE', 'US', 'SV', 'GT', 'HN', 'NI', 'PA', 'CL'].includes(countryCode);
+        const isUSDCountry = [].includes(countryCode);
 
         if (countryCode === 'CO') {
             if (mode === 'two-digit') price = '12000';
@@ -1824,23 +1824,27 @@ const App = () => {
                                                             onClick={async (e) => {
                                                                 if (!isRegisterFormValidForSubmit) {
                                                                     e.preventDefault();
-                                                                    handleRegisterParticipant(); // show validation
+                                                                    handleRegisterParticipant(); // show validation to fill form
                                                                     return;
                                                                 }
                                                                 
                                                                 e.preventDefault(); // Prevent immediate navigation
                                                                 
-                                                                const participantId = await handleRegisterParticipant(false, false);
-
-                                                                if (participantId) {
-                                                                    const url = new URL(raffleState.paymentLink);
-                                                                    // Pass info for confirmation
-                                                                    url.searchParams.set('participantId', String(participantId));
-                                                                    url.searchParams.set('pName', raffleState.name || '');
-                                                                    url.searchParams.set('pPhone', raffleState.phoneNumber || '');
-                                                                    url.searchParams.set('pNum', raffleState.raffleNumber || '');
-                                                                    window.open(url.toString(), '_blank');
-                                                                }
+                                                                const url = new URL(raffleState.paymentLink);
+                                                                // Pass info for confirmation after payment
+                                                                url.searchParams.set('pName', raffleState.name || '');
+                                                                url.searchParams.set('pPhone', raffleState.phoneNumber || '');
+                                                                url.searchParams.set('pNum', raffleState.raffleNumber || '');
+                                                                window.open(url.toString(), '_blank');
+                                                                
+                                                                // Clear form after opening link
+                                                                setRaffleState(prevState => ({
+                                                                    ...prevState,
+                                                                    name: '',
+                                                                    phoneNumber: '',
+                                                                    raffleNumber: '',
+                                                                }));
+                                                                handleTabClick('board');
                                                             }}
                                                         >
                                                             <Button className="w-full bg-blue-500 hover:bg-blue-600 text-white" disabled={!isRegisterFormValidForSubmit}>
@@ -2344,3 +2348,4 @@ export default App;
     
 
     
+
