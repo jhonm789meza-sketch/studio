@@ -156,7 +156,7 @@
     "generateTicketPrizeWarning": "El premio debe estar definido para generar un tiquete.",
     "paymentConfirmedNotification": "Pago para {name} ({number}) confirmado.",
     "paymentConfirmationError": "Error al confirmar el pago del participante.",
-    "successfulPaymentNotification": "¡Pago exitoso! Tu número ha sido registrado. Puedes generar tu tiquete en la pestaña 'Participantes'.",
+    "successfulPaymentNotification": "¡Pago exitoso y número registrado!",
     "paymentActivationConfirmed": "Activación confirmada por pago.",
     "installAppInfo": "La aplicación no se puede instalar en este navegador o ya está instalada.",
     "numberAlreadyAssignedWarning": "Este número ya ha sido asignado.",

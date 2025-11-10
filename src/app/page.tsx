@@ -298,7 +298,7 @@ const App = () => {
     
           const urlParams = new URLSearchParams(window.location.search);
           const refFromUrl = urlParams.get('ref');
-          const statusFromUrl = urlParams.get('status');
+          const statusFromUrl = urlParams.get('status') || urlParams.get('transactionState');
 
           // Wompi params
           const wompiState = urlParams.get('state');
@@ -321,22 +321,15 @@ const App = () => {
           if (refFromUrl) {
             if (statusFromUrl === 'APPROVED') {
               if (participantId) {
-                 const confirmedParticipant = await confirmParticipantPayment(refFromUrl, participantId);
-                 if (confirmedParticipant) {
-                   showNotification(t('successfulPaymentNotification'), 'success');
-                 }
+                 await confirmParticipantPayment(refFromUrl, participantId);
               } else if (pName && pPhone && pNum) {
-                const registeredParticipant = await confirmParticipantPayment(refFromUrl, '', {
+                await confirmParticipantPayment(refFromUrl, '', {
                   name: pName,
                   phoneNumber: pPhone,
                   raffleNumber: pNum,
                 });
-                if (registeredParticipant) {
-                  showNotification(t('successfulPaymentNotification'), 'success');
-                }
-              } else {
-                showNotification(t('paymentActivationConfirmed'), 'info');
               }
+              showNotification(t('successfulPaymentNotification'), 'success');
             }
             await handleAdminSearch({ refToSearch: refFromUrl, isInitialLoad: true });
           } else {

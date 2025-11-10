@@ -156,7 +156,7 @@
     "generateTicketPrizeWarning": "The prize must be defined to generate a ticket.",
     "paymentConfirmedNotification": "Payment for {name} ({number}) confirmed.",
     "paymentConfirmationError": "Error confirming participant payment.",
-    "successfulPaymentNotification": "Successful payment! Your number has been registered. You can generate your ticket in the 'Participants' tab.",
+    "successfulPaymentNotification": "Successful payment and number registered!",
     "paymentActivationConfirmed": "Activation confirmed by payment.",
     "installAppInfo": "The app cannot be installed on this browser or is already installed.",
     "numberAlreadyAssignedWarning": "This number has already been assigned.",
