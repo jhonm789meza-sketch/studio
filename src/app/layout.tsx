@@ -16,10 +16,35 @@ const libreBaskerville = Libre_Baskerville({
 });
 
 
+const APP_URL = "https://rifaexpress.web.app";
+const APP_NAME = "REFA⚡ EXPRESS";
+const APP_DESCRIPTION = "La forma más fácil de gestionar tus rifas y sorteos online.";
+
 export const metadata: Metadata = {
-  title: 'REFA⚡ EXPRESS',
-  description: 'Aplicación de Rifas con Firebase',
+  title: APP_NAME,
+  description: APP_DESCRIPTION,
   manifest: '/manifest.json',
+  metadataBase: new URL(APP_URL),
+  openGraph: {
+    type: "website",
+    url: APP_URL,
+    title: APP_NAME,
+    description: APP_DESCRIPTION,
+    images: [
+      {
+        url: `${APP_URL}/icon-512x512.png`,
+        width: 512,
+        height: 512,
+        alt: APP_NAME,
+      },
+    ],
+  },
+  twitter: {
+    card: "summary",
+    title: APP_NAME,
+    description: APP_DESCRIPTION,
+    images: `${APP_URL}/icon-512x512.png`,
+  },
 };
 
 export default function RootLayout({
