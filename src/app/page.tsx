@@ -288,7 +288,7 @@ const App = () => {
           }
     
           if (typeof window !== 'undefined') {
-            setAppUrl(window.location.origin);
+            setAppUrl("https://rifaexpress.web.app");
           }
     
           const adminIdFromStorage = localStorage.getItem('rifaAdminId');
@@ -971,7 +971,7 @@ const App = () => {
     };
     
     const handleShareToWhatsApp = () => {
-        const urlToShare = "https://9000-firebase-studio-1755886670506.cluster-zhw3w37rxzgkutusbbhib6qhra.cloudworkstations.dev/";
+        const urlToShare = "https://rifaexpress.web.app/";
         const message = encodeURIComponent(t('shareRaffleMessage'));
         const whatsappUrl = `https://wa.me/?text=${message}${encodeURIComponent(urlToShare)}`;
         window.open(whatsappUrl, '_blank');
@@ -979,7 +979,7 @@ const App = () => {
     };
 
     const handleShareToFacebook = () => {
-        const urlToShare = "https://9000-firebase-studio-1755886670506.cluster-zhw3w37rxzgkutusbbhib6qhra.cloudworkstations.dev/";
+        const urlToShare = "https://rifaexpress.web.app/";
         const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(urlToShare)}`;
         window.open(facebookUrl, '_blank');
         setIsShareDialogOpen(false);
@@ -2348,5 +2348,7 @@ export default App;
     
 
     
+
+
 
 
