@@ -902,7 +902,7 @@ const App = () => {
         }
 
         if (paymentLink) {
-            const redirectUrl = `${window.location.origin}${window.location.pathname}`;
+            const redirectUrl = `https://rifaexpress.web.app/`;
             const activationRef = `ACTIVATE_${mode}_CO_${Date.now()}`;
             const finalUrl = `${paymentLink}?redirect-url=${encodeURIComponent(redirectUrl)}&reference=${activationRef}`;
             window.location.href = finalUrl;
@@ -971,7 +971,7 @@ const App = () => {
     };
     
     const handleShareToWhatsApp = () => {
-        const urlToShare = window.location.href;
+        const urlToShare = "https://9000-firebase-studio-1755886670506.cluster-zhw3w37rxzgkutusbbhib6qhra.cloudworkstations.dev/";
         const message = encodeURIComponent(t('shareRaffleMessage'));
         const whatsappUrl = `https://wa.me/?text=${message}${encodeURIComponent(urlToShare)}`;
         window.open(whatsappUrl, '_blank');
@@ -979,7 +979,7 @@ const App = () => {
     };
 
     const handleShareToFacebook = () => {
-        const urlToShare = window.location.href;
+        const urlToShare = "https://9000-firebase-studio-1755886670506.cluster-zhw3w37rxzgkutusbbhib6qhra.cloudworkstations.dev/";
         const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(urlToShare)}`;
         window.open(facebookUrl, '_blank');
         setIsShareDialogOpen(false);
@@ -2348,4 +2348,5 @@ export default App;
     
 
     
+
 
