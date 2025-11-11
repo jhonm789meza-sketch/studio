@@ -896,7 +896,7 @@ const App = () => {
         if (mode === 'two-digit') {
             paymentLink = 'https://checkout.nequi.wompi.co/l/GWZUpk';
         } else if (mode === 'three-digit') {
-            paymentLink = 'https://checkout.nequi.wompi.co/l/9wH9fR';
+            paymentLink = '';
         } else if (mode === 'infinite') {
             paymentLink = 'https://checkout.nequi.wompi.co/l/lwSfQT';
         }
@@ -2348,6 +2348,7 @@ export default App;
     
 
     
+
 
 
 
