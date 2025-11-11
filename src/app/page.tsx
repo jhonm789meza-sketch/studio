@@ -288,7 +288,7 @@ const App = () => {
           }
     
           if (typeof window !== 'undefined') {
-            setAppUrl("https://rifaexpress.web.app");
+            setAppUrl("https://rifaexpress-5b0ac.web.app");
           }
     
           const adminIdFromStorage = localStorage.getItem('rifaAdminId');
@@ -896,13 +896,13 @@ const App = () => {
         if (mode === 'two-digit') {
             paymentLink = 'https://checkout.nequi.wompi.co/l/GWZUpk';
         } else if (mode === 'three-digit') {
-            paymentLink = '';
+            paymentLink = 'https://checkout.nequi.wompi.co/l/9wH9fR';
         } else if (mode === 'infinite') {
             paymentLink = 'https://checkout.nequi.wompi.co/l/lwSfQT';
         }
 
         if (paymentLink) {
-            const redirectUrl = `https://rifaexpress.web.app/`;
+            const redirectUrl = `https://rifaexpress-5b0ac.web.app/`;
             const activationRef = `ACTIVATE_${mode}_CO_${Date.now()}`;
             const finalUrl = `${paymentLink}?redirect-url=${encodeURIComponent(redirectUrl)}&reference=${activationRef}`;
             window.location.href = finalUrl;
@@ -971,7 +971,7 @@ const App = () => {
     };
     
     const handleShareToWhatsApp = () => {
-        const urlToShare = "https://rifaexpress.web.app/";
+        const urlToShare = "https://rifaexpress-5b0ac.web.app/";
         const message = encodeURIComponent(t('shareRaffleMessage'));
         const whatsappUrl = `https://wa.me/?text=${message}${encodeURIComponent(urlToShare)}`;
         window.open(whatsappUrl, '_blank');
@@ -979,7 +979,7 @@ const App = () => {
     };
 
     const handleShareToFacebook = () => {
-        const urlToShare = "https://rifaexpress.web.app/";
+        const urlToShare = "https://rifaexpress-5b0ac.web.app/";
         const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(urlToShare)}`;
         window.open(facebookUrl, '_blank');
         setIsShareDialogOpen(false);
@@ -2348,6 +2348,7 @@ export default App;
     
 
     
+
 
 
 
