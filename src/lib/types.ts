@@ -6,7 +6,6 @@ export interface Participant {
     raffleNumber: string;
     timestamp: Date | any; // Allow for Firebase Timestamp
     paymentStatus: 'pending' | 'confirmed';
-    paymentReference?: string;
     isHouse?: boolean;
     raffleRef?: string;
 }
@@ -21,7 +20,6 @@ export interface Raffle {
     name: string;
     phoneNumber: string;
     raffleNumber: string;
-    paymentReference?: string;
     nequiAccountNumber: string;
     isNequiEnabled: boolean;
     isPaymentLinkEnabled: boolean;
