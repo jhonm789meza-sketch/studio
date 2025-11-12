@@ -166,6 +166,11 @@ const App = () => {
                 let participantToReturn: Participant | null = null;
     
                 if (participantData && participantData.raffleNumber) {
+                    const existingParticipant = raffleData.participants.find((p: Participant) => p.raffleNumber === participantData.raffleNumber);
+                    if(existingParticipant && existingParticipant.paymentStatus === 'confirmed') {
+                        return existingParticipant; // Already confirmed
+                    }
+
                     const newParticipant: Participant = {
                         id: Date.now(),
                         name: participantData.name,
@@ -296,15 +301,11 @@ const App = () => {
     
           const urlParams = new URLSearchParams(window.location.search);
           const refFromUrl = urlParams.get('ref');
-          const statusFromUrl = urlParams.get('status') || urlParams.get('transactionState');
-
-          // Wompi params
-          const wompiState = urlParams.get('state');
-          const wompiReference = urlParams.get('reference');
+          const statusFromUrl = urlParams.get('status') || urlParams.get('transactionState') || urlParams.get('state');
 
           // Board activation
-          if (wompiState === 'APPROVED' && wompiReference && wompiReference.startsWith('ACTIVATE_')) {
-              const parts = wompiReference.split('_');
+          if (statusFromUrl === 'APPROVED' && refFromUrl && refFromUrl.startsWith('ACTIVATE_')) {
+              const parts = refFromUrl.split('_');
               const mode = parts[1] as RaffleMode;
               const country = parts[2];
               await handleActivateBoard(mode, country);
@@ -318,14 +319,14 @@ const App = () => {
     
           if (refFromUrl) {
             if (statusFromUrl === 'APPROVED') {
-              if (participantId) {
-                 await confirmParticipantPayment(refFromUrl, participantId);
-              } else if (pName && pPhone && pNum) {
+              if (pName && pPhone && pNum) {
                 await confirmParticipantPayment(refFromUrl, '', {
                   name: pName,
                   phoneNumber: pPhone,
                   raffleNumber: pNum,
                 });
+              } else if (participantId) {
+                 await confirmParticipantPayment(refFromUrl, participantId);
               }
               showNotification(t('successfulPaymentNotification'), 'success');
             }
@@ -891,20 +892,19 @@ const App = () => {
 
     const handlePriceButtonClick = (mode: RaffleMode) => {
         let paymentLink = '';
-        const redirectUrl = window.location.origin;
+        const redirectUrl = `${window.location.origin}`;
         const activationRef = `ACTIVATE_${mode}_CO_${Date.now()}`;
 
         if (mode === 'two-digit') {
-            paymentLink = 'https://checkout.nequi.wompi.co/l/GWZUpk';
+            paymentLink = `https://checkout.wompi.co/l/GWZUpk?redirect-url=${encodeURIComponent(redirectUrl)}&reference=${activationRef}`;
         } else if (mode === 'three-digit') {
-            paymentLink = 'https://checkout.nequi.wompi.co/l/9wH9fR';
+            paymentLink = `https://checkout.wompi.co/l/9wH9fR?redirect-url=${encodeURIComponent(redirectUrl)}&reference=${activationRef}`;
         } else if (mode === 'infinite') {
-            paymentLink = 'https://checkout.nequi.wompi.co/l/lwSfQT';
+            paymentLink = `https://checkout.wompi.co/l/lwSfQT?redirect-url=${encodeURIComponent(redirectUrl)}&reference=${activationRef}`;
         }
 
         if (paymentLink) {
-            const finalUrl = `${paymentLink}?redirect-url=${encodeURIComponent(redirectUrl)}&reference=${activationRef}`;
-            window.location.href = finalUrl;
+            window.location.href = paymentLink;
         } else {
             setSelectedRaffleMode(mode);
             setIsCountrySelectionOpen(true);
@@ -971,15 +971,15 @@ const App = () => {
     };
     
     const handleShareToWhatsApp = () => {
-        const urlToShare = window.location.origin;
-        const message = encodeURIComponent(t('shareRaffleMessage'));
-        const whatsappUrl = `https://wa.me/?text=${message}${encodeURIComponent(urlToShare)}`;
+        const urlToShare = `${window.location.origin}?ref=${raffleState.raffleRef}`;
+        const message = encodeURIComponent(t('shareRaffleMessage', {prize: raffleState.prize}));
+        const whatsappUrl = `https://wa.me/?text=${message} ${encodeURIComponent(urlToShare)}`;
         window.open(whatsappUrl, '_blank');
         setIsShareDialogOpen(false);
     };
 
     const handleShareToFacebook = () => {
-        const urlToShare = window.location.origin;
+        const urlToShare = `${window.location.origin}?ref=${raffleState.raffleRef}`;
         const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(urlToShare)}`;
         window.open(facebookUrl, '_blank');
         setIsShareDialogOpen(false);
@@ -1818,42 +1818,26 @@ const App = () => {
                                                         </a>
                                                     )}
                                                     {raffleState.isPaymentLinkEnabled && raffleState.paymentLink && (
-                                                        <a
-                                                            href={raffleState.paymentLink}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className="flex-1"
-                                                            onClick={async (e) => {
-                                                                if (!isRegisterFormValidForSubmit) {
-                                                                    e.preventDefault();
-                                                                    handleRegisterParticipant(); // show validation to fill form
-                                                                    return;
-                                                                }
+                                                        <Button
+                                                            className="flex-1 w-full bg-blue-500 hover:bg-blue-600 text-white"
+                                                            disabled={!isRegisterFormValidForSubmit}
+                                                            onClick={() => {
+                                                                const url = new URL(raffleState.paymentLink!);
+                                                                const redirectUrlWithParams = new URL(window.location.origin);
+                                                                redirectUrlWithParams.searchParams.set('ref', raffleState.raffleRef);
+                                                                redirectUrlWithParams.searchParams.set('pName', raffleState.name || '');
+                                                                redirectUrlWithParams.searchParams.set('pPhone', raffleState.phoneNumber || '');
+                                                                redirectUrlWithParams.searchParams.set('pNum', raffleState.raffleNumber || '');
                                                                 
-                                                                e.preventDefault(); // Prevent immediate navigation
+                                                                // For Wompi compatibility
+                                                                url.searchParams.set('redirect-url', redirectUrlWithParams.href);
                                                                 
-                                                                const url = new URL(raffleState.paymentLink);
-                                                                // Pass info for confirmation after payment
-                                                                url.searchParams.set('pName', raffleState.name || '');
-                                                                url.searchParams.set('pPhone', raffleState.phoneNumber || '');
-                                                                url.searchParams.set('pNum', raffleState.raffleNumber || '');
                                                                 window.open(url.toString(), '_blank');
-                                                                
-                                                                // Clear form after opening link
-                                                                setRaffleState(prevState => ({
-                                                                    ...prevState,
-                                                                    name: '',
-                                                                    phoneNumber: '',
-                                                                    raffleNumber: '',
-                                                                }));
-                                                                handleTabClick('board');
                                                             }}
                                                         >
-                                                            <Button className="w-full bg-blue-500 hover:bg-blue-600 text-white" disabled={!isRegisterFormValidForSubmit}>
-                                                                <LinkIcon className="mr-2 h-4 w-4" />
-                                                                <span>{t('payWithLink')}</span>
-                                                            </Button>
-                                                        </a>
+                                                            <LinkIcon className="mr-2 h-4 w-4" />
+                                                            <span>{t('payWithLink')}</span>
+                                                        </Button>
                                                     )}
                                                      {isCurrentUserAdmin && (
                                                         <Button 
@@ -2312,7 +2296,7 @@ const App = () => {
                         <div className="flex justify-center items-center p-4">
                             <div className="relative inline-block p-4 bg-white rounded-lg shadow-md">
                                 <Image
-                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(appUrl)}&qzone=1&ecc=H`}
+                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`${appUrl}?ref=${raffleState.raffleRef}`)}&qzone=1&ecc=H`}
                                     alt={t('appQRCodeAlt')}
                                     width={200}
                                     height={200}

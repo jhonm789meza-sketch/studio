@@ -199,7 +199,7 @@
     "errorActivatingBoard": "Error activating the board.",
     "adminNumberNotSet": "The administrator's number is not configured.",
     "contactAdminMessage": "Hello, I am contacting you about the raffle.",
-    "shareRaffleMessage": "Participate in this incredible raffle!\\n",
+    "shareRaffleMessage": "Participate in this incredible raffle for: {prize}!\\n",
     "backToHome": "You have returned to the home screen.",
     "allowPartialWinners": "Allow partial winners",
     "allowPartialWinnersDescription": "Enable to award prizes for the last 2 and 3 digits.",
