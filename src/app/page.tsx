@@ -1867,7 +1867,7 @@ const App = () => {
                                                                 
                                                                 url.searchParams.set('redirect-url', cleanRedirectUrl.href);
                                                                 
-                                                                window.open(url.toString(), '_blank');
+                                                                window.location.href = url.toString();
                                                             }}
                                                         >
                                                             <LinkIcon className="mr-2 h-4 w-4" />
