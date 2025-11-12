@@ -368,7 +368,7 @@ const App = () => {
           }
     
           if (typeof window !== 'undefined') {
-            setAppUrl("https://rifaexpress-5b0ac.web.app");
+            setAppUrl(window.location.origin);
           }
     
           const adminIdFromStorage = localStorage.getItem('rifaAdminId');
@@ -983,21 +983,20 @@ const App = () => {
 
         if (method === 'qr') {
             setIsQrPaymentDialogOpen(true);
-             // We can assume QR is a manual payment, so we activate the board right away
-            handleActivateBoard(mode, 'CO');
         } else { // gateway
             let paymentLink = '';
+            const redirectUrl = window.location.origin;
+            const activationRef = `ACTIVATE_${mode}_CO_${Date.now()}`;
+
             if (mode === 'two-digit') {
                 paymentLink = 'https://checkout.nequi.wompi.co/l/GWZUpk';
             } else if (mode === 'three-digit') {
-                paymentLink = 'https://checkout.nequi.wompi.co/l/9wH9fR';
+                 paymentLink = 'https://checkout.nequi.wompi.co/l/9wH9fR';
             } else if (mode === 'infinite') {
                 paymentLink = 'https://checkout.nequi.wompi.co/l/lwSfQT';
             }
 
             if (paymentLink) {
-                const redirectUrl = `https://rifaexpress-5b0ac.web.app/`;
-                const activationRef = `ACTIVATE_${mode}_CO_${Date.now()}`;
                 const finalUrl = `${paymentLink}?redirect-url=${encodeURIComponent(redirectUrl)}&reference=${activationRef}`;
                 window.location.href = finalUrl;
             } else {
@@ -1066,7 +1065,7 @@ const App = () => {
     };
     
     const handleShareToWhatsApp = () => {
-        const urlToShare = "https://rifaexpress-5b0ac.web.app/";
+        const urlToShare = window.location.origin;
         const message = encodeURIComponent(t('shareRaffleMessage'));
         const whatsappUrl = `https://wa.me/?text=${message}${encodeURIComponent(urlToShare)}`;
         window.open(whatsappUrl, '_blank');
@@ -1074,7 +1073,7 @@ const App = () => {
     };
 
     const handleShareToFacebook = () => {
-        const urlToShare = "https://rifaexpress-5b0ac.web.app/";
+        const urlToShare = window.location.origin;
         const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(urlToShare)}`;
         window.open(facebookUrl, '_blank');
         setIsShareDialogOpen(false);
@@ -2451,5 +2450,3 @@ const App = () => {
 };
 
 export default App;
-
-    
