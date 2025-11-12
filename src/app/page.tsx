@@ -232,6 +232,7 @@ const App = () => {
                 window.history.replaceState({}, '', url.toString());
     
                 if (raffleRef) {
+                    // Force a reload of the raffle data to show the new participant
                     await handleAdminSearch({ refToSearch: raffleRef, isInitialLoad: true });
                 }
             }
