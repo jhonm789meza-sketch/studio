@@ -119,6 +119,11 @@ const PaymentMethodDialog = ({ isOpen, onClose, onSelect, t }: PaymentMethodDial
 
 
 const QrPaymentDialog = ({ isOpen, onClose, t }: {isOpen: boolean, onClose: () => void, t: (key: string) => string}) => {
+    
+    const handleOpenNequi = () => {
+        window.open('nequi://', '_blank');
+    };
+
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="max-w-xs">
@@ -129,8 +134,18 @@ const QrPaymentDialog = ({ isOpen, onClose, t }: {isOpen: boolean, onClose: () =
                 <div className="flex justify-center p-4">
                     <Image src="/qr-nequi.jpg" alt="QR Nequi" width={250} height={400} className="rounded-lg"/>
                 </div>
-                <DialogFooter>
-                    <Button onClick={onClose} className="w-full">{t('close')}</Button>
+                <DialogFooter className="flex-col sm:flex-col sm:space-x-0 gap-2 w-full pt-2">
+                    <a href="/qr-nequi.jpg" download="qr-pago-rifaexpress.jpg" className="w-full">
+                       <Button className="w-full">
+                           <Download className="mr-2 h-4 w-4" />
+                           {t('downloadQr')}
+                       </Button>
+                    </a>
+                    <Button onClick={handleOpenNequi} className="w-full bg-[#A454C4] hover:bg-[#8e49a8] text-white">
+                        <NequiIcon />
+                        <span className="ml-2">{t('openNequi')}</span>
+                    </Button>
+                    <Button variant="outline" onClick={onClose} className="w-full">{t('close')}</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
@@ -2436,3 +2451,5 @@ const App = () => {
 };
 
 export default App;
+
+    

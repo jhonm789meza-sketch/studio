@@ -216,8 +216,13 @@
     "payWithGateway": "Pagar con Pasarela",
     "payWithGatewayDescription": "Usa la pasarela de pago de Wompi.",
     "qrPaymentTitle": "Pago con Código QR",
-    "qrPaymentDescription": "Escanea el código QR para realizar el pago."
+    "qrPaymentDescription": "Escanea el código QR, descárgalo o abre la app de Nequi para realizar el pago.",
+    "downloadQr": "Descargar QR",
+    "openNequi": "Abrir Nequi"
 }
     
     
 
+
+
+    

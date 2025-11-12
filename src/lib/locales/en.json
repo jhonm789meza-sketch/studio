@@ -216,8 +216,13 @@
     "payWithGateway": "Pay with Gateway",
     "payWithGatewayDescription": "Use the Wompi payment gateway.",
     "qrPaymentTitle": "QR Code Payment",
-    "qrPaymentDescription": "Scan the QR code to make the payment."
+    "qrPaymentDescription": "Scan the QR code, download it, or open the Nequi app to make the payment.",
+    "downloadQr": "Download QR",
+    "openNequi": "Open Nequi"
 }
     
     
 
+
+
+    
