@@ -99,6 +99,8 @@
     "fullName": "Nombre completo",
     "namePlaceholder": "Ej: Juan Pérez",
     "raffleNumberLabel": "Número de rifa ({range})",
+    "paymentReferenceLabel": "Referencia de Pago",
+    "paymentReferencePlaceholder": "Ej: CUS123, Aprobación Nequi",
     "infiniteDigits": "{count} cifras",
     "raffleNumberPlaceholder": "Ej: {example}",
     "payWithNequi": "Pagar con Nequi",
@@ -209,16 +211,9 @@
     "partialWinnersTitle": "Ganadores Parciales",
     "partialWinnersSubtitle": "Ganadores con las últimas {count} cifras - Premio: {prize}",
     "payWithLink": "Pagar con Link",
-    "selectPaymentMethod": "Selecciona un método de pago",
-    "selectPaymentMethodDescription": "Elige cómo quieres activar tu tablero de rifa.",
-    "payWithQR": "Pagar con QR",
-    "payWithQRDescription": "Escanea el código para pagar.",
-    "payWithGateway": "Pagar con Pasarela",
-    "payWithGatewayDescription": "Usa la pasarela de pago de Wompi.",
-    "qrPaymentTitle": "Pago con Código QR",
-    "qrPaymentDescription": "Escanea el código QR, descárgalo o abre la app de Nequi para realizar el pago.",
-    "downloadQr": "Descargar QR",
-    "openNequi": "Abrir Nequi"
+    "deletePendingConfirmation": "¿Estás seguro de que deseas eliminar este participante pendiente? Esta acción no se puede deshacer.",
+    "pendingDeletedSuccess": "Participante pendiente eliminado con éxito.",
+    "pendingDeletedError": "Error al eliminar el participante pendiente."
 }
     
     

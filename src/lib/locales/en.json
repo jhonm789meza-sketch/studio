@@ -99,6 +99,8 @@
     "fullName": "Full Name",
     "namePlaceholder": "Ex: John Doe",
     "raffleNumberLabel": "Raffle Number ({range})",
+    "paymentReferenceLabel": "Payment Reference",
+    "paymentReferencePlaceholder": "Ex: CUS123, Nequi Approval",
     "infiniteDigits": "{count} digits",
     "raffleNumberPlaceholder": "Ex: {example}",
     "payWithNequi": "Pay with Nequi",
@@ -209,16 +211,9 @@
     "partialWinnersTitle": "Partial Winners",
     "partialWinnersSubtitle": "Winners with last {count} digits - Prize: {prize}",
     "payWithLink": "Pay with Link",
-    "selectPaymentMethod": "Select a payment method",
-    "selectPaymentMethodDescription": "Choose how you want to activate your raffle board.",
-    "payWithQR": "Pay with QR",
-    "payWithQRDescription": "Scan the code to pay.",
-    "payWithGateway": "Pay with Gateway",
-    "payWithGatewayDescription": "Use the Wompi payment gateway.",
-    "qrPaymentTitle": "QR Code Payment",
-    "qrPaymentDescription": "Scan the QR code, download it, or open the Nequi app to make the payment.",
-    "downloadQr": "Download QR",
-    "openNequi": "Open Nequi"
+    "deletePendingConfirmation": "Are you sure you want to delete this pending participant? This action cannot be undone.",
+    "pendingDeletedSuccess": "Pending participant deleted successfully.",
+    "pendingDeletedError": "Error deleting pending participant."
 }
     
     

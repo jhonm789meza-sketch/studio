@@ -10,7 +10,7 @@ import { useLanguage } from '@/hooks/use-language';
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House, Clock, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Upload, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages, Trophy } from 'lucide-react';
+import { Menu, Award, Lock, House, Clock, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Upload, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages, Trophy, Trash2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -38,6 +38,7 @@ const initialRaffleData: Raffle = {
     name: '',
     phoneNumber: '',
     raffleNumber: '',
+    paymentReference: '',
     nequiAccountNumber: '',
     isNequiEnabled: true,
     isPaymentLinkEnabled: true,
@@ -177,7 +178,8 @@ const App = () => {
                         phoneNumber: participantData.phoneNumber,
                         raffleNumber: participantData.raffleNumber,
                         timestamp: new Date(),
-                        paymentStatus: 'confirmed'
+                        paymentStatus: 'confirmed',
+                        paymentReference: participantData.paymentReference || '',
                     };
                     const updatedParticipants = [...raffleData.participants.filter((p: Participant) => p.raffleNumber !== newParticipant.raffleNumber), newParticipant];
                     await setDoc(raffleDocRef, { participants: updatedParticipants }, { merge: true });
@@ -217,6 +219,7 @@ const App = () => {
                 url.searchParams.delete('pName');
                 url.searchParams.delete('pPhone');
                 url.searchParams.delete('pNum');
+                url.searchParams.delete('pRef');
                 url.searchParams.delete('transactionState');
                 url.searchParams.delete('ref_payco');
                 url.searchParams.delete('signature');
@@ -298,10 +301,11 @@ const App = () => {
             const statusFromUrl = urlParams.get('status') || urlParams.get('transactionState') || urlParams.get('state');
 
             // Handle payment confirmation first
-            if (refFromUrl && statusFromUrl === 'APPROVED') {
+            if (refFromUrl && (statusFromUrl === 'APPROVED' || statusFromUrl === 'approved')) {
                 const pName = urlParams.get('pName');
                 const pPhone = urlParams.get('pPhone');
                 const pNum = urlParams.get('pNum');
+                const pRef = urlParams.get('pRef'); // Payment reference
                 const participantId = urlParams.get('participantId');
 
                 if (pName && pPhone && pNum) {
@@ -309,6 +313,7 @@ const App = () => {
                         name: pName,
                         phoneNumber: pPhone,
                         raffleNumber: pNum,
+                        paymentReference: pRef
                     });
                 } else if (participantId) {
                     await confirmParticipantPayment(refFromUrl, participantId);
@@ -533,6 +538,7 @@ const App = () => {
         const name = raffleState.name?.trim();
         const phoneNumber = raffleState.phoneNumber?.trim();
         const raffleNumber = raffleState.raffleNumber?.trim();
+        const paymentReference = raffleState.paymentReference?.trim();
         const infiniteDigits = raffleState.infiniteModeDigits || 4;
     
         if (!name) {
@@ -580,6 +586,7 @@ const App = () => {
             raffleNumber: formattedRaffleNumber,
             timestamp: new Date(),
             paymentStatus: confirmPayment ? 'confirmed' : 'pending',
+            paymentReference: paymentReference || '',
             raffleRef: raffleState.raffleRef,
         };
         
@@ -594,6 +601,7 @@ const App = () => {
             name: '',
             phoneNumber: '',
             raffleNumber: '',
+            paymentReference: '',
         }));
         
         if (isNequiPayment && !confirmPayment) {
@@ -627,6 +635,21 @@ const App = () => {
         await confirmParticipantPayment(raffleState.raffleRef, String(participantId));
     };
     
+    const handleDeletePending = async (participantId: number) => {
+        if (!raffleState.raffleRef || !isCurrentUserAdmin) return;
+
+        showConfirmationDialog(t('deletePendingConfirmation'), async () => {
+            const updatedParticipants = raffleState.participants.filter(p => p.id !== participantId);
+            try {
+                await setDoc(doc(db, "raffles", raffleState.raffleRef), { participants: updatedParticipants }, { merge: true });
+                showNotification(t('pendingDeletedSuccess'), 'success');
+            } catch (error) {
+                console.error("Error deleting pending participant:", error);
+                showNotification(t('pendingDeletedError'), 'error');
+            }
+        });
+    };
+
     const handleDownloadTicket = () => {
         const ticketElement = ticketModalRef.current;
         if (!ticketElement) return;
@@ -1793,6 +1816,17 @@ const App = () => {
                                                         <p className="text-red-500 text-sm mt-1">{t('numberAlreadyAssignedWarning')}</p>
                                                     )}
                                                 </div>
+                                                 <div>
+                                                    <Label htmlFor="payment-reference-input">{t('paymentReferenceLabel')}:</Label>
+                                                    <Input
+                                                        id="payment-reference-input"
+                                                        type="text"
+                                                        value={raffleState.paymentReference || ''}
+                                                        onChange={(e) => handleLocalFieldChange('paymentReference', e.target.value)}
+                                                        placeholder={t('paymentReferencePlaceholder')}
+                                                        className="w-full mt-1"
+                                                    />
+                                                </div>
                                                 <div className="flex flex-wrap gap-2">
                                                     {raffleState.isNequiEnabled && raffleState.nequiAccountNumber && raffleState.value && (
                                                         <a
@@ -1828,14 +1862,16 @@ const App = () => {
                                                                 const url = new URL(raffleState.paymentLink!);
                                                                 const redirectUrlWithParams = new URL(window.location.href);
                                                                 const cleanRedirectUrl = new URL(redirectUrlWithParams.origin + redirectUrlWithParams.pathname);
+                                                                
+                                                                const paymentRef = `${raffleState.raffleRef}_${raffleState.raffleNumber}_${Date.now()}`;
+                                                                
                                                                 cleanRedirectUrl.searchParams.set('ref', raffleState.raffleRef);
                                                                 cleanRedirectUrl.searchParams.set('pName', raffleState.name || '');
                                                                 cleanRedirectUrl.searchParams.set('pPhone', raffleState.phoneNumber || '');
                                                                 cleanRedirectUrl.searchParams.set('pNum', raffleState.raffleNumber || '');
+                                                                cleanRedirectUrl.searchParams.set('pRef', paymentRef);
                                                                 
                                                                 url.searchParams.set('redirect-url', cleanRedirectUrl.href);
-
-                                                                const paymentRef = `${raffleState.raffleRef}_${raffleState.raffleNumber}_${Date.now()}`;
                                                                 url.searchParams.set('reference', paymentRef);
                                                                 
                                                                 window.open(url.toString(), '_blank');
@@ -1910,9 +1946,12 @@ const App = () => {
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                                 {p.timestamp && p.timestamp.toDate ? format(p.timestamp.toDate(), 'PPpp', { locale: language === 'es' ? es : enUS }) : 'N/A'}
                                                             </td>
-                                                            <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                                            <td className="px-6 py-4 whitespace-nowrap text-sm space-x-2">
                                                                 <Button onClick={() => handleConfirmPayment(p.id)} size="sm" className="bg-green-500 hover:bg-green-600 text-white">
                                                                     {t('confirmPayment')}
+                                                                </Button>
+                                                                <Button onClick={() => handleDeletePending(p.id)} size="sm" variant="destructive">
+                                                                    <Trash2 className="h-4 w-4"/>
                                                                 </Button>
                                                             </td>
                                                         </tr>
@@ -1945,6 +1984,7 @@ const App = () => {
                                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('name')}</th>
                                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('phone')}</th>
                                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('number')}</th>
+                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('paymentReferenceLabel')}</th>
                                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('action')}</th>
                                                     </tr>
                                                 </thead>
@@ -1971,6 +2011,7 @@ const App = () => {
                                                                 )}
                                                             </td>
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-purple-600">{p.raffleNumber}</td>
+                                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{p.paymentReference}</td>
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm">
                                                                 <Button onClick={() => handleGenerateTicket(p)} size="sm" variant="outline" disabled={!raffleState.prize}>
                                                                     {t('generateTicket')}
