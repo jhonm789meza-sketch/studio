@@ -208,7 +208,16 @@
     "otherWinners": "Otros ganadores",
     "partialWinnersTitle": "Ganadores Parciales",
     "partialWinnersSubtitle": "Ganadores con las últimas {count} cifras - Premio: {prize}",
-    "payWithLink": "Pagar con Link"
+    "payWithLink": "Pagar con Link",
+    "selectPaymentMethod": "Selecciona un método de pago",
+    "selectPaymentMethodDescription": "Elige cómo quieres activar tu tablero de rifa.",
+    "payWithQR": "Pagar con QR",
+    "payWithQRDescription": "Escanea el código para pagar.",
+    "payWithGateway": "Pagar con Pasarela",
+    "payWithGatewayDescription": "Usa la pasarela de pago de Wompi.",
+    "qrPaymentTitle": "Pago con Código QR",
+    "qrPaymentDescription": "Escanea el código QR para realizar el pago."
 }
-
     
+    
+

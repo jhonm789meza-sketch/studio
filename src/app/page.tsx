@@ -74,6 +74,68 @@ interface PartialWinnerInfo {
     prize: string;
 }
 
+interface PaymentMethodDialogProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSelect: (method: 'qr' | 'gateway') => void;
+  t: (key: string, params?: any) => string;
+}
+
+const PaymentMethodDialog = ({ isOpen, onClose, onSelect, t }: PaymentMethodDialogProps) => {
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t('selectPaymentMethod')}</DialogTitle>
+          <DialogDescription>{t('selectPaymentMethodDescription')}</DialogDescription>
+        </DialogHeader>
+        <div className="py-4 flex flex-col gap-4">
+          <Button onClick={() => onSelect('qr')} variant="outline" className="h-auto py-4">
+             <div className="flex items-center gap-4">
+                <QrCode className="h-8 w-8" />
+                <div className="text-left">
+                    <p className="font-semibold">{t('payWithQR')}</p>
+                    <p className="text-xs text-muted-foreground">{t('payWithQRDescription')}</p>
+                </div>
+            </div>
+          </Button>
+           <Button onClick={() => onSelect('gateway')} variant="outline" className="h-auto py-4">
+             <div className="flex items-center gap-4">
+                 <NequiIcon />
+                <div className="text-left">
+                    <p className="font-semibold">{t('payWithGateway')}</p>
+                    <p className="text-xs text-muted-foreground">{t('payWithGatewayDescription')}</p>
+                </div>
+            </div>
+          </Button>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={onClose}>{t('cancel')}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+
+const QrPaymentDialog = ({ isOpen, onClose, t }: {isOpen: boolean, onClose: () => void, t: (key: string) => string}) => {
+    return (
+        <Dialog open={isOpen} onOpenChange={onClose}>
+            <DialogContent className="max-w-xs">
+                <DialogHeader>
+                    <DialogTitle>{t('qrPaymentTitle')}</DialogTitle>
+                    <DialogDescription>{t('qrPaymentDescription')}</DialogDescription>
+                </DialogHeader>
+                <div className="flex justify-center p-4">
+                    <Image src="/qr-nequi.jpg" alt="QR Nequi" width={250} height={400} className="rounded-lg"/>
+                </div>
+                <DialogFooter>
+                    <Button onClick={onClose} className="w-full">{t('close')}</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    )
+}
 
 const App = () => {
     const { t, toggleLanguage, language } = useLanguage();
@@ -111,6 +173,9 @@ const App = () => {
     const [partialWinners, setPartialWinners] = useState<PartialWinnerInfo[]>([]);
 
     const [installPromptEvent, setInstallPromptEvent] = useState<any>(null);
+
+    const [isPaymentMethodDialogOpen, setIsPaymentMethodDialogOpen] = useState(false);
+    const [isQrPaymentDialogOpen, setIsQrPaymentDialogOpen] = useState(false);
 
 
     const raffleManager = new RaffleManager(db);
@@ -892,25 +957,40 @@ const App = () => {
     };
 
     const handlePriceButtonClick = async (mode: RaffleMode) => {
-        let paymentLink = '';
-        if (mode === 'two-digit') {
-            paymentLink = 'https://checkout.nequi.wompi.co/l/GWZUpk';
-        } else if (mode === 'three-digit') {
-            paymentLink = 'https://checkout.nequi.wompi.co/l/9wH9fR';
-        } else if (mode === 'infinite') {
-            paymentLink = 'https://checkout.nequi.wompi.co/l/lwSfQT';
-        }
-
-        if (paymentLink) {
-            const redirectUrl = `https://rifaexpress-5b0ac.web.app/`;
-            const activationRef = `ACTIVATE_${mode}_CO_${Date.now()}`;
-            const finalUrl = `${paymentLink}?redirect-url=${encodeURIComponent(redirectUrl)}&reference=${activationRef}`;
-            window.location.href = finalUrl;
-        } else {
-            setSelectedRaffleMode(mode);
-            setIsCountrySelectionOpen(true);
-        }
+        setSelectedRaffleMode(mode);
+        setIsPaymentMethodDialogOpen(true);
     };
+
+    const handlePaymentMethodSelection = (method: 'qr' | 'gateway') => {
+        setIsPaymentMethodDialogOpen(false);
+        const mode = selectedRaffleMode;
+        if (!mode) return;
+
+        if (method === 'qr') {
+            setIsQrPaymentDialogOpen(true);
+             // We can assume QR is a manual payment, so we activate the board right away
+            handleActivateBoard(mode, 'CO');
+        } else { // gateway
+            let paymentLink = '';
+            if (mode === 'two-digit') {
+                paymentLink = 'https://checkout.nequi.wompi.co/l/GWZUpk';
+            } else if (mode === 'three-digit') {
+                paymentLink = 'https://checkout.nequi.wompi.co/l/9wH9fR';
+            } else if (mode === 'infinite') {
+                paymentLink = 'https://checkout.nequi.wompi.co/l/lwSfQT';
+            }
+
+            if (paymentLink) {
+                const redirectUrl = `https://rifaexpress-5b0ac.web.app/`;
+                const activationRef = `ACTIVATE_${mode}_CO_${Date.now()}`;
+                const finalUrl = `${paymentLink}?redirect-url=${encodeURIComponent(redirectUrl)}&reference=${activationRef}`;
+                window.location.href = finalUrl;
+            } else {
+                setIsCountrySelectionOpen(true);
+            }
+        }
+    }
+
 
     const handleActivateBoard = async (mode: RaffleMode, countryCode: string) => {
         setIsCountrySelectionOpen(false);
@@ -2337,20 +2417,22 @@ const App = () => {
               raffleMode={selectedRaffleMode}
               t={t}
             />
+
+            <PaymentMethodDialog 
+                isOpen={isPaymentMethodDialogOpen}
+                onClose={() => setIsPaymentMethodDialogOpen(false)}
+                onSelect={handlePaymentMethodSelection}
+                t={t}
+            />
+
+            <QrPaymentDialog
+                isOpen={isQrPaymentDialogOpen}
+                onClose={() => setIsQrPaymentDialogOpen(false)}
+                t={t}
+            />
+
         </div>
     );
 };
 
 export default App;
-
-    
-
-    
-
-    
-
-
-
-
-
-
