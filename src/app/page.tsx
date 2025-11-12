@@ -287,83 +287,99 @@ const App = () => {
     };
 
 
+     // Effect for initial loading and handling popstate
     useEffect(() => {
         const initialize = async () => {
+            if (typeof window === 'undefined') {
+                setLoading(false);
+                return;
+            };
+
             setLoading(true);
+            setAppUrl(window.location.origin);
             if (persistenceEnabled) await persistenceEnabled;
-            if (typeof window !== 'undefined') setAppUrl(window.location.origin);
 
             const adminIdFromStorage = localStorage.getItem('rifaAdminId');
             if (adminIdFromStorage) setCurrentAdminId(adminIdFromStorage);
 
             const urlParams = new URLSearchParams(window.location.search);
             const refFromUrl = urlParams.get('ref');
-            const statusFromUrl = urlParams.get('status') || urlParams.get('transactionState') || urlParams.get('state');
 
-            // Handle payment confirmation first
-            if (refFromUrl && (statusFromUrl === 'APPROVED' || statusFromUrl === 'approved')) {
-                const pName = urlParams.get('pName');
-                const pPhone = urlParams.get('pPhone');
-                const pNum = urlParams.get('pNum');
-                const pRef = urlParams.get('pRef'); // Payment reference
-                const participantId = urlParams.get('participantId');
-
-                if (pName && pPhone && pNum) {
-                    await confirmParticipantPayment(refFromUrl, '', {
-                        name: pName,
-                        phoneNumber: pPhone,
-                        raffleNumber: pNum,
-                        paymentReference: pRef
-                    });
-                } else if (participantId) {
-                    await confirmParticipantPayment(refFromUrl, participantId);
-                }
-                showNotification(t('successfulPaymentNotification'), 'success');
-                // The rest of the logic inside confirmParticipantPayment will handle URL cleaning and reloading raffle
-                return; // Stop further execution here to let `confirmParticipantPayment` finish
-            }
-            
-            // Handle board activation
-            if (statusFromUrl === 'APPROVED' && refFromUrl && refFromUrl.startsWith('ACTIVATE_')) {
-                const parts = refFromUrl.split('_');
-                const mode = parts[1] as RaffleMode;
-                const country = parts[2];
-                await handleActivateBoard(mode, country);
-                return; // Stop execution after activation
-            }
-
-            // Regular raffle loading
             if (refFromUrl) {
+                // Always load the raffle if there's a ref in the URL
                 await handleAdminSearch({ refToSearch: refFromUrl, isInitialLoad: true });
             } else {
                 setRaffleState(initialRaffleData);
                 setLoading(false);
             }
-
-            const handlePopState = (event: PopStateEvent) => {
-                const newUrlParams = new URLSearchParams(window.location.search);
-                const newRefFromUrl = newUrlParams.get('ref');
-                if (newRefFromUrl && newRefFromUrl !== raffleState.raffleRef) {
-                    handleAdminSearch({ refToSearch: newRefFromUrl, isInitialLoad: true });
-                } else if (!newRefFromUrl) {
-                    raffleSubscription.current?.();
-                    setRaffleState(initialRaffleData);
-                    setCurrentAdminId(null);
-                    setLoading(false);
-                }
-            };
-
-            window.addEventListener('popstate', handlePopState);
-
-            return () => {
-                window.removeEventListener('popstate', handlePopState);
-                raffleSubscription.current?.();
-            };
         };
 
         initialize();
+
+        const handlePopState = (event: PopStateEvent) => {
+            const newUrlParams = new URLSearchParams(window.location.search);
+            const newRefFromUrl = newUrlParams.get('ref');
+            if (newRefFromUrl && newRefFromUrl !== raffleState.raffleRef) {
+                handleAdminSearch({ refToSearch: newRefFromUrl, isInitialLoad: true });
+            } else if (!newRefFromUrl) {
+                raffleSubscription.current?.();
+                setRaffleState(initialRaffleData);
+                setCurrentAdminId(null);
+                setLoading(false);
+            }
+        };
+
+        window.addEventListener('popstate', handlePopState);
+
+        return () => {
+            window.removeEventListener('popstate', handlePopState);
+            raffleSubscription.current?.();
+        };
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    // Effect for handling payment confirmation after raffle data is loaded
+    useEffect(() => {
+        const confirmPaymentFromUrl = async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const refFromUrl = urlParams.get('ref');
+            const statusFromUrl = urlParams.get('status') || urlParams.get('transactionState') || urlParams.get('state');
+
+            if (refFromUrl && raffleState.raffleRef === refFromUrl && (statusFromUrl === 'APPROVED' || statusFromUrl === 'approved')) {
+                const pName = urlParams.get('pName');
+                const pPhone = urlParams.get('pPhone');
+                const pNum = urlParams.get('pNum');
+                const pRef = urlParams.get('pRef');
+
+                if (pName && pPhone && pNum) {
+                    const confirmedParticipant = await confirmParticipantPayment(refFromUrl, '', {
+                        name: pName,
+                        phoneNumber: pPhone,
+                        raffleNumber: pNum,
+                        paymentReference: pRef
+                    });
+                    if (confirmedParticipant) {
+                        showNotification(t('successfulPaymentNotification'), 'success');
+                    }
+                }
+            }
+            
+            const activationRef = urlParams.get('reference');
+            if (statusFromUrl === 'APPROVED' && activationRef && activationRef.startsWith('ACTIVATE_')) {
+                const parts = activationRef.split('_');
+                const mode = parts[1] as RaffleMode;
+                const country = parts[2];
+                await handleActivateBoard(mode, country);
+            }
+        };
+
+        // Only run this logic if the raffle has been loaded
+        if (raffleState.raffleRef) {
+            confirmPaymentFromUrl();
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [raffleState.raffleRef]);
+
 
     const showNotification = (message: string, type = 'info') => {
         setNotification({ show: true, message, type });
