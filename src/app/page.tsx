@@ -132,10 +132,10 @@ const QrPaymentDialog = ({ isOpen, onClose, t }: {isOpen: boolean, onClose: () =
                     <DialogDescription>{t('qrPaymentDescription')}</DialogDescription>
                 </DialogHeader>
                 <div className="flex justify-center p-4">
-                    <Image src="/qr-nequi.jpg" alt="QR Nequi" width={250} height={400} className="rounded-lg"/>
+                    <Image src="https://storage.googleapis.com/workspace-b7b24e46-16a7-474c-a1b7-658d511bfb37/image/43f3c4ec-b67f-449e-9968-368735164478.png" alt="QR Nequi" width={250} height={400} className="rounded-lg"/>
                 </div>
                 <DialogFooter className="flex-col sm:flex-col sm:space-x-0 gap-2 w-full pt-2">
-                    <a href="/qr-nequi.jpg" download="qr-pago-rifaexpress.jpg" className="w-full">
+                    <a href="https://storage.googleapis.com/workspace-b7b24e46-16a7-474c-a1b7-658d511bfb37/image/43f3c4ec-b67f-449e-9968-368735164478.png" download="qr-pago-rifaexpress.png" className="w-full">
                        <Button className="w-full">
                            <Download className="mr-2 h-4 w-4" />
                            {t('downloadQr')}
@@ -1682,72 +1682,92 @@ const App = () => {
                                     {t('boardLockedDescription')}
                                 </p>
                                 
-                                <div className="flex flex-col justify-center items-center gap-8 my-8">
-                                    
-                                    {/* Ticket for 2 digits */}
-                                    <div className="bg-white rounded-2xl shadow-lg flex flex-col max-w-md w-full">
-                                        <div className='flex'>
-                                            <div className="bg-purple-100 p-4 flex flex-col items-center justify-center rounded-l-2xl border-r-2 border-dashed border-purple-300">
-                                                <TicketIcon className="h-10 w-10 text-purple-600 mb-2" />
-                                                <span className="text-purple-800 font-bold text-lg">2</span>
-                                                <span className="text-purple-600 text-xs">{t('digits')}</span>
+                                <div className="grid md:grid-cols-2 gap-8 items-start">
+                                    <div className="flex flex-col justify-center items-center gap-8">
+                                        {/* Ticket for 2 digits */}
+                                        <div className="bg-white rounded-2xl shadow-lg flex flex-col max-w-md w-full">
+                                            <div className='flex'>
+                                                <div className="bg-purple-100 p-4 flex flex-col items-center justify-center rounded-l-2xl border-r-2 border-dashed border-purple-300">
+                                                    <TicketIcon className="h-10 w-10 text-purple-600 mb-2" />
+                                                    <span className="text-purple-800 font-bold text-lg">2</span>
+                                                    <span className="text-purple-600 text-xs">{t('digits')}</span>
+                                                </div>
+                                                <div className="p-6 flex-grow">
+                                                    <h5 className="mb-1 text-xl font-bold tracking-tight text-gray-900">{t('2digitRaffle')}</h5>
+                                                    <p className="font-normal text-gray-600 mb-4 text-sm">{t('2digitRaffleDescription')}</p>
+                                                </div>
                                             </div>
-                                            <div className="p-6 flex-grow">
-                                                <h5 className="mb-1 text-xl font-bold tracking-tight text-gray-900">{t('2digitRaffle')}</h5>
-                                                <p className="font-normal text-gray-600 mb-4 text-sm">{t('2digitRaffleDescription')}</p>
+                                            <div className="p-6 pt-0 space-y-2">
+                                                <Button onClick={() => handlePriceButtonClick('two-digit')} size="lg" className="w-full bg-green-500 hover:bg-green-600 text-white font-bold">
+                                                    {t('price')}
+                                                </Button>
                                             </div>
                                         </div>
-                                        <div className="p-6 pt-0 space-y-2">
-                                            <Button onClick={() => handlePriceButtonClick('two-digit')} size="lg" className="w-full bg-green-500 hover:bg-green-600 text-white font-bold">
-                                                {t('price')}
-                                            </Button>
-                                        </div>
-                                    </div>
 
-                                    {/* Ticket for 3 digits */}
-                                    <div className="bg-white rounded-2xl shadow-lg flex flex-col max-w-md w-full">
-                                        <div className='flex'>
-                                            <div className="bg-blue-100 p-4 flex flex-col items-center justify-center rounded-l-2xl border-r-2 border-dashed border-blue-300">
-                                                <TicketIcon className="h-10 w-10 text-blue-600 mb-2" />
-                                                <span className="text-blue-800 font-bold text-lg">3</span>
-                                                <span className="text-blue-600 text-xs">{t('digits')}</span>
+                                        {/* Ticket for 3 digits */}
+                                        <div className="bg-white rounded-2xl shadow-lg flex flex-col max-w-md w-full">
+                                            <div className='flex'>
+                                                <div className="bg-blue-100 p-4 flex flex-col items-center justify-center rounded-l-2xl border-r-2 border-dashed border-blue-300">
+                                                    <TicketIcon className="h-10 w-10 text-blue-600 mb-2" />
+                                                    <span className="text-blue-800 font-bold text-lg">3</span>
+                                                    <span className="text-blue-600 text-xs">{t('digits')}</span>
+                                                </div>
+                                                <div className="p-6 flex-grow">
+                                                    <h5 className="mb-1 text-xl font-bold tracking-tight text-gray-900">{t('3digitRaffle')}</h5>
+                                                    <p className="font-normal text-gray-600 mb-4 text-sm">{t('3digitRaffleDescription')}</p>
+                                                </div>
                                             </div>
-                                            <div className="p-6 flex-grow">
-                                                <h5 className="mb-1 text-xl font-bold tracking-tight text-gray-900">{t('3digitRaffle')}</h5>
-                                                <p className="font-normal text-gray-600 mb-4 text-sm">{t('3digitRaffleDescription')}</p>
+                                            <div className="p-6 pt-0 space-y-2">
+                                                <Button onClick={() => handlePriceButtonClick('three-digit')} size="lg" className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold">
+                                                    {t('price')}
+                                                </Button>
                                             </div>
                                         </div>
-                                        <div className="p-6 pt-0 space-y-2">
-                                            <Button onClick={() => handlePriceButtonClick('three-digit')} size="lg" className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold">
-                                                {t('price')}
-                                            </Button>
-                                        </div>
-                                    </div>
 
-                                     {/* Ticket for infinite numbers */}
-                                     <div className="bg-white rounded-2xl shadow-lg flex flex-col max-w-md w-full">
-                                        <div className='flex'>
-                                            <div className="bg-red-100 p-4 flex flex-col items-center justify-center rounded-l-2xl border-r-2 border-dashed border-red-300">
-                                                <InfinityIcon className="h-10 w-10 text-red-600 mb-2" />
-                                                <span className="text-red-800 font-bold text-lg">∞</span>
-                                                <span className="text-red-600 text-xs">{t('infinite_caps')}</span>
+                                         {/* Ticket for infinite numbers */}
+                                         <div className="bg-white rounded-2xl shadow-lg flex flex-col max-w-md w-full">
+                                            <div className='flex'>
+                                                <div className="bg-red-100 p-4 flex flex-col items-center justify-center rounded-l-2xl border-r-2 border-dashed border-red-300">
+                                                    <InfinityIcon className="h-10 w-10 text-red-600 mb-2" />
+                                                    <span className="text-red-800 font-bold text-lg">∞</span>
+                                                    <span className="text-red-600 text-xs">{t('infinite_caps')}</span>
+                                                </div>
+                                                <div className="p-6 flex-grow">
+                                                    <h5 className="mb-1 text-xl font-bold tracking-tight text-gray-900">{t('infiniteRaffle')}</h5>
+                                                    <p className="font-normal text-gray-600 mb-4 text-sm">{t('infiniteRaffleHomeDescription')}</p>
+                                                </div>
                                             </div>
-                                            <div className="p-6 flex-grow">
-                                                <h5 className="mb-1 text-xl font-bold tracking-tight text-gray-900">{t('infiniteRaffle')}</h5>
-                                                <p className="font-normal text-gray-600 mb-4 text-sm">{t('infiniteRaffleHomeDescription')}</p>
+                                            <div className="p-6 pt-0 space-y-2">
+                                                <Button onClick={() => handlePriceButtonClick('infinite')} size="lg" className="w-full bg-red-500 hover:bg-red-600 text-white font-bold">
+                                                    {t('price')}
+                                                </Button>
                                             </div>
-                                        </div>
-                                        <div className="p-6 pt-0 space-y-2">
-                                            <Button onClick={() => handlePriceButtonClick('infinite')} size="lg" className="w-full bg-red-500 hover:bg-red-600 text-white font-bold">
-                                                {t('price')}
-                                            </Button>
                                         </div>
                                     </div>
-                                    
+                                    <div className="flex flex-col items-center justify-start gap-4">
+                                        <h3 className="text-xl font-bold text-gray-800">{t('payWithQR')}</h3>
+                                        <div className="p-4 bg-white rounded-lg shadow-md">
+                                            <Image src="https://storage.googleapis.com/workspace-b7b24e46-16a7-474c-a1b7-658d511bfb37/image/43f3c4ec-b67f-449e-9968-368735164478.png" alt="QR Nequi" width={250} height={400} className="rounded-lg"/>
+                                        </div>
+                                         <div className="w-full max-w-xs flex flex-col gap-2">
+                                              <a href="https://storage.googleapis.com/workspace-b7b24e46-16a7-474c-a1b7-658d511bfb37/image/43f3c4ec-b67f-449e-9968-368735164278.png" download="qr-pago-rifaexpress.png" className="w-full">
+                                                 <Button className="w-full">
+                                                     <Download className="mr-2 h-4 w-4" />
+                                                     {t('downloadQr')}
+                                                 </Button>
+                                              </a>
+                                              <Button onClick={() => window.open('nequi://', '_blank')} className="w-full bg-[#A454C4] hover:bg-[#8e49a8] text-white">
+                                                  <NequiIcon />
+                                                  <span className="ml-2">{t('openNequi')}</span>
+                                              </Button>
+                                         </div>
+                                    </div>
                                 </div>
-                                <Button onClick={() => setIsPublicSearchOpen(true)} size="lg" className="w-full max-w-md bg-purple-600 hover:bg-purple-700 text-white font-bold">
-                                    {t('orSearchByReference')}
-                                </Button>
+                                <div className="mt-8 text-center">
+                                    <Button onClick={() => setIsPublicSearchOpen(true)} size="lg" className="w-full max-w-md bg-purple-600 hover:bg-purple-700 text-white font-bold">
+                                        {t('orSearchByReference')}
+                                    </Button>
+                                </div>
                             </div>
                         </div>
                     ) : (
