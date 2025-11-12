@@ -179,7 +179,7 @@ const App = () => {
                         timestamp: new Date(),
                         paymentStatus: 'confirmed'
                     };
-                    const updatedParticipants = [...raffleData.participants, newParticipant];
+                    const updatedParticipants = [...raffleData.participants.filter((p: Participant) => p.raffleNumber !== newParticipant.raffleNumber), newParticipant];
                     await setDoc(raffleDocRef, { participants: updatedParticipants }, { merge: true });
                     participantToReturn = newParticipant;
     
@@ -1820,23 +1820,23 @@ const App = () => {
                                                             className="flex-1 w-full bg-blue-500 hover:bg-blue-600 text-white"
                                                             disabled={!isRegisterFormValidForSubmit}
                                                             onClick={() => {
+                                                                if (!isRegisterFormValidForSubmit) {
+                                                                    showNotification(t('completeAllFieldsWarning'), 'warning');
+                                                                    return;
+                                                                }
                                                                 const url = new URL(raffleState.paymentLink!);
                                                                 const redirectUrlWithParams = new URL(window.location.href);
-                                                                // Clear old params from redirect URL
                                                                 const cleanRedirectUrl = new URL(redirectUrlWithParams.origin + redirectUrlWithParams.pathname);
                                                                 cleanRedirectUrl.searchParams.set('ref', raffleState.raffleRef);
                                                                 cleanRedirectUrl.searchParams.set('pName', raffleState.name || '');
                                                                 cleanRedirectUrl.searchParams.set('pPhone', raffleState.phoneNumber || '');
                                                                 cleanRedirectUrl.searchParams.set('pNum', raffleState.raffleNumber || '');
                                                                 
-                                                                // For Wompi compatibility, it uses `redirect-url`
                                                                 url.searchParams.set('redirect-url', cleanRedirectUrl.href);
 
-                                                                // Also set the reference for Wompi
                                                                 const paymentRef = `${raffleState.raffleRef}_${raffleState.raffleNumber}_${Date.now()}`;
                                                                 url.searchParams.set('reference', paymentRef);
                                                                 
-                                                                handleRegisterParticipant(); // Register as pending
                                                                 window.open(url.toString(), '_blank');
                                                             }}
                                                         >
@@ -2254,8 +2254,7 @@ const App = () => {
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button type="button" variant="outline" onClick={() => setIsSalesModalOpen(false)}>{t('close')}</Button>
-                    </DialogFooter>
+                        <Button type="button" variant="outline" onClick={() => setIsSalesModalOpen(false)}>{t('close')}</Button>                    </DialogFooter>
                 </DialogContent>
             </Dialog>
 
