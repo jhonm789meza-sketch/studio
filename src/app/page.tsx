@@ -74,84 +74,6 @@ interface PartialWinnerInfo {
     prize: string;
 }
 
-interface PaymentMethodDialogProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSelect: (method: 'qr' | 'gateway') => void;
-  t: (key: string, params?: any) => string;
-}
-
-const PaymentMethodDialog = ({ isOpen, onClose, onSelect, t }: PaymentMethodDialogProps) => {
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{t('selectPaymentMethod')}</DialogTitle>
-          <DialogDescription>{t('selectPaymentMethodDescription')}</DialogDescription>
-        </DialogHeader>
-        <div className="py-4 flex flex-col gap-4">
-          <Button onClick={() => onSelect('qr')} variant="outline" className="h-auto py-4">
-             <div className="flex items-center gap-4">
-                <QrCode className="h-8 w-8" />
-                <div className="text-left">
-                    <p className="font-semibold">{t('payWithQR')}</p>
-                    <p className="text-xs text-muted-foreground">{t('payWithQRDescription')}</p>
-                </div>
-            </div>
-          </Button>
-           <Button onClick={() => onSelect('gateway')} variant="outline" className="h-auto py-4">
-             <div className="flex items-center gap-4">
-                 <NequiIcon />
-                <div className="text-left">
-                    <p className="font-semibold">{t('payWithGateway')}</p>
-                    <p className="text-xs text-muted-foreground">{t('payWithGatewayDescription')}</p>
-                </div>
-            </div>
-          </Button>
-        </div>
-        <DialogFooter>
-          <Button variant="ghost" onClick={onClose}>{t('cancel')}</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-};
-
-
-const QrPaymentDialog = ({ isOpen, onClose, t }: {isOpen: boolean, onClose: () => void, t: (key: string) => string}) => {
-    
-    const handleOpenNequi = () => {
-        window.open('nequi://', '_blank');
-    };
-
-    return (
-        <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="max-w-xs">
-                <DialogHeader>
-                    <DialogTitle>{t('qrPaymentTitle')}</DialogTitle>
-                    <DialogDescription>{t('qrPaymentDescription')}</DialogDescription>
-                </DialogHeader>
-                <div className="flex justify-center p-4">
-                    <Image src="https://storage.googleapis.com/workspace-b7b24e46-16a7-474c-a1b7-658d511bfb37/image/43f3c4ec-b67f-449e-9968-368735164478.png" alt="QR Nequi" width={250} height={400} className="rounded-lg"/>
-                </div>
-                <DialogFooter className="flex-col sm:flex-col sm:space-x-0 gap-2 w-full pt-2">
-                    <a href="https://storage.googleapis.com/workspace-b7b24e46-16a7-474c-a1b7-658d511bfb37/image/43f3c4ec-b67f-449e-9968-368735164478.png" download="qr-pago-rifaexpress.png" className="w-full">
-                       <Button className="w-full">
-                           <Download className="mr-2 h-4 w-4" />
-                           {t('downloadQr')}
-                       </Button>
-                    </a>
-                    <Button onClick={handleOpenNequi} className="w-full bg-[#A454C4] hover:bg-[#8e49a8] text-white">
-                        <NequiIcon />
-                        <span className="ml-2">{t('openNequi')}</span>
-                    </Button>
-                    <Button variant="outline" onClick={onClose} className="w-full">{t('close')}</Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
-    )
-}
-
 const App = () => {
     const { t, toggleLanguage, language } = useLanguage();
     const [loading, setLoading] = useState(true);
@@ -188,10 +110,6 @@ const App = () => {
     const [partialWinners, setPartialWinners] = useState<PartialWinnerInfo[]>([]);
 
     const [installPromptEvent, setInstallPromptEvent] = useState<any>(null);
-
-    const [isPaymentMethodDialogOpen, setIsPaymentMethodDialogOpen] = useState(false);
-    const [isQrPaymentDialogOpen, setIsQrPaymentDialogOpen] = useState(false);
-
 
     const raffleManager = new RaffleManager(db);
     
@@ -971,39 +889,27 @@ const App = () => {
         await setDoc(doc(db, "raffles", raffleState.raffleRef), { [field]: value }, { merge: true });
     };
 
-    const handlePriceButtonClick = async (mode: RaffleMode) => {
-        setSelectedRaffleMode(mode);
-        setIsPaymentMethodDialogOpen(true);
-    };
+    const handlePriceButtonClick = (mode: RaffleMode) => {
+        let paymentLink = '';
+        const redirectUrl = window.location.origin;
+        const activationRef = `ACTIVATE_${mode}_CO_${Date.now()}`;
 
-    const handlePaymentMethodSelection = (method: 'qr' | 'gateway') => {
-        setIsPaymentMethodDialogOpen(false);
-        const mode = selectedRaffleMode;
-        if (!mode) return;
-
-        if (method === 'qr') {
-            setIsQrPaymentDialogOpen(true);
-        } else { // gateway
-            let paymentLink = '';
-            const redirectUrl = window.location.origin;
-            const activationRef = `ACTIVATE_${mode}_CO_${Date.now()}`;
-
-            if (mode === 'two-digit') {
-                paymentLink = 'https://checkout.nequi.wompi.co/l/GWZUpk';
-            } else if (mode === 'three-digit') {
-                 paymentLink = 'https://checkout.nequi.wompi.co/l/9wH9fR';
-            } else if (mode === 'infinite') {
-                paymentLink = 'https://checkout.nequi.wompi.co/l/lwSfQT';
-            }
-
-            if (paymentLink) {
-                const finalUrl = `${paymentLink}?redirect-url=${encodeURIComponent(redirectUrl)}&reference=${activationRef}`;
-                window.location.href = finalUrl;
-            } else {
-                setIsCountrySelectionOpen(true);
-            }
+        if (mode === 'two-digit') {
+            paymentLink = 'https://checkout.nequi.wompi.co/l/GWZUpk';
+        } else if (mode === 'three-digit') {
+            paymentLink = 'https://checkout.nequi.wompi.co/l/9wH9fR';
+        } else if (mode === 'infinite') {
+            paymentLink = 'https://checkout.nequi.wompi.co/l/lwSfQT';
         }
-    }
+
+        if (paymentLink) {
+            const finalUrl = `${paymentLink}?redirect-url=${encodeURIComponent(redirectUrl)}&reference=${activationRef}`;
+            window.location.href = finalUrl;
+        } else {
+            setSelectedRaffleMode(mode);
+            setIsCountrySelectionOpen(true);
+        }
+    };
 
 
     const handleActivateBoard = async (mode: RaffleMode, countryCode: string) => {
@@ -1682,7 +1588,7 @@ const App = () => {
                                     {t('boardLockedDescription')}
                                 </p>
                                 
-                                <div className="grid md:grid-cols-2 gap-8 items-start">
+                                <div className="grid md:grid-cols-1 gap-8 items-start max-w-md mx-auto">
                                     <div className="flex flex-col justify-center items-center gap-8">
                                         {/* Ticket for 2 digits */}
                                         <div className="bg-white rounded-2xl shadow-lg flex flex-col max-w-md w-full">
@@ -1743,24 +1649,6 @@ const App = () => {
                                                 </Button>
                                             </div>
                                         </div>
-                                    </div>
-                                    <div className="flex flex-col items-center justify-start gap-4">
-                                        <h3 className="text-xl font-bold text-gray-800">{t('payWithQR')}</h3>
-                                        <div className="p-4 bg-white rounded-lg shadow-md">
-                                            <Image src="https://storage.googleapis.com/workspace-b7b24e46-16a7-474c-a1b7-658d511bfb37/image/43f3c4ec-b67f-449e-9968-368735164478.png" alt="QR Nequi" width={250} height={400} className="rounded-lg"/>
-                                        </div>
-                                         <div className="w-full max-w-xs flex flex-col gap-2">
-                                              <a href="https://storage.googleapis.com/workspace-b7b24e46-16a7-474c-a1b7-658d511bfb37/image/43f3c4ec-b67f-449e-9968-368735164278.png" download="qr-pago-rifaexpress.png" className="w-full">
-                                                 <Button className="w-full">
-                                                     <Download className="mr-2 h-4 w-4" />
-                                                     {t('downloadQr')}
-                                                 </Button>
-                                              </a>
-                                              <Button onClick={() => window.open('nequi://', '_blank')} className="w-full bg-[#A454C4] hover:bg-[#8e49a8] text-white">
-                                                  <NequiIcon />
-                                                  <span className="ml-2">{t('openNequi')}</span>
-                                              </Button>
-                                         </div>
                                     </div>
                                 </div>
                                 <div className="mt-8 text-center">
@@ -2450,19 +2338,6 @@ const App = () => {
               }}
               raffleMode={selectedRaffleMode}
               t={t}
-            />
-
-            <PaymentMethodDialog 
-                isOpen={isPaymentMethodDialogOpen}
-                onClose={() => setIsPaymentMethodDialogOpen(false)}
-                onSelect={handlePaymentMethodSelection}
-                t={t}
-            />
-
-            <QrPaymentDialog
-                isOpen={isQrPaymentDialogOpen}
-                onClose={() => setIsQrPaymentDialogOpen(false)}
-                t={t}
             />
 
         </div>
