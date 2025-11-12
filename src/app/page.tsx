@@ -285,78 +285,76 @@ const App = () => {
 
     useEffect(() => {
         const initialize = async () => {
-          setLoading(true);
-          if (persistenceEnabled) {
-            await persistenceEnabled;
-          }
-    
-          if (typeof window !== 'undefined') {
-            setAppUrl(window.location.origin);
-          }
-    
-          const adminIdFromStorage = localStorage.getItem('rifaAdminId');
-          if (adminIdFromStorage) {
-            setCurrentAdminId(adminIdFromStorage);
-          }
-    
-          const urlParams = new URLSearchParams(window.location.search);
-          const refFromUrl = urlParams.get('ref');
-          const statusFromUrl = urlParams.get('status') || urlParams.get('transactionState') || urlParams.get('state');
+            setLoading(true);
+            if (persistenceEnabled) await persistenceEnabled;
+            if (typeof window !== 'undefined') setAppUrl(window.location.origin);
 
-          // Board activation
-          if (statusFromUrl === 'APPROVED' && refFromUrl && refFromUrl.startsWith('ACTIVATE_')) {
-              const parts = refFromUrl.split('_');
-              const mode = parts[1] as RaffleMode;
-              const country = parts[2];
-              await handleActivateBoard(mode, country);
-              return;
-          }
-    
-          const pName = urlParams.get('pName');
-          const pPhone = urlParams.get('pPhone');
-          const pNum = urlParams.get('pNum');
-          const participantId = urlParams.get('participantId');
-    
-          if (refFromUrl) {
-            if (statusFromUrl === 'APPROVED') {
-              if (pName && pPhone && pNum) {
-                await confirmParticipantPayment(refFromUrl, '', {
-                  name: pName,
-                  phoneNumber: pPhone,
-                  raffleNumber: pNum,
-                });
-              } else if (participantId) {
-                 await confirmParticipantPayment(refFromUrl, participantId);
-              }
-              showNotification(t('successfulPaymentNotification'), 'success');
+            const adminIdFromStorage = localStorage.getItem('rifaAdminId');
+            if (adminIdFromStorage) setCurrentAdminId(adminIdFromStorage);
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const refFromUrl = urlParams.get('ref');
+            const statusFromUrl = urlParams.get('status') || urlParams.get('transactionState') || urlParams.get('state');
+
+            // Handle payment confirmation first
+            if (refFromUrl && statusFromUrl === 'APPROVED') {
+                const pName = urlParams.get('pName');
+                const pPhone = urlParams.get('pPhone');
+                const pNum = urlParams.get('pNum');
+                const participantId = urlParams.get('participantId');
+
+                if (pName && pPhone && pNum) {
+                    await confirmParticipantPayment(refFromUrl, '', {
+                        name: pName,
+                        phoneNumber: pPhone,
+                        raffleNumber: pNum,
+                    });
+                } else if (participantId) {
+                    await confirmParticipantPayment(refFromUrl, participantId);
+                }
+                showNotification(t('successfulPaymentNotification'), 'success');
+                // The rest of the logic inside confirmParticipantPayment will handle URL cleaning and reloading raffle
+                return; // Stop further execution here to let `confirmParticipantPayment` finish
             }
-            await handleAdminSearch({ refToSearch: refFromUrl, isInitialLoad: true });
-          } else {
-            setRaffleState(initialRaffleData);
-            setLoading(false);
-          }
-    
-          const handlePopState = (event: PopStateEvent) => {
-            const newUrlParams = new URLSearchParams(window.location.search);
-            const newRefFromUrl = newUrlParams.get('ref');
-            if (newRefFromUrl && newUrlParams.get('ref') !== (raffleState.raffleRef)) {
-              handleAdminSearch({ refToSearch: newRefFromUrl, isInitialLoad: true });
-            } else if (!newRefFromUrl) {
-              raffleSubscription.current?.();
-              setRaffleState(initialRaffleData);
-              setCurrentAdminId(null);
-              setLoading(false);
+            
+            // Handle board activation
+            if (statusFromUrl === 'APPROVED' && refFromUrl && refFromUrl.startsWith('ACTIVATE_')) {
+                const parts = refFromUrl.split('_');
+                const mode = parts[1] as RaffleMode;
+                const country = parts[2];
+                await handleActivateBoard(mode, country);
+                return; // Stop execution after activation
             }
-          };
-    
-          window.addEventListener('popstate', handlePopState);
-    
-          return () => {
-            window.removeEventListener('popstate', handlePopState);
-            raffleSubscription.current?.();
-          };
+
+            // Regular raffle loading
+            if (refFromUrl) {
+                await handleAdminSearch({ refToSearch: refFromUrl, isInitialLoad: true });
+            } else {
+                setRaffleState(initialRaffleData);
+                setLoading(false);
+            }
+
+            const handlePopState = (event: PopStateEvent) => {
+                const newUrlParams = new URLSearchParams(window.location.search);
+                const newRefFromUrl = newUrlParams.get('ref');
+                if (newRefFromUrl && newRefFromUrl !== raffleState.raffleRef) {
+                    handleAdminSearch({ refToSearch: newRefFromUrl, isInitialLoad: true });
+                } else if (!newRefFromUrl) {
+                    raffleSubscription.current?.();
+                    setRaffleState(initialRaffleData);
+                    setCurrentAdminId(null);
+                    setLoading(false);
+                }
+            };
+
+            window.addEventListener('popstate', handlePopState);
+
+            return () => {
+                window.removeEventListener('popstate', handlePopState);
+                raffleSubscription.current?.();
+            };
         };
-    
+
         initialize();
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
@@ -1823,15 +1821,22 @@ const App = () => {
                                                             disabled={!isRegisterFormValidForSubmit}
                                                             onClick={() => {
                                                                 const url = new URL(raffleState.paymentLink!);
-                                                                const redirectUrlWithParams = new URL(window.location.origin);
-                                                                redirectUrlWithParams.searchParams.set('ref', raffleState.raffleRef);
-                                                                redirectUrlWithParams.searchParams.set('pName', raffleState.name || '');
-                                                                redirectUrlWithParams.searchParams.set('pPhone', raffleState.phoneNumber || '');
-                                                                redirectUrlWithParams.searchParams.set('pNum', raffleState.raffleNumber || '');
+                                                                const redirectUrlWithParams = new URL(window.location.href);
+                                                                // Clear old params from redirect URL
+                                                                const cleanRedirectUrl = new URL(redirectUrlWithParams.origin + redirectUrlWithParams.pathname);
+                                                                cleanRedirectUrl.searchParams.set('ref', raffleState.raffleRef);
+                                                                cleanRedirectUrl.searchParams.set('pName', raffleState.name || '');
+                                                                cleanRedirectUrl.searchParams.set('pPhone', raffleState.phoneNumber || '');
+                                                                cleanRedirectUrl.searchParams.set('pNum', raffleState.raffleNumber || '');
                                                                 
-                                                                // For Wompi compatibility
-                                                                url.searchParams.set('redirect-url', redirectUrlWithParams.href);
+                                                                // For Wompi compatibility, it uses `redirect-url`
+                                                                url.searchParams.set('redirect-url', cleanRedirectUrl.href);
+
+                                                                // Also set the reference for Wompi
+                                                                const paymentRef = `${raffleState.raffleRef}_${raffleState.raffleNumber}_${Date.now()}`;
+                                                                url.searchParams.set('reference', paymentRef);
                                                                 
+                                                                handleRegisterParticipant(); // Register as pending
                                                                 window.open(url.toString(), '_blank');
                                                             }}
                                                         >
