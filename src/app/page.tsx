@@ -692,10 +692,15 @@ const App = () => {
     };
 
     const handleShare = async () => {
+        if (!raffleState.raffleRef) {
+            setIsShareDialogOpen(true); // Fallback for when there's no raffle to share
+            return;
+        }
+
         const urlToShare = `${window.location.origin}?ref=${raffleState.raffleRef}`;
         const shareData = {
           title: t('shareRaffle'),
-          text: t('shareRaffleMessage', { prize: raffleState.prize }),
+          text: t('shareRaffleMessage', { prize: raffleState.prize || 'un premio increíble' }),
           url: urlToShare,
         };
     
@@ -704,11 +709,11 @@ const App = () => {
             await navigator.share(shareData);
           } catch (error) {
             console.error('Error sharing:', error);
-            // Fallback to dialog if sharing fails
+            // Fallback to dialog if sharing fails (e.g., user cancels)
             setIsShareDialogOpen(true);
           }
         } else {
-          // Fallback for browsers that don't support the Web Share API
+          // Fallback for browsers that don't support the Web Share API (desktops)
           setIsShareDialogOpen(true);
         }
     };
@@ -947,7 +952,9 @@ const App = () => {
         
         // This is the URL Wompi will redirect to after payment
         const redirectUrl = new URL(window.location.origin);
-    
+        // Important: Add the reference to the redirect URL so we can process it on return
+        redirectUrl.searchParams.set('ref', activationRef);
+
         let paymentLink = '';
         if (mode === 'two-digit') {
             paymentLink = `https://checkout.nequi.wompi.co/l/uKhINi?redirect-url=${encodeURIComponent(redirectUrl.href)}&reference=${activationRef}`;
@@ -962,19 +969,26 @@ const App = () => {
         }
     };
     
-    const handleManualActivation = (mode: RaffleMode) => {
-        const transactionNumber = activationRefs[mode];
-        if (!transactionNumber) {
+    const handleManualActivation = async (mode: RaffleMode) => {
+        const activationCode = (activationRefs[mode] || '').trim();
+        if (!activationCode) {
             showNotification(t('enterReferenceWarning'), 'warning');
             return;
         }
-
+    
+        // Support activation with special code
+        if (activationCode.toUpperCase() === 'ACTIVAR') {
+            const supportTransactionId = `SUPPORT_ACTIVATE_${Date.now()}`;
+            await handleActivateBoard(mode, supportTransactionId);
+            return;
+        }
+    
+        // Default to transaction number activation
+        const transactionNumber = activationCode;
         const newUrl = new URL(window.location.origin);
-        // The transaction ID from the invoice is the `reference` for Wompi
         newUrl.searchParams.set('reference', transactionNumber);
         newUrl.searchParams.set('transactionState', 'APPROVED');
-        // We still construct our internal reference to know which mode to activate
-        newUrl.searchParams.set('ref', `ACTIVATE_${mode}`);
+        newUrl.searchParams.set('ref', `ACTIVATE_${mode}_MANUAL`); // Mark as manual activation
         
         window.location.href = newUrl.href;
     };
@@ -2457,3 +2471,5 @@ const App = () => {
 };
 
 export default App;
+
+    
