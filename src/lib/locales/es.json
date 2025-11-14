@@ -213,7 +213,10 @@
     "payWithLink": "Pagar con Link",
     "deletePendingConfirmation": "¿Estás seguro de que deseas eliminar este participante pendiente? Esta acción no se puede deshacer.",
     "pendingDeletedSuccess": "Participante pendiente eliminado con éxito.",
-    "pendingDeletedError": "Error al eliminar el participante pendiente."
+    "pendingDeletedError": "Error al eliminar el participante pendiente.",
+    "reportInvoice": "Reportar Factura",
+    "pasteWompiRef": "Pegar referencia de Wompi",
+    "activate": "Activar"
 }
     
     
@@ -221,3 +224,4 @@
 
 
     
+

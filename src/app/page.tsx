@@ -132,6 +132,8 @@ const App = () => {
 
     const [installPromptEvent, setInstallPromptEvent] = useState<any>(null);
 
+    const [activationRefs, setActivationRefs] = useState<{ [key in RaffleMode]?: string }>({});
+
     const raffleManager = new RaffleManager(db);
     
     const raffleMode = raffleState.raffleMode;
@@ -304,11 +306,11 @@ const App = () => {
 
             const urlParams = new URLSearchParams(window.location.search);
             const status = urlParams.get('transactionState') || urlParams.get('state');
-            const reference = urlParams.get('reference') || urlParams.get('ref'); // Wompi/PayU reference
+            const reference = urlParams.get('reference') || urlParams.get('ref_payco'); // Wompi/PayU reference
             const refFromUrl = urlParams.get('ref'); // Our internal reference
 
             // --- Payment Confirmation Logic ---
-            if (status === 'APPROVED' || status === 'approved') {
+            if (status && (status.toLowerCase() === 'approved' || status === '4')) {
                 // 1. Activation Payment
                 if (reference && reference.startsWith('ACTIVATE_')) {
                     const [, mode] = reference.split('_');
@@ -331,7 +333,7 @@ const App = () => {
             }
             
             // --- Raffle Loading Logic ---
-            if (refFromUrl) {
+            if (refFromUrl && !refFromUrl.startsWith('ACTIVATE_')) {
                 await handleAdminSearch({ refToSearch: refFromUrl, isInitialLoad: true });
             } else {
                 setRaffleState(initialRaffleData);
@@ -919,15 +921,15 @@ const App = () => {
     };
 
     const handlePriceButtonClick = (mode: RaffleMode) => {
-        let paymentLink = '';
-        const redirectUrl = new URL(window.location.origin);
         const activationRef = `ACTIVATE_${mode}_CO_${Date.now()}`;
+        
+        // This is the URL Wompi will redirect to after payment
+        const redirectUrl = new URL(window.location.origin + window.location.pathname);
+        redirectUrl.searchParams.set('ref', activationRef); // Add our internal ref to the redirect
     
-        // Add the reference to the redirect URL so we can pick it up on return
-        redirectUrl.searchParams.set('ref', activationRef);
-
         const encodedRedirectUrl = encodeURIComponent(redirectUrl.href);
 
+        let paymentLink = '';
         if (mode === 'two-digit') {
             paymentLink = `https://checkout.nequi.wompi.co/l/uKhINi?redirect-url=${encodedRedirectUrl}&reference=${activationRef}`;
         } else if (mode === 'three-digit') {
@@ -938,10 +940,19 @@ const App = () => {
 
         if (paymentLink) {
             window.location.href = paymentLink;
-        } else {
-            setSelectedRaffleMode(mode);
-            setIsCountrySelectionOpen(true);
         }
+    };
+    
+    const handleManualActivation = (mode: RaffleMode) => {
+        const ref = activationRefs[mode];
+        if (!ref) {
+            showNotification(t('enterReferenceWarning'), 'warning');
+            return;
+        }
+        const newUrl = new URL(window.location.origin + window.location.pathname);
+        newUrl.searchParams.set('reference', ref);
+        newUrl.searchParams.set('transactionState', 'APPROVED');
+        window.location.href = newUrl.href;
     };
 
 
@@ -984,11 +995,14 @@ const App = () => {
             
             await setDoc(doc(db, "raffles", newRef), newRaffleData);
     
-            await handleAdminSearch({ refToSearch: newRef, isInitialLoad: true });
+            // Redirect to the new raffle page
+            const newUrl = new URL(window.location.origin);
+            newUrl.searchParams.set('ref', newRef);
+            window.location.href = newUrl.href;
+
         } catch (error) {
             console.error("Error activating board:", error);
             showNotification(t('errorActivatingBoard'), "error");
-        } finally {
             setLoading(false);
         }
     };
@@ -1637,10 +1651,22 @@ const App = () => {
                                                     <p className="font-normal text-gray-600 mb-4 text-sm">{t('2digitRaffleDescription')}</p>
                                                 </div>
                                             </div>
-                                            <div className="p-6 pt-0 space-y-2">
+                                            <div className="p-6 pt-0 space-y-4">
                                                 <Button onClick={() => handlePriceButtonClick('two-digit')} size="lg" className="w-full bg-green-500 hover:bg-green-600 text-white font-bold">
                                                     {t('price')}
                                                 </Button>
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="activation-ref-two-digit" className="text-xs text-gray-500">{t('reportInvoice')}</Label>
+                                                    <div className="flex gap-2">
+                                                        <Input
+                                                          id="activation-ref-two-digit"
+                                                          placeholder={t('pasteWompiRef')}
+                                                          value={activationRefs['two-digit'] || ''}
+                                                          onChange={(e) => setActivationRefs(prev => ({...prev, 'two-digit': e.target.value}))}
+                                                        />
+                                                        <Button onClick={() => handleManualActivation('two-digit')} variant="secondary">{t('activate')}</Button>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
 
@@ -1657,10 +1683,22 @@ const App = () => {
                                                     <p className="font-normal text-gray-600 mb-4 text-sm">{t('3digitRaffleDescription')}</p>
                                                 </div>
                                             </div>
-                                            <div className="p-6 pt-0 space-y-2">
+                                            <div className="p-6 pt-0 space-y-4">
                                                 <Button onClick={() => handlePriceButtonClick('three-digit')} size="lg" className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold">
                                                     {t('price')}
                                                 </Button>
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="activation-ref-three-digit" className="text-xs text-gray-500">{t('reportInvoice')}</Label>
+                                                    <div className="flex gap-2">
+                                                        <Input
+                                                          id="activation-ref-three-digit"
+                                                          placeholder={t('pasteWompiRef')}
+                                                          value={activationRefs['three-digit'] || ''}
+                                                          onChange={(e) => setActivationRefs(prev => ({...prev, 'three-digit': e.target.value}))}
+                                                        />
+                                                        <Button onClick={() => handleManualActivation('three-digit')} variant="secondary">{t('activate')}</Button>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
 
@@ -1677,10 +1715,22 @@ const App = () => {
                                                     <p className="font-normal text-gray-600 mb-4 text-sm">{t('infiniteRaffleHomeDescription')}</p>
                                                 </div>
                                             </div>
-                                            <div className="p-6 pt-0 space-y-2">
+                                            <div className="p-6 pt-0 space-y-4">
                                                 <Button onClick={() => handlePriceButtonClick('infinite')} size="lg" className="w-full bg-red-500 hover:bg-red-600 text-white font-bold">
                                                     {t('price')}
                                                 </Button>
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="activation-ref-infinite" className="text-xs text-gray-500">{t('reportInvoice')}</Label>
+                                                    <div className="flex gap-2">
+                                                        <Input
+                                                          id="activation-ref-infinite"
+                                                          placeholder={t('pasteWompiRef')}
+                                                          value={activationRefs['infinite'] || ''}
+                                                          onChange={(e) => setActivationRefs(prev => ({...prev, 'infinite': e.target.value}))}
+                                                        />
+                                                        <Button onClick={() => handleManualActivation('infinite')} variant="secondary">{t('activate')}</Button>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>

@@ -213,7 +213,10 @@
     "payWithLink": "Pay with Link",
     "deletePendingConfirmation": "Are you sure you want to delete this pending participant? This action cannot be undone.",
     "pendingDeletedSuccess": "Pending participant deleted successfully.",
-    "pendingDeletedError": "Error deleting pending participant."
+    "pendingDeletedError": "Error deleting pending participant.",
+    "reportInvoice": "Report Invoice",
+    "pasteWompiRef": "Paste Wompi reference",
+    "activate": "Activate"
 }
     
     
@@ -221,3 +224,4 @@
 
 
     
+
