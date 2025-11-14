@@ -691,6 +691,28 @@ const App = () => {
         });
     };
 
+    const handleShare = async () => {
+        const urlToShare = `${window.location.origin}?ref=${raffleState.raffleRef}`;
+        const shareData = {
+          title: t('shareRaffle'),
+          text: t('shareRaffleMessage', { prize: raffleState.prize }),
+          url: urlToShare,
+        };
+    
+        if (navigator.share) {
+          try {
+            await navigator.share(shareData);
+          } catch (error) {
+            console.error('Error sharing:', error);
+            // Fallback to dialog if sharing fails
+            setIsShareDialogOpen(true);
+          }
+        } else {
+          // Fallback for browsers that don't support the Web Share API
+          setIsShareDialogOpen(true);
+        }
+    };
+
     const handleShareTicket = () => {
         const targetInfo = generatedTicketData || ticketInfo;
         if (!targetInfo || !targetInfo.phoneNumber) return;
@@ -1599,7 +1621,7 @@ const App = () => {
                                         <span>{t('recoverAdminAccess')}</span>
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
-                                    <DropdownMenuItem onSelect={() => setIsShareDialogOpen(true)}>
+                                    <DropdownMenuItem onSelect={handleShare}>
                                         <Share2 className="mr-2 h-4 w-4" />
                                         <span>{t('share')}</span>
                                     </DropdownMenuItem>
