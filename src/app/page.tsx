@@ -10,7 +10,7 @@ import { useLanguage } from '@/hooks/use-language';
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House, Clock as ClockIcon, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Upload, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages, Trophy, Trash2, Copy } from 'lucide-react';
+import { Menu, Award, Lock, House, Clock as ClockIcon, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Upload, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages, Trophy, Trash2, Copy, Shield } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -1041,6 +1041,11 @@ const App = () => {
         const whatsappUrl = `https://wa.me/57${raffleState.organizerPhoneNumber}?text=${message}`;
         window.open(whatsappUrl, '_blank');
     };
+
+    const handleContactAdminWeb = () => {
+        const whatsappUrl = `https://wa.me/3145696687`;
+        window.open(whatsappUrl, '_blank');
+    };
     
     const handleShareToWhatsApp = () => {
         const urlToShare = `${window.location.origin}?ref=${raffleState.raffleRef}`;
@@ -1622,6 +1627,10 @@ const App = () => {
                                     <DropdownMenuItem onSelect={() => setIsAdminLoginOpen(true)}>
                                         <KeyRound className="mr-2 h-4 w-4" />
                                         <span>{t('recoverAdminAccess')}</span>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onSelect={handleContactAdminWeb}>
+                                        <Shield className="mr-2 h-4 w-4" />
+                                        <span>{t('webSupport')}</span>
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem onSelect={handleShare}>
@@ -2448,5 +2457,3 @@ const App = () => {
 };
 
 export default App;
-
-    
