@@ -1107,10 +1107,6 @@ const App = () => {
     };
 
     const handleGoToHome = () => {
-        if (isSuperAdmin) {
-            handleTabClick('activations');
-            return;
-        }
         raffleSubscription.current?.();
         setRaffleState(initialRaffleData);
         setCurrentAdminId(null);
@@ -1643,7 +1639,7 @@ const App = () => {
                                  <h2 className="text-2xl font-bold text-gray-800 flex items-center justify-center gap-2">
                                     <InfinityIcon className="h-6 w-6"/>
                                     {t('infiniteRaffle')}
-                                </h2>
+                                 </h2>
                                 <p className="text-gray-600 mt-2">
                                     {t('infiniteRaffleDescription')}
                                 </p>
