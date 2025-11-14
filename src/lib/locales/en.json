@@ -180,7 +180,7 @@
     "participantRegisteredNotification": "Participant {name} ({number}) registered and confirmed!",
     "ticketDownloaded": "PDF Ticket downloaded",
     "shareTicketMessage": "Hi! Here is your ticket for the \"{prize}\" raffle. Good luck!",
-    "enterReferenceWarning": "Please enter a reference.",
+    "enterReferenceWarning": "Please enter a transaction reference.",
     "enterOrganizerPhoneWarning": "Please enter the organizer's phone number.",
     "enterPasswordWarning": "Please enter the password.",
     "adminAccessRestored": "Admin access restored successfully!",
@@ -215,7 +215,7 @@
     "pendingDeletedSuccess": "Pending participant deleted successfully.",
     "pendingDeletedError": "Error deleting pending participant.",
     "reportInvoice": "Report Invoice",
-    "pasteWompiRef": "Paste Wompi reference",
+    "pasteWompiRef": "Paste transaction number",
     "activate": "Activate"
 }
     
@@ -225,3 +225,6 @@
 
     
 
+
+
+    

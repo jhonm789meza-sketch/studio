@@ -966,13 +966,16 @@ const App = () => {
     };
     
     const handleManualActivation = (mode: RaffleMode) => {
-        const ref = activationRefs[mode];
-        if (!ref) {
+        const transactionNumber = activationRefs[mode];
+        if (!transactionNumber) {
             showNotification(t('enterReferenceWarning'), 'warning');
             return;
         }
+        // Reconstruct the full reference Wompi would use.
+        const fullReference = `ACTIVATE_${mode}_CO_${transactionNumber}`;
+
         const newUrl = new URL(window.location.origin + window.location.pathname);
-        newUrl.searchParams.set('reference', ref);
+        newUrl.searchParams.set('reference', fullReference);
         newUrl.searchParams.set('transactionState', 'APPROVED');
         window.location.href = newUrl.href;
     };
@@ -2445,3 +2448,5 @@ const App = () => {
 };
 
 export default App;
+
+    
