@@ -230,7 +230,9 @@
     "date": "Fecha",
     "activateBoard": "Activar Tablero",
     "boardActivatedSuccessfully": "Tablero activado con éxito.",
-    "activationPendingAdmin": "Pago exitoso. El administrador activará tu tablero en breve."
+    "activationPendingAdmin": "Pago exitoso. El administrador activará tu tablero en breve.",
+    "logout": "Cerrar Sesión",
+    "logoutSuccess": "Sesión cerrada exitosamente."
 }
     
     
@@ -246,3 +248,4 @@
     
 
     
+

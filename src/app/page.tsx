@@ -10,7 +10,7 @@ import { useLanguage } from '@/hooks/use-language';
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House, Clock as ClockIcon, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Upload, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages, Trophy, Trash2, Copy, Shield } from 'lucide-react';
+import { Menu, Award, Lock, House, Clock as ClockIcon, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Upload, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages, Trophy, Trash2, Copy, Shield, LogOut } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -1042,7 +1042,7 @@ const App = () => {
             const transactionDocRef = doc(db, 'usedTransactions', transactionId);
             const transactionDoc = await getDoc(transactionDocRef);
 
-            if (transactionDoc.exists()) {
+            if (transactionDoc.exists() && !transactionId.startsWith('SUPERADMIN_')) {
                 showNotification(t('transactionAlreadyUsed'), 'error');
                 setLoading(false);
                 return;
@@ -1130,6 +1130,13 @@ const App = () => {
         }
     };
     
+    const handleSuperAdminLogout = () => {
+        setIsSuperAdmin(false);
+        sessionStorage.removeItem('isSuperAdmin');
+        handleGoToHome();
+        showNotification(t('logoutSuccess'), 'info');
+    };
+
     const allNumbers = Array.from({ length: totalNumbers }, (_, i) => i);
     
     const backgroundImage = raffleState.prizeImageUrl;
@@ -1688,6 +1695,12 @@ const App = () => {
                                         <Shield className="mr-2 h-4 w-4" />
                                         <span>{t('webSupport')}</span>
                                     </DropdownMenuItem>
+                                     {isSuperAdmin && (
+                                        <DropdownMenuItem onSelect={handleSuperAdminLogout}>
+                                            <LogOut className="mr-2 h-4 w-4" />
+                                            <span>{t('logout')}</span>
+                                        </DropdownMenuItem>
+                                    )}
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem onSelect={handleShare}>
                                         <Share2 className="mr-2 h-4 w-4" />
