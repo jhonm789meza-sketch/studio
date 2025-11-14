@@ -1119,7 +1119,7 @@ const App = () => {
     };
 
     const handleSuperAdminLogin = () => {
-        if (superAdminPassword === 'refaexpress2024') {
+        if (superAdminPassword === '32184257361045715054') {
             setIsSuperAdmin(true);
             sessionStorage.setItem('isSuperAdmin', 'true');
             setIsSuperAdminLoginOpen(false);
