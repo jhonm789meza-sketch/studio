@@ -10,7 +10,7 @@ import { useLanguage } from '@/hooks/use-language';
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House, Clock, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Upload, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages, Trophy, Trash2 } from 'lucide-react';
+import { Menu, Award, Lock, House, Clock, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Upload, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages, Trophy, Trash2, Copy } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -152,8 +152,9 @@ const App = () => {
         setIsTicketModalOpen(true);
     };
     
-    const confirmParticipantPayment = async (raffleRef: string, participantId: string, participantData?: any): Promise<Participant | null> => {
+    const confirmParticipantPayment = async (raffleRef: string, participantData?: any): Promise<Participant | null> => {
         if (!raffleRef) return null;
+        if (!participantData?.raffleNumber) return null;
     
         try {
             if (persistenceEnabled) await persistenceEnabled;
@@ -163,82 +164,68 @@ const App = () => {
     
             if (docSnap.exists()) {
                 const raffleData = docSnap.data();
-                let participantToReturn: Participant | null = null;
-    
-                if (participantData && participantData.raffleNumber) {
-                    const existingParticipant = raffleData.participants.find((p: Participant) => p.raffleNumber === participantData.raffleNumber);
-                    if(existingParticipant && existingParticipant.paymentStatus === 'confirmed') {
-                        return existingParticipant; // Already confirmed
-                    }
-
-                    const newParticipant: Participant = {
-                        id: Date.now(),
-                        name: participantData.name,
-                        phoneNumber: participantData.phoneNumber,
-                        raffleNumber: participantData.raffleNumber,
-                        timestamp: new Date(),
-                        paymentStatus: 'confirmed',
-                    };
-                    const updatedParticipants = [...raffleData.participants.filter((p: Participant) => p.raffleNumber !== newParticipant.raffleNumber), newParticipant];
-                    await setDoc(raffleDocRef, { participants: updatedParticipants }, { merge: true });
-                    participantToReturn = newParticipant;
-    
-                } else if (participantId) {
-                    const numericParticipantId = parseInt(participantId, 10);
-                    const participantIndex = raffleData.participants.findIndex((p: Participant) => p.id === numericParticipantId);
-    
-                    if (participantIndex > -1 && raffleData.participants[participantIndex].paymentStatus === 'pending') {
-                        const updatedParticipants = [...raffleData.participants];
-                        const updatedParticipant = { ...updatedParticipants[participantIndex], paymentStatus: 'confirmed' as 'confirmed' };
-                        updatedParticipants[participantIndex] = updatedParticipant;
-
-                        await setDoc(raffleDocRef, { participants: updatedParticipants }, { merge: true });
-                        participantToReturn = updatedParticipant;
-                    } else {
-                        participantToReturn = raffleData.participants.find((p: Participant) => p.id === numericParticipantId);
-                    }
+                
+                const existingParticipant = raffleData.participants.find((p: Participant) => p.raffleNumber === participantData.raffleNumber);
+                if (existingParticipant && existingParticipant.paymentStatus === 'confirmed') {
+                    return existingParticipant; // Already confirmed
                 }
-    
-                if (participantToReturn && participantToReturn.name) {
-                     showNotification(t('paymentConfirmedNotification', { name: participantToReturn.name, number: participantToReturn.raffleNumber }), 'success');
-                }
-                 return participantToReturn;
+
+                const newParticipant: Participant = {
+                    id: Date.now(),
+                    name: participantData.name,
+                    phoneNumber: participantData.phoneNumber,
+                    raffleNumber: participantData.raffleNumber,
+                    timestamp: new Date(),
+                    paymentStatus: 'confirmed',
+                };
+                const updatedParticipants = [...raffleData.participants.filter((p: Participant) => p.raffleNumber !== newParticipant.raffleNumber), newParticipant];
+                await setDoc(raffleDocRef, { participants: updatedParticipants }, { merge: true });
+                
+                showNotification(t('paymentConfirmedNotification', { name: newParticipant.name, number: newParticipant.raffleNumber }), 'success');
+                return newParticipant;
             }
             return null;
         } catch (error) {
             console.error("Error confirming participant payment:", error);
             showNotification(t('paymentConfirmationError'), 'error');
             return null;
-        } finally {
-            const url = new URL(window.location.href);
-            const needsCleanup = url.searchParams.has('status') || url.searchParams.has('transactionState') || url.searchParams.has('state');
-            
-            if (needsCleanup) {
-                url.searchParams.delete('status');
-                url.searchParams.delete('participantId');
-                url.searchParams.delete('pName');
-                url.searchParams.delete('pPhone');
-                url.searchParams.delete('pNum');
-                url.searchParams.delete('transactionState');
-                url.searchParams.delete('ref_payco');
-                url.searchParams.delete('signature');
-                url.searchParams.delete('transactionId');
-                url.searchParams.delete('amount');
-                url.searchParams.delete('currency');
-                url.searchParams.delete('id');
-                url.searchParams.delete('reference');
-                url.searchParams.delete('state');
-                url.searchParams.delete('env');
-                
-                window.history.replaceState({}, '', url.toString());
+        }
+    };
+    
+    const cleanupUrlParams = () => {
+        const url = new URL(window.location.href);
+        const paramsToClean = [
+            'status', 'participantId', 'pName', 'pPhone', 'pNum', 'transactionState', 
+            'ref_payco', 'signature', 'transactionId', 'amount', 'currency', 
+            'id', 'reference', 'state', 'env'
+        ];
+        
+        let needsCleanup = false;
+        paramsToClean.forEach(param => {
+            if (url.searchParams.has(param)) {
+                url.searchParams.delete(param);
+                needsCleanup = true;
+            }
+        });
+        
+        // Preserve the 'ref' parameter if it's the only one left
+        const currentRef = raffleState.raffleRef || url.searchParams.get('ref');
+        if (currentRef) {
+            url.searchParams.set('ref', currentRef);
+        } else {
+             url.searchParams.delete('ref');
+        }
 
-                if (raffleRef) {
-                    await handleAdminSearch({ refToSearch: raffleRef, isInitialLoad: true });
-                }
-            }
-            if (activeTab !== 'pending') {
-                setLoading(false);
-            }
+        const finalParams = new URLSearchParams(url.search);
+        let finalSearchString = '';
+        if (finalParams.has('ref')) {
+             finalSearchString = `?ref=${finalParams.get('ref')}`;
+        }
+
+        const newUrl = url.pathname + finalSearchString;
+
+        if (window.location.pathname + window.location.search !== newUrl) {
+            window.history.replaceState({}, '', newUrl);
         }
     };
 
@@ -284,7 +271,7 @@ const App = () => {
     };
 
 
-    // Effect for initial loading and handling popstate
+    // Main initialization and URL handling effect
     useEffect(() => {
         const initialize = async () => {
             setLoading(true);
@@ -295,26 +282,41 @@ const App = () => {
             if (adminIdFromStorage) setCurrentAdminId(adminIdFromStorage);
 
             const urlParams = new URLSearchParams(window.location.search);
+            const status = urlParams.get('transactionState') || urlParams.get('state');
+            const reference = urlParams.get('reference') || urlParams.get('ref');
             const refFromUrl = urlParams.get('ref');
-            
-            // Check for activation via payment link
-            if (!refFromUrl && (urlParams.get('transactionState') === 'APPROVED' || urlParams.get('state') === 'APPROVED')) {
-                const reference = urlParams.get('reference');
+
+            // --- Payment Confirmation Logic ---
+            if (status === 'APPROVED' || status === 'approved') {
+                // 1. Activation Payment
                 if (reference && reference.startsWith('ACTIVATE_')) {
                     const [, mode] = reference.split('_');
                     showNotification(t('paymentActivationConfirmed'), 'success');
-                    await handleActivateBoard(mode as RaffleMode, 'CO'); // Assuming CO for now
+                    await handleActivateBoard(mode as RaffleMode, 'CO'); // Activates and loads the new raffle
+                    cleanupUrlParams();
                     return; // Stop further processing
                 }
+                // 2. Participant Payment
+                else if (refFromUrl) {
+                    const pName = urlParams.get('pName');
+                    const pPhone = urlParams.get('pPhone');
+                    const pNum = urlParams.get('pNum');
+
+                    if (pName && pPhone && pNum) {
+                        await confirmParticipantPayment(refFromUrl, { name: pName, phoneNumber: pPhone, raffleNumber: pNum });
+                        // The raffle will be loaded next, and URL will be cleaned up
+                    }
+                }
             }
-
-
+            
+            // --- Raffle Loading Logic ---
             if (refFromUrl) {
                 await handleAdminSearch({ refToSearch: refFromUrl, isInitialLoad: true });
             } else {
                 setRaffleState(initialRaffleData);
                 setLoading(false);
             }
+            cleanupUrlParams(); // Clean URL after loading or payment attempt
         };
 
         initialize();
@@ -340,39 +342,6 @@ const App = () => {
         };
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
-
-    // Effect for handling payment confirmation AFTER raffle data is loaded
-    useEffect(() => {
-        const confirmPaymentFromUrl = async () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const refFromUrl = urlParams.get('ref');
-            const status = urlParams.get('transactionState') || urlParams.get('state');
-
-            // Ensure this runs only for the correct raffle and for a successful payment
-            if (raffleState.raffleRef && refFromUrl === raffleState.raffleRef && (status === 'APPROVED' || status === 'approved')) {
-                const pName = urlParams.get('pName');
-                const pPhone = urlParams.get('pPhone');
-                const pNum = urlParams.get('pNum');
-
-                if (pName && pPhone && pNum) {
-                    const confirmedParticipant = await confirmParticipantPayment(refFromUrl, '', {
-                        name: pName,
-                        phoneNumber: pPhone,
-                        raffleNumber: pNum,
-                    });
-
-                    if (confirmedParticipant) {
-                        showNotification(t('successfulPaymentNotification'), 'success');
-                    }
-                }
-            }
-        };
-
-        if (raffleState.raffleRef) { // Only run if raffle is loaded
-            confirmPaymentFromUrl();
-        }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [raffleState.raffleRef]); // Depends only on raffleRef to run once when raffle is loaded
 
 
     const showNotification = (message: string, type = 'info') => {
@@ -639,7 +608,16 @@ const App = () => {
 
     const handleConfirmPayment = async (participantId: number) => {
         if (!raffleState.raffleRef || !isCurrentUserAdmin) return;
-        await confirmParticipantPayment(raffleState.raffleRef, String(participantId));
+        
+        const participantIndex = raffleState.participants.findIndex(p => p.id === participantId);
+        if (participantIndex === -1 || raffleState.participants[participantIndex].paymentStatus !== 'pending') return;
+
+        const updatedParticipants = [...raffleState.participants];
+        const updatedParticipant = { ...updatedParticipants[participantIndex], paymentStatus: 'confirmed' as 'confirmed' };
+        updatedParticipants[participantIndex] = updatedParticipant;
+
+        await setDoc(doc(db, "raffles", raffleState.raffleRef), { participants: updatedParticipants }, { merge: true });
+        showNotification(t('paymentConfirmedNotification', { name: updatedParticipant.name, number: updatedParticipant.raffleNumber }), 'success');
     };
     
     const handleDeletePending = async (participantId: number) => {
@@ -2404,5 +2382,3 @@ const App = () => {
 };
 
 export default App;
-
-    
