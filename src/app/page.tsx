@@ -971,12 +971,16 @@ const App = () => {
             showNotification(t('enterReferenceWarning'), 'warning');
             return;
         }
-        // Reconstruct the full reference Wompi would use.
-        const fullReference = `ACTIVATE_${mode}_CO_${transactionNumber}`;
+        // Wompi uses the transaction ID as the 'reference' parameter in the redirect URL
+        // when a user pays via a Lipe Link (like the ones we use).
+        const fullReference = transactionNumber;
 
         const newUrl = new URL(window.location.origin + window.location.pathname);
         newUrl.searchParams.set('reference', fullReference);
         newUrl.searchParams.set('transactionState', 'APPROVED');
+        // We add our internal reference to distinguish activation payments
+        newUrl.searchParams.set('ref', `ACTIVATE_${mode}_CO`);
+        
         window.location.href = newUrl.href;
     };
 
@@ -2448,5 +2452,3 @@ const App = () => {
 };
 
 export default App;
-
-    
