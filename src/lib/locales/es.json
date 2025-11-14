@@ -180,7 +180,7 @@
     "participantRegisteredNotification": "¡Participante {name} ({number}) registrado y confirmado!",
     "ticketDownloaded": "Tiquete PDF descargado",
     "shareTicketMessage": "¡Hola! Aquí tienes tu tiquete para la rifa \"{prize}\". ¡Mucha suerte!",
-    "enterReferenceWarning": "Por favor, ingresa una referencia de transacción.",
+    "enterReferenceWarning": "Por favor, ingresa un número de transacción.",
     "enterOrganizerPhoneWarning": "Por favor, ingresa el teléfono del organizador.",
     "enterPasswordWarning": "Por favor, ingresa la contraseña.",
     "adminAccessRestored": "¡Administración recuperada con éxito!",
@@ -216,7 +216,8 @@
     "pendingDeletedError": "Error al eliminar el participante pendiente.",
     "reportInvoice": "Reportar Factura",
     "pasteWompiRef": "Pegar número de transacción",
-    "activate": "Activar"
+    "activate": "Activar",
+    "transactionAlreadyUsed": "Esta factura ya fue utilizada para activar otra rifa."
 }
     
     
@@ -226,5 +227,7 @@
     
 
 
+
+    
 
     

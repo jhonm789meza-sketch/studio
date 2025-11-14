@@ -3,7 +3,7 @@ import { useState, useEffect, useRef, useTransition } from 'react';
 import jsPDF from 'jspdf';
 import { RaffleManager } from '@/lib/RaffleManager';
 import { db, storage, persistenceEnabled } from '@/lib/firebase';
-import { doc, onSnapshot, setDoc, getDoc, deleteDoc, Unsubscribe } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc, getDoc, deleteDoc, Unsubscribe, serverTimestamp } from 'firebase/firestore';
 import Image from 'next/image';
 import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { useLanguage } from '@/hooks/use-language';
@@ -306,16 +306,16 @@ const App = () => {
 
             const urlParams = new URLSearchParams(window.location.search);
             const status = urlParams.get('transactionState') || urlParams.get('state');
-            const reference = urlParams.get('reference') || urlParams.get('ref_payco'); // Wompi/PayU reference
+            const transactionId = urlParams.get('reference'); // Wompi/PayU reference is the transactionId
             const refFromUrl = urlParams.get('ref'); // Our internal reference
 
             // --- Payment Confirmation Logic ---
-            if (status && (status.toLowerCase() === 'approved' || status === '4')) {
-                // 1. Activation Payment
-                if (reference && reference.startsWith('ACTIVATE_')) {
-                    const [, mode] = reference.split('_');
+            if (status && (status.toLowerCase() === 'approved' || status === '4') && transactionId) {
+                 // 1. Activation Payment
+                 if (transactionId.startsWith('ACTIVATE_')) {
+                    const [, mode] = transactionId.split('_');
                     showNotification(t('paymentActivationConfirmed'), 'success');
-                    await handleActivateBoard(mode as RaffleMode, 'CO'); // Activates and loads the new raffle
+                    await handleActivateBoard(mode as RaffleMode, transactionId);
                     cleanupUrlParams();
                     return; // Stop further processing
                 }
@@ -943,21 +943,18 @@ const App = () => {
     };
 
     const handlePriceButtonClick = (mode: RaffleMode) => {
-        const activationRef = `ACTIVATE_${mode}_CO_${Date.now()}`;
+        const activationRef = `ACTIVATE_${mode}_${Date.now()}`;
         
         // This is the URL Wompi will redirect to after payment
-        const redirectUrl = new URL(window.location.origin + window.location.pathname);
-        redirectUrl.searchParams.set('ref', activationRef); // Add our internal ref to the redirect
+        const redirectUrl = new URL(window.location.origin);
     
-        const encodedRedirectUrl = encodeURIComponent(redirectUrl.href);
-
         let paymentLink = '';
         if (mode === 'two-digit') {
-            paymentLink = `https://checkout.nequi.wompi.co/l/uKhINi?redirect-url=${encodedRedirectUrl}&reference=${activationRef}`;
+            paymentLink = `https://checkout.nequi.wompi.co/l/uKhINi?redirect-url=${encodeURIComponent(redirectUrl.href)}&reference=${activationRef}`;
         } else if (mode === 'three-digit') {
-            paymentLink = `https://checkout.wompi.co/l/9wH9fR?redirect-url=${encodedRedirectUrl}&reference=${activationRef}`;
+            paymentLink = `https://checkout.wompi.co/l/9wH9fR?redirect-url=${encodeURIComponent(redirectUrl.href)}&reference=${activationRef}`;
         } else if (mode === 'infinite') {
-            paymentLink = `https://checkout.wompi.co/l/lwSfQT?redirect-url=${encodedRedirectUrl}&reference=${activationRef}`;
+            paymentLink = `https://checkout.wompi.co/l/lwSfQT?redirect-url=${encodeURIComponent(redirectUrl.href)}&reference=${activationRef}`;
         }
 
         if (paymentLink) {
@@ -971,40 +968,33 @@ const App = () => {
             showNotification(t('enterReferenceWarning'), 'warning');
             return;
         }
-        // Wompi uses the transaction ID as the 'reference' parameter in the redirect URL
-        // when a user pays via a Lipe Link (like the ones we use).
-        const fullReference = transactionNumber;
 
-        const newUrl = new URL(window.location.origin + window.location.pathname);
-        newUrl.searchParams.set('reference', fullReference);
+        const newUrl = new URL(window.location.origin);
+        // The transaction ID from the invoice is the `reference` for Wompi
+        newUrl.searchParams.set('reference', transactionNumber);
         newUrl.searchParams.set('transactionState', 'APPROVED');
-        // We add our internal reference to distinguish activation payments
-        newUrl.searchParams.set('ref', `ACTIVATE_${mode}_CO`);
+        // We still construct our internal reference to know which mode to activate
+        newUrl.searchParams.set('ref', `ACTIVATE_${mode}`);
         
         window.location.href = newUrl.href;
     };
 
 
-    const handleActivateBoard = async (mode: RaffleMode, countryCode: string) => {
+    const handleActivateBoard = async (mode: RaffleMode, transactionId: string) => {
         setIsCountrySelectionOpen(false);
         setLoading(true);
-    
-        let price = '0';
-        const currencySymbol = getCurrencySymbol(countryCode);
-        
-        const isUSDCountry = [].includes(countryCode);
 
-        if (countryCode === 'CO') {
-            if (mode === 'two-digit') price = '12000';
-            else if (mode === 'three-digit') price = '15000';
-            else if (mode === 'infinite') price = '30000';
-        } else if (isUSDCountry) {
-            if (mode === 'two-digit') price = '10';
-            else if (mode === 'three-digit') price = '15';
-            else if (mode === 'infinite') price = '30';
-        }
-    
         try {
+            // Security Check: Verify if the transactionId has been used before in Firestore
+            const transactionDocRef = doc(db, 'usedTransactions', transactionId);
+            const transactionDoc = await getDoc(transactionDocRef);
+
+            if (transactionDoc.exists()) {
+                showNotification(t('transactionAlreadyUsed'), 'error');
+                setLoading(false);
+                return;
+            }
+
             const adminId = `admin_${Date.now()}_${Math.random()}`;
             localStorage.setItem('rifaAdminId', adminId);
             setCurrentAdminId(adminId);
@@ -1017,12 +1007,18 @@ const App = () => {
                 adminId: adminId,
                 isPaid: true,
                 prizeImageUrl: '',
-                value: price,
-                currencySymbol: currencySymbol,
+                value: '0', // Default value, should be set by admin
+                currencySymbol: getCurrencySymbol('CO'),
                 infiniteModeDigits: 0,
             };
             
             await setDoc(doc(db, "raffles", newRef), newRaffleData);
+
+            // Log the used transaction ID in Firestore to prevent reuse
+            await setDoc(transactionDocRef, {
+                raffleRef: newRef,
+                activatedAt: serverTimestamp(),
+            });
     
             // Redirect to the new raffle page
             const newUrl = new URL(window.location.origin);
@@ -2440,7 +2436,7 @@ const App = () => {
               onClose={() => setIsCountrySelectionOpen(false)}
               onSelectCountry={(countryCode) => {
                 if (selectedRaffleMode) {
-                  handleActivateBoard(selectedRaffleMode, countryCode);
+                  // handleActivateBoard(selectedRaffleMode, countryCode);
                 }
               }}
               raffleMode={selectedRaffleMode}
@@ -2452,3 +2448,5 @@ const App = () => {
 };
 
 export default App;
+
+    

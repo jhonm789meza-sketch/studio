@@ -180,7 +180,7 @@
     "participantRegisteredNotification": "Participant {name} ({number}) registered and confirmed!",
     "ticketDownloaded": "PDF Ticket downloaded",
     "shareTicketMessage": "Hi! Here is your ticket for the \"{prize}\" raffle. Good luck!",
-    "enterReferenceWarning": "Please enter a transaction reference.",
+    "enterReferenceWarning": "Please enter a transaction number.",
     "enterOrganizerPhoneWarning": "Please enter the organizer's phone number.",
     "enterPasswordWarning": "Please enter the password.",
     "adminAccessRestored": "Admin access restored successfully!",
@@ -216,7 +216,8 @@
     "pendingDeletedError": "Error deleting pending participant.",
     "reportInvoice": "Report Invoice",
     "pasteWompiRef": "Paste transaction number",
-    "activate": "Activate"
+    "activate": "Activate",
+    "transactionAlreadyUsed": "This invoice has already been used to activate another raffle."
 }
     
     
@@ -226,5 +227,7 @@
     
 
 
+
+    
 
     
