@@ -1107,6 +1107,10 @@ const App = () => {
     };
 
     const handleGoToHome = () => {
+        if (isSuperAdmin) {
+            handleTabClick('activations');
+            return;
+        }
         raffleSubscription.current?.();
         setRaffleState(initialRaffleData);
         setCurrentAdminId(null);
