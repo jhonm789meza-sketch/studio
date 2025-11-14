@@ -304,8 +304,8 @@ const App = () => {
 
             const urlParams = new URLSearchParams(window.location.search);
             const status = urlParams.get('transactionState') || urlParams.get('state');
-            const reference = urlParams.get('reference') || urlParams.get('ref');
-            const refFromUrl = urlParams.get('ref');
+            const reference = urlParams.get('reference') || urlParams.get('ref'); // Wompi/PayU reference
+            const refFromUrl = urlParams.get('ref'); // Our internal reference
 
             // --- Payment Confirmation Logic ---
             if (status === 'APPROVED' || status === 'approved') {
@@ -920,15 +920,20 @@ const App = () => {
 
     const handlePriceButtonClick = (mode: RaffleMode) => {
         let paymentLink = '';
-        const redirectUrl = `${window.location.origin}`;
+        const redirectUrl = new URL(window.location.origin);
         const activationRef = `ACTIVATE_${mode}_CO_${Date.now()}`;
+    
+        // Add the reference to the redirect URL so we can pick it up on return
+        redirectUrl.searchParams.set('ref', activationRef);
+
+        const encodedRedirectUrl = encodeURIComponent(redirectUrl.href);
 
         if (mode === 'two-digit') {
-            paymentLink = `https://checkout.nequi.wompi.co/l/uKhINi?redirect-url=${encodeURIComponent(redirectUrl)}&reference=${activationRef}`;
+            paymentLink = `https://checkout.nequi.wompi.co/l/uKhINi?redirect-url=${encodedRedirectUrl}&reference=${activationRef}`;
         } else if (mode === 'three-digit') {
-            paymentLink = `https://checkout.wompi.co/l/9wH9fR?redirect-url=${encodeURIComponent(redirectUrl)}&reference=${activationRef}`;
+            paymentLink = `https://checkout.wompi.co/l/9wH9fR?redirect-url=${encodedRedirectUrl}&reference=${activationRef}`;
         } else if (mode === 'infinite') {
-            paymentLink = `https://checkout.wompi.co/l/lwSfQT?redirect-url=${encodeURIComponent(redirectUrl)}&reference=${activationRef}`;
+            paymentLink = `https://checkout.wompi.co/l/lwSfQT?redirect-url=${encodedRedirectUrl}&reference=${activationRef}`;
         }
 
         if (paymentLink) {
