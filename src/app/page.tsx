@@ -903,7 +903,7 @@ const App = () => {
         const activationRef = `ACTIVATE_${mode}_CO_${Date.now()}`;
 
         if (mode === 'two-digit') {
-            paymentLink = `https://checkout.wompi.co/l/GWZUpk?redirect-url=${encodeURIComponent(redirectUrl)}&reference=${activationRef}`;
+            paymentLink = `https://checkout.nequi.wompi.co/l/uKhINi?redirect-url=${encodeURIComponent(redirectUrl)}&reference=${activationRef}`;
         } else if (mode === 'three-digit') {
             paymentLink = `https://checkout.wompi.co/l/9wH9fR?redirect-url=${encodeURIComponent(redirectUrl)}&reference=${activationRef}`;
         } else if (mode === 'infinite') {
