@@ -1857,13 +1857,16 @@ const App = () => {
                                                                 }
                                                                 const url = new URL(raffleState.paymentLink!);
                                                                 const redirectUrlWithParams = new URL(window.location.href);
+                                                                // Start with a clean URL (origin + pathname)
                                                                 const cleanRedirectUrl = new URL(redirectUrlWithParams.origin + redirectUrlWithParams.pathname);
                                                                 
+                                                                // Add participant data as query parameters to the clean URL
                                                                 cleanRedirectUrl.searchParams.set('ref', raffleState.raffleRef);
                                                                 cleanRedirectUrl.searchParams.set('pName', raffleState.name || '');
                                                                 cleanRedirectUrl.searchParams.set('pPhone', raffleState.phoneNumber || '');
                                                                 cleanRedirectUrl.searchParams.set('pNum', raffleState.raffleNumber || '');
                                                                 
+                                                                // Set the fully-formed URL as the redirect-url for the payment gateway
                                                                 url.searchParams.set('redirect-url', cleanRedirectUrl.href);
                                                                 
                                                                 window.location.href = url.toString();
