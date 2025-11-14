@@ -10,6 +10,15 @@ export interface Participant {
     raffleRef?: string;
 }
 
+export interface PendingActivation {
+    id: string;
+    transactionId: string;
+    raffleMode: 'two-digit' | 'three-digit' | 'infinite';
+    status: 'pending' | 'completed';
+    createdAt: any; // Allow for Firebase Timestamp
+}
+
+
 export interface Raffle {
     drawnNumbers: any[];
     lastDrawnNumber: null;
@@ -53,3 +62,4 @@ export interface Raffle {
     
 
     
+

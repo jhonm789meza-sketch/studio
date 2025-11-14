@@ -3,7 +3,7 @@ import { useState, useEffect, useRef, useTransition } from 'react';
 import jsPDF from 'jspdf';
 import { RaffleManager } from '@/lib/RaffleManager';
 import { db, storage, persistenceEnabled } from '@/lib/firebase';
-import { doc, onSnapshot, setDoc, getDoc, deleteDoc, Unsubscribe, serverTimestamp } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc, getDoc, deleteDoc, Unsubscribe, serverTimestamp, collection, query, where, getDocs, updateDoc, addDoc } from 'firebase/firestore';
 import Image from 'next/image';
 import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { useLanguage } from '@/hooks/use-language';
@@ -16,7 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Confetti } from '@/components/confetti';
 import { Switch } from '@/components/ui/switch';
-import type { Participant, Raffle } from '@/lib/types';
+import type { Participant, Raffle, PendingActivation } from '@/lib/types';
 import { format } from 'date-fns';
 import { es, enUS } from 'date-fns/locale';
 import { Textarea } from '@/components/ui/textarea';
@@ -26,7 +26,7 @@ import { WhatsappIcon, FacebookIcon, TicketIcon, NequiIcon, InlineTicket } from 
 
 
 type RaffleMode = 'two-digit' | 'three-digit' | 'infinite';
-type Tab = 'board' | 'register' | 'participants' | 'pending' | 'recaudado' | 'winners';
+type Tab = 'board' | 'register' | 'participants' | 'pending' | 'recaudado' | 'winners' | 'activations';
 
 const initialRaffleData: Raffle = {
     drawnNumbers: [],
@@ -134,6 +134,11 @@ const App = () => {
 
     const [activationRefs, setActivationRefs] = useState<{ [key in RaffleMode]?: string }>({});
 
+    const [isSuperAdminLoginOpen, setIsSuperAdminLoginOpen] = useState(false);
+    const [superAdminPassword, setSuperAdminPassword] = useState('');
+    const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+    const [pendingActivations, setPendingActivations] = useState<PendingActivation[]>([]);
+
     const raffleManager = new RaffleManager(db);
     
     const raffleMode = raffleState.raffleMode;
@@ -145,6 +150,22 @@ const App = () => {
             document.documentElement.lang = language;
         }
     }, [language]);
+
+
+    useEffect(() => {
+        if (isSuperAdmin) {
+            const q = query(collection(db, "pendingActivations"), where("status", "==", "pending"));
+            const unsubscribe = onSnapshot(q, (querySnapshot) => {
+                const activations: PendingActivation[] = [];
+                querySnapshot.forEach((doc) => {
+                    activations.push({ id: doc.id, ...doc.data() } as PendingActivation);
+                });
+                setPendingActivations(activations);
+            });
+            return () => unsubscribe();
+        }
+    }, [isSuperAdmin]);
+
 
     const handleTabClick = (tab: Tab) => {
         setActiveTab(tab);
@@ -220,7 +241,7 @@ const App = () => {
         const paramsToClean = [
             'status', 'participantId', 'pName', 'pPhone', 'pNum', 'transactionState', 
             'ref_payco', 'signature', 'transactionId', 'amount', 'currency', 
-            'id', 'reference', 'state', 'env'
+            'id', 'reference', 'state', 'env', 'raffleMode'
         ];
         
         let needsCleanup = false;
@@ -231,26 +252,22 @@ const App = () => {
             }
         });
         
-        // Preserve the 'ref' parameter if it's the only one left
-        const currentRef = raffleState.raffleRef || url.searchParams.get('ref');
+        // Preserve the 'ref' parameter if it exists
+        const currentRef = raffleState.raffleRef || new URLSearchParams(window.location.search).get('ref');
+        
+        // Start with a clean slate
+        const finalParams = new URLSearchParams();
         if (currentRef) {
-            url.searchParams.set('ref', currentRef);
-        } else {
-             url.searchParams.delete('ref');
+            finalParams.set('ref', currentRef);
         }
 
-        const finalParams = new URLSearchParams(url.search);
-        let finalSearchString = '';
-        if (finalParams.has('ref')) {
-             finalSearchString = `?ref=${finalParams.get('ref')}`;
-        }
+        const newUrl = url.pathname + (finalParams.toString() ? `?${finalParams.toString()}` : '');
 
-        const newUrl = url.pathname + finalSearchString;
-
-        if (window.location.pathname + window.location.search !== newUrl) {
+        if (window.location.href !== newUrl) {
             window.history.replaceState({}, '', newUrl);
         }
     };
+
 
     useEffect(() => {
         if ('serviceWorker' in navigator) {
@@ -303,43 +320,58 @@ const App = () => {
 
             const adminIdFromStorage = localStorage.getItem('rifaAdminId');
             if (adminIdFromStorage) setCurrentAdminId(adminIdFromStorage);
+            
+            const superAdminSession = sessionStorage.getItem('isSuperAdmin');
+            if (superAdminSession === 'true') {
+                setIsSuperAdmin(true);
+            }
 
             const urlParams = new URLSearchParams(window.location.search);
             const status = urlParams.get('transactionState') || urlParams.get('state');
-            const transactionId = urlParams.get('reference'); // Wompi/PayU reference is the transactionId
-            const refFromUrl = urlParams.get('ref'); // Our internal reference
+            const transactionId = urlParams.get('reference'); 
+            const refFromUrl = urlParams.get('ref');
+            const modeFromUrl = urlParams.get('raffleMode') as RaffleMode;
 
             // --- Payment Confirmation Logic ---
-            if (status && (status.toLowerCase() === 'approved' || status === '4') && transactionId) {
-                 // 1. Activation Payment
-                 if (transactionId.startsWith('ACTIVATE_')) {
-                    const [, mode] = transactionId.split('_');
-                    showNotification(t('paymentActivationConfirmed'), 'success');
-                    await handleActivateBoard(mode as RaffleMode, transactionId);
-                    cleanupUrlParams();
-                    return; // Stop further processing
-                }
-                // 2. Participant Payment
-                else if (refFromUrl) {
-                    const pName = urlParams.get('pName');
-                    const pPhone = urlParams.get('pPhone');
-                    const pNum = urlParams.get('pNum');
+            if ((status?.toLowerCase() === 'approved' || status === '4') && transactionId && modeFromUrl) {
+                const transactionDocRef = doc(db, 'usedTransactions', transactionId);
+                const transactionDoc = await getDoc(transactionDocRef);
 
-                    if (pName && pPhone && pNum) {
-                        await confirmParticipantPayment(refFromUrl, { name: pName, phoneNumber: pPhone, raffleNumber: pNum });
-                        // The raffle will be loaded next, and URL will be cleaned up
-                    }
+                if (transactionDoc.exists()) {
+                    showNotification(t('transactionAlreadyUsed'), 'error');
+                } else {
+                    await addDoc(collection(db, "pendingActivations"), {
+                        transactionId: transactionId,
+                        raffleMode: modeFromUrl,
+                        status: 'pending',
+                        createdAt: serverTimestamp(),
+                    });
+                    await setDoc(transactionDocRef, { used: true, createdAt: serverTimestamp() });
+                    showNotification(t('activationPendingAdmin'), 'success');
                 }
+                cleanupUrlParams();
+                setLoading(false);
+                return;
+            }
+            // --- Participant Payment Confirmation ---
+            else if ((status?.toLowerCase() === 'approved' || status === '4') && transactionId && refFromUrl) {
+                 const pName = urlParams.get('pName');
+                 const pPhone = urlParams.get('pPhone');
+                 const pNum = urlParams.get('pNum');
+
+                 if (pName && pPhone && pNum) {
+                     await confirmParticipantPayment(refFromUrl, { name: pName, phoneNumber: pPhone, raffleNumber: pNum });
+                 }
             }
             
             // --- Raffle Loading Logic ---
-            if (refFromUrl && !refFromUrl.startsWith('ACTIVATE_')) {
+            if (refFromUrl) {
                 await handleAdminSearch({ refToSearch: refFromUrl, isInitialLoad: true });
             } else {
                 setRaffleState(initialRaffleData);
                 setLoading(false);
             }
-            cleanupUrlParams(); // Clean URL after loading or payment attempt
+            cleanupUrlParams(); 
         };
 
         initialize();
@@ -369,7 +401,7 @@ const App = () => {
 
     const showNotification = (message: string, type = 'info') => {
         setNotification({ show: true, message, type });
-        setTimeout(() => setNotification({ show: false, message: '', type: '' }), 3000);
+        setTimeout(() => setNotification({ show: false, message: '', type: '' }), 5000);
     };
 
     const showConfirmationDialog = (message: string, action: () => void) => {
@@ -948,12 +980,15 @@ const App = () => {
     };
 
     const handlePriceButtonClick = (mode: RaffleMode) => {
-        const activationRef = `ACTIVATE_${mode}_${Date.now()}`;
+        if (isSuperAdmin) {
+            handleActivateBoard(mode, `SUPERADMIN_${Date.now()}`);
+            return;
+        }
+
+        const activationRef = `TXN_${mode}_${Date.now()}`;
         
-        // This is the URL Wompi will redirect to after payment
         const redirectUrl = new URL(window.location.origin);
-        // Important: Add the reference to the redirect URL so we can process it on return
-        redirectUrl.searchParams.set('ref', activationRef);
+        redirectUrl.searchParams.set('raffleMode', mode);
 
         let paymentLink = '';
         if (mode === 'two-digit') {
@@ -970,36 +1005,40 @@ const App = () => {
     };
     
     const handleManualActivation = async (mode: RaffleMode) => {
-        const activationCode = (activationRefs[mode] || '').trim();
+        const activationCode = (activationRefs[mode] || '').trim().toUpperCase();
         if (!activationCode) {
-            showNotification(t('enterReferenceWarning'), 'warning');
+            showNotification(t('enterActivationCode'), 'warning');
             return;
         }
     
-        // Support activation with special code
-        if (activationCode.toUpperCase() === 'ACTIVAR') {
-            const supportTransactionId = `SUPPORT_ACTIVATE_${Date.now()}`;
-            await handleActivateBoard(mode, supportTransactionId);
-            return;
+        if (activationCode.startsWith('ACTIVAR-')) {
+             const supportTransactionId = activationCode;
+             await handleActivateBoard(mode, supportTransactionId);
+             return;
         }
-    
-        // Default to transaction number activation
-        const transactionNumber = activationCode;
-        const newUrl = new URL(window.location.origin);
-        newUrl.searchParams.set('reference', transactionNumber);
-        newUrl.searchParams.set('transactionState', 'APPROVED');
-        newUrl.searchParams.set('ref', `ACTIVATE_${mode}_MANUAL`); // Mark as manual activation
-        
-        window.location.href = newUrl.href;
+
+        showNotification(t('invalidActivationCode'), 'error');
     };
 
+    const handleApproveActivation = async (activation: PendingActivation) => {
+        setLoading(true);
+        try {
+            await handleActivateBoard(activation.raffleMode, activation.transactionId);
+            const activationDocRef = doc(db, 'pendingActivations', activation.id);
+            await updateDoc(activationDocRef, { status: 'completed' });
+            showNotification(t('boardActivatedSuccessfully'), 'success');
+        } catch (error) {
+            console.error("Error approving activation:", error);
+            showNotification(t('errorActivatingBoard'), "error");
+        }
+        setLoading(false);
+    };
 
     const handleActivateBoard = async (mode: RaffleMode, transactionId: string) => {
         setIsCountrySelectionOpen(false);
         setLoading(true);
 
         try {
-            // Security Check: Verify if the transactionId has been used before in Firestore
             const transactionDocRef = doc(db, 'usedTransactions', transactionId);
             const transactionDoc = await getDoc(transactionDocRef);
 
@@ -1021,23 +1060,24 @@ const App = () => {
                 adminId: adminId,
                 isPaid: true,
                 prizeImageUrl: '',
-                value: '0', // Default value, should be set by admin
+                value: '0', 
                 currencySymbol: getCurrencySymbol('CO'),
                 infiniteModeDigits: 0,
             };
             
             await setDoc(doc(db, "raffles", newRef), newRaffleData);
 
-            // Log the used transaction ID in Firestore to prevent reuse
             await setDoc(transactionDocRef, {
                 raffleRef: newRef,
                 activatedAt: serverTimestamp(),
             });
     
-            // Redirect to the new raffle page
             const newUrl = new URL(window.location.origin);
             newUrl.searchParams.set('ref', newRef);
-            window.location.href = newUrl.href;
+            window.history.pushState({}, '', newUrl.href);
+            // Instead of redirecting, just load the state
+            await handleAdminSearch({refToSearch: newRef, isInitialLoad: true});
+
 
         } catch (error) {
             console.error("Error activating board:", error);
@@ -1046,17 +1086,7 @@ const App = () => {
         }
     };
 
-    const handleTalkToAdmin = () => {
-        if (!raffleState.organizerPhoneNumber) {
-            showNotification(t('adminNumberNotSet'), 'warning');
-            return;
-        }
-        const message = encodeURIComponent(t('contactAdminMessage'));
-        const whatsappUrl = `https://wa.me/57${raffleState.organizerPhoneNumber}?text=${message}`;
-        window.open(whatsappUrl, '_blank');
-    };
-
-    const handleContactAdminWeb = () => {
+    const handleContactSupport = () => {
         const whatsappUrl = `https://wa.me/3145696687`;
         window.open(whatsappUrl, '_blank');
     };
@@ -1086,6 +1116,18 @@ const App = () => {
             window.history.pushState({}, '', window.location.pathname);
         }
         showNotification(t('backToHome'), 'info');
+    };
+
+    const handleSuperAdminLogin = () => {
+        if (superAdminPassword === 'refaexpress2024') {
+            setIsSuperAdmin(true);
+            sessionStorage.setItem('isSuperAdmin', 'true');
+            setIsSuperAdminLoginOpen(false);
+            setSuperAdminPassword('');
+            showNotification('Acceso de Super Administrador concedido.', 'success');
+        } else {
+            showNotification('Contraseña incorrecta.', 'error');
+        }
     };
     
     const allNumbers = Array.from({ length: totalNumbers }, (_, i) => i);
@@ -1122,7 +1164,7 @@ const App = () => {
                                 <p className="text-sm text-gray-500">{t('gameReference')}</p>
                                 <div className="flex items-center gap-2">
                                     <p className="text-2xl font-bold text-gray-800 tracking-wider">{raffleState.raffleRef}</p>
-                                    <button onClick={handleTalkToAdmin} className="p-2 rounded-full hover:bg-gray-100">
+                                    <button onClick={handleContactSupport} className="p-2 rounded-full hover:bg-gray-100">
                                         <WhatsappIcon />
                                     </button>
                                 </div>
@@ -1642,7 +1684,7 @@ const App = () => {
                                         <KeyRound className="mr-2 h-4 w-4" />
                                         <span>{t('recoverAdminAccess')}</span>
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem onSelect={handleContactAdminWeb}>
+                                    <DropdownMenuItem onSelect={() => setIsSuperAdminLoginOpen(true)}>
                                         <Shield className="mr-2 h-4 w-4" />
                                         <span>{t('webSupport')}</span>
                                     </DropdownMenuItem>
@@ -1700,21 +1742,23 @@ const App = () => {
                                                 </div>
                                             </div>
                                             <div className="p-6 pt-0 space-y-4">
-                                                <Button onClick={() => handlePriceButtonClick('two-digit')} size="lg" className="w-full bg-green-500 hover:bg-green-600 text-white font-bold">
-                                                    {t('price')}
+                                                 <Button onClick={() => handlePriceButtonClick('two-digit')} size="lg" className="w-full bg-green-500 hover:bg-green-600 text-white font-bold">
+                                                    {isSuperAdmin ? t('activate') : t('price')}
                                                 </Button>
-                                                <div className="space-y-2">
-                                                    <Label htmlFor="activation-ref-two-digit" className="text-xs text-gray-500">{t('reportInvoice')}</Label>
-                                                    <div className="flex gap-2">
-                                                        <Input
-                                                          id="activation-ref-two-digit"
-                                                          placeholder={t('pasteWompiRef')}
-                                                          value={activationRefs['two-digit'] || ''}
-                                                          onChange={(e) => setActivationRefs(prev => ({...prev, 'two-digit': e.target.value}))}
-                                                        />
-                                                        <Button onClick={() => handleManualActivation('two-digit')} variant="secondary">{t('activate')}</Button>
+                                                {!isSuperAdmin && (
+                                                    <div className="space-y-2">
+                                                        <Label htmlFor="activation-ref-two-digit" className="text-xs text-gray-500">{t('activateWithCode')}</Label>
+                                                        <div className="flex gap-2">
+                                                            <Input
+                                                            id="activation-ref-two-digit"
+                                                            placeholder={t('enterActivationCode')}
+                                                            value={activationRefs['two-digit'] || ''}
+                                                            onChange={(e) => setActivationRefs(prev => ({...prev, 'two-digit': e.target.value}))}
+                                                            />
+                                                            <Button onClick={() => handleManualActivation('two-digit')} variant="secondary">{t('activate')}</Button>
+                                                        </div>
                                                     </div>
-                                                </div>
+                                                )}
                                             </div>
                                         </div>
 
@@ -1733,20 +1777,22 @@ const App = () => {
                                             </div>
                                             <div className="p-6 pt-0 space-y-4">
                                                 <Button onClick={() => handlePriceButtonClick('three-digit')} size="lg" className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold">
-                                                    {t('price')}
+                                                     {isSuperAdmin ? t('activate') : t('price')}
                                                 </Button>
+                                                {!isSuperAdmin && (
                                                 <div className="space-y-2">
-                                                    <Label htmlFor="activation-ref-three-digit" className="text-xs text-gray-500">{t('reportInvoice')}</Label>
+                                                    <Label htmlFor="activation-ref-three-digit" className="text-xs text-gray-500">{t('activateWithCode')}</Label>
                                                     <div className="flex gap-2">
                                                         <Input
                                                           id="activation-ref-three-digit"
-                                                          placeholder={t('pasteWompiRef')}
+                                                          placeholder={t('enterActivationCode')}
                                                           value={activationRefs['three-digit'] || ''}
                                                           onChange={(e) => setActivationRefs(prev => ({...prev, 'three-digit': e.target.value}))}
                                                         />
                                                         <Button onClick={() => handleManualActivation('three-digit')} variant="secondary">{t('activate')}</Button>
                                                     </div>
                                                 </div>
+                                                )}
                                             </div>
                                         </div>
 
@@ -1765,20 +1811,22 @@ const App = () => {
                                             </div>
                                             <div className="p-6 pt-0 space-y-4">
                                                 <Button onClick={() => handlePriceButtonClick('infinite')} size="lg" className="w-full bg-red-500 hover:bg-red-600 text-white font-bold">
-                                                    {t('price')}
+                                                     {isSuperAdmin ? t('activate') : t('price')}
                                                 </Button>
+                                                 {!isSuperAdmin && (
                                                 <div className="space-y-2">
-                                                    <Label htmlFor="activation-ref-infinite" className="text-xs text-gray-500">{t('reportInvoice')}</Label>
+                                                    <Label htmlFor="activation-ref-infinite" className="text-xs text-gray-500">{t('activateWithCode')}</Label>
                                                     <div className="flex gap-2">
                                                         <Input
                                                           id="activation-ref-infinite"
-                                                          placeholder={t('pasteWompiRef')}
+                                                          placeholder={t('enterActivationCode')}
                                                           value={activationRefs['infinite'] || ''}
                                                           onChange={(e) => setActivationRefs(prev => ({...prev, 'infinite': e.target.value}))}
                                                         />
                                                         <Button onClick={() => handleManualActivation('infinite')} variant="secondary">{t('activate')}</Button>
                                                     </div>
                                                 </div>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
@@ -1800,6 +1848,14 @@ const App = () => {
                                     >
                                         <TicketIcon className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">{t('board')}</span>
                                     </button>
+                                     {isSuperAdmin && (
+                                        <button 
+                                            className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'activations' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
+                                            onClick={() => handleTabClick('activations')}
+                                        >
+                                           <KeyRound className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">{t('activationsTab', { count: pendingActivations.length })}</span>
+                                        </button>
+                                    )}
                                     <button 
                                         className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'register' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
                                         onClick={() => handleTabClick('register')}
@@ -1844,6 +1900,45 @@ const App = () => {
                                 <div className={activeTab === 'board' ? 'tab-content active' : 'tab-content'}>
                                     {renderBoardContent()}
                                 </div>
+
+                                {isSuperAdmin && (
+                                <div className={activeTab === 'activations' ? 'tab-content active' : 'tab-content'}>
+                                    <h2 className="text-2xl font-bold text-gray-800 mb-4">{t('pendingActivations')}</h2>
+                                    {pendingActivations.length > 0 ? (
+                                        <div className="overflow-x-auto">
+                                            <table className="min-w-full divide-y divide-gray-200">
+                                                <thead className="bg-gray-50">
+                                                    <tr>
+                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('transactionId')}</th>
+                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('raffleType')}</th>
+                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('date')}</th>
+                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('action')}</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="bg-white divide-y divide-gray-200">
+                                                    {pendingActivations.sort((a, b) => b.createdAt.toDate().getTime() - a.createdAt.toDate().getTime()).map((p) => (
+                                                        <tr key={p.id}>
+                                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{p.transactionId}</td>
+                                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{p.raffleMode}</td>
+                                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                                {p.createdAt && p.createdAt.toDate ? format(p.createdAt.toDate(), 'PPpp', { locale: language === 'es' ? es : enUS }) : 'N/A'}
+                                                            </td>
+                                                            <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                                                <Button onClick={() => handleApproveActivation(p)} size="sm" className="bg-green-500 hover:bg-green-600 text-white">
+                                                                    {t('activateBoard')}
+                                                                </Button>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    ) : (
+                                        <p className="text-gray-500">{t('noPendingActivations')}</p>
+                                    )}
+                                </div>
+                                )}
+
                                 <div className={activeTab === 'register' ? 'tab-content active' : 'tab-content'}>
                                     <div className="mb-6">
                                         <h2 className="text-2xl font-bold text-gray-800 mb-4">{t('registerNumber')}</h2>
@@ -2284,6 +2379,27 @@ const App = () => {
                 </DialogContent>
             </Dialog>
 
+            <Dialog open={isSuperAdminLoginOpen} onOpenChange={setIsSuperAdminLoginOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{t('superAdminLogin')}</DialogTitle>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <Label htmlFor="super-admin-password">{t('password')}</Label>
+                        <Input
+                            id="super-admin-password"
+                            type="password"
+                            value={superAdminPassword}
+                            onChange={(e) => setSuperAdminPassword(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleSuperAdminLogin()}
+                        />
+                    </div>
+                    <DialogFooter>
+                        <Button type="button" onClick={handleSuperAdminLogin}>{t('login')}</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
             <Dialog open={isAdminLoginOpen} onOpenChange={setIsAdminLoginOpen}>
                 <DialogContent>
                     <DialogHeader>
@@ -2471,5 +2587,3 @@ const App = () => {
 };
 
 export default App;
-
-    

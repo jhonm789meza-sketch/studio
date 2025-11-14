@@ -73,7 +73,7 @@
     "showQR": "Mostrar QR",
     "installApp": "Instalar Aplicación",
     "languages": "Idiomas",
-    "webSupport": "Soporte Web (Activar Manualmente)",
+    "webSupport": "Super Administrador",
     "boardLockedDescription": "Busca una rifa por su referencia o crea una nueva para empezar.",
     "digits": "CIFRAS",
     "2digitRaffle": "Rifa de 2 Cifras",
@@ -181,7 +181,7 @@
     "participantRegisteredNotification": "¡Participante {name} ({number}) registrado y confirmado!",
     "ticketDownloaded": "Tiquete PDF descargado",
     "shareTicketMessage": "¡Hola! Aquí tienes tu tiquete para la rifa \"{prize}\". ¡Mucha suerte!",
-    "enterReferenceWarning": "Por favor, ingresa un número de transacción.",
+    "enterReferenceWarning": "Por favor, ingresa una referencia.",
     "enterOrganizerPhoneWarning": "Por favor, ingresa el teléfono del organizador.",
     "enterPasswordWarning": "Por favor, ingresa la contraseña.",
     "adminAccessRestored": "¡Administración recuperada con éxito!",
@@ -215,10 +215,22 @@
     "deletePendingConfirmation": "¿Estás seguro de que deseas eliminar este participante pendiente? Esta acción no se puede deshacer.",
     "pendingDeletedSuccess": "Participante pendiente eliminado con éxito.",
     "pendingDeletedError": "Error al eliminar el participante pendiente.",
-    "reportInvoice": "Reportar Factura",
-    "pasteWompiRef": "Pegar número de transacción",
+    "activateWithCode": "Activar con Código",
+    "enterActivationCode": "Ingresa el código de soporte",
     "activate": "Activar",
-    "transactionAlreadyUsed": "Esta factura ya fue utilizada para activar otra rifa."
+    "transactionAlreadyUsed": "Esta transacción ya fue utilizada para activar otra rifa.",
+    "invalidActivationCode": "El código de activación ingresado no es válido.",
+    "superAdminLogin": "Acceso Super Administrador",
+    "login": "Ingresar",
+    "activationsTab": "Activaciones ({count})",
+    "pendingActivations": "Activaciones Pendientes",
+    "noPendingActivations": "No hay activaciones pendientes.",
+    "transactionId": "ID de Transacción",
+    "raffleType": "Tipo de Rifa",
+    "date": "Fecha",
+    "activateBoard": "Activar Tablero",
+    "boardActivatedSuccessfully": "Tablero activado con éxito.",
+    "activationPendingAdmin": "Pago exitoso. El administrador activará tu tablero en breve."
 }
     
     
