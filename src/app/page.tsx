@@ -1614,19 +1614,6 @@ const App = () => {
                                                 <Button onClick={() => handlePriceButtonClick('two-digit')} size="lg" className="w-full bg-green-500 hover:bg-green-600 text-white font-bold">
                                                     {t('price')}
                                                 </Button>
-                                                <Input
-                                                    id="volante-two-digit"
-                                                    type="file"
-                                                    className="hidden"
-                                                    accept="image/*"
-                                                    onChange={() => handleActivateBoard('two-digit', 'CO')}
-                                                />
-                                                <Button asChild variant="outline" size="lg" className="w-full">
-                                                  <Label htmlFor="volante-two-digit" className="cursor-pointer">
-                                                    <Upload className="mr-2 h-4 w-4" />
-                                                    Subir Volante
-                                                  </Label>
-                                                </Button>
                                             </div>
                                         </div>
 
@@ -1647,19 +1634,6 @@ const App = () => {
                                                 <Button onClick={() => handlePriceButtonClick('three-digit')} size="lg" className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold">
                                                     {t('price')}
                                                 </Button>
-                                                <Input
-                                                    id="volante-three-digit"
-                                                    type="file"
-                                                    className="hidden"
-                                                    accept="image/*"
-                                                    onChange={() => handleActivateBoard('three-digit', 'CO')}
-                                                />
-                                                <Button asChild variant="outline" size="lg" className="w-full">
-                                                  <Label htmlFor="volante-three-digit" className="cursor-pointer">
-                                                    <Upload className="mr-2 h-4 w-4" />
-                                                    Subir Volante
-                                                  </Label>
-                                                </Button>
                                             </div>
                                         </div>
 
@@ -1679,19 +1653,6 @@ const App = () => {
                                             <div className="p-6 pt-0 space-y-2">
                                                 <Button onClick={() => handlePriceButtonClick('infinite')} size="lg" className="w-full bg-red-500 hover:bg-red-600 text-white font-bold">
                                                     {t('price')}
-                                                </Button>
-                                                <Input
-                                                    id="volante-infinite"
-                                                    type="file"
-                                                    className="hidden"
-                                                    accept="image/*"
-                                                    onChange={() => handleActivateBoard('infinite', 'CO')}
-                                                />
-                                                <Button asChild variant="outline" size="lg" className="w-full">
-                                                  <Label htmlFor="volante-infinite" className="cursor-pointer">
-                                                    <Upload className="mr-2 h-4 w-4" />
-                                                    Subir Volante
-                                                  </Label>
                                                 </Button>
                                             </div>
                                         </div>
