@@ -296,6 +296,18 @@ const App = () => {
 
             const urlParams = new URLSearchParams(window.location.search);
             const refFromUrl = urlParams.get('ref');
+            
+            // Check for activation via payment link
+            if (!refFromUrl && (urlParams.get('transactionState') === 'APPROVED' || urlParams.get('state') === 'APPROVED')) {
+                const reference = urlParams.get('reference');
+                if (reference && reference.startsWith('ACTIVATE_')) {
+                    const [, mode] = reference.split('_');
+                    showNotification(t('paymentActivationConfirmed'), 'success');
+                    await handleActivateBoard(mode as RaffleMode, 'CO'); // Assuming CO for now
+                    return; // Stop further processing
+                }
+            }
+
 
             if (refFromUrl) {
                 await handleAdminSearch({ refToSearch: refFromUrl, isInitialLoad: true });
@@ -334,7 +346,7 @@ const App = () => {
         const confirmPaymentFromUrl = async () => {
             const urlParams = new URLSearchParams(window.location.search);
             const refFromUrl = urlParams.get('ref');
-            const status = urlParams.get('status') || urlParams.get('transactionState') || urlParams.get('state');
+            const status = urlParams.get('transactionState') || urlParams.get('state');
 
             // Ensure this runs only for the correct raffle and for a successful payment
             if (raffleState.raffleRef && refFromUrl === raffleState.raffleRef && (status === 'APPROVED' || status === 'approved')) {
@@ -1624,6 +1636,19 @@ const App = () => {
                                                 <Button onClick={() => handlePriceButtonClick('two-digit')} size="lg" className="w-full bg-green-500 hover:bg-green-600 text-white font-bold">
                                                     {t('price')}
                                                 </Button>
+                                                <Input
+                                                    id="volante-two-digit"
+                                                    type="file"
+                                                    className="hidden"
+                                                    accept="image/*"
+                                                    onChange={() => handleActivateBoard('two-digit', 'CO')}
+                                                />
+                                                <Button asChild variant="outline" size="lg" className="w-full">
+                                                  <Label htmlFor="volante-two-digit" className="cursor-pointer">
+                                                    <Upload className="mr-2 h-4 w-4" />
+                                                    Subir Volante
+                                                  </Label>
+                                                </Button>
                                             </div>
                                         </div>
 
@@ -1644,6 +1669,19 @@ const App = () => {
                                                 <Button onClick={() => handlePriceButtonClick('three-digit')} size="lg" className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold">
                                                     {t('price')}
                                                 </Button>
+                                                <Input
+                                                    id="volante-three-digit"
+                                                    type="file"
+                                                    className="hidden"
+                                                    accept="image/*"
+                                                    onChange={() => handleActivateBoard('three-digit', 'CO')}
+                                                />
+                                                <Button asChild variant="outline" size="lg" className="w-full">
+                                                  <Label htmlFor="volante-three-digit" className="cursor-pointer">
+                                                    <Upload className="mr-2 h-4 w-4" />
+                                                    Subir Volante
+                                                  </Label>
+                                                </Button>
                                             </div>
                                         </div>
 
@@ -1663,6 +1701,19 @@ const App = () => {
                                             <div className="p-6 pt-0 space-y-2">
                                                 <Button onClick={() => handlePriceButtonClick('infinite')} size="lg" className="w-full bg-red-500 hover:bg-red-600 text-white font-bold">
                                                     {t('price')}
+                                                </Button>
+                                                <Input
+                                                    id="volante-infinite"
+                                                    type="file"
+                                                    className="hidden"
+                                                    accept="image/*"
+                                                    onChange={() => handleActivateBoard('infinite', 'CO')}
+                                                />
+                                                <Button asChild variant="outline" size="lg" className="w-full">
+                                                  <Label htmlFor="volante-infinite" className="cursor-pointer">
+                                                    <Upload className="mr-2 h-4 w-4" />
+                                                    Subir Volante
+                                                  </Label>
                                                 </Button>
                                             </div>
                                         </div>
@@ -2353,3 +2404,5 @@ const App = () => {
 };
 
 export default App;
+
+    
