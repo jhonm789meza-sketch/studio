@@ -10,7 +10,7 @@ import { useLanguage } from '@/hooks/use-language';
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House, Clock, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Upload, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages, Trophy, Trash2, Copy } from 'lucide-react';
+import { Menu, Award, Lock, House, Clock as ClockIcon, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Upload, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages, Trophy, Trash2, Copy } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -73,6 +73,27 @@ interface PartialWinnerInfo {
     digits: number;
     prize: string;
 }
+
+const DateTimeDisplay = () => {
+    const [currentTime, setCurrentTime] = useState(new Date());
+
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setCurrentTime(new Date());
+        }, 1000);
+        return () => clearInterval(timer);
+    }, []);
+
+    const locale = typeof navigator !== 'undefined' ? navigator.language : 'es-ES';
+
+    return (
+        <div className="text-center text-gray-500 mb-4">
+            <p className="font-semibold text-lg">{currentTime.toLocaleDateString(locale, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+            <p className="text-3xl font-bold tracking-wider">{currentTime.toLocaleTimeString(locale)}</p>
+        </div>
+    );
+};
+
 
 const App = () => {
     const { t, toggleLanguage, language } = useLanguage();
@@ -1589,6 +1610,7 @@ const App = () => {
                     {!raffleState.raffleRef ? (
                         <div className="p-8">
                             <div className="text-center">
+                                <DateTimeDisplay />
                                 <Lock className="mx-auto h-12 w-12 text-gray-400 mb-4" />
                                 <h2 className="text-2xl font-bold text-gray-800 mb-2">{t('boardLocked')}</h2>
                                 <p className="text-gray-600 mb-6 max-w-md mx-auto">
@@ -1687,7 +1709,7 @@ const App = () => {
                                         className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'pending' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
                                         onClick={() => handleTabClick('pending')}
                                     >
-                                        <Clock className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">{t('pendingTab', { count: pendingParticipants.length })}</span>
+                                        <ClockIcon className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">{t('pendingTab', { count: pendingParticipants.length })}</span>
                                     </button>
                                     )}
                                     <button 
