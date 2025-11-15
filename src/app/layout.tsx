@@ -17,7 +17,7 @@ const libreBaskerville = Libre_Baskerville({
 
 
 const APP_URL = "https://rifaexpress.web.app";
-const APP_NAME = "REFA⚡ EXPRESS";
+const APP_NAME = "RIFA⚡ EXPRESS";
 const APP_DESCRIPTION = "La forma más fácil de gestionar tus rifas y sorteos online.";
 
 export const metadata: Metadata = {

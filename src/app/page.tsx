@@ -1738,7 +1738,7 @@ const App = () => {
                             </DropdownMenu>
                         </div>
                         <div className="text-center">
-                            <h1 className="text-4xl font-bold">REFA⚡ EXPRESS</h1>
+                            <h1 className="text-4xl font-bold">RIFA⚡ EXPRESS</h1>
                         </div>
                         <div className="w-10">
                             {/* Placeholder for symmetry */}
@@ -2354,7 +2354,7 @@ const App = () => {
                                 </div>
                                 <div className="relative z-10">
                                     <div className="text-center mb-4">
-                                        <h3 className="text-xl font-bold">REFA⚡ EXPRESS</h3>
+                                        <h3 className="text-xl font-bold">RIFA EXPRESS</h3>
                                         <p>{t('reference')}: {ticketInfo.raffleRef}</p>
                                         <p className="font-semibold">{t('purchaseReceipt')}</p>
                                     </div>
