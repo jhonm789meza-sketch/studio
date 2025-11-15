@@ -215,8 +215,8 @@
     "deletePendingConfirmation": "¿Estás seguro de que deseas eliminar este participante pendiente? Esta acción no se puede deshacer.",
     "pendingDeletedSuccess": "Participante pendiente eliminado con éxito.",
     "pendingDeletedError": "Error al eliminar el participante pendiente.",
-    "activateWithCode": "Activar con Código",
-    "enterActivationCode": "Ingresa el código de soporte",
+    "searchByReferenceLabel": "Buscar por Referencia",
+    "enterGameReference": "Ingresa la referencia del juego",
     "activate": "Activar",
     "transactionAlreadyUsed": "Esta transacción ya fue utilizada para activar otra rifa.",
     "invalidActivationCode": "El código de activación ingresado no es válido.",
@@ -248,4 +248,5 @@
     
 
     
+
 

@@ -1005,19 +1005,17 @@ const App = () => {
     };
     
     const handleManualActivation = async (mode: RaffleMode) => {
-        const activationCode = (activationRefs[mode] || '').trim().toUpperCase();
-        if (!activationCode) {
-            showNotification(t('enterActivationCode'), 'warning');
+        const raffleRefToSearch = (activationRefs[mode] || '').trim().toUpperCase();
+        if (!raffleRefToSearch) {
+            showNotification(t('enterReferenceWarning'), 'warning');
             return;
         }
-    
-        if (activationCode.startsWith('ACTIVAR-')) {
-             const supportTransactionId = activationCode;
-             await handleActivateBoard(mode, supportTransactionId);
-             return;
-        }
-
-        showNotification(t('invalidActivationCode'), 'error');
+        
+        // This now functions as a public search for the given reference
+        await handleAdminSearch({ refToSearch: raffleRefToSearch, isPublicSearch: true });
+        
+        // Clear the input after searching
+        setActivationRefs(prev => ({...prev, [mode]: ''}));
     };
 
     const handleApproveActivation = async (activation: PendingActivation) => {
@@ -1760,15 +1758,15 @@ const App = () => {
                                                 </Button>
                                                 {!isSuperAdmin && (
                                                     <div className="space-y-2">
-                                                        <Label htmlFor="activation-ref-two-digit" className="text-xs text-gray-500">{t('activateWithCode')}</Label>
+                                                        <Label htmlFor="activation-ref-two-digit" className="text-xs text-gray-500">{t('searchByReferenceLabel')}</Label>
                                                         <div className="flex gap-2">
                                                             <Input
                                                             id="activation-ref-two-digit"
-                                                            placeholder={t('enterActivationCode')}
+                                                            placeholder={t('enterGameReference')}
                                                             value={activationRefs['two-digit'] || ''}
                                                             onChange={(e) => setActivationRefs(prev => ({...prev, 'two-digit': e.target.value}))}
                                                             />
-                                                            <Button onClick={() => handleManualActivation('two-digit')} variant="secondary">{t('activate')}</Button>
+                                                            <Button onClick={() => handleManualActivation('two-digit')} variant="secondary">{t('search')}</Button>
                                                         </div>
                                                     </div>
                                                 )}
@@ -1794,15 +1792,15 @@ const App = () => {
                                                 </Button>
                                                 {!isSuperAdmin && (
                                                 <div className="space-y-2">
-                                                    <Label htmlFor="activation-ref-three-digit" className="text-xs text-gray-500">{t('activateWithCode')}</Label>
+                                                    <Label htmlFor="activation-ref-three-digit" className="text-xs text-gray-500">{t('searchByReferenceLabel')}</Label>
                                                     <div className="flex gap-2">
                                                         <Input
                                                           id="activation-ref-three-digit"
-                                                          placeholder={t('enterActivationCode')}
+                                                          placeholder={t('enterGameReference')}
                                                           value={activationRefs['three-digit'] || ''}
                                                           onChange={(e) => setActivationRefs(prev => ({...prev, 'three-digit': e.target.value}))}
                                                         />
-                                                        <Button onClick={() => handleManualActivation('three-digit')} variant="secondary">{t('activate')}</Button>
+                                                        <Button onClick={() => handleManualActivation('three-digit')} variant="secondary">{t('search')}</Button>
                                                     </div>
                                                 </div>
                                                 )}
@@ -1828,15 +1826,15 @@ const App = () => {
                                                 </Button>
                                                  {!isSuperAdmin && (
                                                 <div className="space-y-2">
-                                                    <Label htmlFor="activation-ref-infinite" className="text-xs text-gray-500">{t('activateWithCode')}</Label>
+                                                    <Label htmlFor="activation-ref-infinite" className="text-xs text-gray-500">{t('searchByReferenceLabel')}</Label>
                                                     <div className="flex gap-2">
                                                         <Input
                                                           id="activation-ref-infinite"
-                                                          placeholder={t('enterActivationCode')}
+                                                          placeholder={t('enterGameReference')}
                                                           value={activationRefs['infinite'] || ''}
                                                           onChange={(e) => setActivationRefs(prev => ({...prev, 'infinite': e.target.value}))}
                                                         />
-                                                        <Button onClick={() => handleManualActivation('infinite')} variant="secondary">{t('activate')}</Button>
+                                                        <Button onClick={() => handleManualActivation('infinite')} variant="secondary">{t('search')}</Button>
                                                     </div>
                                                 </div>
                                                 )}

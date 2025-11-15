@@ -215,8 +215,8 @@
     "deletePendingConfirmation": "Are you sure you want to delete this pending participant? This action cannot be undone.",
     "pendingDeletedSuccess": "Pending participant deleted successfully.",
     "pendingDeletedError": "Error deleting pending participant.",
-    "activateWithCode": "Activate with Code",
-    "enterActivationCode": "Enter support code",
+    "searchByReferenceLabel": "Search by Reference",
+    "enterGameReference": "Enter the game reference",
     "activate": "Activate",
     "transactionAlreadyUsed": "This transaction has already been used to activate another raffle.",
     "invalidActivationCode": "The entered activation code is not valid.",
@@ -248,4 +248,5 @@
     
 
     
+
 
