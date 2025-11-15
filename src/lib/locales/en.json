@@ -239,8 +239,8 @@
     "confirmActivationDescription": "You are about to activate a new board. Please confirm the details below.",
     "newRaffleRef": "New Raffle Reference",
     "confirmAndActivate": "Confirm and Activate",
-    "nextRefsEven": "Next Refs (Even):",
-    "nextRefsOdd": "Next Refs (Odd):",
-    "nextRefsInfinite": "Next Refs (Infinite):",
+    "nextRefsEven": "Prox. Refs (Even):",
+    "nextRefsOdd": "Prox. Refs (Odd):",
+    "nextRefsInfinite": "Prox. Refs (Infinite):",
     "playedCount": "Played"
 }

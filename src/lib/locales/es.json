@@ -239,8 +239,8 @@
     "confirmActivationDescription": "Estás a punto de activar un nuevo tablero. Por favor confirma los detalles.",
     "newRaffleRef": "Nueva Referencia de Rifa",
     "confirmAndActivate": "Confirmar y Activar",
-    "nextRefsEven": "Próximas Refs (Par):",
-    "nextRefsOdd": "Próximas Refs (Impar):",
-    "nextRefsInfinite": "Próximas Refs (Infinita):",
+    "nextRefsEven": "Prox. Refs (Par):",
+    "nextRefsOdd": "Prox. Refs (Impar):",
+    "nextRefsInfinite": "Prox. Refs (Infinita):",
     "playedCount": "Jugados"
 }

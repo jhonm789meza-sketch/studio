@@ -273,7 +273,7 @@ const App = () => {
         const paramsToClean = [
             'status', 'participantId', 'pName', 'pPhone', 'pNum', 'transactionState', 
             'ref_payco', 'signature', 'transactionId', 'amount', 'currency', 
-            'id', 'reference', 'state', 'env', 'raffleMode'
+            'id', 'reference', 'state', 'env', 'raffleMode', 'adminId' // Add adminId here
         ];
         
         let needsCleanup = false;
@@ -284,19 +284,17 @@ const App = () => {
             }
         });
         
-        // Preserve the 'ref' parameter if it exists
         const currentRef = raffleState.raffleRef || new URLSearchParams(window.location.search).get('ref');
         
-        // Start with a clean slate
         const finalParams = new URLSearchParams();
         if (currentRef) {
             finalParams.set('ref', currentRef);
         }
 
-        const newUrl = url.pathname + (finalParams.toString() ? `?${finalParams.toString()}` : '');
+        const newPath = url.pathname + (finalParams.toString() ? `?${finalParams.toString()}` : '');
 
-        if (window.location.href !== newUrl) {
-            window.history.replaceState({}, '', newUrl);
+        if (window.location.pathname + window.location.search !== newPath) {
+             window.history.replaceState({}, '', newPath);
         }
     };
 
@@ -349,16 +347,23 @@ const App = () => {
             setLoading(true);
             setAppUrl(window.location.origin);
             if (persistenceEnabled) await persistenceEnabled;
-
-            const adminIdFromStorage = localStorage.getItem('rifaAdminId');
-            if (adminIdFromStorage) setCurrentAdminId(adminIdFromStorage);
+            
+            const urlParams = new URLSearchParams(window.location.search);
+            const adminIdFromUrl = urlParams.get('adminId');
+            
+            if (adminIdFromUrl) {
+                localStorage.setItem('rifaAdminId', adminIdFromUrl);
+                setCurrentAdminId(adminIdFromUrl);
+            } else {
+                const adminIdFromStorage = localStorage.getItem('rifaAdminId');
+                if (adminIdFromStorage) setCurrentAdminId(adminIdFromStorage);
+            }
             
             const superAdminSession = sessionStorage.getItem('isSuperAdmin');
             if (superAdminSession === 'true') {
                 setIsSuperAdmin(true);
             }
 
-            const urlParams = new URLSearchParams(window.location.search);
             const status = urlParams.get('transactionState') || urlParams.get('state');
             const transactionId = urlParams.get('reference'); 
             const refFromUrl = urlParams.get('ref');
@@ -887,9 +892,14 @@ const App = () => {
                     setPublicRefSearch('');
                     setPartialWinners([]);
                     handleTabClick('board');
-                    if (window.location.search !== `?ref=${aRef}`) {
-                        window.history.pushState({}, '', `?ref=${aRef}`);
+                    
+                    const currentUrl = new URL(window.location.href);
+                    if (currentUrl.searchParams.get('ref') !== aRef) {
+                        const newUrl = new URL(window.location.origin + window.location.pathname);
+                        newUrl.searchParams.set('ref', aRef);
+                        window.history.pushState({}, '', newUrl);
                     }
+
                 } else if (!isInitialLoad) {
                     showNotification(t('raffleNotFound'), 'error');
                     setRaffleState(initialRaffleData);
@@ -1059,11 +1069,11 @@ const App = () => {
         if (!isSuperAdmin) return;
         
         setLoading(true);
-        const newAdminId = await handleActivateBoard(mode, `SUPERADMIN_${Date.now()}`, ref, false);
+        const { adminId } = await handleActivateBoard(mode, `SUPERADMIN_${Date.now()}`, ref, false);
         setLoading(false);
         
-        if (newAdminId) {
-            const adminUrl = `${window.location.origin}?ref=${ref}`;
+        if (adminId) {
+            const adminUrl = `${window.location.origin}?ref=${ref}&adminId=${adminId}`;
             navigator.clipboard.writeText(adminUrl).then(() => {
                 showNotification(t('boardActivatedAndCopied', { ref }), 'success');
             }, () => {
@@ -1109,7 +1119,7 @@ const App = () => {
         }
     };
 
-    const handleActivateBoard = async (mode: RaffleMode, transactionId: string, newRef?: string, loadBoard = true) => {
+    const handleActivateBoard = async (mode: RaffleMode, transactionId: string, newRef?: string, loadBoard = true): Promise<{ adminId: string | null }> => {
         if (loadBoard) setLoading(true);
 
         try {
@@ -1119,7 +1129,7 @@ const App = () => {
             if (transactionDoc.exists() && !transactionId.startsWith('SUPERADMIN_') && !transactionId.startsWith('MANUAL_')) {
                 showNotification(t('transactionAlreadyUsed'), 'error');
                 if (loadBoard) setLoading(false);
-                return null;
+                return { adminId: null };
             }
             
             const finalRaffleRef = newRef || await raffleManager.createNewRaffleRef(mode, false, transactionId.startsWith('MANUAL_'));
@@ -1158,12 +1168,12 @@ const App = () => {
                 window.history.pushState({}, '', newUrl.href);
                 await handleAdminSearch({refToSearch: finalRaffleRef, isInitialLoad: true});
             }
-            return adminId;
+            return { adminId };
 
         } catch (error) {
             console.error("Error activating board:", error);
             showNotification(t('errorActivatingBoard'), "error");
-             return null;
+             return { adminId: null };
         } finally {
             if (loadBoard) setLoading(false);
         }
