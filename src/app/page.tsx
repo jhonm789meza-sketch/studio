@@ -96,10 +96,10 @@ const DateTimeDisplay = ({ nextRaffleRefs, t }: { nextRaffleRefs: { even: NextRa
             <p className="font-semibold text-lg">{currentTime.toLocaleDateString(locale, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
             <p className="text-3xl font-bold tracking-wider">{currentTime.toLocaleTimeString(locale)}</p>
              {nextRaffleRefs && (
-                <div className="text-sm font-semibold text-purple-600 mt-2 space-y-1">
-                    <p>{t('nextRefsEven')} {nextRaffleRefs.even.refs.join(', ')} ({t('playedCount')}: {nextRaffleRefs.even.count})</p>
-                    <p>{t('nextRefsOdd')} {nextRaffleRefs.odd.refs.join(', ')} ({t('playedCount')}: {nextRaffleRefs.odd.count})</p>
-                    <p>{t('nextRefsInfinite')} {nextRaffleRefs.infinite.refs.join(', ')} ({t('playedCount')}: {nextRaffleRefs.infinite.count})</p>
+                <div className="text-sm font-semibold mt-2 space-y-1">
+                    <p className="text-green-600">{t('nextRefsEven')} {nextRaffleRefs.even.refs.join(', ')} ({t('playedCount')}: {nextRaffleRefs.even.count})</p>
+                    <p className="text-blue-600">{t('nextRefsOdd')} {nextRaffleRefs.odd.refs.join(', ')} ({t('playedCount')}: {nextRaffleRefs.odd.count})</p>
+                    <p className="text-red-600">{t('nextRefsInfinite')} {nextRaffleRefs.infinite.refs.join(', ')} ({t('playedCount')}: {nextRaffleRefs.infinite.count})</p>
                 </div>
             )}
         </div>
