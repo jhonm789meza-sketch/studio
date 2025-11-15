@@ -60,8 +60,12 @@ export const InlineTicket = ({ ticketModalRef, ticketData, setGeneratedTicketDat
                 className="bg-white p-2 rounded-lg shadow-lg font-mono text-gray-800 text-[11px] relative overflow-hidden"
                 style={{width: '280px'}}
             >
-                 <div className="absolute inset-0 flex items-center justify-center z-0">
-                    <p className="text-gray-200/50 text-7xl font-bold -rotate-45 select-none opacity-50">RIFA EXPRESS</p>
+                <div className="absolute inset-0 flex items-center justify-center z-0 opacity-50">
+                    <p className="text-gray-200/50 text-7xl font-bold -rotate-45 select-none flex items-center gap-4">
+                        <span>RIFA</span>
+                        <span className='text-yellow-400'>⚡</span>
+                        <span>EXPRESS</span>
+                    </p>
                 </div>
                 <div className="relative z-10">
                     <div className="text-center mb-4">
@@ -73,7 +77,7 @@ export const InlineTicket = ({ ticketModalRef, ticketData, setGeneratedTicketDat
                            <X className="h-4 w-4" />
                            <span className="sr-only">{t('close')}</span>
                        </Button>
-                        <h3 className="text-xl font-bold">RIFA EXPRESS</h3>
+                        <h3 className="text-xl font-bold">RIFA⚡ EXPRESS</h3>
                         <p>{t('reference')}: {ticketData.raffleRef}</p>
                         <p className="font-semibold">{t('purchaseReceipt')}</p>
                     </div>
@@ -118,3 +122,5 @@ export const InlineTicket = ({ ticketModalRef, ticketData, setGeneratedTicketDat
        </div>
     );
 };
+
+    
