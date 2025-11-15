@@ -1,4 +1,4 @@
-import { doc, getDoc, setDoc, increment, updateDoc, DocumentReference } from 'firebase/firestore';
+import { doc, getDoc, setDoc, increment, updateDoc, DocumentReference, runTransaction } from 'firebase/firestore';
 import type { Firestore } from 'firebase/firestore';
 import { persistenceEnabled } from './firebase';
 
@@ -16,6 +16,7 @@ class RaffleManager {
     }
 
     private getCounterRef(mode: RaffleMode): DocumentReference {
+        // 'two-digit' uses even, 'three-digit' and 'infinite' use odd
         return mode === 'two-digit' ? this.counterRefEven : this.counterRefOdd;
     }
 
@@ -29,37 +30,45 @@ class RaffleManager {
         }
 
         const counterRef = this.getCounterRef(mode);
-        
+        const isEvenMode = mode === 'two-digit';
+
         try {
-            const docSnap = await getDoc(counterRef);
-            let currentCount = 0;
-            if (docSnap.exists()) {
-                currentCount = docSnap.data()?.count || 0;
-            } else if (!peek) {
-                 await setDoc(counterRef, { count: 0 });
-            }
-
-            const nextNumbers: number[] = [];
-            let incrementBy = 0;
-
-            for (let i = 0; i < count; i++) {
-                nextNumbers.push(currentCount + (i * 2) + (mode === 'two-digit' ? 2 : 1));
-                incrementBy += 2;
-            }
+            let nextNumbers: number[] = [];
             
-            if (!peek) {
+            if (peek) {
+                 const docSnap = await getDoc(counterRef);
+                 let currentCount = isEvenMode ? 0 : 1;
                  if (docSnap.exists()) {
-                    await updateDoc(counterRef, { count: increment(incrementBy) });
-                } else {
-                    await setDoc(counterRef, { count: incrementBy });
-                }
+                     currentCount = docSnap.data()?.count || currentCount;
+                 }
+                 for (let i = 0; i < count; i++) {
+                     nextNumbers.push(currentCount + (i * 2));
+                 }
+            } else {
+                 await runTransaction(this.db, async (transaction) => {
+                    const docSnap = await transaction.get(counterRef);
+                    let currentCount = isEvenMode ? 0 : 1;
+                    if (docSnap.exists()) {
+                        currentCount = docSnap.data()?.count || currentCount;
+                    }
+
+                    nextNumbers = [];
+                    for (let i = 0; i < count; i++) {
+                        nextNumbers.push(currentCount + (i * 2));
+                    }
+                    
+                    const newCount = currentCount + (count * 2);
+                    transaction.set(counterRef, { count: newCount }, { merge: true });
+                });
             }
             
             return nextNumbers;
 
         } catch (error) {
             console.error("Error getting next ref number:", error);
-            return [Math.floor(Math.random() * 1000)];
+            // Fallback to a random number in case of transaction failure
+            const randomBase = Math.floor(Math.random() * 1000);
+            return [isEvenMode ? randomBase * 2 : randomBase * 2 + 1];
         }
     }
 
@@ -67,20 +76,22 @@ class RaffleManager {
         if (typeof window === 'undefined') {
              return 'JM-SERVER';
         }
-        const [nextNumber] = await this.getNextRefNumber(mode, peek, isManualActivation);
+        const [nextNumber] = await this.getNextRefNumber(mode, peek, isManualActivation, 1);
         const ref = `JM${nextNumber}`;
         return ref;
     }
     
-    public async peekNextRaffleRef(mode: RaffleMode, count: number = 1): Promise<string[]> {
+    public async peekNextRaffleRef(mode: RaffleMode, count: number = 2): Promise<string[]> {
         const nextNumbers = await this.getNextRefNumber(mode, true, false, count);
         return nextNumbers.map(num => `JM${num}`);
     }
 
     public async resetRef(): Promise<void> {
         if (typeof window !== 'undefined') {
+            // Reset even counter to start at 0, next will be 0.
             await setDoc(this.counterRefEven, { count: 0 });
-            await setDoc(this.counterRefOdd, { count: -1 });
+            // Reset odd counter to start at 1, next will be 1.
+            await setDoc(this.counterRefOdd, { count: 1 });
         }
     }
 }
