@@ -237,7 +237,8 @@
     "confirmActivationTitle": "Confirm Activation",
     "confirmActivationDescription": "You are about to activate a new board. Please confirm the details below.",
     "newRaffleRef": "New Raffle Reference",
-    "confirmAndActivate": "Confirm and Activate"
+    "confirmAndActivate": "Confirm and Activate",
+    "nextRef": "Next Ref"
 }
     
     

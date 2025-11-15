@@ -11,7 +11,7 @@ class RaffleManager {
         this.counterRef = doc(this.db, 'internal', 'raffleCounter');
     }
 
-    public async getNextRefNumber(): Promise<number> {
+    public async getNextRefNumber(peek: boolean = false): Promise<number> {
         if (typeof window === 'undefined') {
             return 1;
         }
@@ -24,10 +24,16 @@ class RaffleManager {
             const docSnap = await getDoc(this.counterRef);
 
             if (docSnap.exists()) {
+                if (peek) {
+                    return (docSnap.data()?.count || 0) + 1;
+                }
                 await updateDoc(this.counterRef, { count: increment(1) });
                 const updatedSnap = await getDoc(this.counterRef);
                 return updatedSnap.data()?.count || 1;
             } else {
+                 if (peek) {
+                    return 1;
+                }
                 await setDoc(this.counterRef, { count: 1 });
                 return 1;
             }
@@ -37,13 +43,17 @@ class RaffleManager {
         }
     }
 
-    public async createNewRaffleRef(): Promise<string> {
+    public async createNewRaffleRef(peek: boolean = false): Promise<string> {
         if (typeof window === 'undefined') {
              return 'JM-SERVER';
         }
-        const nextNumber = await this.getNextRefNumber();
+        const nextNumber = await this.getNextRefNumber(peek);
         const ref = `JM${nextNumber}`;
         return ref;
+    }
+    
+    public async peekNextRaffleRef(): Promise<string> {
+        return this.createNewRaffleRef(true);
     }
 
     public async resetRef(): Promise<void> {

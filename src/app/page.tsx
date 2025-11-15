@@ -74,7 +74,7 @@ interface PartialWinnerInfo {
     prize: string;
 }
 
-const DateTimeDisplay = () => {
+const DateTimeDisplay = ({ nextRaffleRef, t }: { nextRaffleRef: string | null, t: (key: string) => string }) => {
     const [currentTime, setCurrentTime] = useState(new Date());
 
     useEffect(() => {
@@ -90,6 +90,9 @@ const DateTimeDisplay = () => {
         <div className="text-center text-gray-500 mb-4">
             <p className="font-semibold text-lg">{currentTime.toLocaleDateString(locale, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
             <p className="text-3xl font-bold tracking-wider">{currentTime.toLocaleTimeString(locale)}</p>
+            {nextRaffleRef && (
+                <p className="text-sm font-semibold text-purple-600 mt-1">{t('nextRef')}: {nextRaffleRef}</p>
+            )}
         </div>
     );
 };
@@ -142,6 +145,8 @@ const App = () => {
     const [activationConfirmationOpen, setActivationConfirmationOpen] = useState(false);
     const [activationToConfirm, setActivationToConfirm] = useState<{ activation: PendingActivation; newRaffleRef: string; } | null>(null);
 
+    const [nextRaffleRef, setNextRaffleRef] = useState<string | null>(null);
+
 
     const raffleManager = new RaffleManager(db);
     
@@ -155,6 +160,18 @@ const App = () => {
         }
     }, [language]);
 
+
+    useEffect(() => {
+        const fetchNextRef = async () => {
+            if (isSuperAdmin && !raffleState.raffleRef) {
+                const ref = await raffleManager.peekNextRaffleRef();
+                setNextRaffleRef(ref);
+            } else {
+                setNextRaffleRef(null);
+            }
+        };
+        fetchNextRef();
+    }, [isSuperAdmin, raffleState.raffleRef]);
 
     useEffect(() => {
         if (isSuperAdmin) {
@@ -1050,7 +1067,7 @@ const App = () => {
     };
 
     const handleActivateBoard = async (mode: RaffleMode, transactionId: string, newRef?: string, loadBoard = true) => {
-        if (!loadBoard) setLoading(true);
+        if (loadBoard) setLoading(true);
 
         try {
             const transactionDocRef = doc(db, 'usedTransactions', transactionId);
@@ -1058,7 +1075,7 @@ const App = () => {
 
             if (transactionDoc.exists() && !transactionId.startsWith('SUPERADMIN_')) {
                 showNotification(t('transactionAlreadyUsed'), 'error');
-                if (!loadBoard) setLoading(false);
+                if (loadBoard) setLoading(false);
                 return;
             }
             
@@ -1101,7 +1118,7 @@ const App = () => {
             console.error("Error activating board:", error);
             showNotification(t('errorActivatingBoard'), "error");
         } finally {
-            if (!loadBoard) setLoading(false);
+            if (loadBoard) setLoading(false);
         }
     };
 
@@ -1751,7 +1768,7 @@ const App = () => {
                     {!raffleState.raffleRef ? (
                         <div className="p-8">
                             <div className="text-center">
-                                <DateTimeDisplay />
+                                <DateTimeDisplay nextRaffleRef={nextRaffleRef} t={t} />
                                 <Lock className="mx-auto h-12 w-12 text-gray-400 mb-4" />
                                 <h2 className="text-2xl font-bold text-gray-800 mb-2">{t('boardLocked')}</h2>
                                 <p className="text-gray-600 mb-6 max-w-md mx-auto">
