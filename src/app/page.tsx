@@ -1030,28 +1030,27 @@ const App = () => {
 
     const confirmAndActivateBoard = async () => {
         if (!activationToConfirm) return;
-
+    
         const { activation, newRaffleRef } = activationToConfirm;
         setLoading(true);
-
+    
         try {
-            await handleActivateBoard(activation.raffleMode, activation.transactionId, newRaffleRef);
+            await handleActivateBoard(activation.raffleMode, activation.transactionId, newRaffleRef, false);
             const activationDocRef = doc(db, 'pendingActivations', activation.id);
             await updateDoc(activationDocRef, { status: 'completed' });
-            showNotification(t('boardActivatedSuccessfully'), 'success');
+            showNotification(t('boardActivatedSuccessfullyWithRef', { ref: newRaffleRef }), 'success');
         } catch (error) {
             console.error("Error approving activation:", error);
             showNotification(t('errorActivatingBoard'), "error");
+        } finally {
+            setActivationConfirmationOpen(false);
+            setActivationToConfirm(null);
+            setLoading(false);
         }
-        
-        setActivationConfirmationOpen(false);
-        setActivationToConfirm(null);
-        setLoading(false);
     };
 
-    const handleActivateBoard = async (mode: RaffleMode, transactionId: string, newRef?: string) => {
-        setIsCountrySelectionOpen(false);
-        setLoading(true);
+    const handleActivateBoard = async (mode: RaffleMode, transactionId: string, newRef?: string, loadBoard = true) => {
+        if (!loadBoard) setLoading(true);
 
         try {
             const transactionDocRef = doc(db, 'usedTransactions', transactionId);
@@ -1059,15 +1058,18 @@ const App = () => {
 
             if (transactionDoc.exists() && !transactionId.startsWith('SUPERADMIN_')) {
                 showNotification(t('transactionAlreadyUsed'), 'error');
-                setLoading(false);
+                if (!loadBoard) setLoading(false);
                 return;
             }
             
             const finalRaffleRef = newRef || await raffleManager.createNewRaffleRef();
 
             const adminId = `admin_${Date.now()}_${Math.random()}`;
-            localStorage.setItem('rifaAdminId', adminId);
-            setCurrentAdminId(adminId);
+            
+            if (loadBoard) {
+                localStorage.setItem('rifaAdminId', adminId);
+                setCurrentAdminId(adminId);
+            }
     
             const newRaffleData: Raffle = {
                 ...initialRaffleData,
@@ -1088,17 +1090,18 @@ const App = () => {
                 activatedAt: serverTimestamp(),
             });
     
-            const newUrl = new URL(window.location.origin);
-            newUrl.searchParams.set('ref', finalRaffleRef);
-            window.history.pushState({}, '', newUrl.href);
-            // Instead of redirecting, just load the state
-            await handleAdminSearch({refToSearch: finalRaffleRef, isInitialLoad: true});
-
+            if (loadBoard) {
+                const newUrl = new URL(window.location.origin);
+                newUrl.searchParams.set('ref', finalRaffleRef);
+                window.history.pushState({}, '', newUrl.href);
+                await handleAdminSearch({refToSearch: finalRaffleRef, isInitialLoad: true});
+            }
 
         } catch (error) {
             console.error("Error activating board:", error);
             showNotification(t('errorActivatingBoard'), "error");
-            setLoading(false);
+        } finally {
+            if (!loadBoard) setLoading(false);
         }
     };
 

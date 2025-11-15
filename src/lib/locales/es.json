@@ -230,6 +230,7 @@
     "date": "Fecha",
     "activateBoard": "Activar Tablero",
     "boardActivatedSuccessfully": "Tablero activado con éxito.",
+    "boardActivatedSuccessfullyWithRef": "Tablero {ref} activado con éxito.",
     "activationPendingAdmin": "Pago exitoso. El administrador activará tu tablero en breve.",
     "logout": "Cerrar Sesión",
     "logoutSuccess": "Sesión cerrada exitosamente.",

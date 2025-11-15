@@ -230,6 +230,7 @@
     "date": "Date",
     "activateBoard": "Activate Board",
     "boardActivatedSuccessfully": "Board activated successfully.",
+    "boardActivatedSuccessfullyWithRef": "Board {ref} activated successfully.",
     "activationPendingAdmin": "Payment successful. The administrator will activate your board shortly.",
     "logout": "Logout",
     "logoutSuccess": "Session closed successfully.",
