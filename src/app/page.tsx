@@ -74,7 +74,7 @@ interface PartialWinnerInfo {
     prize: string;
 }
 
-const DateTimeDisplay = ({ nextRaffleRefs, t }: { nextRaffleRefs: { even: string[]; odd: string[] } | null, t: (key: string) => string }) => {
+const DateTimeDisplay = ({ nextRaffleRefs, t }: { nextRaffleRefs: { even: string[]; odd: string[]; infinite: string[]; } | null, t: (key: string) => string }) => {
     const [currentTime, setCurrentTime] = useState(new Date());
 
     useEffect(() => {
@@ -94,6 +94,7 @@ const DateTimeDisplay = ({ nextRaffleRefs, t }: { nextRaffleRefs: { even: string
                 <div className="text-sm font-semibold text-purple-600 mt-1 space-y-1">
                     <p>{t('nextRefsEven')} {nextRaffleRefs.even.join(', ')}</p>
                     <p>{t('nextRefsOdd')} {nextRaffleRefs.odd.join(', ')}</p>
+                    <p>{t('nextRefsInfinite')} {nextRaffleRefs.infinite.join(', ')}</p>
                 </div>
             )}
         </div>
@@ -148,7 +149,7 @@ const App = () => {
     const [activationConfirmationOpen, setActivationConfirmationOpen] = useState(false);
     const [activationToConfirm, setActivationToConfirm] = useState<{ activation: PendingActivation; newRaffleRef: string; } | null>(null);
 
-    const [nextRaffleRefs, setNextRaffleRefs] = useState<{ even: string[]; odd: string[] }>({ even: [], odd: [] });
+    const [nextRaffleRefs, setNextRaffleRefs] = useState<{ even: string[]; odd: string[]; infinite: string[]; }>({ even: [], odd: [], infinite: [] });
 
 
     const raffleManager = new RaffleManager(db);
@@ -169,9 +170,10 @@ const App = () => {
             if (isSuperAdmin && !raffleState.raffleRef) {
                 const evenRefs = await raffleManager.peekNextRaffleRef('two-digit', 2);
                 const oddRefs = await raffleManager.peekNextRaffleRef('three-digit', 2);
-                setNextRaffleRefs({ even: evenRefs, odd: oddRefs });
+                const infiniteRefs = await raffleManager.peekNextRaffleRef('infinite', 2);
+                setNextRaffleRefs({ even: evenRefs, odd: oddRefs, infinite: infiniteRefs });
             } else {
-                setNextRaffleRefs({ even: [], odd: [] });
+                setNextRaffleRefs({ even: [], odd: [], infinite: [] });
             }
         };
         fetchNextRefs();
@@ -1036,9 +1038,9 @@ const App = () => {
             return;
         }
 
-        const nextRef = (await raffleManager.peekNextRaffleRef(mode))[0];
+        const [nextRef] = await raffleManager.peekNextRaffleRef(mode, 1);
         
-        if (raffleRefToSearch === nextRef) {
+        if (raffleRefToSearch.toUpperCase() === nextRef.toUpperCase()) {
             await handleActivateBoard(mode, `MANUAL_${raffleRefToSearch}`);
         } else {
             // Fallback to public search for an existing raffle
@@ -1049,7 +1051,7 @@ const App = () => {
     };
 
     const handleApproveActivation = async (activation: PendingActivation) => {
-        const [newRaffleRef] = await raffleManager.peekNextRaffleRef(activation.raffleMode);
+        const [newRaffleRef] = await raffleManager.peekNextRaffleRef(activation.raffleMode, 1);
         setActivationToConfirm({ activation, newRaffleRef });
         setActivationConfirmationOpen(true);
     };

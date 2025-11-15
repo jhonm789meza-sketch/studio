@@ -239,7 +239,8 @@
     "newRaffleRef": "New Raffle Reference",
     "confirmAndActivate": "Confirm and Activate",
     "nextRefsEven": "Next Refs (Even):",
-    "nextRefsOdd": "Next Refs (Odd):"
+    "nextRefsOdd": "Next Refs (Odd):",
+    "nextRefsInfinite": "Next Refs (Infinite):"
 }
     
     
