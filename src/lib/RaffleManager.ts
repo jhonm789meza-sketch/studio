@@ -4,6 +4,11 @@ import { persistenceEnabled } from './firebase';
 
 type RaffleMode = 'two-digit' | 'three-digit' | 'infinite';
 
+interface NextRaffleInfo {
+    refs: string[];
+    count: number;
+}
+
 class RaffleManager {
     private db: Firestore;
     private counterRefEven: DocumentReference;
@@ -26,10 +31,10 @@ class RaffleManager {
         }
         return this.counterRefInfinite;
     }
-
-    public async getNextRefNumber(mode: RaffleMode, peek: boolean = false, count: number = 1): Promise<number[]> {
+    
+    public async getNextRefInfo(mode: RaffleMode, peek: boolean = false, count: number = 1): Promise<{ numbers: number[], playedCount: number }> {
         if (typeof window === 'undefined') {
-            return Array.from({ length: count }, (_, i) => i + 1);
+             return { numbers: Array.from({ length: count }, (_, i) => i + 1), playedCount: 0 };
         }
 
         if (persistenceEnabled) {
@@ -42,70 +47,64 @@ class RaffleManager {
 
         try {
             let nextNumbers: number[] = [];
+            let playedCount = 0;
             
-            if (peek) {
-                 const docSnap = await getDoc(counterRef);
-                 let currentCount: number;
+            await runTransaction(this.db, async (transaction) => {
+                const docSnap = await transaction.get(counterRef);
+                let currentCount: number;
                  if (docSnap.exists()) {
                      currentCount = docSnap.data()?.count || (isEvenMode ? 0 : isOddMode ? 1 : 1);
                  } else {
                      currentCount = isEvenMode ? 0 : isOddMode ? 1 : 1;
                  }
 
-                 for (let i = 0; i < count; i++) {
+                if (isEvenMode) {
+                    playedCount = currentCount / 2;
+                } else if (isOddMode) {
+                    playedCount = Math.floor(currentCount / 2);
+                } else { // infinite
+                    playedCount = currentCount - 1;
+                }
+
+
+                nextNumbers = [];
+                for (let i = 0; i < count; i++) {
                      if (isEvenMode || isOddMode) {
                         nextNumbers.push(currentCount + (i * 2));
                      } else { // infinite
                         nextNumbers.push(currentCount + i);
                      }
                  }
-            } else {
-                 await runTransaction(this.db, async (transaction) => {
-                    const docSnap = await transaction.get(counterRef);
-                    let currentCount: number;
-                    if (docSnap.exists()) {
-                        currentCount = docSnap.data()?.count || (isEvenMode ? 0 : isOddMode ? 1 : 1);
-                    } else {
-                        currentCount = isEvenMode ? 0 : isOddMode ? 1 : 1;
-                    }
 
-
-                    nextNumbers = [];
+                if (!peek) {
                     let newCount: number;
-
                     if (isEvenMode || isOddMode) {
-                        for (let i = 0; i < count; i++) {
-                            nextNumbers.push(currentCount + (i * 2));
-                        }
                         newCount = currentCount + (count * 2);
                     } else { // infinite
-                         for (let i = 0; i < count; i++) {
-                            nextNumbers.push(currentCount + i);
-                        }
                         newCount = currentCount + count;
                     }
-                    
                     transaction.set(counterRef, { count: newCount }, { merge: true });
-                });
-            }
+                }
+            });
             
-            return nextNumbers;
+            return { numbers: nextNumbers, playedCount };
 
         } catch (error) {
             console.error("Error getting next ref number:", error);
             // Fallback to a random number in case of transaction failure
             const randomBase = Math.floor(Math.random() * 1000);
-            if (isEvenMode) return [randomBase * 2];
-            if (isOddMode) return [randomBase * 2 + 1];
-            return [randomBase];
+            if (isEvenMode) return { numbers: [randomBase * 2], playedCount: 0 };
+            if (isOddMode) return { numbers: [randomBase * 2 + 1], playedCount: 0 };
+            return { numbers: [randomBase], playedCount: 0 };
         }
     }
+
 
     public async createNewRaffleRef(mode: RaffleMode, peek: boolean = false, isManualActivation: boolean = false): Promise<string> {
         if (typeof window === 'undefined') {
              return 'JM-SERVER';
         }
-        const [nextNumber] = await this.getNextRefNumber(mode, peek || isManualActivation, 1);
+        const { numbers: [nextNumber] } = await this.getNextRefInfo(mode, peek || isManualActivation, 1);
         
         if (mode === 'infinite') {
             return `JM∞${nextNumber}`;
@@ -115,12 +114,16 @@ class RaffleManager {
         return ref;
     }
     
-    public async peekNextRaffleRef(mode: RaffleMode, count: number = 2): Promise<string[]> {
-        const nextNumbers = await this.getNextRefNumber(mode, true, count);
+    public async peekNextRaffleRef(mode: RaffleMode, count: number = 2): Promise<NextRaffleInfo> {
+        const { numbers, playedCount } = await this.getNextRefInfo(mode, true, count);
+        let refs: string[];
+
         if (mode === 'infinite') {
-            return nextNumbers.map(num => `JM∞${num}`);
+            refs = numbers.map(num => `JM∞${num}`);
+        } else {
+            refs = numbers.map(num => `JM${num}`);
         }
-        return nextNumbers.map(num => `JM${num}`);
+        return { refs, count: playedCount };
     }
 
     public async resetRef(): Promise<void> {
@@ -133,3 +136,6 @@ class RaffleManager {
 }
 
 export { RaffleManager };
+export type { NextRaffleInfo };
+
+    

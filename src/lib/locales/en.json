@@ -240,7 +240,8 @@
     "confirmAndActivate": "Confirm and Activate",
     "nextRefsEven": "Next Refs (Even):",
     "nextRefsOdd": "Next Refs (Odd):",
-    "nextRefsInfinite": "Next Refs (Infinite):"
+    "nextRefsInfinite": "Next Refs (Infinite):",
+    "playedCount": "Played"
 }
     
     
@@ -259,6 +260,8 @@
 
 
 
+
+    
 
     
 

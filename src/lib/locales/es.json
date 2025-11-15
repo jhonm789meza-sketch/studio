@@ -240,7 +240,8 @@
     "confirmAndActivate": "Confirmar y Activar",
     "nextRefsEven": "Próximas Refs (Par):",
     "nextRefsOdd": "Próximas Refs (Impar):",
-    "nextRefsInfinite": "Próximas Refs (Infinita):"
+    "nextRefsInfinite": "Próximas Refs (Infinita):",
+    "playedCount": "Jugados"
 }
     
     
@@ -259,6 +260,8 @@
 
 
 
+
+    
 
     
 
