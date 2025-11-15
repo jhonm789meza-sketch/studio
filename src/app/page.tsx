@@ -139,6 +139,10 @@ const App = () => {
     const [isSuperAdmin, setIsSuperAdmin] = useState(false);
     const [pendingActivations, setPendingActivations] = useState<PendingActivation[]>([]);
 
+    const [activationConfirmationOpen, setActivationConfirmationOpen] = useState(false);
+    const [activationToConfirm, setActivationToConfirm] = useState<{ activation: PendingActivation; newRaffleRef: string; } | null>(null);
+
+
     const raffleManager = new RaffleManager(db);
     
     const raffleMode = raffleState.raffleMode;
@@ -1019,9 +1023,19 @@ const App = () => {
     };
 
     const handleApproveActivation = async (activation: PendingActivation) => {
+        const newRaffleRef = await raffleManager.createNewRaffleRef();
+        setActivationToConfirm({ activation, newRaffleRef });
+        setActivationConfirmationOpen(true);
+    };
+
+    const confirmAndActivateBoard = async () => {
+        if (!activationToConfirm) return;
+
+        const { activation, newRaffleRef } = activationToConfirm;
         setLoading(true);
+
         try {
-            await handleActivateBoard(activation.raffleMode, activation.transactionId);
+            await handleActivateBoard(activation.raffleMode, activation.transactionId, newRaffleRef);
             const activationDocRef = doc(db, 'pendingActivations', activation.id);
             await updateDoc(activationDocRef, { status: 'completed' });
             showNotification(t('boardActivatedSuccessfully'), 'success');
@@ -1029,10 +1043,13 @@ const App = () => {
             console.error("Error approving activation:", error);
             showNotification(t('errorActivatingBoard'), "error");
         }
+        
+        setActivationConfirmationOpen(false);
+        setActivationToConfirm(null);
         setLoading(false);
     };
 
-    const handleActivateBoard = async (mode: RaffleMode, transactionId: string) => {
+    const handleActivateBoard = async (mode: RaffleMode, transactionId: string, newRef?: string) => {
         setIsCountrySelectionOpen(false);
         setLoading(true);
 
@@ -1045,16 +1062,17 @@ const App = () => {
                 setLoading(false);
                 return;
             }
+            
+            const finalRaffleRef = newRef || await raffleManager.createNewRaffleRef();
 
             const adminId = `admin_${Date.now()}_${Math.random()}`;
             localStorage.setItem('rifaAdminId', adminId);
             setCurrentAdminId(adminId);
     
-            const newRef = await raffleManager.createNewRaffleRef();
             const newRaffleData: Raffle = {
                 ...initialRaffleData,
                 raffleMode: mode,
-                raffleRef: newRef,
+                raffleRef: finalRaffleRef,
                 adminId: adminId,
                 isPaid: true,
                 prizeImageUrl: '',
@@ -1063,18 +1081,18 @@ const App = () => {
                 infiniteModeDigits: 0,
             };
             
-            await setDoc(doc(db, "raffles", newRef), newRaffleData);
+            await setDoc(doc(db, "raffles", finalRaffleRef), newRaffleData);
 
             await setDoc(transactionDocRef, {
-                raffleRef: newRef,
+                raffleRef: finalRaffleRef,
                 activatedAt: serverTimestamp(),
             });
     
             const newUrl = new URL(window.location.origin);
-            newUrl.searchParams.set('ref', newRef);
+            newUrl.searchParams.set('ref', finalRaffleRef);
             window.history.pushState({}, '', newUrl.href);
             // Instead of redirecting, just load the state
-            await handleAdminSearch({refToSearch: newRef, isInitialLoad: true});
+            await handleAdminSearch({refToSearch: finalRaffleRef, isInitialLoad: true});
 
 
         } catch (error) {
@@ -2581,6 +2599,25 @@ const App = () => {
                 </DialogContent>
             </Dialog>
             
+            <Dialog open={activationConfirmationOpen} onOpenChange={setActivationConfirmationOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{t('confirmActivationTitle')}</DialogTitle>
+                        <DialogDescription>
+                            {t('confirmActivationDescription')}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4 space-y-2">
+                        <p>{t('transactionId')}: <span className="font-mono bg-gray-100 p-1 rounded">{activationToConfirm?.activation.transactionId}</span></p>
+                        <p>{t('newRaffleRef')}: <span className="font-mono bg-gray-100 p-1 rounded font-bold">{activationToConfirm?.newRaffleRef}</span></p>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setActivationConfirmationOpen(false)}>{t('cancel')}</Button>
+                        <Button onClick={confirmAndActivateBoard}>{t('confirmAndActivate')}</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
             <CountrySelectionDialog
               isOpen={isCountrySelectionOpen}
               onClose={() => setIsCountrySelectionOpen(false)}
@@ -2598,3 +2635,5 @@ const App = () => {
 };
 
 export default App;
+
+    

@@ -232,7 +232,11 @@
     "boardActivatedSuccessfully": "Tablero activado con éxito.",
     "activationPendingAdmin": "Pago exitoso. El administrador activará tu tablero en breve.",
     "logout": "Cerrar Sesión",
-    "logoutSuccess": "Sesión cerrada exitosamente."
+    "logoutSuccess": "Sesión cerrada exitosamente.",
+    "confirmActivationTitle": "Confirmar Activación",
+    "confirmActivationDescription": "Estás a punto de activar un nuevo tablero. Por favor confirma los detalles.",
+    "newRaffleRef": "Nueva Referencia de Rifa",
+    "confirmAndActivate": "Confirmar y Activar"
 }
     
     
@@ -250,3 +254,6 @@
     
 
 
+
+
+    

@@ -232,7 +232,11 @@
     "boardActivatedSuccessfully": "Board activated successfully.",
     "activationPendingAdmin": "Payment successful. The administrator will activate your board shortly.",
     "logout": "Logout",
-    "logoutSuccess": "Session closed successfully."
+    "logoutSuccess": "Session closed successfully.",
+    "confirmActivationTitle": "Confirm Activation",
+    "confirmActivationDescription": "You are about to activate a new board. Please confirm the details below.",
+    "newRaffleRef": "New Raffle Reference",
+    "confirmAndActivate": "Confirm and Activate"
 }
     
     
@@ -250,3 +254,6 @@
     
 
 
+
+
+    
