@@ -67,7 +67,7 @@
     "infiniteRaffleDescription": "Esta rifa no tiene un tablero de números. Registra a los participantes directamente en la pestaña 'Registrar'.",
     "raffleBackgroundAlt": "Fondo de la rifa",
     "goToHome": "Ir al Inicio",
-    "searchRaffleByRef": "Buscar Rifa por Referencia",
+    "searchRaffleByRef": "Buscar por Referencia",
     "recoverAdminAccess": "Recuperar Administración",
     "share": "Compartir",
     "showQR": "Mostrar QR",
@@ -238,8 +238,8 @@
     "confirmActivationDescription": "Estás a punto de activar un nuevo tablero. Por favor confirma los detalles.",
     "newRaffleRef": "Nueva Referencia de Rifa",
     "confirmAndActivate": "Confirmar y Activar",
-    "nextRefEven": "Próxima Ref (Par):",
-    "nextRefOdd": "Próxima Ref (Impar):"
+    "nextRefsEven": "Próximas Refs (Par):",
+    "nextRefsOdd": "Próximas Refs (Impar):"
 }
     
     

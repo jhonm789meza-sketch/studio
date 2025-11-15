@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect, useRef, useTransition } from 'react';
 import jsPDF from 'jspdf';
@@ -75,7 +74,7 @@ interface PartialWinnerInfo {
     prize: string;
 }
 
-const DateTimeDisplay = ({ nextRaffleRefs, t }: { nextRaffleRefs: { even: string | null; odd: string | null } | null, t: (key: string) => string }) => {
+const DateTimeDisplay = ({ nextRaffleRefs, t }: { nextRaffleRefs: { even: string[]; odd: string[] } | null, t: (key: string) => string }) => {
     const [currentTime, setCurrentTime] = useState(new Date());
 
     useEffect(() => {
@@ -92,9 +91,10 @@ const DateTimeDisplay = ({ nextRaffleRefs, t }: { nextRaffleRefs: { even: string
             <p className="font-semibold text-lg">{currentTime.toLocaleDateString(locale, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
             <p className="text-3xl font-bold tracking-wider">{currentTime.toLocaleTimeString(locale)}</p>
              {nextRaffleRefs && (
-                <p className="text-sm font-semibold text-purple-600 mt-1">
-                    {t('nextRefOdd')} {nextRaffleRefs.odd} | {t('nextRefEven')} {nextRaffleRefs.even}
-                </p>
+                <div className="text-sm font-semibold text-purple-600 mt-1 space-y-1">
+                    <p>{t('nextRefsEven')} {nextRaffleRefs.even.join(', ')}</p>
+                    <p>{t('nextRefsOdd')} {nextRaffleRefs.odd.join(', ')}</p>
+                </div>
             )}
         </div>
     );
@@ -148,7 +148,7 @@ const App = () => {
     const [activationConfirmationOpen, setActivationConfirmationOpen] = useState(false);
     const [activationToConfirm, setActivationToConfirm] = useState<{ activation: PendingActivation; newRaffleRef: string; } | null>(null);
 
-    const [nextRaffleRefs, setNextRaffleRefs] = useState<{ even: string | null; odd: string | null }>({ even: null, odd: null });
+    const [nextRaffleRefs, setNextRaffleRefs] = useState<{ even: string[]; odd: string[] }>({ even: [], odd: [] });
 
 
     const raffleManager = new RaffleManager(db);
@@ -167,11 +167,11 @@ const App = () => {
     useEffect(() => {
         const fetchNextRefs = async () => {
             if (isSuperAdmin && !raffleState.raffleRef) {
-                const evenRef = await raffleManager.peekNextRaffleRef('two-digit');
-                const oddRef = await raffleManager.peekNextRaffleRef('three-digit');
-                setNextRaffleRefs({ even: evenRef, odd: oddRef });
+                const evenRefs = await raffleManager.peekNextRaffleRef('two-digit', 2);
+                const oddRefs = await raffleManager.peekNextRaffleRef('three-digit', 2);
+                setNextRaffleRefs({ even: evenRefs, odd: oddRefs });
             } else {
-                setNextRaffleRefs({ even: null, odd: null });
+                setNextRaffleRefs({ even: [], odd: [] });
             }
         };
         fetchNextRefs();
@@ -1036,12 +1036,9 @@ const App = () => {
             return;
         }
 
-        const nextRefEven = await raffleManager.peekNextRaffleRef('two-digit');
-        const nextRefOdd = await raffleManager.peekNextRaffleRef('three-digit');
+        const nextRef = (await raffleManager.peekNextRaffleRef(mode))[0];
         
-        const isNextRef = (mode === 'two-digit' && raffleRefToSearch === nextRefEven) || (mode !== 'two-digit' && raffleRefToSearch === nextRefOdd);
-
-        if (isNextRef) {
+        if (raffleRefToSearch === nextRef) {
             await handleActivateBoard(mode, `MANUAL_${raffleRefToSearch}`);
         } else {
             // Fallback to public search for an existing raffle
@@ -1052,7 +1049,7 @@ const App = () => {
     };
 
     const handleApproveActivation = async (activation: PendingActivation) => {
-        const newRaffleRef = await raffleManager.peekNextRaffleRef(activation.raffleMode);
+        const [newRaffleRef] = await raffleManager.peekNextRaffleRef(activation.raffleMode);
         setActivationToConfirm({ activation, newRaffleRef });
         setActivationConfirmationOpen(true);
     };
@@ -1070,8 +1067,6 @@ const App = () => {
             const activationDocRef = doc(db, 'pendingActivations', activation.id);
             await updateDoc(activationDocRef, { status: 'completed' });
             
-            // We need to fetch the *actual* ref created to show it.
-            // A bit tricky without returning it from handleActivateBoard. Let's show the peeked one for now.
             showNotification(t('boardActivatedSuccessfullyWithRef', { ref: newRaffleRef }), 'success');
 
         } catch (error) {
@@ -2679,5 +2674,3 @@ const App = () => {
 };
 
 export default App;
-
-    
