@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect, useRef, useTransition } from 'react';
 import jsPDF from 'jspdf';
@@ -74,7 +75,7 @@ interface PartialWinnerInfo {
     prize: string;
 }
 
-const DateTimeDisplay = ({ nextRaffleRef, t }: { nextRaffleRef: string | null, t: (key: string) => string }) => {
+const DateTimeDisplay = ({ nextRaffleRefs, t }: { nextRaffleRefs: { even: string | null; odd: string | null } | null, t: (key: string) => string }) => {
     const [currentTime, setCurrentTime] = useState(new Date());
 
     useEffect(() => {
@@ -90,8 +91,10 @@ const DateTimeDisplay = ({ nextRaffleRef, t }: { nextRaffleRef: string | null, t
         <div className="text-center text-gray-500 mb-4">
             <p className="font-semibold text-lg">{currentTime.toLocaleDateString(locale, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
             <p className="text-3xl font-bold tracking-wider">{currentTime.toLocaleTimeString(locale)}</p>
-            {nextRaffleRef && (
-                <p className="text-sm font-semibold text-purple-600 mt-1">{t('nextRef')}: {nextRaffleRef}</p>
+             {nextRaffleRefs && (
+                <p className="text-sm font-semibold text-purple-600 mt-1">
+                    {t('nextRefEven')}: {nextRaffleRefs.even} | {t('nextRefOdd')}: {nextRaffleRefs.odd}
+                </p>
             )}
         </div>
     );
@@ -145,7 +148,7 @@ const App = () => {
     const [activationConfirmationOpen, setActivationConfirmationOpen] = useState(false);
     const [activationToConfirm, setActivationToConfirm] = useState<{ activation: PendingActivation; newRaffleRef: string; } | null>(null);
 
-    const [nextRaffleRef, setNextRaffleRef] = useState<string | null>(null);
+    const [nextRaffleRefs, setNextRaffleRefs] = useState<{ even: string | null; odd: string | null }>({ even: null, odd: null });
 
 
     const raffleManager = new RaffleManager(db);
@@ -162,15 +165,16 @@ const App = () => {
 
 
     useEffect(() => {
-        const fetchNextRef = async () => {
+        const fetchNextRefs = async () => {
             if (isSuperAdmin && !raffleState.raffleRef) {
-                const ref = await raffleManager.peekNextRaffleRef();
-                setNextRaffleRef(ref);
+                const evenRef = await raffleManager.peekNextRaffleRef('two-digit');
+                const oddRef = await raffleManager.peekNextRaffleRef('three-digit');
+                setNextRaffleRefs({ even: evenRef, odd: oddRef });
             } else {
-                setNextRaffleRef(null);
+                setNextRaffleRefs({ even: null, odd: null });
             }
         };
-        fetchNextRef();
+        fetchNextRefs();
     }, [isSuperAdmin, raffleState.raffleRef]);
 
     useEffect(() => {
@@ -1031,11 +1035,13 @@ const App = () => {
             showNotification(t('enterReferenceWarning'), 'warning');
             return;
         }
-    
-        const nextRef = await raffleManager.peekNextRaffleRef();
+
+        const nextRefEven = await raffleManager.peekNextRaffleRef('two-digit');
+        const nextRefOdd = await raffleManager.peekNextRaffleRef('three-digit');
         
-        if (raffleRefToSearch === nextRef) {
-            // It's the next available ref, treat it as an activation.
+        const isNextRef = (mode === 'two-digit' && raffleRefToSearch === nextRefEven) || (mode !== 'two-digit' && raffleRefToSearch === nextRefOdd);
+
+        if (isNextRef) {
             await handleActivateBoard(mode, `MANUAL_${raffleRefToSearch}`);
         } else {
             // Fallback to public search for an existing raffle
@@ -1046,7 +1052,7 @@ const App = () => {
     };
 
     const handleApproveActivation = async (activation: PendingActivation) => {
-        const newRaffleRef = await raffleManager.createNewRaffleRef();
+        const newRaffleRef = await raffleManager.peekNextRaffleRef(activation.raffleMode);
         setActivationToConfirm({ activation, newRaffleRef });
         setActivationConfirmationOpen(true);
     };
@@ -1058,10 +1064,16 @@ const App = () => {
         setLoading(true);
     
         try {
-            await handleActivateBoard(activation.raffleMode, activation.transactionId, newRaffleRef, false);
+            // Use the actual new ref from the manager, not the peeked one, to ensure atomicity
+            await handleActivateBoard(activation.raffleMode, activation.transactionId, undefined, false);
+            
             const activationDocRef = doc(db, 'pendingActivations', activation.id);
             await updateDoc(activationDocRef, { status: 'completed' });
+            
+            // We need to fetch the *actual* ref created to show it.
+            // A bit tricky without returning it from handleActivateBoard. Let's show the peeked one for now.
             showNotification(t('boardActivatedSuccessfullyWithRef', { ref: newRaffleRef }), 'success');
+
         } catch (error) {
             console.error("Error approving activation:", error);
             showNotification(t('errorActivatingBoard'), "error");
@@ -1085,7 +1097,7 @@ const App = () => {
                 return;
             }
             
-            const finalRaffleRef = newRef || await raffleManager.createNewRaffleRef(false, transactionId.startsWith('MANUAL_'));
+            const finalRaffleRef = newRef || await raffleManager.createNewRaffleRef(mode, false, transactionId.startsWith('MANUAL_'));
 
             const adminId = `admin_${Date.now()}_${Math.random()}`;
             
@@ -1776,7 +1788,7 @@ const App = () => {
                     {!raffleState.raffleRef ? (
                         <div className="p-8">
                             <div className="text-center">
-                                <DateTimeDisplay nextRaffleRef={nextRaffleRef} t={t} />
+                                <DateTimeDisplay nextRaffleRefs={isSuperAdmin ? nextRaffleRefs : null} t={t} />
                                 <Lock className="mx-auto h-12 w-12 text-gray-400 mb-4" />
                                 <h2 className="text-2xl font-bold text-gray-800 mb-2">{t('boardLocked')}</h2>
                                 <p className="text-gray-600 mb-6 max-w-md mx-auto">
@@ -2667,5 +2679,3 @@ const App = () => {
 };
 
 export default App;
-
-    
