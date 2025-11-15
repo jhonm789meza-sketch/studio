@@ -93,7 +93,7 @@ const DateTimeDisplay = ({ nextRaffleRefs, t }: { nextRaffleRefs: { even: string
             <p className="text-3xl font-bold tracking-wider">{currentTime.toLocaleTimeString(locale)}</p>
              {nextRaffleRefs && (
                 <p className="text-sm font-semibold text-purple-600 mt-1">
-                    {t('nextRefEven')}: {nextRaffleRefs.even} | {t('nextRefOdd')}: {nextRaffleRefs.odd}
+                    {t('nextRefOdd')} {nextRaffleRefs.odd} | {t('nextRefEven')} {nextRaffleRefs.even}
                 </p>
             )}
         </div>
@@ -2679,3 +2679,5 @@ const App = () => {
 };
 
 export default App;
+
+    
