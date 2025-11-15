@@ -231,6 +231,7 @@
     "activateBoard": "Activar Tablero",
     "boardActivatedSuccessfully": "Tablero activado con éxito.",
     "boardActivatedSuccessfullyWithRef": "Tablero {ref} activado con éxito.",
+    "boardActivatedAndCopied": "Tablero {ref} activado. Enlace de admin copiado al portapapeles.",
     "activationPendingAdmin": "Pago exitoso. El administrador activará tu tablero en breve.",
     "logout": "Cerrar Sesión",
     "logoutSuccess": "Sesión cerrada exitosamente.",
@@ -238,33 +239,8 @@
     "confirmActivationDescription": "Estás a punto de activar un nuevo tablero. Por favor confirma los detalles.",
     "newRaffleRef": "Nueva Referencia de Rifa",
     "confirmAndActivate": "Confirmar y Activar",
-    "nextRefsEven": "Prox. Refs (Par):",
-    "nextRefsOdd": "Prox. Refs (Impar):",
-    "nextRefsInfinite": "Prox. Refs (Infinita):",
+    "nextRefsEven": "Próximas Refs (Par):",
+    "nextRefsOdd": "Próximas Refs (Impar):",
+    "nextRefsInfinite": "Próximas Refs (Infinita):",
     "playedCount": "Jugados"
 }
-    
-    
-
-
-
-    
-
-
-
-    
-
-    
-
-    
-
-
-
-
-    
-
-    
-
-    
-
-    

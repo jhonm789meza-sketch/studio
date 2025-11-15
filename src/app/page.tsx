@@ -79,7 +79,7 @@ interface NextRaffleInfo {
     count: number;
 }
 
-const DateTimeDisplay = ({ nextRaffleRefs, t }: { nextRaffleRefs: { even: NextRaffleInfo; odd: NextRaffleInfo; infinite: NextRaffleInfo; } | null, t: (key: string) => string }) => {
+const DateTimeDisplay = ({ nextRaffleRefs, t, onRefClick }: { nextRaffleRefs: { even: NextRaffleInfo; odd: NextRaffleInfo; infinite: NextRaffleInfo; } | null, t: (key: string) => string, onRefClick: (ref: string, mode: RaffleMode) => void }) => {
     const [currentTime, setCurrentTime] = useState(new Date());
 
     useEffect(() => {
@@ -97,9 +97,9 @@ const DateTimeDisplay = ({ nextRaffleRefs, t }: { nextRaffleRefs: { even: NextRa
             <p className="text-3xl font-bold tracking-wider">{currentTime.toLocaleTimeString(locale)}</p>
              {nextRaffleRefs && (
                 <div className="text-sm font-semibold mt-2 space-y-1">
-                    <p className="text-green-600">{t('nextRefsEven')} {nextRaffleRefs.even.refs.join(', ')} ({t('playedCount')}: {nextRaffleRefs.even.count})</p>
-                    <p className="text-blue-600">{t('nextRefsOdd')} {nextRaffleRefs.odd.refs.join(', ')} ({t('playedCount')}: {nextRaffleRefs.odd.count})</p>
-                    <p className="text-red-600">{t('nextRefsInfinite')} {nextRaffleRefs.infinite.refs.join(', ')} ({t('playedCount')}: {nextRaffleRefs.infinite.count})</p>
+                    <p className="text-green-600">{t('nextRefsEven')} <span className="cursor-pointer hover:underline" onClick={() => onRefClick(nextRaffleRefs.even.refs[0], 'two-digit')}>{nextRaffleRefs.even.refs.join(', ')}</span> ({t('playedCount')}: {nextRaffleRefs.even.count})</p>
+                    <p className="text-blue-600">{t('nextRefsOdd')} <span className="cursor-pointer hover:underline" onClick={() => onRefClick(nextRaffleRefs.odd.refs[0], 'three-digit')}>{nextRaffleRefs.odd.refs.join(', ')}</span> ({t('playedCount')}: {nextRaffleRefs.odd.count})</p>
+                    <p className="text-red-600">{t('nextRefsInfinite')} <span className="cursor-pointer hover:underline" onClick={() => onRefClick(nextRaffleRefs.infinite.refs[0], 'infinite')}>{nextRaffleRefs.infinite.refs.join(', ')}</span> ({t('playedCount')}: {nextRaffleRefs.infinite.count})</p>
                 </div>
             )}
         </div>
@@ -1055,6 +1055,29 @@ const App = () => {
         setActivationRefs(prev => ({...prev, [mode]: ''}));
     };
 
+    const handleRefClick = async (ref: string, mode: RaffleMode) => {
+        if (!isSuperAdmin) return;
+        
+        setLoading(true);
+        const newAdminId = await handleActivateBoard(mode, `SUPERADMIN_${Date.now()}`, ref, false);
+        setLoading(false);
+        
+        if (newAdminId) {
+            const adminUrl = `${window.location.origin}?ref=${ref}`;
+            navigator.clipboard.writeText(adminUrl).then(() => {
+                showNotification(t('boardActivatedAndCopied', { ref }), 'success');
+            }, () => {
+                showNotification(t('boardActivatedSuccessfullyWithRef', { ref }), 'success');
+            });
+            // Refetch the next refs to keep the display updated
+            const evenInfo = await raffleManager.peekNextRaffleRef('two-digit', 2);
+            const oddInfo = await raffleManager.peekNextRaffleRef('three-digit', 2);
+            const infiniteInfo = await raffleManager.peekNextRaffleRef('infinite', 2);
+            setNextRaffleRefs({ even: evenInfo, odd: oddInfo, infinite: infiniteInfo });
+        }
+    };
+
+
     const handleApproveActivation = async (activation: PendingActivation) => {
         const { refs: [newRaffleRef] } = await raffleManager.peekNextRaffleRef(activation.raffleMode, 1);
         setActivationToConfirm({ activation, newRaffleRef });
@@ -1096,7 +1119,7 @@ const App = () => {
             if (transactionDoc.exists() && !transactionId.startsWith('SUPERADMIN_') && !transactionId.startsWith('MANUAL_')) {
                 showNotification(t('transactionAlreadyUsed'), 'error');
                 if (loadBoard) setLoading(false);
-                return;
+                return null;
             }
             
             const finalRaffleRef = newRef || await raffleManager.createNewRaffleRef(mode, false, transactionId.startsWith('MANUAL_'));
@@ -1135,10 +1158,12 @@ const App = () => {
                 window.history.pushState({}, '', newUrl.href);
                 await handleAdminSearch({refToSearch: finalRaffleRef, isInitialLoad: true});
             }
+            return adminId;
 
         } catch (error) {
             console.error("Error activating board:", error);
             showNotification(t('errorActivatingBoard'), "error");
+             return null;
         } finally {
             if (loadBoard) setLoading(false);
         }
@@ -1790,7 +1815,7 @@ const App = () => {
                     {!raffleState.raffleRef ? (
                         <div className="p-8">
                             <div className="text-center">
-                                <DateTimeDisplay nextRaffleRefs={isSuperAdmin ? nextRaffleRefs : null} t={t} />
+                                <DateTimeDisplay nextRaffleRefs={isSuperAdmin ? nextRaffleRefs : null} t={t} onRefClick={handleRefClick} />
                                 <Lock className="mx-auto h-12 w-12 text-gray-400 mb-4" />
                                 <h2 className="text-2xl font-bold text-gray-800 mb-2">{t('boardLocked')}</h2>
                                 <p className="text-gray-600 mb-6 max-w-md mx-auto">
@@ -2681,5 +2706,3 @@ const App = () => {
 };
 
 export default App;
-
-    

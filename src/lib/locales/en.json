@@ -231,6 +231,7 @@
     "activateBoard": "Activate Board",
     "boardActivatedSuccessfully": "Board activated successfully.",
     "boardActivatedSuccessfullyWithRef": "Board {ref} activated successfully.",
+    "boardActivatedAndCopied": "Board {ref} activated. Admin link copied to clipboard.",
     "activationPendingAdmin": "Payment successful. The administrator will activate your board shortly.",
     "logout": "Logout",
     "logoutSuccess": "Session closed successfully.",
@@ -243,28 +244,3 @@
     "nextRefsInfinite": "Next Refs (Infinite):",
     "playedCount": "Played"
 }
-    
-    
-
-
-
-    
-
-
-
-    
-
-    
-
-    
-
-
-
-
-    
-
-    
-
-    
-
-    
