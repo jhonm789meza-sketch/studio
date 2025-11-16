@@ -79,7 +79,7 @@ interface NextRaffleInfo {
     count: number;
 }
 
-const DateTimeDisplay = ({ nextRaffleRefs, t, onRefClick }: { nextRaffleRefs: { even: NextRaffleInfo; odd: NextRaffleInfo; infinite: NextRaffleInfo; } | null, t: (key: string) => void, onRefClick: (ref: string, mode: RaffleMode) => void }) => {
+const DateTimeDisplay = ({ t }: { t: (key: string) => void }) => {
     const [currentTime, setCurrentTime] = useState(new Date());
 
     useEffect(() => {
@@ -828,6 +828,7 @@ const App = () => {
                 return;
             }
     
+            // Super Admin Activation Flow
             if (isSuperAdmin && (nextRaffleRefs.even.refs.includes(aRef) || nextRaffleRefs.odd.refs.includes(aRef) || nextRaffleRefs.infinite.refs.includes(aRef))) {
                 const mode = nextRaffleRefs.even.refs.includes(aRef) ? 'two-digit' : nextRaffleRefs.odd.refs.includes(aRef) ? 'three-digit' : 'infinite';
                 const { adminId } = await handleActivateBoard(mode, undefined, aRef, false);
@@ -838,11 +839,11 @@ const App = () => {
                     }, () => {
                         showNotification(t('boardActivatedSuccessfullyWithRef', { ref: aRef }), 'success');
                     });
-                     const evenInfo = await raffleManager.peekNextRaffleRef('two-digit', 2);
-                     const oddInfo = await raffleManager.peekNextRaffleRef('three-digit', 2);
-                     const infiniteInfo = await raffleManager.peekNextRaffleRef('infinite', 2);
-                     setNextRaffleRefs({ even: evenInfo, odd: oddInfo, infinite: infiniteInfo });
                 }
+                const evenInfo = await raffleManager.peekNextRaffleRef('two-digit', 2);
+                const oddInfo = await raffleManager.peekNextRaffleRef('three-digit', 2);
+                const infiniteInfo = await raffleManager.peekNextRaffleRef('infinite', 2);
+                setNextRaffleRefs({ even: evenInfo, odd: oddInfo, infinite: infiniteInfo });
                 setIsPublicSearchOpen(false);
                 setPublicRefSearch('');
                 setLoading(false);
@@ -850,6 +851,7 @@ const App = () => {
                 return;
             }
     
+            // Admin Recovery Flow
             if (!isInitialLoad && !isPublicSearch && !isSuperAdmin) {
                 if (!aPhone) {
                     showNotification(t('enterOrganizerPhoneWarning'), 'warning');
@@ -869,36 +871,38 @@ const App = () => {
             const raffleDocRef = doc(db, 'raffles', aRef);
             if (persistenceEnabled) await persistenceEnabled;
     
-            if (!isInitialLoad && !isPublicSearch && !isSuperAdmin) {
-                try {
-                    const docSnap = await getDoc(raffleDocRef);
-                    if (docSnap.exists()) {
-                        const data = docSnap.data() as Raffle;
-                        if (data.organizerPhoneNumber === aPhone && data.password === aPassword) {
-                            localStorage.setItem('rifaAdminId', data.adminId!);
-                            setCurrentAdminId(data.adminId);
-                            showNotification(t('adminAccessRestored'), 'success');
-                        } else {
-                            showNotification(t('phoneOrPasswordMismatch'), 'error');
-                            setLoading(false);
-                            resolve();
-                            return;
-                        }
-                    } else {
-                        showNotification(t('raffleNotFound'), 'error');
-                        setLoading(false);
-                        resolve();
-                        return;
-                    }
-                } catch (error) {
-                    console.error("Error fetching raffle for recovery:", error);
-                    showNotification(t('raffleVerificationError'), 'error');
-                    setLoading(false);
-                    resolve();
-                    return;
-                }
+            // Super Admin Search / Admin Recovery
+            if (!isInitialLoad && !isPublicSearch) {
+                 try {
+                     const docSnap = await getDoc(raffleDocRef);
+                     if (docSnap.exists()) {
+                         const data = docSnap.data() as Raffle;
+                         if (isSuperAdmin || (data.organizerPhoneNumber === aPhone && data.password === aPassword)) {
+                             localStorage.setItem('rifaAdminId', data.adminId!);
+                             setCurrentAdminId(data.adminId);
+                             if (!isSuperAdmin) showNotification(t('adminAccessRestored'), 'success');
+                         } else {
+                             showNotification(t('phoneOrPasswordMismatch'), 'error');
+                             setLoading(false);
+                             resolve();
+                             return;
+                         }
+                     } else {
+                         showNotification(t('raffleNotFound'), 'error');
+                         setLoading(false);
+                         resolve();
+                         return;
+                     }
+                 } catch (error) {
+                     console.error("Error fetching raffle for recovery:", error);
+                     showNotification(t('raffleVerificationError'), 'error');
+                     setLoading(false);
+                     resolve();
+                     return;
+                 }
             }
     
+            // General Subscription Logic (for all searches)
             raffleSubscription.current = onSnapshot(raffleDocRef, (docSnapshot) => {
                 if (docSnapshot.exists()) {
                     const data = docSnapshot.data() as Raffle;
@@ -1097,7 +1101,6 @@ const App = () => {
              setIsPublicSearchOpen(true);
              return;
         }
-        
         setPublicRefSearch(ref);
         setIsPublicSearchOpen(true);
     };
@@ -1849,7 +1852,7 @@ const App = () => {
                     {!raffleState.raffleRef ? (
                         <div className="p-8">
                             <div className="text-center">
-                                <DateTimeDisplay nextRaffleRefs={isSuperAdmin ? nextRaffleRefs : null} t={t} onRefClick={handleRefClick} />
+                                <DateTimeDisplay t={t} />
                                 <Lock className="mx-auto h-12 w-12 text-gray-400 mb-4" />
                                 <h2 className="text-2xl font-bold text-gray-800 mb-2">{t('boardLocked')}</h2>
                                 <p className="text-gray-600 mb-6 max-w-md mx-auto">
@@ -2108,7 +2111,7 @@ const App = () => {
                                                         .map((raffle) => {
                                                         const collected = ((raffle.participants || []).filter(p => p.paymentStatus === 'confirmed').length * parseFloat(String(raffle.value).replace(/\D/g, ''))) || 0;
                                                         return (
-                                                            <tr key={raffle.raffleRef}>
+                                                            <tr key={`${raffle.raffleRef}-${raffle.adminId}`}>
                                                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{raffle.raffleRef}</td>
                                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{raffle.raffleMode === 'infinite' ? formatValue(raffle.prize) : raffle.prize}</td>
                                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{raffle.organizerName}</td>
