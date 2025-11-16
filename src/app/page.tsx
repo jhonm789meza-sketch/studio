@@ -1110,7 +1110,7 @@ const App = () => {
              setIsPublicSearchOpen(true);
              return;
         }
-
+        
         setPublicRefSearch(ref);
         setIsPublicSearchOpen(true);
     };
@@ -1888,6 +1888,11 @@ const App = () => {
                                                  <Button onClick={() => handlePriceButtonClick('two-digit')} size="lg" className="w-full bg-green-500 hover:bg-green-600 text-white font-bold">
                                                     {isSuperAdmin ? t('activate') : t('price')}
                                                 </Button>
+                                                 {isSuperAdmin && nextRaffleRefs.even.refs.length > 0 && (
+                                                    <div className="text-xs text-center text-gray-500 font-semibold">
+                                                        {t('nextRefsEven')} <span className="cursor-pointer hover:underline" onClick={() => handleRefClick(nextRaffleRefs.even.refs[0], 'two-digit')}>{nextRaffleRefs.even.refs.join(', ')}</span> ({t('playedCount')}: {nextRaffleRefs.even.count})
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
 
@@ -1908,6 +1913,11 @@ const App = () => {
                                                 <Button onClick={() => handlePriceButtonClick('three-digit')} size="lg" className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold">
                                                      {isSuperAdmin ? t('activate') : t('price')}
                                                 </Button>
+                                                {isSuperAdmin && nextRaffleRefs.odd.refs.length > 0 && (
+                                                    <div className="text-xs text-center text-gray-500 font-semibold">
+                                                        {t('nextRefsOdd')} <span className="cursor-pointer hover:underline" onClick={() => handleRefClick(nextRaffleRefs.odd.refs[0], 'three-digit')}>{nextRaffleRefs.odd.refs.join(', ')}</span> ({t('playedCount')}: {nextRaffleRefs.odd.count})
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
 
@@ -1928,6 +1938,11 @@ const App = () => {
                                                 <Button onClick={() => handlePriceButtonClick('infinite')} size="lg" className="w-full bg-red-500 hover:bg-red-600 text-white font-bold">
                                                      {isSuperAdmin ? t('activate') : t('price')}
                                                 </Button>
+                                                {isSuperAdmin && nextRaffleRefs.infinite.refs.length > 0 && (
+                                                    <div className="text-xs text-center text-gray-500 font-semibold">
+                                                        {t('nextRefsInfinite')} <span className="cursor-pointer hover:underline" onClick={() => handleRefClick(nextRaffleRefs.infinite.refs[0], 'infinite')}>{nextRaffleRefs.infinite.refs.join(', ')}</span> ({t('playedCount')}: {nextRaffleRefs.infinite.count})
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
