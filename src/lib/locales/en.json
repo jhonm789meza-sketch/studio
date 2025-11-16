@@ -73,7 +73,7 @@
     "installApp": "Install App",
     "languages": "Languages",
     "contact": "Contact",
-    "boardLockedDescription": "Search for a raffle by its reference or create a new one to start.",
+    "boardLockedDescription": "Activate a raffle or search for one by its reference to get started.",
     "digits": "DIGITS",
     "2digitRaffle": "2-Digit Raffle",
     "2digitRaffleDescription": "For numbers from 00 to 99.",
@@ -242,3 +242,5 @@
     "activateRaffleToSeeParticipants": "You must activate or search for a raffle to see the participants.",
     "searchGamePlaceholder": "Search by reference..."
 }
+
+    

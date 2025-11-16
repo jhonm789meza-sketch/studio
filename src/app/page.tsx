@@ -2008,9 +2008,18 @@ const App = () => {
                                     </div>
                                 </div>
                                 <div className="mt-8">
-                                    <Button onClick={() => setIsPublicSearchOpen(true)} variant="outline">
-                                        {t('searchRaffleByRef')}
-                                    </Button>
+                                    <div className="flex justify-center items-center gap-2">
+                                        <Input
+                                            id="public-ref-search"
+                                            value={publicRefSearch}
+                                            onChange={(e) => setPublicRefSearch(e.target.value)}
+                                            className="max-w-xs"
+                                            placeholder={t('searchRaffleByRefDescription')}
+                                        />
+                                        <Button onClick={() => handleAdminSearch({ refToSearch: publicRefSearch, isPublicSearch: true })}>
+                                            <Search className="h-4 w-4" />
+                                        </Button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -2716,7 +2725,7 @@ const App = () => {
                     </div>
                     <DialogFooter>
                         <Button type="button" variant="outline" onClick={() => setIsAdminLoginOpen(false)}>{t('cancel')}</Button>
-                        <Button type="submit" onClick={() => handleAdminSearch({ })}>{t('recover')}</Button>
+                        <Button type="submit" onClick={() => handleAdminSearch({ refToSearch: adminRefSearch, isPublicSearch: isSuperAdmin })}>{t('recover')}</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
@@ -2924,3 +2933,5 @@ const App = () => {
 export default App;
 
 
+
+    

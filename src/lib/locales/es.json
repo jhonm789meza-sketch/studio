@@ -28,7 +28,7 @@
     "lottery": "Lotería",
     "selectLottery": "Selecciona una lotería",
     "lotteryBogota": "Lotería de Bogotá",
-    "lotteryMedellin": "Lotería de Medellín",
+    "lotteryMedellín": "Lotería de Medellín",
     "lotteryCundinamarca": "Lotería de Cundinamarca",
     "lotteryValle": "Lotería del Valle",
     "lotteryTolima": "Lotería del Tolima",
@@ -73,7 +73,7 @@
     "installApp": "Instalar Aplicación",
     "languages": "Idiomas",
     "contact": "Contacto",
-    "boardLockedDescription": "Busca una rifa por su referencia o crea una nueva para empezar.",
+    "boardLockedDescription": "Activa una rifa o busca una por su referencia para empezar.",
     "digits": "CIFRAS",
     "2digitRaffle": "Rifa de 2 Cifras",
     "2digitRaffleDescription": "Para números del 00 al 99.",
@@ -247,3 +247,5 @@
     "webSupport": "Soporte Web",
     "searchGamePlaceholder": "Buscar por referencia..."
 }
+
+    
