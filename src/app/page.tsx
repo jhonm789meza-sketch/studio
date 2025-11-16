@@ -1251,7 +1251,7 @@ const App = () => {
             sessionStorage.setItem('isSuperAdmin', 'true');
             setIsSuperAdminLoginOpen(false);
             setSuperAdminPassword('');
-            showNotification('Acceso de Super Administrador concedido.', 'success');
+            showNotification('Acceso de Director Ejecutivo concedido.', 'success');
         } else {
             showNotification('Contraseña incorrecta.', 'error');
         }
@@ -1841,7 +1841,7 @@ const App = () => {
                                     </DropdownMenuItem>
                                     <DropdownMenuItem onSelect={() => setIsSuperAdminLoginOpen(true)}>
                                         <Shield className="mr-2 h-4 w-4" />
-                                        <span>Super Administrador</span>
+                                        <span>Director Ejecutivo</span>
                                     </DropdownMenuItem>
                                      {isSuperAdmin && (
                                         <>
@@ -2573,8 +2573,7 @@ const App = () => {
                             >
                                 <div className="absolute inset-0 flex items-center justify-center z-0 opacity-50">
                                     <p className="text-gray-200/50 text-7xl font-bold -rotate-45 select-none flex items-center gap-1">
-                                        <span>RIFA<span className='text-yellow-400'>⚡</span></span>
-                                        <span>EXPRESS</span>
+                                        <span>RIFA⚡EXPRESS</span>
                                     </p>
                                 </div>
                                 <div className="relative z-10">

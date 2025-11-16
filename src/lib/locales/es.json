@@ -212,7 +212,7 @@
     "pendingDeletedError": "Error al eliminar el participante pendiente.",
     "activate": "Activar",
     "transactionAlreadyUsed": "Esta transacción ya fue utilizada para activar otra rifa.",
-    "superAdminLogin": "Acceso Super Administrador",
+    "superAdminLogin": "Acceso Director Ejecutivo",
     "login": "Ingresar",
     "activationsTab": "Activaciones ({count})",
     "pendingActivations": "Activaciones Pendientes",
