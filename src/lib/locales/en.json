@@ -1,3 +1,4 @@
+
 {
     "loading": "Loading",
     "adminMessage": "You are the administrator of this game",
@@ -67,7 +68,7 @@
     "raffleBackgroundAlt": "Raffle background",
     "goToHome": "Go to Home",
     "searchRaffleByRef": "Search Raffle by Reference",
-    "recoverAdminAccess": "Recover Admin Access",
+    "recoverAdminAccess": "Login as Administrator",
     "share": "Share",
     "showQR": "Show QR",
     "installApp": "Install App",
@@ -136,10 +137,10 @@
     "thanksForParticipating": "Thank you for participating!",
     "downloadTicket": "Download Ticket",
     "close": "Close",
-    "recoverAdminAccessDescription": "Enter the details to recover administrator access.",
+    "recoverAdminAccessDescription": "Enter your details to log in as an administrator.",
     "password": "Password",
     "yourPassword": "Your password",
-    "recover": "Recover",
+    "recover": "Login",
     "searchRaffleByRefDescription": "Enter the reference of the raffle you want to find.",
     "search": "Search",
     "salesCollection": "Sales Collection",
@@ -224,7 +225,6 @@
     "automaticDraw": "Automatic Draw",
     "adminAccessRestored": "Admin access restored!",
     "shareRaffleMessage": "Join my raffle and win {prize}!",
-    "housePrizeNotification": "The prize goes to the house. The winning number is {number}.",
     "secondaryContactSaved": "Secondary contact saved successfully!",
     "errorSavingSecondaryContact": "Error saving secondary contact.",
     "contactDialogDescription": "Choose a contact option.",
@@ -242,5 +242,3 @@
     "activateRaffleToSeeParticipants": "You must activate or search for a raffle to see the participants.",
     "searchGamePlaceholder": "Search by reference..."
 }
-
-    

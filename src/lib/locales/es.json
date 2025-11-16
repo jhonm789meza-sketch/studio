@@ -1,3 +1,4 @@
+
 {
     "loading": "Cargando",
     "adminMessage": "Eres el administrador de este juego",
@@ -67,7 +68,7 @@
     "raffleBackgroundAlt": "Fondo de la rifa",
     "goToHome": "Ir al Inicio",
     "searchRaffleByRef": "Buscar por Referencia",
-    "recoverAdminAccess": "Recuperar Administración",
+    "recoverAdminAccess": "Entrar como administrador",
     "share": "Compartir",
     "showQR": "Mostrar QR",
     "installApp": "Instalar Aplicación",
@@ -136,10 +137,10 @@
     "thanksForParticipating": "¡Gracias por participar!",
     "downloadTicket": "Descargar Tiquete",
     "close": "Cerrar",
-    "recoverAdminAccessDescription": "Ingresa los datos para recuperar el acceso de administrador.",
+    "recoverAdminAccessDescription": "Ingresa los datos para entrar como administrador.",
     "password": "Contraseña",
     "yourPassword": "Tu contraseña",
-    "recover": "Recuperar",
+    "recover": "Entrar",
     "searchRaffleByRefDescription": "Ingresa la referencia de la rifa que quieres encontrar.",
     "search": "Buscar",
     "salesCollection": "Recaudo de Ventas",
@@ -247,5 +248,3 @@
     "webSupport": "Soporte Web",
     "searchGamePlaceholder": "Buscar por referencia..."
 }
-
-    
