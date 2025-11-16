@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect, useRef, useTransition } from 'react';
 import jsPDF from 'jspdf';
@@ -1069,7 +1070,7 @@ const App = () => {
         if (!isSuperAdmin) return;
         
         setLoading(true);
-        const { adminId } = await handleActivateBoard(mode, `SUPERADMIN_${Date.now()}`, ref, false);
+        const { adminId } = await handleActivateBoard(mode, undefined, ref, false);
         setLoading(false);
         
         if (adminId) {
@@ -1119,20 +1120,22 @@ const App = () => {
         }
     };
 
-    const handleActivateBoard = async (mode: RaffleMode, transactionId: string, newRef?: string, loadBoard = true): Promise<{ adminId: string | null }> => {
+    const handleActivateBoard = async (mode: RaffleMode, transactionId: string | undefined, newRef?: string, loadBoard = true): Promise<{ adminId: string | null }> => {
         if (loadBoard) setLoading(true);
 
+        const finalTransactionId = transactionId || `SUPERADMIN_${Date.now()}`;
+
         try {
-            const transactionDocRef = doc(db, 'usedTransactions', transactionId);
+            const transactionDocRef = doc(db, 'usedTransactions', finalTransactionId);
             const transactionDoc = await getDoc(transactionDocRef);
 
-            if (transactionDoc.exists() && !transactionId.startsWith('SUPERADMIN_') && !transactionId.startsWith('MANUAL_')) {
+            if (transactionDoc.exists()) {
                 showNotification(t('transactionAlreadyUsed'), 'error');
                 if (loadBoard) setLoading(false);
                 return { adminId: null };
             }
             
-            const finalRaffleRef = newRef || await raffleManager.createNewRaffleRef(mode, false, transactionId.startsWith('MANUAL_'));
+            const finalRaffleRef = newRef || await raffleManager.createNewRaffleRef(mode, false, finalTransactionId.startsWith('MANUAL_'));
 
             const adminId = `admin_${Date.now()}_${Math.random()}`;
             
@@ -1154,13 +1157,11 @@ const App = () => {
             };
             
             await setDoc(doc(db, "raffles", finalRaffleRef), newRaffleData);
-
-            if (!transactionId.startsWith('MANUAL_')) {
-                await setDoc(transactionDocRef, {
-                    raffleRef: finalRaffleRef,
-                    activatedAt: serverTimestamp(),
-                });
-            }
+            
+            await setDoc(transactionDocRef, {
+                raffleRef: finalRaffleRef,
+                activatedAt: serverTimestamp(),
+            });
     
             if (loadBoard) {
                 const newUrl = new URL(window.location.origin);
