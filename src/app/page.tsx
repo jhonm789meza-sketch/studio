@@ -161,6 +161,7 @@ const App = () => {
     const [raffleToChangePassword, setRaffleToChangePassword] = useState<Raffle | null>(null);
     const [newPassword, setNewPassword] = useState('');
     const [confirmNewPassword, setConfirmNewPassword] = useState('');
+    const [isSuperAdminChangePasswordOpen, setIsSuperAdminChangePasswordOpen] = useState(false);
 
     const raffleManager = new RaffleManager(db);
     
@@ -1250,7 +1251,11 @@ const App = () => {
     };
 
     const handleSuperAdminLogin = () => {
-        if (superAdminPassword === '32184257361045715054') {
+        // This is a simple, insecure client-side check.
+        // In a real application, this should be a proper authentication flow.
+        const executivePassword = appSettings.superAdminPassword || '32184257361045715054';
+
+        if (superAdminPassword === executivePassword) {
             setIsSuperAdmin(true);
             sessionStorage.setItem('isSuperAdmin', 'true');
             setIsSuperAdminLoginOpen(false);
@@ -1298,6 +1303,25 @@ const App = () => {
             setRaffleToChangePassword(null);
         } catch (error) {
             console.error("Error changing password:", error);
+            showNotification(t('passwordChangeError'), 'error');
+        }
+    };
+    
+    const handleChangeSuperAdminPassword = async () => {
+        if (!newPassword || newPassword !== confirmNewPassword) {
+            showNotification(t('passwordsDoNotMatch'), 'error');
+            return;
+        }
+
+        try {
+            const settingsDocRef = doc(db, 'internal', 'settings');
+            await updateDoc(settingsDocRef, { superAdminPassword: newPassword });
+            showNotification(t('passwordChangedSuccess'), 'success');
+            setIsSuperAdminChangePasswordOpen(false);
+            setNewPassword('');
+            setConfirmNewPassword('');
+        } catch (error) {
+            console.error("Error changing super admin password:", error);
             showNotification(t('passwordChangeError'), 'error');
         }
     };
@@ -1875,7 +1899,7 @@ const App = () => {
                                                 <Phone className="mr-2 h-4 w-4" />
                                                 <span>{t('secondaryContact')}</span>
                                             </DropdownMenuItem>
-                                            <DropdownMenuItem onSelect={() => setIsChangePasswordDialogOpen(true)}>
+                                            <DropdownMenuItem onSelect={() => setIsSuperAdminChangePasswordOpen(true)}>
                                                 <KeyRound className="mr-2 h-4 w-4" />
                                                 <span>{t('changePasswordTitle')}</span>
                                             </DropdownMenuItem>
@@ -2981,6 +3005,41 @@ const App = () => {
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setIsChangePasswordDialogOpen(false)}>{t('cancel')}</Button>
                         <Button onClick={handleChangePassword}>{t('changePasswordButton')}</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={isSuperAdminChangePasswordOpen} onOpenChange={setIsSuperAdminChangePasswordOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{t('changeExecutivePasswordTitle')}</DialogTitle>
+                        <DialogDescription>
+                            {t('changeExecutivePasswordDescription')}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="new-super-admin-password">{t('newPassword')}</Label>
+                            <Input
+                                id="new-super-admin-password"
+                                type="password"
+                                value={newPassword}
+                                onChange={(e) => setNewPassword(e.target.value)}
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="confirm-new-super-admin-password">{t('confirmNewPassword')}</Label>
+                            <Input
+                                id="confirm-new-super-admin-password"
+                                type="password"
+                                value={confirmNewPassword}
+                                onChange={(e) => setConfirmNewPassword(e.target.value)}
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsSuperAdminChangePasswordOpen(false)}>{t('cancel')}</Button>
+                        <Button onClick={handleChangeSuperAdminPassword}>{t('changePasswordButton')}</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

@@ -212,7 +212,7 @@
     "pendingDeletedError": "Error al eliminar el participante pendiente.",
     "activate": "Activar",
     "transactionAlreadyUsed": "Esta transacción ya fue utilizada para activar otra rifa.",
-    "superAdminLogin": "Director Ejecutivo",
+    "superAdminLogin": "Acceso Director Ejecutivo",
     "login": "Ingresar",
     "activationsTab": "Activaciones ({count})",
     "pendingActivations": "Activaciones Pendientes",
@@ -254,5 +254,7 @@
     "changePasswordButton": "Cambiar Contraseña",
     "passwordsDoNotMatch": "Las contraseñas no coinciden.",
     "passwordChangedSuccess": "Contraseña cambiada con éxito.",
-    "passwordChangeError": "Error al cambiar la contraseña."
+    "passwordChangeError": "Error al cambiar la contraseña.",
+    "changeExecutivePasswordTitle": "Cambiar Contraseña de Director Ejecutivo",
+    "changeExecutivePasswordDescription": "Estás a punto de cambiar tu contraseña de acceso."
 }

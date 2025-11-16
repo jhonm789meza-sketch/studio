@@ -20,6 +20,7 @@ export interface PendingActivation {
 
 export interface AppSettings {
     secondaryContact?: string;
+    superAdminPassword?: string;
 }
 
 
@@ -66,4 +67,5 @@ export interface Raffle {
     
 
     
+
 

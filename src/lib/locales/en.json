@@ -249,5 +249,7 @@
     "changePasswordButton": "Change Password",
     "passwordsDoNotMatch": "Passwords do not match.",
     "passwordChangedSuccess": "Password changed successfully.",
-    "passwordChangeError": "Error changing password."
+    "passwordChangeError": "Error changing password.",
+    "changeExecutivePasswordTitle": "Change Executive Director Password",
+    "changeExecutivePasswordDescription": "You are about to change your access password."
 }
