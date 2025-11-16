@@ -838,10 +838,10 @@ const App = () => {
                     }, () => {
                         showNotification(t('boardActivatedSuccessfullyWithRef', { ref: aRef }), 'success');
                     });
-                    const evenInfo = await raffleManager.peekNextRaffleRef('two-digit', 2);
-                    const oddInfo = await raffleManager.peekNextRaffleRef('three-digit', 2);
-                    const infiniteInfo = await raffleManager.peekNextRaffleRef('infinite', 2);
-                    setNextRaffleRefs({ even: evenInfo, odd: oddInfo, infinite: infiniteInfo });
+                     const evenInfo = await raffleManager.peekNextRaffleRef('two-digit', 2);
+                     const oddInfo = await raffleManager.peekNextRaffleRef('three-digit', 2);
+                     const infiniteInfo = await raffleManager.peekNextRaffleRef('infinite', 2);
+                     setNextRaffleRefs({ even: evenInfo, odd: oddInfo, infinite: infiniteInfo });
                 }
                 setIsPublicSearchOpen(false);
                 setPublicRefSearch('');
@@ -1971,7 +1971,7 @@ const App = () => {
                                     </div>
                                 </div>
                                 <div className="mt-8">
-                                    <Button variant="link" onClick={() => setIsPublicSearchOpen(true)}>
+                                    <Button onClick={() => setIsPublicSearchOpen(true)}>
                                         {t('searchRaffleByRef')}
                                     </Button>
                                 </div>
@@ -2103,7 +2103,9 @@ const App = () => {
                                                     </tr>
                                                 </thead>
                                                 <tbody className="bg-white divide-y divide-gray-200">
-                                                    {allRaffles.sort((a, b) => (b.raffleRef || '').localeCompare(a.raffleRef || '')).map((raffle) => {
+                                                    {allRaffles
+                                                        .sort((a, b) => (b.raffleRef || '').localeCompare(a.raffleRef || ''))
+                                                        .map((raffle) => {
                                                         const collected = ((raffle.participants || []).filter(p => p.paymentStatus === 'confirmed').length * parseFloat(String(raffle.value).replace(/\D/g, ''))) || 0;
                                                         return (
                                                             <tr key={raffle.raffleRef}>
