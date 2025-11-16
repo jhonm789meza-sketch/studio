@@ -876,12 +876,12 @@ const App = () => {
             }
     
             // Admin Recovery Flow
-            if (!isInitialLoad && !isPublicSearch && !isSuperAdmin) {
+            if (!isInitialLoad && !isPublicSearch) {
                  try {
                      const docSnap = await getDoc(doc(db, 'raffles', aRef));
                      if (docSnap.exists()) {
                          const data = docSnap.data() as Raffle;
-                         if (data.organizerPhoneNumber === aPhone && data.password === aPassword) {
+                         if (isSuperAdmin || (data.organizerPhoneNumber === aPhone && data.password === aPassword)) {
                              localStorage.setItem('rifaAdminId', data.adminId!);
                              setCurrentAdminId(data.adminId);
                              showNotification(t('adminAccessRestored'), 'success');
@@ -1917,12 +1917,12 @@ const App = () => {
                                                         {t('nextRefsEven')}{' '}
                                                         {nextRaffleRefs.even.refs.map((ref, index) => (
                                                             <span key={ref}>
-                                                                <span
+                                                                <button
                                                                     className="cursor-pointer hover:underline"
                                                                     onClick={() => handleRefClick(ref, 'two-digit')}
                                                                 >
                                                                     {ref}
-                                                                </span>
+                                                                </button>
                                                                 {index < nextRaffleRefs.even.refs.length - 1 ? ', ' : ''}
                                                             </span>
                                                         ))}{' '}
@@ -1954,12 +1954,12 @@ const App = () => {
                                                         {t('nextRefsOdd')}{' '}
                                                         {nextRaffleRefs.odd.refs.map((ref, index) => (
                                                             <span key={ref}>
-                                                                <span
+                                                                <button
                                                                     className="cursor-pointer hover:underline"
                                                                     onClick={() => handleRefClick(ref, 'three-digit')}
                                                                 >
                                                                     {ref}
-                                                                </span>
+                                                                </button>
                                                                 {index < nextRaffleRefs.odd.refs.length - 1 ? ', ' : ''}
                                                             </span>
                                                         ))}{' '}
@@ -1991,12 +1991,12 @@ const App = () => {
                                                         {t('nextRefsInfinite')}{' '}
                                                         {nextRaffleRefs.infinite.refs.map((ref, index) => (
                                                             <span key={ref}>
-                                                                <span
+                                                                <button
                                                                     className="cursor-pointer hover:underline"
                                                                     onClick={() => handleRefClick(ref, 'infinite')}
                                                                 >
                                                                     {ref}
-                                                                </span>
+                                                                </button>
                                                                 {index < nextRaffleRefs.infinite.refs.length - 1 ? ', ' : ''}
                                                             </span>
                                                         ))}{' '}
@@ -2152,7 +2152,6 @@ const App = () => {
                                                 </thead>
                                                 <tbody className="bg-white divide-y divide-gray-200">
                                                     {filteredGames
-                                                        .sort((a, b) => (b.raffleRef || '').localeCompare(a.raffleRef || ''))
                                                         .map((raffle) => {
                                                         const collected = ((raffle.participants || []).filter(p => p.paymentStatus === 'confirmed').length * parseFloat(String(raffle.value).replace(/\D/g, ''))) || 0;
                                                         return (
@@ -2679,37 +2678,41 @@ const App = () => {
                                 placeholder="Ej: JM1"
                             />
                         </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="admin-phone-search" className="text-right">
-                                {t('phone')}
-                            </Label>
-                             <div className="relative col-span-3">
-                                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                    <span className="text-gray-500 sm:text-sm">+57</span>
+                        {!isSuperAdmin && (
+                            <>
+                                <div className="grid grid-cols-4 items-center gap-4">
+                                    <Label htmlFor="admin-phone-search" className="text-right">
+                                        {t('phone')}
+                                    </Label>
+                                    <div className="relative col-span-3">
+                                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                                            <span className="text-gray-500 sm:text-sm">+57</span>
+                                        </div>
+                                        <Input
+                                            id="admin-phone-search"
+                                            type="tel"
+                                            value={adminPhoneSearch}
+                                            onChange={(e) => setAdminPhoneSearch(e.target.value.replace(/\D/g, ''))}
+                                            className="pl-12"
+                                            placeholder="3001234567"
+                                        />
+                                    </div>
                                 </div>
-                                <Input
-                                    id="admin-phone-search"
-                                    type="tel"
-                                    value={adminPhoneSearch}
-                                    onChange={(e) => setAdminPhoneSearch(e.target.value.replace(/\D/g, ''))}
-                                    className="pl-12"
-                                    placeholder="3001234567"
-                                />
-                            </div>
-                        </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="admin-password-search" className="text-right">
-                                {t('password')}
-                            </Label>
-                            <Input
-                                id="admin-password-search"
-                                type="password"
-                                value={adminPasswordSearch}
-                                onChange={(e) => setAdminPasswordSearch(e.target.value)}
-                                className="col-span-3"
-                                placeholder={t('yourPassword')}
-                            />
-                        </div>
+                                <div className="grid grid-cols-4 items-center gap-4">
+                                    <Label htmlFor="admin-password-search" className="text-right">
+                                        {t('password')}
+                                    </Label>
+                                    <Input
+                                        id="admin-password-search"
+                                        type="password"
+                                        value={adminPasswordSearch}
+                                        onChange={(e) => setAdminPasswordSearch(e.target.value)}
+                                        className="col-span-3"
+                                        placeholder={t('yourPassword')}
+                                    />
+                                </div>
+                            </>
+                        )}
                     </div>
                     <DialogFooter>
                         <Button type="button" variant="outline" onClick={() => setIsAdminLoginOpen(false)}>{t('cancel')}</Button>
@@ -2919,5 +2922,3 @@ const App = () => {
 };
 
 export default App;
-
-    
