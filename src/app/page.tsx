@@ -11,7 +11,7 @@ import { useLanguage } from '@/hooks/use-language';
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House, Clock as ClockIcon, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Upload, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages, Trophy, Trash2, Copy, Shield, LogOut } from 'lucide-react';
+import { Menu, Award, Lock, House, Clock as ClockIcon, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Upload, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages, Trophy, Trash2, Copy, Shield, LogOut, Eye, EyeOff } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -149,6 +149,7 @@ const App = () => {
 
     const [isSuperAdminLoginOpen, setIsSuperAdminLoginOpen] = useState(false);
     const [superAdminPassword, setSuperAdminPassword] = useState('');
+    const [showSuperAdminPassword, setShowSuperAdminPassword] = useState(false);
     const [isSuperAdmin, setIsSuperAdmin] = useState(false);
     const [pendingActivations, setPendingActivations] = useState<PendingActivation[]>([]);
 
@@ -277,7 +278,7 @@ const App = () => {
             'id', 'reference', 'state', 'env', 'raffleMode', 'adminId' // Add adminId here
         ];
         
-        let needsCleanup = false;
+        let needsCleanup = needsCleanup || false;
         paramsToClean.forEach(param => {
             if (url.searchParams.has(param)) {
                 url.searchParams.delete(param);
@@ -2450,13 +2451,25 @@ const App = () => {
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                         <Label htmlFor="super-admin-password">{t('password')}</Label>
-                        <Input
-                            id="super-admin-password"
-                            type="password"
-                            value={superAdminPassword}
-                            onChange={(e) => setSuperAdminPassword(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && handleSuperAdminLogin()}
-                        />
+                        <div className="relative">
+                            <Input
+                                id="super-admin-password"
+                                type={showSuperAdminPassword ? 'text' : 'password'}
+                                value={superAdminPassword}
+                                onChange={(e) => setSuperAdminPassword(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && handleSuperAdminLogin()}
+                            />
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="absolute inset-y-0 right-0 h-full px-3"
+                                onClick={() => setShowSuperAdminPassword(!showSuperAdminPassword)}
+                            >
+                                {showSuperAdminPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                <span className="sr-only">{showSuperAdminPassword ? 'Hide password' : 'Show password'}</span>
+                            </Button>
+                        </div>
                     </div>
                     <DialogFooter>
                         <Button type="button" onClick={handleSuperAdminLogin}>{t('login')}</Button>
