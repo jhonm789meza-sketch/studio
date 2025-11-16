@@ -819,13 +819,13 @@ const App = () => {
                 resolve();
                 return;
             }
-            if (!isInitialLoad && !isPublicSearch && !aPhone ) {
+            if (!isInitialLoad && !isPublicSearch && !isSuperAdmin && !aPhone ) {
                  showNotification(t('enterOrganizerPhoneWarning'), 'warning');
                  setLoading(false);
                  resolve();
                  return;
             }
-             if (!isInitialLoad && !isPublicSearch && !aPassword ) {
+             if (!isInitialLoad && !isPublicSearch && !isSuperAdmin && !aPassword ) {
                  showNotification(t('enterPasswordWarning'), 'warning');
                  setLoading(false);
                  resolve();
@@ -842,7 +842,7 @@ const App = () => {
             }
 
             // For recovery, we need to get the doc once first.
-            if (!isInitialLoad && !isPublicSearch) {
+            if (!isInitialLoad && !isPublicSearch && !isSuperAdmin) {
                 try {
                     const docSnap = await getDoc(raffleDocRef);
                     if (docSnap.exists()) {
@@ -878,8 +878,8 @@ const App = () => {
                     const data = docSnapshot.data() as Raffle;
                     
                     const adminIdFromStorage = localStorage.getItem('rifaAdminId');
-                    if (adminIdFromStorage && data.adminId === adminIdFromStorage) {
-                        setCurrentAdminId(adminIdFromStorage);
+                    if ((adminIdFromStorage && data.adminId === adminIdFromStorage) || isSuperAdmin) {
+                        setCurrentAdminId(isSuperAdmin ? 'SUPER_ADMIN_SESSION' : adminIdFromStorage);
                     }
 
                     setRaffleState(data);
@@ -1055,37 +1055,47 @@ const App = () => {
             return;
         }
 
-        const { refs: [nextRef] } = await raffleManager.peekNextRaffleRef(mode, 1);
-        
-        if (raffleRefToSearch.toUpperCase() === nextRef.toUpperCase()) {
-            await handleActivateBoard(mode, `MANUAL_${raffleRefToSearch}`);
-        } else {
-            // Fallback to public search for an existing raffle
-            await handleAdminSearch({ refToSearch: raffleRefToSearch, isPublicSearch: true });
-        }
+        // Always do a public search. If it exists, it loads. If not, it shows not found.
+        // Activation of *new* boards should only happen via payment or Super Admin click.
+        await handleAdminSearch({ refToSearch: raffleRefToSearch, isPublicSearch: true });
     
         setActivationRefs(prev => ({...prev, [mode]: ''}));
     };
 
     const handleRefClick = async (ref: string, mode: RaffleMode) => {
-        if (!isSuperAdmin) return;
+        if (!isSuperAdmin) {
+             setPublicRefSearch(ref);
+             setIsPublicSearchOpen(true);
+             return;
+        }
         
         setLoading(true);
-        const { adminId } = await handleActivateBoard(mode, undefined, ref, false);
-        setLoading(false);
-        
-        if (adminId) {
-            const adminUrl = `${window.location.origin}?ref=${ref}&adminId=${adminId}`;
-            navigator.clipboard.writeText(adminUrl).then(() => {
-                showNotification(t('boardActivatedAndCopied', { ref }), 'success');
-            }, () => {
-                showNotification(t('boardActivatedSuccessfullyWithRef', { ref }), 'success');
-            });
-            // Refetch the next refs to keep the display updated
-            const evenInfo = await raffleManager.peekNextRaffleRef('two-digit', 2);
-            const oddInfo = await raffleManager.peekNextRaffleRef('three-digit', 2);
-            const infiniteInfo = await raffleManager.peekNextRaffleRef('infinite', 2);
-            setNextRaffleRefs({ even: evenInfo, odd: oddInfo, infinite: infiniteInfo });
+    
+        const { refs: nextRefs } = await raffleManager.peekNextRaffleRef(mode, 2);
+        const isNextAvailable = nextRefs.includes(ref);
+
+        if(isNextAvailable) {
+            // It's a new raffle to activate
+            const { adminId } = await handleActivateBoard(mode, undefined, ref, false);
+            setLoading(false);
+            
+            if (adminId) {
+                const adminUrl = `${window.location.origin}?ref=${ref}&adminId=${adminId}`;
+                navigator.clipboard.writeText(adminUrl).then(() => {
+                    showNotification(t('boardActivatedAndCopied', { ref }), 'success');
+                }, () => {
+                    showNotification(t('boardActivatedSuccessfullyWithRef', { ref }), 'success');
+                });
+                // Refetch the next refs to keep the display updated
+                const evenInfo = await raffleManager.peekNextRaffleRef('two-digit', 2);
+                const oddInfo = await raffleManager.peekNextRaffleRef('three-digit', 2);
+                const infiniteInfo = await raffleManager.peekNextRaffleRef('infinite', 2);
+                setNextRaffleRefs({ even: evenInfo, odd: oddInfo, infinite: infiniteInfo });
+            }
+        } else {
+            // It's an existing raffle to recover/view
+            await handleAdminSearch({ refToSearch: ref, isPublicSearch: true });
+            setLoading(false);
         }
     };
 
@@ -1130,13 +1140,20 @@ const App = () => {
             const transactionDocRef = doc(db, 'usedTransactions', finalTransactionId);
             const transactionDoc = await getDoc(transactionDocRef);
 
-            if (transactionDoc.exists()) {
+            if (transactionDoc.exists() && !finalTransactionId.startsWith('SUPERADMIN')) {
                 showNotification(t('transactionAlreadyUsed'), 'error');
                 if (loadBoard) setLoading(false);
                 return { adminId: null };
             }
             
             const finalRaffleRef = newRef || await raffleManager.createNewRaffleRef(mode, false, finalTransactionId.startsWith('MANUAL_'));
+
+            const existingRaffleDoc = await getDoc(doc(db, "raffles", finalRaffleRef));
+            if (existingRaffleDoc.exists()) {
+                showNotification(t('raffleNotFound'), 'error'); // A bit of a misnomer, but it implies the ref is taken.
+                if (loadBoard) setLoading(false);
+                return { adminId: null };
+            }
 
             const adminId = `admin_${Date.now()}_${Math.random()}`;
             
@@ -1154,15 +1171,17 @@ const App = () => {
                 prizeImageUrl: '',
                 value: '0', 
                 currencySymbol: getCurrencySymbol('CO'),
-                infiniteModeDigits: 0,
+                infiniteModeDigits: 4,
             };
             
             await setDoc(doc(db, "raffles", finalRaffleRef), newRaffleData);
             
-            await setDoc(transactionDocRef, {
-                raffleRef: finalRaffleRef,
-                activatedAt: serverTimestamp(),
-            });
+            if (!finalTransactionId.startsWith('SUPERADMIN')) {
+                 await setDoc(transactionDocRef, {
+                     raffleRef: finalRaffleRef,
+                     activatedAt: serverTimestamp(),
+                 });
+            }
     
             if (loadBoard) {
                 const newUrl = new URL(window.location.origin);

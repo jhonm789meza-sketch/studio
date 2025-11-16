@@ -32,7 +32,7 @@ class RaffleManager {
             case 'three-digit':
                 return this.counterRefOdd;
             case 'infinite':
-                return this.counterRefInfinite; // Although we use random, we still need a counter for total played
+                return this.counterRefInfinite;
         }
     }
     
@@ -61,11 +61,11 @@ class RaffleManager {
                 if (counterDoc.exists() && typeof counterDoc.data()?.count === 'number') {
                     currentCount = counterDoc.data().count;
                 } else {
-                    currentCount = isOddMode ? 1 : 0; // Start evens at 0, odds at 1
+                    currentCount = isOddMode ? 1 : 0; 
                 }
                 
                 if (isInfiniteMode) {
-                     playedCount = currentCount; // For infinite, count is just a simple counter of how many have been created.
+                     playedCount = currentCount;
                 } else if (isEvenMode) {
                     playedCount = currentCount / 2;
                 } else { // isOddMode
@@ -76,24 +76,24 @@ class RaffleManager {
 
                 if (isInfiniteMode) {
                     const usedNumbersDoc = await transaction.get(this.usedRandomNumbersRef);
-                    const usedNumbers = usedNumbersDoc.exists() ? usedNumbersDoc.data().numbers || [] : [];
+                    const usedNumbersData = usedNumbersDoc.data();
+                    const usedNumbers = usedNumbersData && Array.isArray(usedNumbersData.numbers) ? usedNumbersData.numbers : [];
                     const usedNumbersSet = new Set(usedNumbers);
 
                     for (let i = 0; i < count; i++) {
                         let randomNumber;
                         do {
-                            randomNumber = Math.floor(Math.random() * 900000) + 100000; // 6-digit random number
+                            randomNumber = Math.floor(Math.random() * 900000) + 100000;
                         } while (usedNumbersSet.has(randomNumber));
                         
                         nextNumbers.push(randomNumber);
-                        usedNumbersSet.add(randomNumber); // Add to set to prevent duplicates in the same batch
+                        usedNumbersSet.add(randomNumber);
                     }
 
                     if (!peek) {
-                        transaction.set(counterRef, { count: increment(count) }, { merge: true });
-                        // Persist the newly used random numbers. We trim the array to avoid unbounded growth.
-                        const updatedUsedNumbers = [...usedNumbers, ...nextNumbers].slice(-5000);
-                        transaction.set(this.usedRandomNumbersRef, { numbers: updatedUsedNumbers });
+                        transaction.update(counterRef, { count: increment(count) });
+                        const updatedUsedNumbers = [...usedNumbers, ...nextNumbers].slice(-5000); // Keep the list from growing indefinitely
+                        transaction.set(this.usedRandomNumbersRef, { numbers: updatedUsedNumbers }, { merge: true });
                     }
                 } else { // Sequential modes
                     let numberCursor = currentCount;
@@ -104,8 +104,7 @@ class RaffleManager {
 
                     if (!peek) {
                         const incrementBy = count * 2;
-                        const newCount = currentCount + incrementBy;
-                        transaction.set(counterRef, { count: newCount }, { merge: true });
+                        transaction.update(counterRef, { count: increment(incrementBy) });
                     }
                 }
             });
@@ -114,7 +113,6 @@ class RaffleManager {
 
         } catch (error) {
             console.error(`Error in getNextRefInfo for mode ${mode}:`, error);
-            // Fallback to a random number to avoid complete failure.
             const randomBase = Date.now();
             if (isEvenMode) return { numbers: [randomBase - (randomBase % 2)], playedCount: 0 };
             if (isOddMode) return { numbers: [randomBase - (randomBase % 2) + 1], playedCount: 0 };
@@ -161,3 +159,5 @@ class RaffleManager {
 
 export { RaffleManager };
 export type { NextRaffleInfo };
+
+    
