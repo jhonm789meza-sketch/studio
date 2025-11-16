@@ -208,6 +208,9 @@
     "loadingRaffle": "Loading raffle {ref}...",
     "raffleLoadError": "Error loading raffle.",
     "enterValidWinningNumber": "Please enter a valid winning number with {count} digits.",
+    "winnerNotification": "¡The winner is {name} with the number {number}! (100% of the prize)",
+    "housePrize": "The Prize Stays in the House",
+    "housePrizeNotification": "The number {number} was not sold. The prize stays in the house.",
     "enterWinningNumberAndPrizeWarning": "Please enter the winning number and the prize.",
     "noPrizeValueWarning": "Please enter a valid prize value.",
     "partialWinnersNotification": "Partial winners ({count} digits, ending with {digits}): {winners}. Prize: {prize}",
@@ -239,5 +242,3 @@
     "activateRaffleToSeeParticipants": "You must activate or search for a raffle to see the participants.",
     "searchGamePlaceholder": "Search by reference..."
 }
-
-    

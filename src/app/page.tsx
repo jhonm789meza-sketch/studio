@@ -876,7 +876,7 @@ const App = () => {
             }
     
             // Admin Recovery Flow
-            if (!isInitialLoad && !isPublicSearch && !isSuperAdmin) {
+            if (!isInitialLoad && !isPublicSearch) {
                  try {
                      const docSnap = await getDoc(doc(db, 'raffles', aRef));
                      if (docSnap.exists()) {
@@ -1315,7 +1315,7 @@ const App = () => {
                                 <p className="text-sm text-gray-500">{t('gameReference')}</p>
                                 <div className="flex items-center gap-2">
                                     <p className="text-2xl font-bold text-gray-800 tracking-wider">{raffleState.raffleRef}</p>
-                                    <button onClick={handleContactSupport} className="p-2 rounded-full hover:bg-gray-100">
+                                    <button onClick={() => window.open(`https://wa.me/3145696687`, '_blank')} className="p-2 rounded-full hover:bg-gray-100">
                                         <WhatsappIcon />
                                     </button>
                                 </div>
@@ -2152,6 +2152,7 @@ const App = () => {
                                                 </thead>
                                                 <tbody className="bg-white divide-y divide-gray-200">
                                                     {filteredGames
+                                                        .sort((a, b) => (b.raffleRef || '').localeCompare(a.raffleRef || ''))
                                                         .map((raffle) => {
                                                         const collected = ((raffle.participants || []).filter(p => p.paymentStatus === 'confirmed').length * parseFloat(String(raffle.value).replace(/\D/g, ''))) || 0;
                                                         return (
@@ -2716,7 +2717,7 @@ const App = () => {
                     </div>
                     <DialogFooter>
                         <Button type="button" variant="outline" onClick={() => setIsAdminLoginOpen(false)}>{t('cancel')}</Button>
-                        <Button type="submit" onClick={() => handleAdminSearch({ phoneToSearch: adminPhoneSearch, passwordToSearch: adminPasswordSearch })}>{t('recover')}</Button>
+                        <Button type="submit" onClick={() => handleAdminSearch({ })}>{t('recover')}</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
@@ -2886,10 +2887,10 @@ const App = () => {
                                 window.open(`https://wa.me/3145696687`, '_blank');
                                 setIsContactDialogOpen(false);
                             }}
-                            className="w-full bg-gray-200 text-gray-800 hover:bg-gray-300 flex items-center justify-center gap-2"
+                            className="w-full bg-green-500 text-white hover:bg-green-600 flex items-center justify-center gap-2"
                         >
-                            <MessageCircle className="h-5 w-5" />
-                            <span>{t('assignReference')}</span>
+                            <WhatsappIcon />
+                            <span>{t('webSupport')}</span>
                         </Button>
                         <Button
                             onClick={() => {
@@ -2922,4 +2923,5 @@ const App = () => {
 };
 
 export default App;
+
 
