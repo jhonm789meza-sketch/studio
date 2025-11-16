@@ -807,27 +807,27 @@ const App = () => {
     const handleAdminSearch = ({ refToSearch, isInitialLoad = false, phoneToSearch, passwordToSearch, isPublicSearch = false }: { refToSearch?: string, isInitialLoad?: boolean, phoneToSearch?: string, passwordToSearch?: string, isPublicSearch?: boolean }) => {
         return new Promise<void>(async (resolve) => {
             if (!isInitialLoad) setLoading(true);
-            
+    
             const aRef = (refToSearch || (isPublicSearch ? publicRefSearch : adminRefSearch)).trim().toUpperCase();
             const aPhone = (phoneToSearch || adminPhoneSearch).trim();
             const aPassword = (passwordToSearch || adminPasswordSearch).trim();
-
+    
             if (!aRef) {
                 showNotification(t('enterReferenceWarning'), 'warning');
-                if(!isInitialLoad) setLoading(false);
+                if (!isInitialLoad) setLoading(false);
                 resolve();
                 return;
             }
-
-            if(isSuperAdmin && isPublicSearch){
+    
+            if (isSuperAdmin && isPublicSearch) {
                 const isNextEven = nextRaffleRefs.even.refs.includes(aRef);
                 const isNextOdd = nextRaffleRefs.odd.refs.includes(aRef);
                 const isNextInfinite = nextRaffleRefs.infinite.refs.includes(aRef);
-
+    
                 if (isNextEven || isNextOdd || isNextInfinite) {
                     const mode = isNextEven ? 'two-digit' : isNextOdd ? 'three-digit' : 'infinite';
                     const { adminId } = await handleActivateBoard(mode, undefined, aRef, false);
-                     if (adminId) {
+                    if (adminId) {
                         const adminUrl = `${window.location.origin}?ref=${aRef}&adminId=${adminId}`;
                         navigator.clipboard.writeText(adminUrl).then(() => {
                             showNotification(t('boardActivatedAndCopied', { ref: aRef }), 'success');
@@ -846,31 +846,26 @@ const App = () => {
                     return;
                 }
             }
-
-
-            if (!isInitialLoad && !isPublicSearch && !isSuperAdmin && !aPhone ) {
-                 showNotification(t('enterOrganizerPhoneWarning'), 'warning');
-                 setLoading(false);
-                 resolve();
-                 return;
+    
+            if (!isInitialLoad && !isPublicSearch && !isSuperAdmin) {
+                if (!aPhone) {
+                    showNotification(t('enterOrganizerPhoneWarning'), 'warning');
+                    setLoading(false);
+                    resolve();
+                    return;
+                }
+                if (!aPassword) {
+                    showNotification(t('enterPasswordWarning'), 'warning');
+                    setLoading(false);
+                    resolve();
+                    return;
+                }
             }
-             if (!isInitialLoad && !isPublicSearch && !isSuperAdmin && !aPassword ) {
-                 showNotification(t('enterPasswordWarning'), 'warning');
-                 setLoading(false);
-                 resolve();
-                 return;
-            }
-
-
+    
             raffleSubscription.current?.();
-            
             const raffleDocRef = doc(db, 'raffles', aRef);
-
-            if (persistenceEnabled) {
-                await persistenceEnabled;
-            }
-
-            // For recovery, we need to get the doc once first.
+            if (persistenceEnabled) await persistenceEnabled;
+    
             if (!isInitialLoad && !isPublicSearch && !isSuperAdmin) {
                 try {
                     const docSnap = await getDoc(raffleDocRef);
@@ -887,10 +882,10 @@ const App = () => {
                             return;
                         }
                     } else {
-                         showNotification(t('raffleNotFound'), 'error');
-                         setLoading(false);
-                         resolve();
-                         return;
+                        showNotification(t('raffleNotFound'), 'error');
+                        setLoading(false);
+                        resolve();
+                        return;
                     }
                 } catch (error) {
                     console.error("Error fetching raffle for recovery:", error);
@@ -900,19 +895,22 @@ const App = () => {
                     return;
                 }
             }
-
-
+    
             raffleSubscription.current = onSnapshot(raffleDocRef, (docSnapshot) => {
                 if (docSnapshot.exists()) {
                     const data = docSnapshot.data() as Raffle;
-                    
-                    const adminIdFromStorage = localStorage.getItem('rifaAdminId');
-                    if ((adminIdFromStorage && data.adminId === adminIdFromStorage) || isSuperAdmin) {
-                        setCurrentAdminId(isSuperAdmin ? 'SUPER_ADMIN_SESSION' : adminIdFromStorage);
+    
+                    if (isSuperAdmin) {
+                        setCurrentAdminId(data.adminId);
+                    } else {
+                        const adminIdFromStorage = localStorage.getItem('rifaAdminId');
+                        if (adminIdFromStorage && data.adminId === adminIdFromStorage) {
+                            setCurrentAdminId(adminIdFromStorage);
+                        }
                     }
-
+    
                     setRaffleState(data);
-                    if (!isInitialLoad) { 
+                    if (!isInitialLoad) {
                         showNotification(t('loadingRaffle', { ref: aRef }), 'info');
                     }
                     setIsAdminLoginOpen(false);
@@ -923,14 +921,13 @@ const App = () => {
                     setPublicRefSearch('');
                     setPartialWinners([]);
                     handleTabClick('board');
-                    
+    
                     const currentUrl = new URL(window.location.href);
                     if (currentUrl.searchParams.get('ref') !== aRef) {
                         const newUrl = new URL(window.location.origin + window.location.pathname);
                         newUrl.searchParams.set('ref', aRef);
                         window.history.pushState({}, '', newUrl);
                     }
-
                 } else if (!isInitialLoad) {
                     showNotification(t('raffleNotFound'), 'error');
                     setRaffleState(initialRaffleData);
@@ -1097,8 +1094,7 @@ const App = () => {
              setIsPublicSearchOpen(true);
              return;
         }
-        
-        // For super admin, always open the search dialog pre-filled.
+
         setPublicRefSearch(ref);
         setIsPublicSearchOpen(true);
     };
