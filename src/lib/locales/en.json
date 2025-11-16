@@ -1,4 +1,3 @@
-
 {
     "loading": "Loading",
     "adminMessage": "You are the administrator of this game",
@@ -237,5 +236,8 @@
     "boardActivatedSuccessfullyWithRef": "Board activated successfully with ref {ref}.",
     "activationPendingAdmin": "Activation pending administrator approval. Thank you!",
     "transactionAlreadyUsed": "This transaction has already been used.",
-    "activateRaffleToSeeParticipants": "You must activate or search for a raffle to see the participants."
+    "activateRaffleToSeeParticipants": "You must activate or search for a raffle to see the participants.",
+    "searchGamePlaceholder": "Search by reference..."
 }
+
+    

@@ -244,5 +244,8 @@
     "errorSavingSecondaryContact": "Error al guardar el contacto secundario.",
     "contactDialogDescription": "Elige una opción de contacto.",
     "assignReference": "Asignar Referencia",
-    "webSupport": "Soporte Web"
+    "webSupport": "Soporte Web",
+    "searchGamePlaceholder": "Buscar por referencia..."
 }
+
+    

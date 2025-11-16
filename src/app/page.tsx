@@ -147,6 +147,7 @@ const App = () => {
     const [allRaffles, setAllRaffles] = useState<Raffle[]>([]);
     const [secondaryContact, setSecondaryContact] = useState('');
     const [isSecondaryContactDialogOpen, setIsSecondaryContactDialogOpen] = useState(false);
+    const [gameSearchQuery, setGameSearchQuery] = useState('');
 
 
     const [activationConfirmationOpen, setActivationConfirmationOpen] = useState(false);
@@ -1285,6 +1286,10 @@ const App = () => {
         setTicketInfo(null);
     };
 
+    const filteredGames = allRaffles.filter(raffle => 
+        raffle.raffleRef?.toLowerCase().includes(gameSearchQuery.toLowerCase())
+    );
+
 
     if (loading && !raffleState.raffleRef) {
         return <div className="flex justify-center items-center h-screen text-xl font-semibold">{t('loading')}...</div>;
@@ -2121,8 +2126,17 @@ const App = () => {
                                 {isSuperAdmin && (
                                 <div className={activeTab === 'games' ? 'tab-content active' : 'tab-content'}>
                                     <h2 className="text-2xl font-bold text-gray-800 mb-4">{t('assignedGames')}</h2>
+                                    <div className="mb-4">
+                                        <Input
+                                            type="text"
+                                            placeholder={t('searchGamePlaceholder')}
+                                            value={gameSearchQuery}
+                                            onChange={(e) => setGameSearchQuery(e.target.value)}
+                                            className="max-w-sm"
+                                        />
+                                    </div>
                                     
-                                    {allRaffles.length > 0 ? (
+                                    {filteredGames.length > 0 ? (
                                         <div className="overflow-x-auto">
                                             <table className="min-w-full divide-y divide-gray-200">
                                                 <thead className="bg-gray-50">
@@ -2137,7 +2151,7 @@ const App = () => {
                                                     </tr>
                                                 </thead>
                                                 <tbody className="bg-white divide-y divide-gray-200">
-                                                    {allRaffles
+                                                    {filteredGames
                                                         .sort((a, b) => (b.raffleRef || '').localeCompare(a.raffleRef || ''))
                                                         .map((raffle) => {
                                                         const collected = ((raffle.participants || []).filter(p => p.paymentStatus === 'confirmed').length * parseFloat(String(raffle.value).replace(/\D/g, ''))) || 0;
@@ -2905,3 +2919,5 @@ const App = () => {
 };
 
 export default App;
+
+    
