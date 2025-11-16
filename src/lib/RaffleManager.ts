@@ -15,12 +15,14 @@ class RaffleManager {
     private counterRefEven: DocumentReference;
     private counterRefOdd: DocumentReference;
     private counterRefInfinite: DocumentReference;
+    private usedRandomNumbersRef: DocumentReference;
 
     constructor(db: Firestore) {
         this.db = db;
         this.counterRefEven = doc(this.db, 'internal', 'raffleCounterEven');
         this.counterRefOdd = doc(this.db, 'internal', 'raffleCounterOdd');
         this.counterRefInfinite = doc(this.db, 'internal', 'raffleCounterInfinite');
+        this.usedRandomNumbersRef = doc(this.db, 'internal', 'usedRandomNumbers');
     }
 
     private getCounterRef(mode: RaffleMode): DocumentReference {
@@ -30,7 +32,7 @@ class RaffleManager {
             case 'three-digit':
                 return this.counterRefOdd;
             case 'infinite':
-                return this.counterRefInfinite;
+                return this.counterRefInfinite; // Although we use random, we still need a counter for total played
         }
     }
     
@@ -46,47 +48,65 @@ class RaffleManager {
         const counterRef = this.getCounterRef(mode);
         const isEvenMode = mode === 'two-digit';
         const isOddMode = mode === 'three-digit';
+        const isInfiniteMode = mode === 'infinite';
 
         try {
             let nextNumbers: number[] = [];
             let playedCount = 0;
             
             await runTransaction(this.db, async (transaction) => {
-                const docSnap = await transaction.get(counterRef);
+                const counterDoc = await transaction.get(counterRef);
                 let currentCount: number;
 
-                if (docSnap.exists() && typeof docSnap.data()?.count === 'number') {
-                    currentCount = docSnap.data().count;
+                if (counterDoc.exists() && typeof counterDoc.data()?.count === 'number') {
+                    currentCount = counterDoc.data().count;
                 } else {
-                    // Initialize counter if it doesn't exist or is invalid
-                    if (isEvenMode) currentCount = 0;
-                    else if (isOddMode) currentCount = 1;
-                    else currentCount = 1; // Infinite mode
+                    currentCount = isOddMode ? 1 : 0; // Start evens at 0, odds at 1
                 }
-
-                if (isEvenMode) {
+                
+                if (isInfiniteMode) {
+                     playedCount = currentCount; // For infinite, count is just a simple counter of how many have been created.
+                } else if (isEvenMode) {
                     playedCount = currentCount / 2;
-                } else if (isOddMode) {
-                    playedCount = Math.floor(currentCount / 2);
-                } else { // infinite
-                    playedCount = currentCount > 0 ? currentCount - 1 : 0;
+                } else { // isOddMode
+                    playedCount = (currentCount - 1) / 2;
                 }
 
                 nextNumbers = [];
-                let numberCursor = currentCount;
-                for (let i = 0; i < count; i++) {
-                    nextNumbers.push(numberCursor);
-                    if (isEvenMode || isOddMode) {
-                        numberCursor += 2;
-                    } else { // infinite
-                        numberCursor += 1;
-                    }
-                }
 
-                if (!peek) {
-                    const incrementBy = isEvenMode || isOddMode ? (count * 2) : count;
-                    const newCount = currentCount + incrementBy;
-                    transaction.set(counterRef, { count: newCount }, { merge: true });
+                if (isInfiniteMode) {
+                    const usedNumbersDoc = await transaction.get(this.usedRandomNumbersRef);
+                    const usedNumbers = usedNumbersDoc.exists() ? usedNumbersDoc.data().numbers || [] : [];
+                    const usedNumbersSet = new Set(usedNumbers);
+
+                    for (let i = 0; i < count; i++) {
+                        let randomNumber;
+                        do {
+                            randomNumber = Math.floor(Math.random() * 900000) + 100000; // 6-digit random number
+                        } while (usedNumbersSet.has(randomNumber));
+                        
+                        nextNumbers.push(randomNumber);
+                        usedNumbersSet.add(randomNumber); // Add to set to prevent duplicates in the same batch
+                    }
+
+                    if (!peek) {
+                        transaction.set(counterRef, { count: increment(count) }, { merge: true });
+                        // Persist the newly used random numbers. We trim the array to avoid unbounded growth.
+                        const updatedUsedNumbers = [...usedNumbers, ...nextNumbers].slice(-5000);
+                        transaction.set(this.usedRandomNumbersRef, { numbers: updatedUsedNumbers });
+                    }
+                } else { // Sequential modes
+                    let numberCursor = currentCount;
+                    for (let i = 0; i < count; i++) {
+                        nextNumbers.push(numberCursor);
+                        numberCursor += 2;
+                    }
+
+                    if (!peek) {
+                        const incrementBy = count * 2;
+                        const newCount = currentCount + incrementBy;
+                        transaction.set(counterRef, { count: newCount }, { merge: true });
+                    }
                 }
             });
             
@@ -94,7 +114,7 @@ class RaffleManager {
 
         } catch (error) {
             console.error(`Error in getNextRefInfo for mode ${mode}:`, error);
-            // Fallback to a random number to avoid complete failure, although transactions should prevent this.
+            // Fallback to a random number to avoid complete failure.
             const randomBase = Date.now();
             if (isEvenMode) return { numbers: [randomBase - (randomBase % 2)], playedCount: 0 };
             if (isOddMode) return { numbers: [randomBase - (randomBase % 2) + 1], playedCount: 0 };
@@ -107,8 +127,6 @@ class RaffleManager {
              return 'JM-SERVER';
         }
         
-        // When not peeking, we want to consume exactly one number.
-        // isManualActivation peeks, it does not consume.
         const shouldConsume = !peek && !isManualActivation;
         const { numbers: [nextNumber] } = await this.getNextRefInfo(mode, !shouldConsume, 1);
         
@@ -135,7 +153,8 @@ class RaffleManager {
         if (typeof window !== 'undefined') {
             await setDoc(this.counterRefEven, { count: 0 });
             await setDoc(this.counterRefOdd, { count: 1 });
-            await setDoc(this.counterRefInfinite, { count: 1 });
+            await setDoc(this.counterRefInfinite, { count: 0 });
+            await setDoc(this.usedRandomNumbersRef, { numbers: [] });
         }
     }
 }
