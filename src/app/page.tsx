@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect, useRef, useTransition } from 'react';
 import jsPDF from 'jspdf';
@@ -819,6 +818,36 @@ const App = () => {
                 resolve();
                 return;
             }
+
+            if(isSuperAdmin && isPublicSearch){
+                const isNextEven = nextRaffleRefs.even.refs.includes(aRef);
+                const isNextOdd = nextRaffleRefs.odd.refs.includes(aRef);
+                const isNextInfinite = nextRaffleRefs.infinite.refs.includes(aRef);
+
+                if (isNextEven || isNextOdd || isNextInfinite) {
+                    const mode = isNextEven ? 'two-digit' : isNextOdd ? 'three-digit' : 'infinite';
+                    const { adminId } = await handleActivateBoard(mode, undefined, aRef, false);
+                     if (adminId) {
+                        const adminUrl = `${window.location.origin}?ref=${aRef}&adminId=${adminId}`;
+                        navigator.clipboard.writeText(adminUrl).then(() => {
+                            showNotification(t('boardActivatedAndCopied', { ref: aRef }), 'success');
+                        }, () => {
+                            showNotification(t('boardActivatedSuccessfullyWithRef', { ref: aRef }), 'success');
+                        });
+                        const evenInfo = await raffleManager.peekNextRaffleRef('two-digit', 2);
+                        const oddInfo = await raffleManager.peekNextRaffleRef('three-digit', 2);
+                        const infiniteInfo = await raffleManager.peekNextRaffleRef('infinite', 2);
+                        setNextRaffleRefs({ even: evenInfo, odd: oddInfo, infinite: infiniteInfo });
+                    }
+                    setIsPublicSearchOpen(false);
+                    setPublicRefSearch('');
+                    setLoading(false);
+                    resolve();
+                    return;
+                }
+            }
+
+
             if (!isInitialLoad && !isPublicSearch && !isSuperAdmin && !aPhone ) {
                  showNotification(t('enterOrganizerPhoneWarning'), 'warning');
                  setLoading(false);
@@ -1069,34 +1098,9 @@ const App = () => {
              return;
         }
         
-        setLoading(true);
-    
-        const { refs: nextRefs } = await raffleManager.peekNextRaffleRef(mode, 2);
-        const isNextAvailable = nextRefs.includes(ref);
-
-        if(isNextAvailable) {
-            // It's a new raffle to activate
-            const { adminId } = await handleActivateBoard(mode, undefined, ref, false);
-            setLoading(false);
-            
-            if (adminId) {
-                const adminUrl = `${window.location.origin}?ref=${ref}&adminId=${adminId}`;
-                navigator.clipboard.writeText(adminUrl).then(() => {
-                    showNotification(t('boardActivatedAndCopied', { ref }), 'success');
-                }, () => {
-                    showNotification(t('boardActivatedSuccessfullyWithRef', { ref }), 'success');
-                });
-                // Refetch the next refs to keep the display updated
-                const evenInfo = await raffleManager.peekNextRaffleRef('two-digit', 2);
-                const oddInfo = await raffleManager.peekNextRaffleRef('three-digit', 2);
-                const infiniteInfo = await raffleManager.peekNextRaffleRef('infinite', 2);
-                setNextRaffleRefs({ even: evenInfo, odd: oddInfo, infinite: infiniteInfo });
-            }
-        } else {
-            // It's an existing raffle to recover/view
-            await handleAdminSearch({ refToSearch: ref, isPublicSearch: true });
-            setLoading(false);
-        }
+        // For super admin, always open the search dialog pre-filled.
+        setPublicRefSearch(ref);
+        setIsPublicSearchOpen(true);
     };
 
 
@@ -2702,5 +2706,3 @@ const App = () => {
 };
 
 export default App;
-
-    
