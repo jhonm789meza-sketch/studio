@@ -1852,20 +1852,6 @@ const App = () => {
                                                  <Button onClick={() => handlePriceButtonClick('two-digit')} size="lg" className="w-full bg-green-500 hover:bg-green-600 text-white font-bold">
                                                     {isSuperAdmin ? t('activate') : t('price')}
                                                 </Button>
-                                                {!isSuperAdmin && (
-                                                    <div className="space-y-2">
-                                                        <Label htmlFor="activation-ref-two-digit" className="text-xs text-gray-500">{t('searchByReferenceLabel')}</Label>
-                                                        <div className="flex gap-2">
-                                                            <Input
-                                                            id="activation-ref-two-digit"
-                                                            placeholder={t('enterGameReference')}
-                                                            value={activationRefs['two-digit'] || ''}
-                                                            onChange={(e) => setActivationRefs(prev => ({...prev, 'two-digit': e.target.value}))}
-                                                            />
-                                                            <Button onClick={() => handleManualActivation('two-digit')} variant="secondary">{t('search')}</Button>
-                                                        </div>
-                                                    </div>
-                                                )}
                                             </div>
                                         </div>
 
@@ -1886,20 +1872,6 @@ const App = () => {
                                                 <Button onClick={() => handlePriceButtonClick('three-digit')} size="lg" className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold">
                                                      {isSuperAdmin ? t('activate') : t('price')}
                                                 </Button>
-                                                {!isSuperAdmin && (
-                                                <div className="space-y-2">
-                                                    <Label htmlFor="activation-ref-three-digit" className="text-xs text-gray-500">{t('searchByReferenceLabel')}</Label>
-                                                    <div className="flex gap-2">
-                                                        <Input
-                                                          id="activation-ref-three-digit"
-                                                          placeholder={t('enterGameReference')}
-                                                          value={activationRefs['three-digit'] || ''}
-                                                          onChange={(e) => setActivationRefs(prev => ({...prev, 'three-digit': e.target.value}))}
-                                                        />
-                                                        <Button onClick={() => handleManualActivation('three-digit')} variant="secondary">{t('search')}</Button>
-                                                    </div>
-                                                </div>
-                                                )}
                                             </div>
                                         </div>
 
@@ -1920,28 +1892,9 @@ const App = () => {
                                                 <Button onClick={() => handlePriceButtonClick('infinite')} size="lg" className="w-full bg-red-500 hover:bg-red-600 text-white font-bold">
                                                      {isSuperAdmin ? t('activate') : t('price')}
                                                 </Button>
-                                                 {!isSuperAdmin && (
-                                                <div className="space-y-2">
-                                                    <Label htmlFor="activation-ref-infinite" className="text-xs text-gray-500">{t('searchByReferenceLabel')}</Label>
-                                                    <div className="flex gap-2">
-                                                        <Input
-                                                          id="activation-ref-infinite"
-                                                          placeholder={t('enterGameReference')}
-                                                          value={activationRefs['infinite'] || ''}
-                                                          onChange={(e) => setActivationRefs(prev => ({...prev, 'infinite': e.target.value}))}
-                                                        />
-                                                        <Button onClick={() => handleManualActivation('infinite')} variant="secondary">{t('search')}</Button>
-                                                    </div>
-                                                </div>
-                                                )}
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                                <div className="mt-8 text-center">
-                                    <Button onClick={() => setIsPublicSearchOpen(true)} size="lg" className="w-full max-w-md bg-purple-600 hover:bg-purple-700 text-white font-bold">
-                                        {t('orSearchByReference')}
-                                    </Button>
                                 </div>
                             </div>
                         </div>
@@ -2717,3 +2670,5 @@ const App = () => {
 };
 
 export default App;
+
+    
