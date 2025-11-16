@@ -10,7 +10,7 @@ import { useLanguage } from '@/hooks/use-language';
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House, Clock as ClockIcon, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Upload, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages, Trophy, Trash2, Copy, Shield, LogOut, Eye, EyeOff } from 'lucide-react';
+import { Menu, Award, Lock, House, Clock as ClockIcon, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Upload, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages, Trophy, Trash2, Copy, Shield, LogOut, Eye, EyeOff, Gamepad2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -26,7 +26,7 @@ import { WhatsappIcon, FacebookIcon, TicketIcon, NequiIcon, InlineTicket } from 
 
 
 type RaffleMode = 'two-digit' | 'three-digit' | 'infinite';
-type Tab = 'board' | 'register' | 'participants' | 'pending' | 'recaudado' | 'winners' | 'activations';
+type Tab = 'board' | 'register' | 'participants' | 'pending' | 'recaudado' | 'winners' | 'activations' | 'games';
 
 const initialRaffleData: Raffle = {
     drawnNumbers: [],
@@ -151,6 +151,8 @@ const App = () => {
     const [showSuperAdminPassword, setShowSuperAdminPassword] = useState(false);
     const [isSuperAdmin, setIsSuperAdmin] = useState(false);
     const [pendingActivations, setPendingActivations] = useState<PendingActivation[]>([]);
+    const [allRaffles, setAllRaffles] = useState<Raffle[]>([]);
+
 
     const [activationConfirmationOpen, setActivationConfirmationOpen] = useState(false);
     const [activationToConfirm, setActivationToConfirm] = useState<{ activation: PendingActivation; newRaffleRef: string; } | null>(null);
@@ -195,7 +197,21 @@ const App = () => {
                 });
                 setPendingActivations(activations);
             });
-            return () => unsubscribe();
+
+            const allRafflesQuery = query(collection(db, "raffles"));
+            const unsubscribeRaffles = onSnapshot(allRafflesQuery, (querySnapshot) => {
+                const raffles: Raffle[] = [];
+                querySnapshot.forEach((doc) => {
+                    raffles.push({ ...doc.data() } as Raffle);
+                });
+                setAllRaffles(raffles);
+            });
+
+
+            return () => {
+                unsubscribe();
+                unsubscribeRaffles();
+            }
         }
     }, [isSuperAdmin]);
 
@@ -456,7 +472,7 @@ const App = () => {
         return new Intl.NumberFormat(locale).format(parseInt(stringValue, 10));
     };
 
-    const formatValue = (rawValue: string | number) => {
+    const formatValue = (value: string | number) => {
         const currencySymbol = raffleState.currencySymbol || '$';
         if (!rawValue) return `${currencySymbol} 0`;
         const numericValue = String(rawValue).replace(/\D/g, '');
@@ -1929,12 +1945,20 @@ const App = () => {
                                         <TicketIcon className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">{t('board')}</span>
                                     </button>
                                      {isSuperAdmin && (
+                                        <>
                                         <button 
                                             className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'activations' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
                                             onClick={() => handleTabClick('activations')}
                                         >
                                            <KeyRound className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">{t('activationsTab', { count: pendingActivations.length })}</span>
                                         </button>
+                                        <button 
+                                            className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'games' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
+                                            onClick={() => handleTabClick('games')}
+                                        >
+                                           <Gamepad2 className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">{t('gamesTab')}</span>
+                                        </button>
+                                        </>
                                     )}
                                     <button 
                                         className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'register' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
@@ -2018,6 +2042,50 @@ const App = () => {
                                     )}
                                 </div>
                                 )}
+
+                                {isSuperAdmin && (
+                                <div className={activeTab === 'games' ? 'tab-content active' : 'tab-content'}>
+                                    <h2 className="text-2xl font-bold text-gray-800 mb-4">{t('assignedGames')}</h2>
+                                    {allRaffles.length > 0 ? (
+                                        <div className="overflow-x-auto">
+                                            <table className="min-w-full divide-y divide-gray-200">
+                                                <thead className="bg-gray-50">
+                                                    <tr>
+                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('reference')}</th>
+                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('prize')}</th>
+                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('whoOrganizes')}</th>
+                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('gameDate')}</th>
+                                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('collected')}</th>
+                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('action')}</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="bg-white divide-y divide-gray-200">
+                                                    {allRaffles.sort((a, b) => b.raffleRef.localeCompare(a.raffleRef)).map((raffle) => {
+                                                        const collected = (raffle.participants.filter(p => p.paymentStatus === 'confirmed').length * parseFloat(String(raffle.value).replace(/\D/g, ''))) || 0;
+                                                        return (
+                                                            <tr key={raffle.raffleRef}>
+                                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{raffle.raffleRef}</td>
+                                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{raffle.raffleMode === 'infinite' ? formatValue(raffle.prize) : raffle.prize}</td>
+                                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{raffle.organizerName}</td>
+                                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{raffle.gameDate}</td>
+                                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-600">{formatValue(collected)}</td>
+                                                                <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                                                    <Button onClick={() => handleAdminSearch({ refToSearch: raffle.raffleRef, isPublicSearch: true })} size="sm" variant="outline">
+                                                                        {t('manage')}
+                                                                    </Button>
+                                                                </td>
+                                                            </tr>
+                                                        )
+                                                    })}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    ) : (
+                                        <p className="text-gray-500">{t('noGamesAssigned')}</p>
+                                    )}
+                                </div>
+                                )}
+
 
                                 <div className={activeTab === 'register' ? 'tab-content active' : 'tab-content'}>
                                     <div className="mb-6">

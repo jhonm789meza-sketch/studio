@@ -239,8 +239,12 @@
     "confirmActivationDescription": "You are about to activate a new board. Please confirm the details below.",
     "newRaffleRef": "New Raffle Reference",
     "confirmAndActivate": "Confirm and Activate",
-    "nextRefsEven": "Prox. Refs (Even):",
-    "nextRefsOdd": "Prox. Refs (Odd):",
-    "nextRefsInfinite": "Prox. Refs (Infinite):",
-    "playedCount": "Played"
+    "nextRefsEven": "Next Refs (Even):",
+    "nextRefsOdd": "Next Refs (Odd):",
+    "nextRefsInfinite": "Next Refs (Infinite):",
+    "playedCount": "Played",
+    "gamesTab": "Games",
+    "assignedGames": "Assigned Games",
+    "noGamesAssigned": "No games have been assigned yet.",
+    "manage": "Manage"
 }

@@ -242,5 +242,9 @@
     "nextRefsEven": "Prox. Refs (Par):",
     "nextRefsOdd": "Prox. Refs (Impar):",
     "nextRefsInfinite": "Prox. Refs (Infinita):",
-    "playedCount": "Jugados"
+    "playedCount": "Jugados",
+    "gamesTab": "Juegos",
+    "assignedGames": "Juegos Asignados",
+    "noGamesAssigned": "Aún no se han asignado juegos.",
+    "manage": "Administrar"
 }
