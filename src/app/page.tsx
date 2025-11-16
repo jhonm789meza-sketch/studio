@@ -145,6 +145,7 @@ const App = () => {
     const [isSuperAdmin, setIsSuperAdmin] = useState(false);
     const [pendingActivations, setPendingActivations] = useState<PendingActivation[]>([]);
     const [allRaffles, setAllRaffles] = useState<Raffle[]>([]);
+    const [secondaryContact, setSecondaryContact] = useState('');
 
 
     const [activationConfirmationOpen, setActivationConfirmationOpen] = useState(false);
@@ -164,6 +165,15 @@ const App = () => {
             document.documentElement.lang = language;
         }
     }, [language]);
+
+     useEffect(() => {
+        if (isSuperAdmin) {
+            const savedContact = localStorage.getItem('secondaryContact');
+            if (savedContact) {
+                setSecondaryContact(savedContact);
+            }
+        }
+    }, [isSuperAdmin]);
 
 
     useEffect(() => {
@@ -828,27 +838,30 @@ const App = () => {
                 return;
             }
     
-            // Super Admin Activation Flow
-            if (isSuperAdmin && (nextRaffleRefs.even.refs.includes(aRef) || nextRaffleRefs.odd.refs.includes(aRef) || nextRaffleRefs.infinite.refs.includes(aRef))) {
-                const mode = nextRaffleRefs.even.refs.includes(aRef) ? 'two-digit' : nextRaffleRefs.odd.refs.includes(aRef) ? 'three-digit' : 'infinite';
-                const { adminId } = await handleActivateBoard(mode, undefined, aRef, false);
-                if (adminId) {
-                    const adminUrl = `${window.location.origin}?ref=${aRef}&adminId=${adminId}`;
-                    navigator.clipboard.writeText(adminUrl).then(() => {
-                        showNotification(t('boardActivatedAndCopied', { ref: aRef }), 'success');
-                    }, () => {
-                        showNotification(t('boardActivatedSuccessfullyWithRef', { ref: aRef }), 'success');
-                    });
+            // Super Admin Activation/Search Flow
+            if (isSuperAdmin && isPublicSearch) {
+                 const isNextRef = nextRaffleRefs.even.refs.includes(aRef) || nextRaffleRefs.odd.refs.includes(aRef) || nextRaffleRefs.infinite.refs.includes(aRef);
+                 if (isNextRef) {
+                    const mode = nextRaffleRefs.even.refs.includes(aRef) ? 'two-digit' : nextRaffleRefs.odd.refs.includes(aRef) ? 'three-digit' : 'infinite';
+                    const { adminId } = await handleActivateBoard(mode, undefined, aRef, false);
+                    if (adminId) {
+                        const adminUrl = `${window.location.origin}?ref=${aRef}&adminId=${adminId}`;
+                        navigator.clipboard.writeText(adminUrl).then(() => {
+                            showNotification(t('boardActivatedAndCopied', { ref: aRef }), 'success');
+                        }, () => {
+                            showNotification(t('boardActivatedSuccessfullyWithRef', { ref: aRef }), 'success');
+                        });
+                    }
+                    const evenInfo = await raffleManager.peekNextRaffleRef('two-digit', 2);
+                    const oddInfo = await raffleManager.peekNextRaffleRef('three-digit', 2);
+                    const infiniteInfo = await raffleManager.peekNextRaffleRef('infinite', 2);
+                    setNextRaffleRefs({ even: evenInfo, odd: oddInfo, infinite: infiniteInfo });
+                    setIsPublicSearchOpen(false);
+                    setPublicRefSearch('');
+                    setLoading(false);
+                    resolve();
+                    return;
                 }
-                const evenInfo = await raffleManager.peekNextRaffleRef('two-digit', 2);
-                const oddInfo = await raffleManager.peekNextRaffleRef('three-digit', 2);
-                const infiniteInfo = await raffleManager.peekNextRaffleRef('infinite', 2);
-                setNextRaffleRefs({ even: evenInfo, odd: oddInfo, infinite: infiniteInfo });
-                setIsPublicSearchOpen(false);
-                setPublicRefSearch('');
-                setLoading(false);
-                resolve();
-                return;
             }
     
             // Admin Recovery Flow
@@ -1235,6 +1248,21 @@ const App = () => {
         handleGoToHome();
         showNotification(t('logoutSuccess'), 'info');
     };
+
+    const handleSaveSecondaryContact = () => {
+        localStorage.setItem('secondaryContact', secondaryContact);
+        showNotification(t('secondaryContactSaved'), 'success');
+    };
+    
+    const handleSecondaryContact = () => {
+        if (secondaryContact) {
+            const whatsappUrl = `https://wa.me/${secondaryContact}`;
+            window.open(whatsappUrl, '_blank');
+        } else {
+            showNotification(t('secondaryContactNotSet'), 'warning');
+        }
+    };
+
 
     const allNumbers = Array.from({ length: totalNumbers }, (_, i) => i);
     
@@ -1796,7 +1824,7 @@ const App = () => {
                                     </DropdownMenuItem>
                                     <DropdownMenuItem onSelect={handleContactSupport}>
                                         <MessageCircle className="mr-2 h-4 w-4" />
-                                        <span>Contacto</span>
+                                        <span>{t('webSupport')}</span>
                                     </DropdownMenuItem>
                                      {isSuperAdmin && (
                                         <DropdownMenuItem onSelect={handleSuperAdminLogout}>
@@ -2075,6 +2103,22 @@ const App = () => {
                                 {isSuperAdmin && (
                                 <div className={activeTab === 'games' ? 'tab-content active' : 'tab-content'}>
                                     <h2 className="text-2xl font-bold text-gray-800 mb-4">{t('assignedGames')}</h2>
+                                     <div className="mb-6 p-4 border rounded-lg bg-gray-50 space-y-2">
+                                        <Label htmlFor="secondary-contact">{t('secondaryContact')}</Label>
+                                        <div className="flex items-center gap-2">
+                                            <Input
+                                                id="secondary-contact"
+                                                type="tel"
+                                                value={secondaryContact}
+                                                onChange={(e) => setSecondaryContact(e.target.value.replace(/\D/g, ''))}
+                                                placeholder={t('enterPhoneNumber')}
+                                            />
+                                            <Button onClick={handleSaveSecondaryContact} size="sm">{t('save')}</Button>
+                                            <Button onClick={handleSecondaryContact} size="sm" variant="outline" disabled={!secondaryContact}>
+                                                <WhatsappIcon />
+                                            </Button>
+                                        </div>
+                                    </div>
                                     {allRaffles.length > 0 ? (
                                         <div className="overflow-x-auto">
                                             <table className="min-w-full divide-y divide-gray-200">
@@ -2801,3 +2845,4 @@ const App = () => {
 };
 
 export default App;
+

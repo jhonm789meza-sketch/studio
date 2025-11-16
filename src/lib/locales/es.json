@@ -1,4 +1,3 @@
-
 {
     "loading": "Cargando",
     "adminMessage": "Eres el administrador de este juego",
@@ -246,5 +245,10 @@
     "gamesTab": "Juegos",
     "assignedGames": "Juegos Asignados",
     "noGamesAssigned": "Aún no se han asignado juegos.",
-    "manage": "Administrar"
+    "manage": "Administrar",
+    "secondaryContact": "Contacto Secundario",
+    "enterPhoneNumber": "Ingresar número de teléfono",
+    "save": "Guardar",
+    "secondaryContactSaved": "Contacto secundario guardado con éxito.",
+    "secondaryContactNotSet": "El número de contacto secundario no está configurado."
 }
