@@ -79,7 +79,7 @@ interface NextRaffleInfo {
     count: number;
 }
 
-const DateTimeDisplay = ({ nextRaffleRefs, t, onRefClick }: { nextRaffleRefs: { even: NextRaffleInfo; odd: NextRaffleInfo; infinite: NextRaffleInfo; } | null, t: (key: string) => string, onRefClick: (ref: string, mode: RaffleMode) => void }) => {
+const DateTimeDisplay = ({ nextRaffleRefs, t, onRefClick }: { nextRaffleRefs: { even: NextRaffleInfo; odd: NextRaffleInfo; infinite: NextRaffleInfo; } | null, t: (key: string) => void, onRefClick: (ref: string, mode: RaffleMode) => void }) => {
     const [currentTime, setCurrentTime] = useState(new Date());
 
     useEffect(() => {
@@ -828,32 +828,26 @@ const App = () => {
                 return;
             }
     
-            if (isSuperAdmin && isPublicSearch) {
-                const isNextEven = nextRaffleRefs.even.refs.includes(aRef);
-                const isNextOdd = nextRaffleRefs.odd.refs.includes(aRef);
-                const isNextInfinite = nextRaffleRefs.infinite.refs.includes(aRef);
-    
-                if (isNextEven || isNextOdd || isNextInfinite) {
-                    const mode = isNextEven ? 'two-digit' : isNextOdd ? 'three-digit' : 'infinite';
-                    const { adminId } = await handleActivateBoard(mode, undefined, aRef, false);
-                    if (adminId) {
-                        const adminUrl = `${window.location.origin}?ref=${aRef}&adminId=${adminId}`;
-                        navigator.clipboard.writeText(adminUrl).then(() => {
-                            showNotification(t('boardActivatedAndCopied', { ref: aRef }), 'success');
-                        }, () => {
-                            showNotification(t('boardActivatedSuccessfullyWithRef', { ref: aRef }), 'success');
-                        });
-                        const evenInfo = await raffleManager.peekNextRaffleRef('two-digit', 2);
-                        const oddInfo = await raffleManager.peekNextRaffleRef('three-digit', 2);
-                        const infiniteInfo = await raffleManager.peekNextRaffleRef('infinite', 2);
-                        setNextRaffleRefs({ even: evenInfo, odd: oddInfo, infinite: infiniteInfo });
-                    }
-                    setIsPublicSearchOpen(false);
-                    setPublicRefSearch('');
-                    setLoading(false);
-                    resolve();
-                    return;
+            if (isSuperAdmin && (nextRaffleRefs.even.refs.includes(aRef) || nextRaffleRefs.odd.refs.includes(aRef) || nextRaffleRefs.infinite.refs.includes(aRef))) {
+                const mode = nextRaffleRefs.even.refs.includes(aRef) ? 'two-digit' : nextRaffleRefs.odd.refs.includes(aRef) ? 'three-digit' : 'infinite';
+                const { adminId } = await handleActivateBoard(mode, undefined, aRef, false);
+                if (adminId) {
+                    const adminUrl = `${window.location.origin}?ref=${aRef}&adminId=${adminId}`;
+                    navigator.clipboard.writeText(adminUrl).then(() => {
+                        showNotification(t('boardActivatedAndCopied', { ref: aRef }), 'success');
+                    }, () => {
+                        showNotification(t('boardActivatedSuccessfullyWithRef', { ref: aRef }), 'success');
+                    });
+                    const evenInfo = await raffleManager.peekNextRaffleRef('two-digit', 2);
+                    const oddInfo = await raffleManager.peekNextRaffleRef('three-digit', 2);
+                    const infiniteInfo = await raffleManager.peekNextRaffleRef('infinite', 2);
+                    setNextRaffleRefs({ even: evenInfo, odd: oddInfo, infinite: infiniteInfo });
                 }
+                setIsPublicSearchOpen(false);
+                setPublicRefSearch('');
+                setLoading(false);
+                resolve();
+                return;
             }
     
             if (!isInitialLoad && !isPublicSearch && !isSuperAdmin) {
@@ -1106,21 +1100,6 @@ const App = () => {
         
         setPublicRefSearch(ref);
         setIsPublicSearchOpen(true);
-        // Direct activation for super admin
-        const { adminId } = await handleActivateBoard(mode, undefined, ref, false);
-        if (adminId) {
-            const adminUrl = `${window.location.origin}?ref=${ref}&adminId=${adminId}`;
-            navigator.clipboard.writeText(adminUrl).then(() => {
-                showNotification(t('boardActivatedAndCopied', { ref: ref }), 'success');
-            }, () => {
-                showNotification(t('boardActivatedSuccessfullyWithRef', { ref: ref }), 'success');
-            });
-            // Refresh the refs list
-            const evenInfo = await raffleManager.peekNextRaffleRef('two-digit', 2);
-            const oddInfo = await raffleManager.peekNextRaffleRef('three-digit', 2);
-            const infiniteInfo = await raffleManager.peekNextRaffleRef('infinite', 2);
-            setNextRaffleRefs({ even: evenInfo, odd: oddInfo, infinite: infiniteInfo });
-        }
     };
 
 
@@ -2119,7 +2098,7 @@ const App = () => {
                                                     </tr>
                                                 </thead>
                                                 <tbody className="bg-white divide-y divide-gray-200">
-                                                    {allRaffles.sort((a, b) => b.raffleRef.localeCompare(a.raffleRef)).map((raffle) => {
+                                                    {allRaffles.sort((a, b) => (b.raffleRef || '').localeCompare(a.raffleRef || '')).map((raffle) => {
                                                         const collected = (raffle.participants.filter(p => p.paymentStatus === 'confirmed').length * parseFloat(String(raffle.value).replace(/\D/g, ''))) || 0;
                                                         return (
                                                             <tr key={raffle.raffleRef}>
