@@ -1106,6 +1106,21 @@ const App = () => {
         
         setPublicRefSearch(ref);
         setIsPublicSearchOpen(true);
+        // Direct activation for super admin
+        const { adminId } = await handleActivateBoard(mode, undefined, ref, false);
+        if (adminId) {
+            const adminUrl = `${window.location.origin}?ref=${ref}&adminId=${adminId}`;
+            navigator.clipboard.writeText(adminUrl).then(() => {
+                showNotification(t('boardActivatedAndCopied', { ref: ref }), 'success');
+            }, () => {
+                showNotification(t('boardActivatedSuccessfullyWithRef', { ref: ref }), 'success');
+            });
+            // Refresh the refs list
+            const evenInfo = await raffleManager.peekNextRaffleRef('two-digit', 2);
+            const oddInfo = await raffleManager.peekNextRaffleRef('three-digit', 2);
+            const infiniteInfo = await raffleManager.peekNextRaffleRef('infinite', 2);
+            setNextRaffleRefs({ even: evenInfo, odd: oddInfo, infinite: infiniteInfo });
+        }
     };
 
 
@@ -1881,9 +1896,21 @@ const App = () => {
                                                  <Button onClick={() => handlePriceButtonClick('two-digit')} size="lg" className="w-full bg-green-500 hover:bg-green-600 text-white font-bold">
                                                     {isSuperAdmin ? t('activate') : t('price')}
                                                 </Button>
-                                                 {isSuperAdmin && nextRaffleRefs.even.refs.length > 0 && (
+                                                {isSuperAdmin && nextRaffleRefs.even.refs.length > 0 && (
                                                     <div className="text-xs text-center text-gray-500 font-semibold">
-                                                        {t('nextRefsEven')} <span className="cursor-pointer hover:underline" onClick={() => handleRefClick(nextRaffleRefs.even.refs[0], 'two-digit')}>{nextRaffleRefs.even.refs.join(', ')}</span> ({t('playedCount')}: {nextRaffleRefs.even.count})
+                                                        {t('nextRefsEven')}{' '}
+                                                        {nextRaffleRefs.even.refs.map((ref, index) => (
+                                                            <span key={ref}>
+                                                                <span
+                                                                    className="cursor-pointer hover:underline"
+                                                                    onClick={() => handleRefClick(ref, 'two-digit')}
+                                                                >
+                                                                    {ref}
+                                                                </span>
+                                                                {index < nextRaffleRefs.even.refs.length - 1 ? ', ' : ''}
+                                                            </span>
+                                                        ))}{' '}
+                                                        ({t('playedCount')}: {nextRaffleRefs.even.count})
                                                     </div>
                                                 )}
                                             </div>
@@ -1908,7 +1935,19 @@ const App = () => {
                                                 </Button>
                                                 {isSuperAdmin && nextRaffleRefs.odd.refs.length > 0 && (
                                                     <div className="text-xs text-center text-gray-500 font-semibold">
-                                                        {t('nextRefsOdd')} <span className="cursor-pointer hover:underline" onClick={() => handleRefClick(nextRaffleRefs.odd.refs[0], 'three-digit')}>{nextRaffleRefs.odd.refs.join(', ')}</span> ({t('playedCount')}: {nextRaffleRefs.odd.count})
+                                                        {t('nextRefsOdd')}{' '}
+                                                        {nextRaffleRefs.odd.refs.map((ref, index) => (
+                                                            <span key={ref}>
+                                                                <span
+                                                                    className="cursor-pointer hover:underline"
+                                                                    onClick={() => handleRefClick(ref, 'three-digit')}
+                                                                >
+                                                                    {ref}
+                                                                </span>
+                                                                {index < nextRaffleRefs.odd.refs.length - 1 ? ', ' : ''}
+                                                            </span>
+                                                        ))}{' '}
+                                                        ({t('playedCount')}: {nextRaffleRefs.odd.count})
                                                     </div>
                                                 )}
                                             </div>
@@ -1933,7 +1972,19 @@ const App = () => {
                                                 </Button>
                                                 {isSuperAdmin && nextRaffleRefs.infinite.refs.length > 0 && (
                                                     <div className="text-xs text-center text-gray-500 font-semibold">
-                                                        {t('nextRefsInfinite')} <span className="cursor-pointer hover:underline" onClick={() => handleRefClick(nextRaffleRefs.infinite.refs[0], 'infinite')}>{nextRaffleRefs.infinite.refs.join(', ')}</span> ({t('playedCount')}: {nextRaffleRefs.infinite.count})
+                                                        {t('nextRefsInfinite')}{' '}
+                                                        {nextRaffleRefs.infinite.refs.map((ref, index) => (
+                                                            <span key={ref}>
+                                                                <span
+                                                                    className="cursor-pointer hover:underline"
+                                                                    onClick={() => handleRefClick(ref, 'infinite')}
+                                                                >
+                                                                    {ref}
+                                                                </span>
+                                                                {index < nextRaffleRefs.infinite.refs.length - 1 ? ', ' : ''}
+                                                            </span>
+                                                        ))}{' '}
+                                                        ({t('playedCount')}: {nextRaffleRefs.infinite.count})
                                                     </div>
                                                 )}
                                             </div>
