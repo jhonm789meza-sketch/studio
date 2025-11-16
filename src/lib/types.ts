@@ -18,6 +18,10 @@ export interface PendingActivation {
     createdAt: any; // Allow for Firebase Timestamp
 }
 
+export interface AppSettings {
+    secondaryContact?: string;
+}
+
 
 export interface Raffle {
     drawnNumbers: any[];

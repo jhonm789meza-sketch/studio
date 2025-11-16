@@ -73,7 +73,7 @@
     "showQR": "Show QR",
     "installApp": "Install App",
     "languages": "Languages",
-    "webSupport": "Contact",
+    "contact": "Contact",
     "boardLockedDescription": "Search for a raffle by its reference or create a new one to start.",
     "digits": "DIGITS",
     "2digitRaffle": "2-Digit Raffle",
@@ -208,7 +208,6 @@
     "raffleVerificationError": "Error verifying the raffle.",
     "loadingRaffle": "Loading raffle {ref}...",
     "raffleLoadError": "Error loading raffle.",
-    "completeAllFieldsWarning": "Please complete all fields.",
     "enterValidWinningNumber": "Please enter a valid winning number with {count} digits.",
     "enterWinningNumberAndPrizeWarning": "Please enter the winning number and the prize.",
     "noPrizeValueWarning": "Please enter a valid prize value.",
@@ -225,9 +224,11 @@
     "shareRaffleMessage": "Join my raffle and win {prize}!",
     "housePrizeNotification": "The prize goes to the house. The winning number is {number}.",
     "secondaryContactSaved": "Secondary contact saved successfully!",
-    "secondaryContactNotSet": "Secondary contact is not set.",
+    "errorSavingSecondaryContact": "Error saving secondary contact.",
+    "contactDialogDescription": "Choose a contact option.",
+    "assignReference": "Assign Reference",
+    "webSupport": "Web Support",
     "shareRaffleAppDescription": "Share this app so more people can join the lottery.",
-    "enterValidWinningNumber": "Please enter a valid winning number with {count} digits.",
     "confirmActivationTitle": "Confirm Activation",
     "confirmActivationDescription": "Confirm the activation of this board.",
     "newRaffleRef": "New Raffle Ref",
@@ -238,4 +239,3 @@
     "transactionAlreadyUsed": "This transaction has already been used.",
     "activateRaffleToSeeParticipants": "You must activate or search for a raffle to see the participants."
 }
-

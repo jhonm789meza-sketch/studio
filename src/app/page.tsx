@@ -16,7 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Confetti } from '@/components/confetti';
 import { Switch } from '@/components/ui/switch';
-import type { Participant, Raffle, PendingActivation } from '@/lib/types';
+import type { Participant, Raffle, PendingActivation, AppSettings } from '@/lib/types';
 import { format } from 'date-fns';
 import { es, enUS } from 'date-fns/locale';
 import { Textarea } from '@/components/ui/textarea';
@@ -154,6 +154,8 @@ const App = () => {
 
     const [nextRaffleRefs, setNextRaffleRefs] = useState<{ even: NextRaffleInfo, odd: NextRaffleInfo, infinite: NextRaffleInfo }>({ even: { refs: [], count: 0 }, odd: { refs: [], count: 0 }, infinite: { refs: [], count: 0 } });
 
+    const [appSettings, setAppSettings] = useState<AppSettings>({});
+    const [isContactDialogOpen, setIsContactDialogOpen] = useState(false);
 
     const raffleManager = new RaffleManager(db);
     
@@ -167,13 +169,20 @@ const App = () => {
         }
     }, [language]);
 
-     useEffect(() => {
-        if (isSuperAdmin) {
-            const savedContact = localStorage.getItem('secondaryContact');
-            if (savedContact) {
-                setSecondaryContact(savedContact);
+
+    // Fetch global settings
+    useEffect(() => {
+        const settingsDocRef = doc(db, 'internal', 'settings');
+        const unsubscribe = onSnapshot(settingsDocRef, (docSnap) => {
+            if (docSnap.exists()) {
+                const settings = docSnap.data() as AppSettings;
+                setAppSettings(settings);
+                if (isSuperAdmin) {
+                    setSecondaryContact(settings.secondaryContact || '');
+                }
             }
-        }
+        });
+        return () => unsubscribe();
     }, [isSuperAdmin]);
 
 
@@ -1200,8 +1209,12 @@ const App = () => {
     };
 
     const handleContactSupport = () => {
-        const whatsappUrl = `https://wa.me/3145696687`;
-        window.open(whatsappUrl, '_blank');
+        if (appSettings.secondaryContact && !raffleState.raffleRef) {
+            setIsContactDialogOpen(true);
+        } else {
+            const whatsappUrl = `https://wa.me/3145696687`;
+            window.open(whatsappUrl, '_blank');
+        }
     };
     
     const handleShareToWhatsApp = () => {
@@ -1250,18 +1263,15 @@ const App = () => {
         showNotification(t('logoutSuccess'), 'info');
     };
 
-    const handleSaveSecondaryContact = () => {
-        localStorage.setItem('secondaryContact', secondaryContact);
-        showNotification(t('secondaryContactSaved'), 'success');
-        setIsSecondaryContactDialogOpen(false);
-    };
-    
-    const handleSecondaryContact = () => {
-        if (secondaryContact) {
-            const whatsappUrl = `https://wa.me/${secondaryContact}`;
-            window.open(whatsappUrl, '_blank');
-        } else {
-            showNotification(t('secondaryContactNotSet'), 'warning');
+    const handleSaveSecondaryContact = async () => {
+        try {
+            const settingsDocRef = doc(db, 'internal', 'settings');
+            await setDoc(settingsDocRef, { secondaryContact: secondaryContact }, { merge: true });
+            showNotification(t('secondaryContactSaved'), 'success');
+            setIsSecondaryContactDialogOpen(false);
+        } catch (error) {
+            console.error("Error saving secondary contact:", error);
+            showNotification(t('errorSavingSecondaryContact'), 'error');
         }
     };
 
@@ -1820,13 +1830,13 @@ const App = () => {
                                         <KeyRound className="mr-2 h-4 w-4" />
                                         <span>{t('recoverAdminAccess')}</span>
                                     </DropdownMenuItem>
+                                    <DropdownMenuItem onSelect={handleContactSupport}>
+                                        <MessageCircle className="mr-2 h-4 w-4" />
+                                        <span>{t('contact')}</span>
+                                    </DropdownMenuItem>
                                     <DropdownMenuItem onSelect={() => setIsSuperAdminLoginOpen(true)}>
                                         <Shield className="mr-2 h-4 w-4" />
                                         <span>Super Administrador</span>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onSelect={handleContactSupport}>
-                                        <MessageCircle className="mr-2 h-4 w-4" />
-                                        <span>{t('webSupport')}</span>
                                     </DropdownMenuItem>
                                      {isSuperAdmin && (
                                         <>
@@ -2840,6 +2850,39 @@ const App = () => {
                         <Button type="button" variant="outline" onClick={() => setIsSecondaryContactDialogOpen(false)}>{t('cancel')}</Button>
                         <Button type="button" onClick={handleSaveSecondaryContact}>{t('save')}</Button>
                     </DialogFooter>
+                </DialogContent>
+            </Dialog>
+            
+            <Dialog open={isContactDialogOpen} onOpenChange={setIsContactDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{t('contact')}</DialogTitle>
+                        <DialogDescription>
+                            {t('contactDialogDescription')}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex flex-col space-y-4 py-4">
+                         <Button
+                            onClick={() => {
+                                window.open(`https://wa.me/3145696687`, '_blank');
+                                setIsContactDialogOpen(false);
+                            }}
+                            className="w-full bg-gray-200 text-gray-800 hover:bg-gray-300 flex items-center justify-center gap-2"
+                        >
+                            <MessageCircle className="h-5 w-5" />
+                            <span>{t('webSupport')}</span>
+                        </Button>
+                        <Button
+                            onClick={() => {
+                                window.open(`https://wa.me/${appSettings.secondaryContact}`, '_blank');
+                                setIsContactDialogOpen(false);
+                            }}
+                            className="w-full bg-green-500 text-white hover:bg-green-600 flex items-center justify-center gap-2"
+                        >
+                            <WhatsappIcon />
+                            <span>{t('assignReference')}</span>
+                        </Button>
+                    </div>
                 </DialogContent>
             </Dialog>
 
