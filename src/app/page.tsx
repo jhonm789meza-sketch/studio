@@ -1876,7 +1876,7 @@ const App = () => {
                             </DropdownMenu>
                         </div>
                         <div className="text-center">
-                            <h1 className="text-4xl font-bold">RIFA⚡ EXPRESS</h1>
+                            <h1 className="text-4xl font-bold">RIFA⚡EXPRESS</h1>
                         </div>
                         <div className="w-10">
                             {/* Placeholder for symmetry */}
@@ -2008,7 +2008,7 @@ const App = () => {
                                     </div>
                                 </div>
                                 <div className="mt-8">
-                                    <Button onClick={() => setIsPublicSearchOpen(true)}>
+                                    <Button onClick={() => setIsPublicSearchOpen(true)} variant="outline">
                                         {t('searchRaffleByRef')}
                                     </Button>
                                 </div>
@@ -2563,15 +2563,14 @@ const App = () => {
                                 style={{width: '280px'}}
                             >
                                 <div className="absolute inset-0 flex items-center justify-center z-0 opacity-50">
-                                    <p className="text-gray-200/50 text-7xl font-bold -rotate-45 select-none flex items-center gap-4">
-                                        <span>RIFA</span>
-                                        <span className='text-yellow-400'>⚡</span>
+                                    <p className="text-gray-200/50 text-7xl font-bold -rotate-45 select-none flex items-center gap-1">
+                                        <span>RIFA<span className='text-yellow-400'>⚡</span></span>
                                         <span>EXPRESS</span>
                                     </p>
                                 </div>
                                 <div className="relative z-10">
                                     <div className="text-center mb-4">
-                                        <h3 className="text-xl font-bold">RIFA⚡ EXPRESS</h3>
+                                        <h3 className="text-xl font-bold">RIFA⚡EXPRESS</h3>
                                         <p>{t('reference')}: {ticketInfo.raffleRef}</p>
                                         <p className="font-semibold">{t('purchaseReceipt')}</p>
                                     </div>
