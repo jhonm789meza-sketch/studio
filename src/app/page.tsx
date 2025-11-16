@@ -10,7 +10,7 @@ import { useLanguage } from '@/hooks/use-language';
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House, Clock as ClockIcon, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Upload, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages, Trophy, Trash2, Copy, Shield, LogOut, Eye, EyeOff, Gamepad2 } from 'lucide-react';
+import { Menu, Award, Lock, House, Clock as ClockIcon, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Upload, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages, Trophy, Trash2, Copy, Shield, LogOut, Eye, EyeOff, Gamepad2, Phone } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -146,6 +146,7 @@ const App = () => {
     const [pendingActivations, setPendingActivations] = useState<PendingActivation[]>([]);
     const [allRaffles, setAllRaffles] = useState<Raffle[]>([]);
     const [secondaryContact, setSecondaryContact] = useState('');
+    const [isSecondaryContactDialogOpen, setIsSecondaryContactDialogOpen] = useState(false);
 
 
     const [activationConfirmationOpen, setActivationConfirmationOpen] = useState(false);
@@ -1252,6 +1253,7 @@ const App = () => {
     const handleSaveSecondaryContact = () => {
         localStorage.setItem('secondaryContact', secondaryContact);
         showNotification(t('secondaryContactSaved'), 'success');
+        setIsSecondaryContactDialogOpen(false);
     };
     
     const handleSecondaryContact = () => {
@@ -1827,10 +1829,16 @@ const App = () => {
                                         <span>{t('webSupport')}</span>
                                     </DropdownMenuItem>
                                      {isSuperAdmin && (
-                                        <DropdownMenuItem onSelect={handleSuperAdminLogout}>
-                                            <LogOut className="mr-2 h-4 w-4" />
-                                            <span>{t('logout')}</span>
-                                        </DropdownMenuItem>
+                                        <>
+                                            <DropdownMenuItem onSelect={() => setIsSecondaryContactDialogOpen(true)}>
+                                                <Phone className="mr-2 h-4 w-4" />
+                                                <span>{t('secondaryContact')}</span>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onSelect={handleSuperAdminLogout}>
+                                                <LogOut className="mr-2 h-4 w-4" />
+                                                <span>{t('logout')}</span>
+                                            </DropdownMenuItem>
+                                        </>
                                     )}
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem onSelect={handleShare}>
@@ -2103,22 +2111,7 @@ const App = () => {
                                 {isSuperAdmin && (
                                 <div className={activeTab === 'games' ? 'tab-content active' : 'tab-content'}>
                                     <h2 className="text-2xl font-bold text-gray-800 mb-4">{t('assignedGames')}</h2>
-                                     <div className="mb-6 p-4 border rounded-lg bg-gray-50 space-y-2">
-                                        <Label htmlFor="secondary-contact">{t('secondaryContact')}</Label>
-                                        <div className="flex items-center gap-2">
-                                            <Input
-                                                id="secondary-contact"
-                                                type="tel"
-                                                value={secondaryContact}
-                                                onChange={(e) => setSecondaryContact(e.target.value.replace(/\D/g, ''))}
-                                                placeholder={t('enterPhoneNumber')}
-                                            />
-                                            <Button onClick={handleSaveSecondaryContact} size="sm">{t('save')}</Button>
-                                            <Button onClick={handleSecondaryContact} size="sm" variant="outline" disabled={!secondaryContact}>
-                                                <WhatsappIcon />
-                                            </Button>
-                                        </div>
-                                    </div>
+                                    
                                     {allRaffles.length > 0 ? (
                                         <div className="overflow-x-auto">
                                             <table className="min-w-full divide-y divide-gray-200">
@@ -2828,6 +2821,28 @@ const App = () => {
                 </DialogContent>
             </Dialog>
 
+             <Dialog open={isSecondaryContactDialogOpen} onOpenChange={setIsSecondaryContactDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{t('secondaryContact')}</DialogTitle>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <Label htmlFor="secondary-contact-input">{t('enterPhoneNumber')}</Label>
+                        <Input
+                            id="secondary-contact-input"
+                            type="tel"
+                            value={secondaryContact}
+                            onChange={(e) => setSecondaryContact(e.target.value.replace(/\D/g, ''))}
+                            placeholder="3001234567"
+                        />
+                    </div>
+                    <DialogFooter>
+                        <Button type="button" variant="outline" onClick={() => setIsSecondaryContactDialogOpen(false)}>{t('cancel')}</Button>
+                        <Button type="button" onClick={handleSaveSecondaryContact}>{t('save')}</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
             <CountrySelectionDialog
               isOpen={isCountrySelectionOpen}
               onClose={() => setIsCountrySelectionOpen(false)}
@@ -2845,4 +2860,3 @@ const App = () => {
 };
 
 export default App;
-
