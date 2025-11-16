@@ -876,7 +876,7 @@ const App = () => {
             }
     
             // Admin Recovery Flow
-            if (!isInitialLoad && !isPublicSearch) {
+            if (!isInitialLoad && !isPublicSearch && !isSuperAdmin) {
                  try {
                      const docSnap = await getDoc(doc(db, 'raffles', aRef));
                      if (docSnap.exists()) {
@@ -1835,8 +1835,8 @@ const App = () => {
                                         <KeyRound className="mr-2 h-4 w-4" />
                                         <span>{t('recoverAdminAccess')}</span>
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem onSelect={handleContactSupport}>
-                                        <MessageCircle className="mr-2 h-4 w-4" />
+                                    <DropdownMenuItem onSelect={handleContactSupport} className="bg-green-500 text-white focus:bg-green-600 focus:text-white">
+                                        <WhatsappIcon className="mr-2 h-4 w-4" />
                                         <span>{t('contact')}</span>
                                     </DropdownMenuItem>
                                     <DropdownMenuItem onSelect={() => setIsSuperAdminLoginOpen(true)}>
@@ -2922,3 +2922,4 @@ const App = () => {
 };
 
 export default App;
+
