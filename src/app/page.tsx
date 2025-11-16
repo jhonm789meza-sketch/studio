@@ -474,8 +474,8 @@ const App = () => {
 
     const formatValue = (value: string | number) => {
         const currencySymbol = raffleState.currencySymbol || '$';
-        if (!rawValue) return `${currencySymbol} 0`;
-        const numericValue = String(rawValue).replace(/\D/g, '');
+        if (!value) return `${currencySymbol} 0`;
+        const numericValue = String(value).replace(/\D/g, '');
         if (numericValue === '') return `${currencySymbol} 0`;
         
         const number = parseFloat(numericValue);
