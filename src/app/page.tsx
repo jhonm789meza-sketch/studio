@@ -1970,6 +1970,11 @@ const App = () => {
                                         </div>
                                     </div>
                                 </div>
+                                <div className="mt-8">
+                                    <Button variant="link" onClick={() => setIsPublicSearchOpen(true)}>
+                                        {t('searchRaffleByRef')}
+                                    </Button>
+                                </div>
                             </div>
                         </div>
                     ) : (
