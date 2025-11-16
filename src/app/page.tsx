@@ -1875,6 +1875,10 @@ const App = () => {
                                                 <Phone className="mr-2 h-4 w-4" />
                                                 <span>{t('secondaryContact')}</span>
                                             </DropdownMenuItem>
+                                            <DropdownMenuItem onSelect={() => setIsChangePasswordDialogOpen(true)}>
+                                                <KeyRound className="mr-2 h-4 w-4" />
+                                                <span>{t('changePasswordTitle')}</span>
+                                            </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={handleSuperAdminLogout}>
                                                 <LogOut className="mr-2 h-4 w-4" />
                                                 <span>{t('logout')}</span>
