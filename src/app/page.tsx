@@ -278,7 +278,7 @@ const App = () => {
             'id', 'reference', 'state', 'env', 'raffleMode', 'adminId' // Add adminId here
         ];
         
-        let needsCleanup = needsCleanup || false;
+        let needsCleanup = false;
         paramsToClean.forEach(param => {
             if (url.searchParams.has(param)) {
                 url.searchParams.delete(param);
