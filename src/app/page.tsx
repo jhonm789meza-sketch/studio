@@ -1813,7 +1813,11 @@ const App = () => {
                                     </DropdownMenuItem>
                                     <DropdownMenuItem onSelect={() => setIsSuperAdminLoginOpen(true)}>
                                         <Shield className="mr-2 h-4 w-4" />
-                                        <span>{t('webSupport')}</span>
+                                        <span>Super Administrador</span>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onSelect={handleContactSupport}>
+                                        <MessageCircle className="mr-2 h-4 w-4" />
+                                        <span>Soporte Web</span>
                                     </DropdownMenuItem>
                                      {isSuperAdmin && (
                                         <DropdownMenuItem onSelect={handleSuperAdminLogout}>
