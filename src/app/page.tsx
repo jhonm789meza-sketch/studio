@@ -2890,7 +2890,7 @@ const App = () => {
                             className="w-full bg-green-500 text-white hover:bg-green-600 flex items-center justify-center gap-2"
                         >
                             <WhatsappIcon />
-                            <span>{t('webSupport')}</span>
+                            <span>{t('assignReference')}</span>
                         </Button>
                         <Button
                             onClick={() => {
