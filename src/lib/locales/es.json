@@ -256,5 +256,6 @@
     "passwordChangedSuccess": "Contraseña cambiada con éxito.",
     "passwordChangeError": "Error al cambiar la contraseña.",
     "changeExecutivePasswordTitle": "Cambiar Contraseña de Director Ejecutivo",
-    "changeExecutivePasswordDescription": "Estás a punto de cambiar tu contraseña de acceso."
+    "changeExecutivePasswordDescription": "Estás a punto de cambiar tu contraseña de acceso.",
+    "currentPassword": "Contraseña Actual"
 }

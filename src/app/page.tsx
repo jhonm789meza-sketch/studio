@@ -2224,13 +2224,10 @@ const App = () => {
                                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{raffle.raffleMode === 'infinite' ? formatValue(raffle.prize) : raffle.prize}</td>
                                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{raffle.organizerName}</td>
                                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{raffle.gameDate}</td>
-                                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">
-                                                                    <div className="flex items-center gap-2">
-                                                                        <span>{raffle.password}</span>
-                                                                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => { setRaffleToChangePassword(raffle); setIsChangePasswordDialogOpen(true); }}>
-                                                                            <KeyRound className="h-4 w-4 text-gray-400" />
-                                                                        </Button>
-                                                                    </div>
+                                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setRaffleToChangePassword(raffle); setIsChangePasswordDialogOpen(true); }}>
+                                                                        <KeyRound className="h-4 w-4 text-gray-500" />
+                                                                    </Button>
                                                                 </td>
                                                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-600">{formatValue(collected)}</td>
                                                                 <td className="px-6 py-4 whitespace-nowrap text-sm">
@@ -2983,6 +2980,20 @@ const App = () => {
                         </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
+                         <div className="grid gap-2">
+                             <Label htmlFor="current-password">{t('currentPassword')}</Label>
+                             <div className="relative">
+                                 <Input id="current-password" type="text" readOnly value={raffleToChangePassword?.password || ''} />
+                                 <Button
+                                     variant="ghost"
+                                     size="icon"
+                                     className="absolute top-1/2 right-2 -translate-y-1/2 h-7 w-7"
+                                     onClick={() => navigator.clipboard.writeText(raffleToChangePassword?.password || '')}
+                                 >
+                                     <Copy className="h-4 w-4" />
+                                 </Button>
+                             </div>
+                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="new-password">{t('newPassword')}</Label>
                             <Input
@@ -3061,7 +3072,3 @@ const App = () => {
 };
 
 export default App;
-
-
-
-    

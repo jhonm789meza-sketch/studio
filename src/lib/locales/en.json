@@ -251,5 +251,6 @@
     "passwordChangedSuccess": "Password changed successfully.",
     "passwordChangeError": "Error changing password.",
     "changeExecutivePasswordTitle": "Change Executive Director Password",
-    "changeExecutivePasswordDescription": "You are about to change your access password."
+    "changeExecutivePasswordDescription": "You are about to change your access password.",
+    "currentPassword": "Current Password"
 }
