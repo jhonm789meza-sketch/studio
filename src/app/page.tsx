@@ -2870,7 +2870,7 @@ const App = () => {
                             className="w-full bg-gray-200 text-gray-800 hover:bg-gray-300 flex items-center justify-center gap-2"
                         >
                             <MessageCircle className="h-5 w-5" />
-                            <span>{t('webSupport')}</span>
+                            <span>{t('assignReference')}</span>
                         </Button>
                         <Button
                             onClick={() => {
