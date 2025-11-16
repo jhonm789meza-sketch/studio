@@ -853,34 +853,14 @@ const App = () => {
     
             // Admin Recovery Flow
             if (!isInitialLoad && !isPublicSearch && !isSuperAdmin) {
-                if (!aPhone) {
-                    showNotification(t('enterOrganizerPhoneWarning'), 'warning');
-                    setLoading(false);
-                    resolve();
-                    return;
-                }
-                if (!aPassword) {
-                    showNotification(t('enterPasswordWarning'), 'warning');
-                    setLoading(false);
-                    resolve();
-                    return;
-                }
-            }
-    
-            raffleSubscription.current?.();
-            const raffleDocRef = doc(db, 'raffles', aRef);
-            if (persistenceEnabled) await persistenceEnabled;
-    
-            // Super Admin Search / Admin Recovery
-            if (!isInitialLoad && !isPublicSearch) {
                  try {
-                     const docSnap = await getDoc(raffleDocRef);
+                     const docSnap = await getDoc(doc(db, 'raffles', aRef));
                      if (docSnap.exists()) {
                          const data = docSnap.data() as Raffle;
-                         if (isSuperAdmin || (data.organizerPhoneNumber === aPhone && data.password === aPassword)) {
+                         if (data.organizerPhoneNumber === aPhone && data.password === aPassword) {
                              localStorage.setItem('rifaAdminId', data.adminId!);
                              setCurrentAdminId(data.adminId);
-                             if (!isSuperAdmin) showNotification(t('adminAccessRestored'), 'success');
+                             showNotification(t('adminAccessRestored'), 'success');
                          } else {
                              showNotification(t('phoneOrPasswordMismatch'), 'error');
                              setLoading(false);
@@ -903,6 +883,10 @@ const App = () => {
             }
     
             // General Subscription Logic (for all searches)
+            raffleSubscription.current?.();
+            const raffleDocRef = doc(db, 'raffles', aRef);
+            if (persistenceEnabled) await persistenceEnabled;
+
             raffleSubscription.current = onSnapshot(raffleDocRef, (docSnapshot) => {
                 if (docSnapshot.exists()) {
                     const data = docSnapshot.data() as Raffle;
@@ -1096,11 +1080,6 @@ const App = () => {
     };
 
     const handleRefClick = async (ref: string, mode: RaffleMode) => {
-        if (!isSuperAdmin) {
-             setPublicRefSearch(ref);
-             setIsPublicSearchOpen(true);
-             return;
-        }
         setPublicRefSearch(ref);
         setIsPublicSearchOpen(true);
     };
@@ -1817,7 +1796,7 @@ const App = () => {
                                     </DropdownMenuItem>
                                     <DropdownMenuItem onSelect={handleContactSupport}>
                                         <MessageCircle className="mr-2 h-4 w-4" />
-                                        <span>Soporte Web</span>
+                                        <span>Contacto</span>
                                     </DropdownMenuItem>
                                      {isSuperAdmin && (
                                         <DropdownMenuItem onSelect={handleSuperAdminLogout}>
