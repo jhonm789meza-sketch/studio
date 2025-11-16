@@ -157,6 +157,10 @@ const App = () => {
 
     const [appSettings, setAppSettings] = useState<AppSettings>({});
     const [isContactDialogOpen, setIsContactDialogOpen] = useState(false);
+    const [isChangePasswordDialogOpen, setIsChangePasswordDialogOpen] = useState(false);
+    const [raffleToChangePassword, setRaffleToChangePassword] = useState<Raffle | null>(null);
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmNewPassword, setConfirmNewPassword] = useState('');
 
     const raffleManager = new RaffleManager(db);
     
@@ -809,7 +813,7 @@ const App = () => {
             await navigator.share(shareData);
           } catch (error) {
             console.error('Error sharing:', error);
-            // Fallback to dialog if sharing fails (e.g., user cancels)
+            // Fallback to sharing fails (e.g., user cancels)
             setIsShareDialogOpen(true);
           }
         } else {
@@ -1273,6 +1277,28 @@ const App = () => {
         } catch (error) {
             console.error("Error saving secondary contact:", error);
             showNotification(t('errorSavingSecondaryContact'), 'error');
+        }
+    };
+
+    const handleChangePassword = async () => {
+        if (!raffleToChangePassword || !raffleToChangePassword.raffleRef) return;
+    
+        if (!newPassword || newPassword !== confirmNewPassword) {
+            showNotification(t('passwordsDoNotMatch'), 'error');
+            return;
+        }
+    
+        try {
+            const raffleDocRef = doc(db, 'raffles', raffleToChangePassword.raffleRef);
+            await updateDoc(raffleDocRef, { password: newPassword });
+            showNotification(t('passwordChangedSuccess'), 'success');
+            setIsChangePasswordDialogOpen(false);
+            setNewPassword('');
+            setConfirmNewPassword('');
+            setRaffleToChangePassword(null);
+        } catch (error) {
+            console.error("Error changing password:", error);
+            showNotification(t('passwordChangeError'), 'error');
         }
     };
 
@@ -1841,7 +1867,7 @@ const App = () => {
                                     </DropdownMenuItem>
                                     <DropdownMenuItem onSelect={() => setIsSuperAdminLoginOpen(true)}>
                                         <Shield className="mr-2 h-4 w-4" />
-                                        <span>Director Ejecutivo</span>
+                                        <span>{t('superAdminLogin')}</span>
                                     </DropdownMenuItem>
                                      {isSuperAdmin && (
                                         <>
@@ -2010,7 +2036,7 @@ const App = () => {
                                 <div className="mt-8">
                                     <div className="flex justify-center items-center gap-2">
                                         <Input
-                                            id="public-ref-search"
+                                            id="public-ref-search-home"
                                             value={publicRefSearch}
                                             onChange={(e) => setPublicRefSearch(e.target.value)}
                                             className="max-w-xs"
@@ -2170,7 +2196,14 @@ const App = () => {
                                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{raffle.raffleMode === 'infinite' ? formatValue(raffle.prize) : raffle.prize}</td>
                                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{raffle.organizerName}</td>
                                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{raffle.gameDate}</td>
-                                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">{raffle.password}</td>
+                                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">
+                                                                    <div className="flex items-center gap-2">
+                                                                        <span>{raffle.password}</span>
+                                                                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => { setRaffleToChangePassword(raffle); setIsChangePasswordDialogOpen(true); }}>
+                                                                            <KeyRound className="h-4 w-4 text-gray-400" />
+                                                                        </Button>
+                                                                    </div>
+                                                                </td>
                                                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-600">{formatValue(collected)}</td>
                                                                 <td className="px-6 py-4 whitespace-nowrap text-sm">
                                                                     <Button onClick={() => handleAdminSearch({ refToSearch: raffle.raffleRef, isPublicSearch: true })} size="sm" variant="outline">
@@ -2910,6 +2943,41 @@ const App = () => {
                             <span>{t('assignReference')}</span>
                         </Button>
                     </div>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={isChangePasswordDialogOpen} onOpenChange={setIsChangePasswordDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{t('changePasswordTitle')}</DialogTitle>
+                        <DialogDescription>
+                            {t('changePasswordDescription', { ref: raffleToChangePassword?.raffleRef })}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="new-password">{t('newPassword')}</Label>
+                            <Input
+                                id="new-password"
+                                type="password"
+                                value={newPassword}
+                                onChange={(e) => setNewPassword(e.target.value)}
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="confirm-new-password">{t('confirmNewPassword')}</Label>
+                            <Input
+                                id="confirm-new-password"
+                                type="password"
+                                value={confirmNewPassword}
+                                onChange={(e) => setConfirmNewPassword(e.target.value)}
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsChangePasswordDialogOpen(false)}>{t('cancel')}</Button>
+                        <Button onClick={handleChangePassword}>{t('changePasswordButton')}</Button>
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
 

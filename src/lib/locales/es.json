@@ -116,7 +116,7 @@
     "confirmPayment": "Confirmar Pago",
     "noPendingPayments": "No hay pagos pendientes de confirmación.",
     "confirmedParticipants": "Participantes Confirmados",
-    "activateRaffleToSeeParticipants": "Debes activar o buscar una rifa en la pestaña 'Tablero' para poder ver los participantes.",
+    "activateRaffleToSeeParticipants": "Debes activar o buscar una rifa para ver los participantes.",
     "generateTicket": "Generar Tiquete",
     "noConfirmedParticipants": "No hay participantes con pago confirmado.",
     "confirmAction": "Confirmar acción",
@@ -212,7 +212,7 @@
     "pendingDeletedError": "Error al eliminar el participante pendiente.",
     "activate": "Activar",
     "transactionAlreadyUsed": "Esta transacción ya fue utilizada para activar otra rifa.",
-    "superAdminLogin": "Acceso Director Ejecutivo",
+    "superAdminLogin": "Director Ejecutivo",
     "login": "Ingresar",
     "activationsTab": "Activaciones ({count})",
     "pendingActivations": "Activaciones Pendientes",
@@ -246,5 +246,13 @@
     "contactDialogDescription": "Elige una opción de contacto.",
     "assignReference": "Asignar Referencia",
     "webSupport": "Soporte Web",
-    "searchGamePlaceholder": "Buscar por referencia..."
+    "searchGamePlaceholder": "Buscar por referencia...",
+    "changePasswordTitle": "Cambiar Contraseña",
+    "changePasswordDescription": "Estás a punto de cambiar la contraseña para la rifa {ref}.",
+    "newPassword": "Nueva Contraseña",
+    "confirmNewPassword": "Confirmar Nueva Contraseña",
+    "changePasswordButton": "Cambiar Contraseña",
+    "passwordsDoNotMatch": "Las contraseñas no coinciden.",
+    "passwordChangedSuccess": "Contraseña cambiada con éxito.",
+    "passwordChangeError": "Error al cambiar la contraseña."
 }

@@ -116,7 +116,7 @@
     "confirmPayment": "Confirm Payment",
     "noPendingPayments": "No pending payments for confirmation.",
     "confirmedParticipants": "Confirmed Participants",
-    "activateRaffleToSeeParticipants": "You must activate or search for a raffle on the 'Board' tab to see the participants.",
+    "activateRaffleToSeeParticipants": "You must activate or search for a raffle to see the participants.",
     "generateTicket": "Generate Ticket",
     "noConfirmedParticipants": "No participants with confirmed payment.",
     "confirmAction": "Confirm action",
@@ -241,5 +241,13 @@
     "transactionAlreadyUsed": "This transaction has already been used.",
     "activateRaffleToSeeParticipants": "You must activate or search for a raffle to see the participants.",
     "searchGamePlaceholder": "Search by reference...",
-    "superAdminLogin": "Executive Director Login"
+    "superAdminLogin": "Executive Director Login",
+    "changePasswordTitle": "Change Password",
+    "changePasswordDescription": "You are about to change the password for raffle {ref}.",
+    "newPassword": "New Password",
+    "confirmNewPassword": "Confirm New Password",
+    "changePasswordButton": "Change Password",
+    "passwordsDoNotMatch": "Passwords do not match.",
+    "passwordChangedSuccess": "Password changed successfully.",
+    "passwordChangeError": "Error changing password."
 }
