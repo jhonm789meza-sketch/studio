@@ -95,13 +95,6 @@ const DateTimeDisplay = ({ nextRaffleRefs, t, onRefClick }: { nextRaffleRefs: { 
         <div className="text-center text-gray-500 mb-4">
             <p className="font-semibold text-lg">{currentTime.toLocaleDateString(locale, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
             <p className="text-3xl font-bold tracking-wider">{currentTime.toLocaleTimeString(locale)}</p>
-             {nextRaffleRefs && (
-                <div className="text-sm font-semibold mt-2 space-y-1">
-                    <p className="text-green-600">{t('nextRefsEven')} <span className="cursor-pointer hover:underline" onClick={() => onRefClick(nextRaffleRefs.even.refs[0], 'two-digit')}>{nextRaffleRefs.even.refs.join(', ')}</span> ({t('playedCount')}: {nextRaffleRefs.even.count})</p>
-                    <p className="text-blue-600">{t('nextRefsOdd')} <span className="cursor-pointer hover:underline" onClick={() => onRefClick(nextRaffleRefs.odd.refs[0], 'three-digit')}>{nextRaffleRefs.odd.refs.join(', ')}</span> ({t('playedCount')}: {nextRaffleRefs.odd.count})</p>
-                    <p className="text-red-600">{t('nextRefsInfinite')} <span className="cursor-pointer hover:underline" onClick={() => onRefClick(nextRaffleRefs.infinite.refs[0], 'infinite')}>{nextRaffleRefs.infinite.refs.join(', ')}</span> ({t('playedCount')}: {nextRaffleRefs.infinite.count})</p>
-                </div>
-            )}
         </div>
     );
 };
