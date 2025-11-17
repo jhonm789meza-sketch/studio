@@ -74,7 +74,6 @@
     "installApp": "Install App",
     "languages": "Languages",
     "contact": "Contact",
-    "boardLockedDescription": "",
     "digits": "DIGITS",
     "2digitRaffle": "2-Digit Raffle",
     "2digitRaffleDescription": "For numbers from 00 to 99.",
@@ -256,5 +255,3 @@
     "activationInstructionTitle": "How to Activate Your Board",
     "activationInstructionBody": "To get your raffle board, first pay to the account number displayed on the screen for the raffle you want. Then, contact us through the 'Contact' option in the menu so we can assign you your reference."
 }
-
-    
