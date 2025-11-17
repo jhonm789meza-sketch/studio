@@ -74,7 +74,7 @@
     "installApp": "Instalar Aplicación",
     "languages": "Idiomas",
     "contact": "Contacto",
-    "boardLockedDescription": "Activa una rifa o busca una por su referencia para empezar.",
+    "boardLockedDescription": "",
     "digits": "CIFRAS",
     "2digitRaffle": "Rifa de 2 Cifras",
     "2digitRaffleDescription": "Para números del 00 al 99.",
@@ -261,3 +261,5 @@
     "activationInstructionTitle": "Cómo Activar tu Tablero",
     "activationInstructionBody": "Para obtener tu tablero de rifa, primero cancela al número de cuenta que aparece en pantalla para la rifa que deseas. Luego, comunícate con nosotros a través de la opción 'Contacto' en el menú para que te asignemos tu referencia."
 }
+
+    
