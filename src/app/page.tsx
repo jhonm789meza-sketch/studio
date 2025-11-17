@@ -1975,10 +1975,13 @@ const App = () => {
                                                     {isSuperAdmin ? t('activate') : t('price')}
                                                 </Button>
                                                 {!isSuperAdmin && (
-                                                    <Button onClick={() => handleNequiActivationClick('two-digit')} size="lg" className="w-full bg-[#A454C4] hover:bg-[#8e49a8] text-white font-bold flex items-center gap-2">
-                                                        <NequiIcon />
-                                                        Nequi (12.000)
-                                                    </Button>
+                                                    <div className="text-center">
+                                                        <Button onClick={() => handleNequiActivationClick('two-digit')} size="lg" className="w-full bg-[#A454C4] hover:bg-[#8e49a8] text-white font-bold flex items-center gap-2">
+                                                            <NequiIcon />
+                                                            Nequi (12.000)
+                                                        </Button>
+                                                        <p className="text-xs text-gray-500 mt-2">Numero cuenta Nequi: 3145696687</p>
+                                                    </div>
                                                 )}
                                                 {isSuperAdmin && nextRaffleRefs.even.refs.length > 0 && (
                                                     <div className="text-xs text-center text-gray-500 font-semibold">
@@ -2018,10 +2021,13 @@ const App = () => {
                                                      {isSuperAdmin ? t('activate') : t('price')}
                                                 </Button>
                                                  {!isSuperAdmin && (
-                                                    <Button onClick={() => handleNequiActivationClick('three-digit')} size="lg" className="w-full bg-[#A454C4] hover:bg-[#8e49a8] text-white font-bold flex items-center gap-2">
-                                                        <NequiIcon />
-                                                        Nequi (15.000)
-                                                    </Button>
+                                                    <div className="text-center">
+                                                        <Button onClick={() => handleNequiActivationClick('three-digit')} size="lg" className="w-full bg-[#A454C4] hover:bg-[#8e49a8] text-white font-bold flex items-center gap-2">
+                                                            <NequiIcon />
+                                                            Nequi (15.000)
+                                                        </Button>
+                                                        <p className="text-xs text-gray-500 mt-2">Numero cuenta Nequi: 3145696687</p>
+                                                    </div>
                                                 )}
                                                 {isSuperAdmin && nextRaffleRefs.odd.refs.length > 0 && (
                                                     <div className="text-xs text-center text-gray-500 font-semibold">
@@ -2061,10 +2067,13 @@ const App = () => {
                                                      {isSuperAdmin ? t('activate') : t('price')}
                                                 </Button>
                                                  {!isSuperAdmin && (
-                                                    <Button onClick={() => handleNequiActivationClick('infinite')} size="lg" className="w-full bg-[#A454C4] hover:bg-[#8e49a8] text-white font-bold flex items-center gap-2">
-                                                        <NequiIcon />
-                                                        Nequi (30.000)
-                                                    </Button>
+                                                    <div className="text-center">
+                                                        <Button onClick={() => handleNequiActivationClick('infinite')} size="lg" className="w-full bg-[#A454C4] hover:bg-[#8e49a8] text-white font-bold flex items-center gap-2">
+                                                            <NequiIcon />
+                                                            Nequi (30.000)
+                                                        </Button>
+                                                        <p className="text-xs text-gray-500 mt-2">Numero cuenta Nequi: 3145696687</p>
+                                                    </div>
                                                 )}
                                                 {isSuperAdmin && nextRaffleRefs.infinite.refs.length > 0 && (
                                                     <div className="text-xs text-center text-gray-500 font-semibold">
