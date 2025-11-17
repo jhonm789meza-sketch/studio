@@ -1966,7 +1966,7 @@ const App = () => {
                                 <Lock className="mx-auto h-12 w-12 text-gray-400 mb-4" />
                                 <h2 className="text-2xl font-bold text-gray-800 mb-2">{t('boardLocked')}</h2>
                                 <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                                    {t('boardLockedDescription')}
+                                    
                                 </p>
 
                                 <div className="max-w-2xl mx-auto bg-blue-50 border-l-4 border-blue-500 text-blue-800 p-4 rounded-md mb-8">
@@ -3126,3 +3126,5 @@ const App = () => {
 };
 
 export default App;
+
+    
