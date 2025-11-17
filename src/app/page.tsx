@@ -168,11 +168,11 @@ const App = () => {
 
     const raffleManager = new RaffleManager(db);
     
+    const isCurrentUserAdmin = !!raffleState.adminId && !!currentAdminId && raffleState.adminId === currentAdminId;
     const raffleMode = raffleState.raffleMode;
     const totalNumbers = raffleMode === 'two-digit' ? 100 : 1000;
     const numberLength = raffleMode === 'two-digit' ? 2 : 3;
 
-    const isCurrentUserAdmin = !!raffleState.adminId && !!currentAdminId && raffleState.adminId === currentAdminId;
 
      useEffect(() => {
         if (typeof document !== 'undefined') {
@@ -933,11 +933,15 @@ const App = () => {
     
                     if (isSuperAdmin) {
                         setCurrentAdminId(data.adminId);
-                    } else {
+                    } else if (!isPublicSearch) { // Only set admin from storage if not a public search
                         const adminIdFromStorage = localStorage.getItem('rifaAdminId');
                         if (adminIdFromStorage && data.adminId === adminIdFromStorage) {
                             setCurrentAdminId(adminIdFromStorage);
+                        } else {
+                            setCurrentAdminId(null);
                         }
+                    } else {
+                        setCurrentAdminId(null); // Ensure no admin access on public search
                     }
     
                     setRaffleState(data);
