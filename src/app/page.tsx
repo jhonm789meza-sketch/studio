@@ -401,12 +401,12 @@ const App = () => {
             }
 
             const status = urlParams.get('transactionState') || urlParams.get('state');
-            const transactionId = urlParams.get('reference'); 
+            const transactionId = urlParams.get('reference') || urlParams.get('ref_payco'); 
             const refFromUrl = urlParams.get('ref');
             const modeFromUrl = urlParams.get('raffleMode') as RaffleMode;
 
             // --- Payment Confirmation Logic ---
-            if ((status?.toLowerCase() === 'approved' || status === '4') && transactionId && modeFromUrl) {
+            if ((status?.toLowerCase() === 'approved' || status === '4' || status === '1') && transactionId && modeFromUrl) {
                 const transactionDocRef = doc(db, 'usedTransactions', transactionId);
                 const transactionDoc = await getDoc(transactionDocRef);
 
@@ -427,7 +427,7 @@ const App = () => {
                 return;
             }
             // --- Participant Payment Confirmation ---
-            else if ((status?.toLowerCase() === 'approved' || status === '4') && transactionId && refFromUrl) {
+            else if ((status?.toLowerCase() === 'approved' || status === '4' || status === '1') && transactionId && refFromUrl) {
                  const pName = urlParams.get('pName');
                  const pPhone = urlParams.get('pPhone');
                  const pNum = urlParams.get('pNum');
@@ -1091,6 +1091,26 @@ const App = () => {
 
         if (paymentLink) {
             window.location.href = paymentLink;
+        }
+    };
+
+    const handleNequiActivationClick = (mode: RaffleMode) => {
+        const activationRef = `TXN_${mode}_${Date.now()}`;
+        const redirectUrl = new URL(window.location.origin);
+        redirectUrl.searchParams.set('raffleMode', mode);
+        redirectUrl.searchParams.set('reference', activationRef);
+
+        let nequiUrl = '';
+        if (mode === 'two-digit') {
+            nequiUrl = `nequi://app/pay?phoneNumber=3145696687&value=10000&currency=COP&description=Activacion Rifa 2 Cifras`;
+        } else if (mode === 'three-digit') {
+            nequiUrl = `nequi://app/pay?phoneNumber=3145696687&value=15000&currency=COP&description=Activacion Rifa 3 Cifras`;
+        } else if (mode === 'infinite') {
+            nequiUrl = `nequi://app/pay?phoneNumber=3145696687&value=30000&currency=COP&description=Activacion Rifa Infinita`;
+        }
+
+        if (nequiUrl) {
+            window.location.href = nequiUrl;
         }
     };
     
@@ -1966,6 +1986,12 @@ const App = () => {
                                                  <Button onClick={() => handlePriceButtonClick('two-digit')} size="lg" className="w-full bg-green-500 hover:bg-green-600 text-white font-bold">
                                                     {isSuperAdmin ? t('activate') : t('price')}
                                                 </Button>
+                                                {!isSuperAdmin && (
+                                                    <Button onClick={() => handleNequiActivationClick('two-digit')} size="lg" className="w-full bg-[#A454C4] hover:bg-[#8e49a8] text-white font-bold flex items-center gap-2">
+                                                        <NequiIcon />
+                                                        {t('payWithNequi')}
+                                                    </Button>
+                                                )}
                                                 {isSuperAdmin && nextRaffleRefs.even.refs.length > 0 && (
                                                     <div className="text-xs text-center text-gray-500 font-semibold">
                                                         {t('nextRefsEven')}{' '}
@@ -2003,6 +2029,12 @@ const App = () => {
                                                 <Button onClick={() => handlePriceButtonClick('three-digit')} size="lg" className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold">
                                                      {isSuperAdmin ? t('activate') : t('price')}
                                                 </Button>
+                                                 {!isSuperAdmin && (
+                                                    <Button onClick={() => handleNequiActivationClick('three-digit')} size="lg" className="w-full bg-[#A454C4] hover:bg-[#8e49a8] text-white font-bold flex items-center gap-2">
+                                                        <NequiIcon />
+                                                        {t('payWithNequi')}
+                                                    </Button>
+                                                )}
                                                 {isSuperAdmin && nextRaffleRefs.odd.refs.length > 0 && (
                                                     <div className="text-xs text-center text-gray-500 font-semibold">
                                                         {t('nextRefsOdd')}{' '}
@@ -2040,6 +2072,12 @@ const App = () => {
                                                 <Button onClick={() => handlePriceButtonClick('infinite')} size="lg" className="w-full bg-red-500 hover:bg-red-600 text-white font-bold">
                                                      {isSuperAdmin ? t('activate') : t('price')}
                                                 </Button>
+                                                 {!isSuperAdmin && (
+                                                    <Button onClick={() => handleNequiActivationClick('infinite')} size="lg" className="w-full bg-[#A454C4] hover:bg-[#8e49a8] text-white font-bold flex items-center gap-2">
+                                                        <NequiIcon />
+                                                        {t('payWithNequi')}
+                                                    </Button>
+                                                )}
                                                 {isSuperAdmin && nextRaffleRefs.infinite.refs.length > 0 && (
                                                     <div className="text-xs text-center text-gray-500 font-semibold">
                                                         {t('nextRefsInfinite')}{' '}
@@ -3072,3 +3110,5 @@ const App = () => {
 };
 
 export default App;
+
+    
