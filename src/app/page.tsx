@@ -1095,23 +1095,11 @@ const App = () => {
     };
 
     const handleNequiActivationClick = (mode: RaffleMode) => {
-        const activationRef = `TXN_${mode}_${Date.now()}`;
-        const redirectUrl = new URL(window.location.origin);
-        redirectUrl.searchParams.set('raffleMode', mode);
-        redirectUrl.searchParams.set('reference', activationRef);
-
-        let nequiUrl = '';
-        if (mode === 'two-digit') {
-            nequiUrl = `nequi://app/pay?phoneNumber=3145696687&value=12000&currency=COP&description=Activacion Rifa 2 Cifras`;
-        } else if (mode === 'three-digit') {
-            nequiUrl = `nequi://app/pay?phoneNumber=3145696687&value=15000&currency=COP&description=Activacion Rifa 3 Cifras`;
-        } else if (mode === 'infinite') {
-            nequiUrl = `nequi://app/pay?phoneNumber=3145696687&value=30000&currency=COP&description=Activacion Rifa Infinita`;
-        }
-
-        if (nequiUrl) {
-            window.location.href = nequiUrl;
-        }
+        // This function now redirects to WhatsApp for manual activation coordination.
+        const nequiNumber = '3145696687';
+        const message = `Hola, quiero activar una rifa de ${mode === 'two-digit' ? '2 cifras' : mode === 'three-digit' ? '3 cifras' : 'infinita'}. Mi número de Nequi es:`;
+        const whatsappUrl = `https://wa.me/${nequiNumber}?text=${encodeURIComponent(message)}`;
+        window.open(whatsappUrl, '_blank');
     };
     
     const handleManualActivation = async (mode: RaffleMode) => {
