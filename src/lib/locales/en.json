@@ -252,5 +252,7 @@
     "passwordChangeError": "Error changing password.",
     "changeExecutivePasswordTitle": "Change Executive Director Password",
     "changeExecutivePasswordDescription": "You are about to change your access password.",
-    "currentPassword": "Current Password"
+    "currentPassword": "Current Password",
+    "activationInstructionTitle": "How to Activate Your Board",
+    "activationInstructionBody": "To get your raffle board, first pay to the account number displayed on the screen for the raffle you want. Then, contact us through the 'Contact' option in the menu so we can assign you your reference."
 }

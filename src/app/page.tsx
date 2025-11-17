@@ -1968,6 +1968,11 @@ const App = () => {
                                 <p className="text-gray-600 mb-6 max-w-md mx-auto">
                                     {t('boardLockedDescription')}
                                 </p>
+
+                                <div className="max-w-2xl mx-auto bg-blue-50 border-l-4 border-blue-500 text-blue-800 p-4 rounded-md mb-8">
+                                    <h3 className="font-bold">{t('activationInstructionTitle')}</h3>
+                                    <p className="text-sm">{t('activationInstructionBody')}</p>
+                                </div>
                                 
                                 <div className="grid md:grid-cols-1 gap-8 items-start max-w-md mx-auto">
                                     <div className="flex flex-col justify-center items-center gap-8">

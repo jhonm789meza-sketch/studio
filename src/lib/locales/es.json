@@ -257,5 +257,7 @@
     "passwordChangeError": "Error al cambiar la contraseña.",
     "changeExecutivePasswordTitle": "Cambiar Contraseña de Director Ejecutivo",
     "changeExecutivePasswordDescription": "Estás a punto de cambiar tu contraseña de acceso.",
-    "currentPassword": "Contraseña Actual"
+    "currentPassword": "Contraseña Actual",
+    "activationInstructionTitle": "Cómo Activar tu Tablero",
+    "activationInstructionBody": "Para obtener tu tablero de rifa, primero cancela al número de cuenta que aparece en pantalla para la rifa que deseas. Luego, comunícate con nosotros a través de la opción 'Contacto' en el menú para que te asignemos tu referencia."
 }
