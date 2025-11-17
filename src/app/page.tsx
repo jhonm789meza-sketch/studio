@@ -7,6 +7,7 @@ import { doc, onSnapshot, setDoc, getDoc, deleteDoc, Unsubscribe, serverTimestam
 import Image from 'next/image';
 import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { useLanguage } from '@/hooks/use-language';
+import { requestNotificationPermission } from '@/lib/notification';
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
@@ -66,6 +67,7 @@ const initialRaffleData: Raffle = {
     sharePrize: false,
     automaticDraw: false,
     allowPartialWinners: false,
+    notificationTokens: [],
 };
 
 interface PartialWinnerInfo {
@@ -174,6 +176,13 @@ const App = () => {
             document.documentElement.lang = language;
         }
     }, [language]);
+
+
+    useEffect(() => {
+        if (isCurrentUserAdmin && raffleState.raffleRef) {
+            requestNotificationPermission(raffleState.raffleRef);
+        }
+    }, [isCurrentUserAdmin, raffleState.raffleRef]);
 
 
     // Fetch global settings
@@ -3126,5 +3135,3 @@ const App = () => {
 };
 
 export default App;
-
-    

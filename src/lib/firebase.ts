@@ -2,6 +2,7 @@
 import { initializeApp, getApp, FirebaseApp } from 'firebase/app';
 import { getFirestore, Firestore, enableIndexedDbPersistence } from 'firebase/firestore';
 import { getStorage, FirebaseStorage } from 'firebase/storage';
+import { getMessaging, Messaging } from 'firebase/messaging';
 
 const firebaseConfig = {
   "projectId": "rifaexpress",
@@ -9,13 +10,14 @@ const firebaseConfig = {
   "storageBucket": "rifaexpress.appspot.com",
   "apiKey": "AIzaSyBnHP82Rccw1gS35YCUWGyYfRKbvnvXdmg",
   "authDomain": "rifaexpress-5b0ac.firebaseapp.com",
-  "measurementId": "",
+  "measurementId": "G-S6V0FE42M9",
   "messagingSenderId": "945876849893"
 };
 
 let app: FirebaseApp;
 let db: Firestore;
 let storage: FirebaseStorage;
+let messaging: Messaging | null = null;
 let persistenceEnabled: Promise<void> | null = null;
 
 
@@ -28,6 +30,9 @@ try {
 db = getFirestore(app);
 storage = getStorage(app);
 
+if (typeof window !== 'undefined') {
+    messaging = getMessaging(app);
+}
 
 // Enable offline persistence
 if (typeof window !== 'undefined' && !persistenceEnabled) {
@@ -46,6 +51,4 @@ if (typeof window !== 'undefined' && !persistenceEnabled) {
 }
 
 
-export { db, storage, persistenceEnabled };
-
-    
+export { db, storage, messaging, persistenceEnabled, app };

@@ -62,10 +62,12 @@ export interface Raffle {
     sharePrize?: boolean;
     automaticDraw?: boolean;
     allowPartialWinners?: boolean;
+    notificationTokens?: string[];
 }
 
     
 
     
+
 
 
