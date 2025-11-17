@@ -1102,7 +1102,7 @@ const App = () => {
 
         let nequiUrl = '';
         if (mode === 'two-digit') {
-            nequiUrl = `nequi://app/pay?phoneNumber=3145696687&value=10000&currency=COP&description=Activacion Rifa 2 Cifras`;
+            nequiUrl = `nequi://app/pay?phoneNumber=3145696687&value=12000&currency=COP&description=Activacion Rifa 2 Cifras`;
         } else if (mode === 'three-digit') {
             nequiUrl = `nequi://app/pay?phoneNumber=3145696687&value=15000&currency=COP&description=Activacion Rifa 3 Cifras`;
         } else if (mode === 'infinite') {
@@ -1989,7 +1989,7 @@ const App = () => {
                                                 {!isSuperAdmin && (
                                                     <Button onClick={() => handleNequiActivationClick('two-digit')} size="lg" className="w-full bg-[#A454C4] hover:bg-[#8e49a8] text-white font-bold flex items-center gap-2">
                                                         <NequiIcon />
-                                                        {t('payWithNequi')}
+                                                        Nequi (12.000)
                                                     </Button>
                                                 )}
                                                 {isSuperAdmin && nextRaffleRefs.even.refs.length > 0 && (
@@ -2032,7 +2032,7 @@ const App = () => {
                                                  {!isSuperAdmin && (
                                                     <Button onClick={() => handleNequiActivationClick('three-digit')} size="lg" className="w-full bg-[#A454C4] hover:bg-[#8e49a8] text-white font-bold flex items-center gap-2">
                                                         <NequiIcon />
-                                                        {t('payWithNequi')}
+                                                        Nequi (15.000)
                                                     </Button>
                                                 )}
                                                 {isSuperAdmin && nextRaffleRefs.odd.refs.length > 0 && (
@@ -2075,7 +2075,7 @@ const App = () => {
                                                  {!isSuperAdmin && (
                                                     <Button onClick={() => handleNequiActivationClick('infinite')} size="lg" className="w-full bg-[#A454C4] hover:bg-[#8e49a8] text-white font-bold flex items-center gap-2">
                                                         <NequiIcon />
-                                                        {t('payWithNequi')}
+                                                        Nequi (30.000)
                                                     </Button>
                                                 )}
                                                 {isSuperAdmin && nextRaffleRefs.infinite.refs.length > 0 && (
@@ -3110,5 +3110,3 @@ const App = () => {
 };
 
 export default App;
-
-    
