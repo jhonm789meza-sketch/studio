@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useTransition } from 'react';
 import jsPDF from 'jspdf';
 import { RaffleManager } from '@/lib/RaffleManager';
-import { db, storage, persistenceEnabled } from '@/lib/firebase';
+import { db, storage } from '@/lib/firebase';
 import { doc, onSnapshot, setDoc, getDoc, deleteDoc, Unsubscribe, serverTimestamp, collection, query, where, getDocs, updateDoc, addDoc } from 'firebase/firestore';
 import Image from 'next/image';
 import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
@@ -295,8 +295,6 @@ const App = () => {
         if (!participantData?.raffleNumber) return null;
     
         try {
-            if (persistenceEnabled) await persistenceEnabled;
-    
             const raffleDocRef = doc(db, "raffles", raffleRef);
             const docSnap = await getDoc(raffleDocRef);
     
@@ -408,7 +406,6 @@ const App = () => {
         const initialize = async () => {
             setLoading(true);
             setAppUrl(window.location.origin);
-            if (persistenceEnabled) await persistenceEnabled;
             
             const urlParams = new URLSearchParams(window.location.search);
             const adminIdFromUrl = urlParams.get('adminId');
@@ -960,7 +957,6 @@ const App = () => {
             // General Subscription Logic (for all searches)
             raffleSubscription.current?.();
             const raffleDocRef = doc(db, 'raffles', aRef);
-            if (persistenceEnabled) await persistenceEnabled;
 
             raffleSubscription.current = onSnapshot(raffleDocRef, (docSnapshot) => {
                 if (docSnapshot.exists()) {

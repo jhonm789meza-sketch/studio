@@ -1,6 +1,6 @@
 
 import { initializeApp, getApp, FirebaseApp } from 'firebase/app';
-import { getFirestore, Firestore, enableIndexedDbPersistence } from 'firebase/firestore';
+import { getFirestore, Firestore } from 'firebase/firestore';
 import { getStorage, FirebaseStorage } from 'firebase/storage';
 import { getMessaging, Messaging } from 'firebase/messaging';
 
@@ -18,7 +18,6 @@ let app: FirebaseApp;
 let db: Firestore;
 let storage: FirebaseStorage;
 let messaging: Messaging | null = null;
-let persistenceEnabled: Promise<void> | null = null;
 
 
 try {
@@ -32,23 +31,9 @@ storage = getStorage(app);
 
 if (typeof window !== 'undefined') {
     messaging = getMessaging(app);
-    persistenceEnabled = enableIndexedDbPersistence(db)
-      .catch((err) => {
-        if (err.code == 'failed-precondition') {
-          // Multiple tabs open, persistence can only be enabled
-          // in one tab at a a time.
-          console.warn('Firestore persistence failed: Multiple tabs open.');
-        } else if (err.code == 'unimplemented') {
-          // The current browser does not support all of the
-          // features required to enable persistence
-           console.warn('Firestore persistence failed: Browser does not support persistence.');
-        }
-        return Promise.resolve();
-      });
 }
 
 
 
 
-export { db, storage, messaging, persistenceEnabled, app };
-
+export { db, storage, messaging, app };

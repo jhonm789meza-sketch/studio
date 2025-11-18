@@ -1,7 +1,6 @@
 
 import { doc, getDoc, setDoc, increment, updateDoc, DocumentReference, runTransaction, collection, getDocs, writeBatch } from 'firebase/firestore';
 import type { Firestore } from 'firebase/firestore';
-import { persistenceEnabled } from './firebase';
 
 type RaffleMode = 'two-digit' | 'three-digit' | 'infinite';
 
@@ -28,10 +27,6 @@ class RaffleManager {
     public async getNextRefInfo(mode: RaffleMode, peek: boolean = false, count: number = 1): Promise<{ numbers: number[], playedCount: number }> {
         if (typeof window === 'undefined') {
             return { numbers: Array.from({ length: count }, (_, i) => i + 1), playedCount: 0 };
-        }
-
-        if (persistenceEnabled) {
-            await persistenceEnabled;
         }
         
         const counterRef = this.getCounterRef(mode);
