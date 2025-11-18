@@ -2287,7 +2287,6 @@ const App = () => {
                                 <div className={activeTab === 'board' ? 'tab-content active' : 'tab-content'}>
                                     {renderBoardContent()}
                                 </div>
-
                                 <div className={activeTab === 'activations' || activeTab === 'games' || activeTab === 'stats' ? 'tab-content active' : 'tab-content'}>
                                     {isSuperAdmin && (
                                         <>
@@ -2413,7 +2412,6 @@ const App = () => {
                                         </>
                                     )}
                                 </div>
-                                
                                 <div className={activeTab === 'register' ? 'tab-content active' : 'tab-content'}>
                                     <div className="mb-6">
                                         <h2 className="text-2xl font-bold text-gray-800 mb-4">{t('registerNumber')}</h2>
