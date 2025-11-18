@@ -107,7 +107,7 @@ class RaffleManager {
         const shouldConsume = !peek && !isManualActivation;
         const { numbers: [nextNumber] } = await this.getNextRefInfo(mode, !shouldConsume, 1);
         
-        let prefix = 'JM';
+        const prefix = 'JM';
         let numStr = '';
 
         switch (mode) {
@@ -118,7 +118,6 @@ class RaffleManager {
                 numStr = String(nextNumber).padStart(3, '0');
                 break;
             case 'infinite':
-                prefix = 'JM∞';
                 numStr = String(nextNumber);
                 break;
         }
@@ -130,7 +129,7 @@ class RaffleManager {
         const { numbers, playedCount } = await this.getNextRefInfo(mode, true, count);
         
         let refs: string[];
-        let prefix = 'JM';
+        const prefix = 'JM';
         
         switch (mode) {
             case 'two-digit':
@@ -140,7 +139,6 @@ class RaffleManager {
                 refs = numbers.map(num => `${prefix}${String(num).padStart(3, '0')}`);
                 break;
             case 'infinite':
-                prefix = 'JM∞';
                 refs = numbers.map(num => `${prefix}${num}`);
                 break;
         }
