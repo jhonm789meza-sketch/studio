@@ -894,12 +894,16 @@ const App = () => {
     
             // Super Admin Activation/Search Flow
             if (isSuperAdmin && isPublicSearch) {
-                 const isEven = nextRaffleRefs.even.refs.includes(aRef);
-                 const isOdd = nextRaffleRefs.odd.refs.includes(aRef);
-                 const isInfinite = nextRaffleRefs.infinite.refs.includes(aRef);
-                 
-                 if (isEven || isOdd || isInfinite) {
-                    const mode: RaffleMode = isEven ? 'two-digit' : isOdd ? 'three-digit' : 'infinite';
+                const isEven = nextRaffleRefs.even.refs.includes(aRef);
+                const isOdd = nextRaffleRefs.odd.refs.includes(aRef);
+                const isInfinite = nextRaffleRefs.infinite.refs.includes(aRef);
+
+                let mode: RaffleMode | null = null;
+                if (isEven) mode = 'two-digit';
+                else if (isOdd) mode = 'three-digit';
+                else if (isInfinite) mode = 'infinite';
+
+                if (mode) {
                     const { adminId } = await handleActivateBoard(mode, undefined, aRef, false);
                     if (adminId) {
                         const adminUrl = `${window.location.origin}?ref=${aRef}&adminId=${adminId}`;
@@ -1116,7 +1120,7 @@ const App = () => {
 
     const handlePriceButtonClick = (mode: RaffleMode) => {
         if (isSuperAdmin) {
-            handleActivateBoard(mode, `SUPERADMIN_${Date.now()}`);
+            // This is now handled by a separate "Activate" button
             return;
         }
 
@@ -2035,9 +2039,15 @@ const App = () => {
                                                 </div>
                                             </div>
                                             <div className="p-6 pt-0 space-y-4">
-                                                 <Button onClick={() => handlePriceButtonClick('two-digit')} size="lg" className="w-full bg-green-500 hover:bg-green-600 text-white font-bold">
-                                                    {isSuperAdmin ? t('activate') : t('price')}
-                                                </Button>
+                                                {isSuperAdmin ? (
+                                                    <Button onClick={() => handleActivateBoard('two-digit', undefined, undefined, true)} size="lg" className="w-full bg-green-500 hover:bg-green-600 text-white font-bold">
+                                                        {t('activate')}
+                                                    </Button>
+                                                ) : (
+                                                    <Button onClick={() => handlePriceButtonClick('two-digit')} size="lg" className="w-full bg-green-500 hover:bg-green-600 text-white font-bold">
+                                                        {t('price')}
+                                                    </Button>
+                                                )}
                                                 {!isSuperAdmin && (
                                                     <div className="text-center">
                                                         <Button onClick={() => handleNequiActivationClick('two-digit')} size="lg" className="w-full bg-[#A454C4] hover:bg-[#8e49a8] text-white font-bold flex items-center gap-2">
@@ -2081,9 +2091,15 @@ const App = () => {
                                                 </div>
                                             </div>
                                             <div className="p-6 pt-0 space-y-4">
-                                                <Button onClick={() => handlePriceButtonClick('three-digit')} size="lg" className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold">
-                                                     {isSuperAdmin ? t('activate') : t('price')}
-                                                </Button>
+                                                {isSuperAdmin ? (
+                                                    <Button onClick={() => handleActivateBoard('three-digit', undefined, undefined, true)} size="lg" className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold">
+                                                        {t('activate')}
+                                                    </Button>
+                                                ) : (
+                                                    <Button onClick={() => handlePriceButtonClick('three-digit')} size="lg" className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold">
+                                                        {t('price')}
+                                                    </Button>
+                                                )}
                                                  {!isSuperAdmin && (
                                                     <div className="text-center">
                                                         <Button onClick={() => handleNequiActivationClick('three-digit')} size="lg" className="w-full bg-[#A454C4] hover:bg-[#8e49a8] text-white font-bold flex items-center gap-2">
@@ -2127,9 +2143,15 @@ const App = () => {
                                                 </div>
                                             </div>
                                             <div className="p-6 pt-0 space-y-4">
-                                                <Button onClick={() => handlePriceButtonClick('infinite')} size="lg" className="w-full bg-red-500 hover:bg-red-600 text-white font-bold">
-                                                     {isSuperAdmin ? t('activate') : t('price')}
-                                                </Button>
+                                                {isSuperAdmin ? (
+                                                     <Button onClick={() => handleActivateBoard('infinite', undefined, undefined, true)} size="lg" className="w-full bg-red-500 hover:bg-red-600 text-white font-bold">
+                                                        {t('activate')}
+                                                     </Button>
+                                                ) : (
+                                                    <Button onClick={() => handlePriceButtonClick('infinite')} size="lg" className="w-full bg-red-500 hover:bg-red-600 text-white font-bold">
+                                                        {t('price')}
+                                                    </Button>
+                                                )}
                                                  {!isSuperAdmin && (
                                                     <div className="text-center">
                                                         <Button onClick={() => handleNequiActivationClick('infinite')} size="lg" className="w-full bg-[#A454C4] hover:bg-[#8e49a8] text-white font-bold flex items-center gap-2">
@@ -3178,3 +3200,4 @@ const App = () => {
 
 export default App;
 
+    
