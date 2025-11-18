@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect, useRef, useTransition } from 'react';
 import jsPDF from 'jspdf';
@@ -832,24 +831,8 @@ const App = () => {
         });
     };
 
-    const handleShare = async () => {
-        const urlToShare = window.location.origin;
-        const shareData = {
-          title: t('shareRaffle'),
-          text: t('shareRaffleAppDescription'),
-          url: urlToShare,
-        };
-    
-        if (navigator.share) {
-          try {
-            await navigator.share(shareData);
-          } catch (error) {
-            console.error('Error sharing:', error);
-            setIsShareDialogOpen(true);
-          }
-        } else {
-          setIsShareDialogOpen(true);
-        }
+    const handleShare = () => {
+        setIsShareDialogOpen(true);
     };
 
     const handleShareTicket = () => {
@@ -3224,5 +3207,3 @@ const App = () => {
 };
 
 export default App;
-
-    
