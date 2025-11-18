@@ -83,12 +83,16 @@ interface NextRaffleInfo {
 }
 
 const DateTimeDisplay = ({ t }: { t: (key: string) => void }) => {
-    const [currentTime, setCurrentTime] = useState(new Date());
+    const [currentTime, setCurrentTime] = useState<Date | null>(null);
 
     useEffect(() => {
+        // This effect runs only on the client
+        setCurrentTime(new Date());
+
         const timer = setInterval(() => {
             setCurrentTime(new Date());
         }, 1000);
+
         return () => clearInterval(timer);
     }, []);
 
@@ -96,8 +100,17 @@ const DateTimeDisplay = ({ t }: { t: (key: string) => void }) => {
 
     return (
         <div className="text-center text-gray-500 mb-4">
-            <p className="font-semibold text-lg">{currentTime.toLocaleDateString(locale, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
-            <p className="text-3xl font-bold tracking-wider">{currentTime.toLocaleTimeString(locale)}</p>
+            {currentTime ? (
+                <>
+                    <p className="font-semibold text-lg">{currentTime.toLocaleDateString(locale, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                    <p className="text-3xl font-bold tracking-wider">{currentTime.toLocaleTimeString(locale)}</p>
+                </>
+            ) : (
+                <div className="space-y-2">
+                    <div className="h-6 bg-gray-200 rounded w-48 mx-auto animate-pulse"></div>
+                    <div className="h-9 bg-gray-200 rounded w-32 mx-auto animate-pulse"></div>
+                </div>
+            )}
         </div>
     );
 };
@@ -216,7 +229,7 @@ const App = () => {
             }
         };
         fetchNextRefs();
-    }, [isSuperAdmin, raffleState.raffleRef]);
+    }, [isSuperAdmin, raffleState.raffleRef, raffleManager]);
 
     useEffect(() => {
         if (isSuperAdmin) {
@@ -774,6 +787,20 @@ const App = () => {
         });
     };
 
+    const handleDeleteRaffle = async (raffleRef: string) => {
+        showConfirmationDialog(t('deleteGameConfirmation'), async () => {
+            try {
+                await deleteDoc(doc(db, 'raffles', raffleRef));
+                showNotification(t('gameDeletedSuccess'), 'success');
+                // The onSnapshot listener for allRaffles will update the UI automatically.
+            } catch (error) {
+                console.error('Error deleting raffle:', error);
+                showNotification(t('gameDeletedError'), 'error');
+            }
+        });
+    };
+
+
     const handleDownloadTicket = () => {
         const ticketElement = ticketModalRef.current;
         if (!ticketElement) return;
@@ -1168,7 +1195,7 @@ const App = () => {
             await handleActivateBoard(activation.raffleMode, activation.transactionId, undefined, false);
             
             const activationDocRef = doc(db, 'pendingActivations', activation.id);
-            await updateDoc(activationDocRef, { status: 'completed' });
+            await setDoc(activationDocRef, { status: 'completed' }, { merge: true });
             
             showNotification(t('boardActivatedSuccessfullyWithRef', { ref: newRaffleRef }), 'success');
 
@@ -1402,7 +1429,7 @@ const App = () => {
                                 <p className="text-sm text-gray-500">{t('gameReference')}</p>
                                 <div className="flex items-center gap-2">
                                     <p className="text-2xl font-bold text-gray-800 tracking-wider">{raffleState.raffleRef}</p>
-                                    <button onClick={() => window.open(`https://wa.me/3145696687`, '_blank')} className="p-2 rounded-full hover:bg-gray-100">
+                                    <button onClick={() => window.open(`https://wa.me/57${raffleState.organizerPhoneNumber}`, '_blank')} className="p-2 rounded-full hover:bg-gray-100">
                                         <WhatsappIcon />
                                     </button>
                                 </div>
@@ -2287,6 +2314,7 @@ const App = () => {
                                                         .sort((a, b) => (b.raffleRef || '').localeCompare(a.raffleRef || ''))
                                                         .map((raffle) => {
                                                         const collected = ((raffle.participants || []).filter(p => p.paymentStatus === 'confirmed').length * parseFloat(String(raffle.value).replace(/\D/g, ''))) || 0;
+                                                        const canDelete = (raffle.participants || []).length === 0;
                                                         return (
                                                             <tr key={`${raffle.raffleRef}-${raffle.adminId}`}>
                                                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{raffle.raffleRef}</td>
@@ -2299,10 +2327,15 @@ const App = () => {
                                                                     </Button>
                                                                 </td>
                                                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-600">{formatValue(collected)}</td>
-                                                                <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                                                <td className="px-6 py-4 whitespace-nowrap text-sm space-x-2">
                                                                     <Button onClick={() => handleAdminSearch({ refToSearch: raffle.raffleRef, isPublicSearch: true })} size="sm" variant="outline">
                                                                         {t('manage')}
                                                                     </Button>
+                                                                    {canDelete && (
+                                                                        <Button onClick={() => handleDeleteRaffle(raffle.raffleRef)} size="sm" variant="destructive">
+                                                                            <Trash2 className="h-4 w-4"/>
+                                                                        </Button>
+                                                                    )}
                                                                 </td>
                                                             </tr>
                                                         )
@@ -3141,3 +3174,5 @@ const App = () => {
 };
 
 export default App;
+
+    
