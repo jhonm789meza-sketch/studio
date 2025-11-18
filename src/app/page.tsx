@@ -2239,7 +2239,7 @@ const App = () => {
                                             className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'stats' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
                                             onClick={() => handleTabClick('stats')}
                                         >
-                                           <TrendingUp className="h-5 w-5 mr-2"/> <span>{t('statsTab')}</span>
+                                           <span>{t('statsTab')}</span>
                                         </button>
                                         </>
                                     )}
