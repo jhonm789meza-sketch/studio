@@ -12,7 +12,7 @@ import { requestNotificationPermission } from '@/lib/notification';
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House, Clock as ClockIcon, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Upload, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages, Trophy, Trash2, Copy, Shield, LogOut, Eye, EyeOff, Gamepad2, Phone } from 'lucide-react';
+import { Menu, Award, Lock, House, Clock as ClockIcon, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Upload, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages, Trophy, Trash2, Copy, Shield, LogOut, Eye, EyeOff, Gamepad2, Phone, TrendingUp } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -28,7 +28,7 @@ import { WhatsappIcon, FacebookIcon, TicketIcon, NequiIcon, InlineTicket } from 
 
 
 type RaffleMode = 'two-digit' | 'three-digit' | 'infinite';
-type Tab = 'board' | 'register' | 'participants' | 'pending' | 'recaudado' | 'winners' | 'activations' | 'games';
+type Tab = 'board' | 'register' | 'participants' | 'pending' | 'recaudado' | 'winners' | 'activations' | 'games' | 'stats';
 
 const initialRaffleData: Raffle = {
     drawnNumbers: [],
@@ -1200,12 +1200,12 @@ const App = () => {
     
         try {
             // Use the actual new ref from the manager, not the peeked one, to ensure atomicity
-            await handleActivateBoard(activation.raffleMode, activation.transactionId, undefined, false);
+            const {adminId, finalRaffleRef} = await handleActivateBoard(activation.raffleMode, activation.transactionId, undefined, false);
             
             const activationDocRef = doc(db, 'pendingActivations', activation.id);
             await setDoc(activationDocRef, { status: 'completed' }, { merge: true });
             
-            showNotification(t('boardActivatedSuccessfullyWithRef', { ref: newRaffleRef }), 'success');
+            showNotification(t('boardActivatedSuccessfullyWithRef', { ref: finalRaffleRef }), 'success');
 
         } catch (error) {
             console.error("Error approving activation:", error);
@@ -1217,7 +1217,7 @@ const App = () => {
         }
     };
 
-    const handleActivateBoard = async (mode: RaffleMode, transactionId: string | undefined, newRef?: string, loadBoard = true): Promise<{ adminId: string | null }> => {
+    const handleActivateBoard = async (mode: RaffleMode, transactionId: string | undefined, newRef?: string, loadBoard = true): Promise<{ adminId: string | null, finalRaffleRef: string | null }> => {
         if (loadBoard) setLoading(true);
 
         const finalTransactionId = transactionId || `SUPERADMIN_${Date.now()}`;
@@ -1229,7 +1229,7 @@ const App = () => {
             if (transactionDoc.exists() && !finalTransactionId.startsWith('SUPERADMIN')) {
                 showNotification(t('transactionAlreadyUsed'), 'error');
                 if (loadBoard) setLoading(false);
-                return { adminId: null };
+                return { adminId: null, finalRaffleRef: null };
             }
             
             const finalRaffleRef = newRef || await raffleManager.createNewRaffleRef(mode, false, finalTransactionId.startsWith('MANUAL_'));
@@ -1238,7 +1238,7 @@ const App = () => {
             if (existingRaffleDoc.exists()) {
                 showNotification(t('raffleNotFound'), 'error'); // A bit of a misnomer, but it implies the ref is taken.
                 if (loadBoard) setLoading(false);
-                return { adminId: null };
+                return { adminId: null, finalRaffleRef: null };
             }
 
             const adminId = `admin_${Date.now()}_${Math.random()}`;
@@ -1275,12 +1275,12 @@ const App = () => {
                 window.history.pushState({}, '', newUrl.href);
                 await handleAdminSearch({refToSearch: finalRaffleRef, isInitialLoad: true});
             }
-            return { adminId };
+            return { adminId, finalRaffleRef };
 
         } catch (error) {
             console.error("Error activating board:", error);
             showNotification(t('errorActivatingBoard'), "error");
-             return { adminId: null };
+             return { adminId: null, finalRaffleRef: null };
         } finally {
             if (loadBoard) setLoading(false);
         }
@@ -2235,6 +2235,12 @@ const App = () => {
                                         >
                                            <Gamepad2 className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">{t('gamesTab')}</span>
                                         </button>
+                                        <button 
+                                            className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'stats' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
+                                            onClick={() => handleTabClick('stats')}
+                                        >
+                                           <TrendingUp className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">{t('statsTab')}</span>
+                                        </button>
                                         </>
                                     )}
                                     <button 
@@ -2384,6 +2390,29 @@ const App = () => {
                                     ) : (
                                         <p className="text-gray-500">{t('noGamesAssigned')}</p>
                                     )}
+                                </div>
+                                )}
+                                
+                                {isSuperAdmin && (
+                                <div className={activeTab === 'stats' ? 'tab-content active' : 'tab-content'}>
+                                     <h2 className="text-2xl font-bold text-gray-800 mb-4">{t('gameStats')}</h2>
+                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                         <div className="bg-purple-100 p-4 rounded-lg text-center">
+                                             <p className="text-sm text-purple-800 font-semibold">{t('2digitRaffle')}</p>
+                                             <p className="text-3xl font-bold text-purple-900">{nextRaffleRefs.even.count}</p>
+                                             <p className="text-xs text-purple-700">{t('gamesPlayed')}</p>
+                                         </div>
+                                         <div className="bg-blue-100 p-4 rounded-lg text-center">
+                                             <p className="text-sm text-blue-800 font-semibold">{t('3digitRaffle')}</p>
+                                             <p className="text-3xl font-bold text-blue-900">{nextRaffleRefs.odd.count}</p>
+                                             <p className="text-xs text-blue-700">{t('gamesPlayed')}</p>
+                                         </div>
+                                         <div className="bg-red-100 p-4 rounded-lg text-center">
+                                             <p className="text-sm text-red-800 font-semibold">{t('infiniteRaffle')}</p>
+                                             <p className="text-3xl font-bold text-red-900">{nextRaffleRefs.infinite.count}</p>
+                                             <p className="text-xs text-red-700">{t('gamesPlayed')}</p>
+                                         </div>
+                                     </div>
                                 </div>
                                 )}
 

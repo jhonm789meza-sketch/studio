@@ -257,6 +257,12 @@
     "changeExecutivePasswordTitle": "Cambiar Contraseña de Director Ejecutivo",
     "changeExecutivePasswordDescription": "Estás a punto de cambiar tu contraseña de acceso.",
     "currentPassword": "Contraseña Actual",
+    "deleteGameConfirmation": "¿Estás seguro de que deseas eliminar este juego? Esta acción es irreversible.",
+    "gameDeletedSuccess": "Juego eliminado con éxito.",
+    "gameDeletedError": "Error al eliminar el juego.",
     "activationInstructionTitle": "Cómo Activar tu Tablero",
-    "activationInstructionBody": "Para obtener tu tablero de rifa, primero cancela al número de cuenta que aparece en pantalla para la rifa que deseas. Luego, comunícate con nosotros a través de la opción 'Contacto' en el menú para que te asignemos tu referencia."
+    "activationInstructionBody": "Para obtener tu tablero de rifa, primero cancela al número de cuenta que aparece en pantalla para la rifa que deseas. Luego, comunícate con nosotros a través de la opción 'Contacto' en el menú para que te asignemos tu referencia.",
+    "statsTab": "Estadísticas",
+    "gameStats": "Estadísticas de Juegos",
+    "gamesPlayed": "Juegos Jugados"
 }
