@@ -115,6 +115,7 @@ const DateTimeDisplay = ({ t }: { t: (key: string) => void }) => {
     );
 };
 
+const raffleManager = new RaffleManager(db);
 
 const App = () => {
     const { t, toggleLanguage, language } = useLanguage();
@@ -179,7 +180,6 @@ const App = () => {
     const [confirmNewPassword, setConfirmNewPassword] = useState('');
     const [isSuperAdminChangePasswordOpen, setIsSuperAdminChangePasswordOpen] = useState(false);
 
-    const raffleManager = new RaffleManager(db);
     
     const isCurrentUserAdmin = !!raffleState.adminId && !!currentAdminId && raffleState.adminId === currentAdminId;
     const raffleMode = raffleState.raffleMode;
@@ -229,7 +229,7 @@ const App = () => {
             }
         };
         fetchNextRefs();
-    }, [isSuperAdmin, raffleState.raffleRef, raffleManager]);
+    }, [isSuperAdmin, raffleState.raffleRef]);
 
     useEffect(() => {
         if (isSuperAdmin) {
@@ -894,9 +894,12 @@ const App = () => {
     
             // Super Admin Activation/Search Flow
             if (isSuperAdmin && isPublicSearch) {
-                 const isNextRef = nextRaffleRefs.even.refs.includes(aRef) || nextRaffleRefs.odd.refs.includes(aRef) || nextRaffleRefs.infinite.refs.includes(aRef);
-                 if (isNextRef) {
-                    const mode = nextRaffleRefs.even.refs.includes(aRef) ? 'two-digit' : nextRaffleRefs.odd.refs.includes(aRef) ? 'three-digit' : 'infinite';
+                 const isEven = nextRaffleRefs.even.refs.includes(aRef);
+                 const isOdd = nextRaffleRefs.odd.refs.includes(aRef);
+                 const isInfinite = nextRaffleRefs.infinite.refs.includes(aRef);
+                 
+                 if (isEven || isOdd || isInfinite) {
+                    const mode: RaffleMode = isEven ? 'two-digit' : isOdd ? 'three-digit' : 'infinite';
                     const { adminId } = await handleActivateBoard(mode, undefined, aRef, false);
                     if (adminId) {
                         const adminUrl = `${window.location.origin}?ref=${aRef}&adminId=${adminId}`;
@@ -1913,8 +1916,8 @@ const App = () => {
                    </div>
                 </div>
             </>
-        )
-    }
+        );
+    };
 
     
     return (
@@ -3175,4 +3178,3 @@ const App = () => {
 
 export default App;
 
-    
