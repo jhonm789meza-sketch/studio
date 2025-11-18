@@ -147,6 +147,7 @@ const App = () => {
     const [currentAdminId, setCurrentAdminId] = useState<string | null>(null);
     const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
     const [isQrDialogOpen, setIsQrDialogOpen] = useState(false);
+    const [showAdminPassword, setShowAdminPassword] = useState(false);
     
     const [isCountrySelectionOpen, setIsCountrySelectionOpen] = useState(false);
     const [selectedRaffleMode, setSelectedRaffleMode] = useState<RaffleMode | null>(null);
@@ -1118,9 +1119,9 @@ const App = () => {
         await setDoc(doc(db, "raffles", raffleState.raffleRef), { [field]: value }, { merge: true });
     };
 
-    const handlePriceButtonClick = (mode: RaffleMode) => {
+    const handlePriceButtonClick = async (mode: RaffleMode) => {
         if (isSuperAdmin) {
-            // This is now handled by a separate "Activate" button
+            await handleActivateBoard(mode, undefined, undefined, true);
             return;
         }
 
@@ -1265,7 +1266,7 @@ const App = () => {
                  await setDoc(transactionDocRef, {
                      raffleRef: finalRaffleRef,
                      activatedAt: serverTimestamp(),
-                 });
+                 }, { merge: true });
             }
     
             if (loadBoard) {
@@ -1486,16 +1487,28 @@ const App = () => {
                             {isCurrentUserAdmin && !raffleState.isDetailsConfirmed && (
                                 <div>
                                     <Label htmlFor="password-input">{t('adminPassword')}:</Label>
-                                    <Input
-                                        id="password-input"
-                                        type="password"
-                                        value={raffleState.password || ''}
-                                        onChange={(e) => handleLocalFieldChange('password', e.target.value)}
-                                        onBlur={(e) => handleFieldChange('password', e.target.value)}
-                                        placeholder={t('adminPasswordPlaceholder')}
-                                        disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
-                                        className="w-full mt-1"
-                                    />
+                                    <div className="relative">
+                                        <Input
+                                            id="password-input"
+                                            type={showAdminPassword ? 'text' : 'password'}
+                                            value={raffleState.password || ''}
+                                            onChange={(e) => handleLocalFieldChange('password', e.target.value)}
+                                            onBlur={(e) => handleFieldChange('password', e.target.value)}
+                                            placeholder={t('adminPasswordPlaceholder')}
+                                            disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
+                                            className="w-full mt-1"
+                                        />
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon"
+                                            className="absolute inset-y-0 right-0 h-full px-3"
+                                            onClick={() => setShowAdminPassword(!showAdminPassword)}
+                                        >
+                                            {showAdminPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                            <span className="sr-only">{showAdminPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}</span>
+                                        </Button>
+                                    </div>
                                </div>
                             )}
                            <div>
@@ -2040,7 +2053,7 @@ const App = () => {
                                             </div>
                                             <div className="p-6 pt-0 space-y-4">
                                                 {isSuperAdmin ? (
-                                                    <Button onClick={() => handleActivateBoard('two-digit', undefined, undefined, true)} size="lg" className="w-full bg-green-500 hover:bg-green-600 text-white font-bold">
+                                                    <Button onClick={() => handlePriceButtonClick('two-digit')} size="lg" className="w-full bg-green-500 hover:bg-green-600 text-white font-bold">
                                                         {t('activate')}
                                                     </Button>
                                                 ) : (
@@ -2092,7 +2105,7 @@ const App = () => {
                                             </div>
                                             <div className="p-6 pt-0 space-y-4">
                                                 {isSuperAdmin ? (
-                                                    <Button onClick={() => handleActivateBoard('three-digit', undefined, undefined, true)} size="lg" className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold">
+                                                    <Button onClick={() => handlePriceButtonClick('three-digit')} size="lg" className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold">
                                                         {t('activate')}
                                                     </Button>
                                                 ) : (
@@ -2144,7 +2157,7 @@ const App = () => {
                                             </div>
                                             <div className="p-6 pt-0 space-y-4">
                                                 {isSuperAdmin ? (
-                                                     <Button onClick={() => handleActivateBoard('infinite', undefined, undefined, true)} size="lg" className="w-full bg-red-500 hover:bg-red-600 text-white font-bold">
+                                                     <Button onClick={() => handlePriceButtonClick('infinite')} size="lg" className="w-full bg-red-500 hover:bg-red-600 text-white font-bold">
                                                         {t('activate')}
                                                      </Button>
                                                 ) : (
@@ -3199,5 +3212,3 @@ const App = () => {
 };
 
 export default App;
-
-    
