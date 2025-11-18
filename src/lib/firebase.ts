@@ -32,10 +32,6 @@ storage = getStorage(app);
 
 if (typeof window !== 'undefined') {
     messaging = getMessaging(app);
-}
-
-// Enable offline persistence
-if (typeof window !== 'undefined' && !persistenceEnabled) {
     persistenceEnabled = enableIndexedDbPersistence(db)
       .catch((err) => {
         if (err.code == 'failed-precondition') {
@@ -47,8 +43,12 @@ if (typeof window !== 'undefined' && !persistenceEnabled) {
           // features required to enable persistence
            console.warn('Firestore persistence failed: Browser does not support persistence.');
         }
+        return Promise.resolve();
       });
 }
 
 
+
+
 export { db, storage, messaging, persistenceEnabled, app };
+
