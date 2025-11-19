@@ -1104,7 +1104,7 @@ const App = () => {
 
         let paymentLink = '';
         if (mode === 'two-digit') {
-            paymentLink = `https://checkout.nequi.wompi.co/l/uKhINi?redirect-url=${encodeURIComponent(redirectUrl.href)}&reference=${activationRef}`;
+            paymentLink = `https://checkout.nequi.wompi.co/l/GWZUpk?redirect-url=${encodeURIComponent(redirectUrl.href)}&reference=${activationRef}`;
         } else if (mode === 'three-digit') {
             paymentLink = `https://checkout.wompi.co/l/9wH9fR?redirect-url=${encodeURIComponent(redirectUrl.href)}&reference=${activationRef}`;
         } else if (mode === 'infinite') {
@@ -2192,7 +2192,7 @@ const App = () => {
                                     >
                                         <TicketIcon className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">{t('board')}</span>
                                     </button>
-                                    <div className={activeTab === 'stats' ? 'tab-content active' : 'tab-content'}>
+                                     <div className={activeTab === 'stats' ? 'tab-content active' : 'tab-content'}>
                                         {isSuperAdmin && (
                                             <>
                                                 <div className={activeTab === 'activations' ? 'tab-content active' : 'tab-content'}>
