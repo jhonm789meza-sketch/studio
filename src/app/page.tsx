@@ -27,7 +27,7 @@ import { WhatsappIcon, FacebookIcon, TicketIcon, NequiIcon, InlineTicket } from 
 
 
 type RaffleMode = 'two-digit' | 'three-digit' | 'infinite';
-type Tab = 'board' | 'register' | 'participants' | 'pending' | 'recaudado' | 'winners' | 'activations' | 'games' | 'stats';
+type Tab = 'board' | 'register' | 'participants' | 'pending' | 'recaudado' | 'winners' | 'activations' | 'games';
 
 const initialRaffleData: Raffle = {
     drawnNumbers: [],
@@ -888,10 +888,28 @@ const App = () => {
                             showNotification(t('boardActivatedSuccessfullyWithRef', { ref: aRef }), 'success');
                         });
                     }
-                    const evenInfo = await raffleManager.peekNextRaffleRef('two-digit', 2);
-                    const oddInfo = await raffleManager.peekNextRaffleRef('three-digit', 2);
-                    const infiniteInfo = await raffleManager.peekNextRaffleRef('infinite', 2);
-                    setNextRaffleRefs({ even: evenInfo, odd: oddInfo, infinite: infiniteInfo });
+                    
+                    // Update the local state immediately to reflect the new sale
+                    setNextRaffleRefs(prev => {
+                        const newRefs = { ...prev };
+                        if (mode === 'two-digit') {
+                            newRefs.even.count += 1;
+                            newRefs.even.refs = newRefs.even.refs.filter(r => r !== aRef);
+                        } else if (mode === 'three-digit') {
+                            newRefs.odd.count += 1;
+                            newRefs.odd.refs = newRefs.odd.refs.filter(r => r !== aRef);
+                        } else if (mode === 'infinite') {
+                            newRefs.infinite.count += 1;
+                            newRefs.infinite.refs = newRefs.infinite.refs.filter(r => r !== aRef);
+                        }
+                        return newRefs;
+                    });
+                    
+                    // Fetch the next refs to keep the list fresh, without awaiting
+                    raffleManager.peekNextRaffleRef('two-digit', 2).then(info => setNextRaffleRefs(p => ({...p, even: info})));
+                    raffleManager.peekNextRaffleRef('three-digit', 2).then(info => setNextRaffleRefs(p => ({...p, odd: info})));
+                    raffleManager.peekNextRaffleRef('infinite', 2).then(info => setNextRaffleRefs(p => ({...p, infinite: info})));
+
                     setIsPublicSearchOpen(false);
                     setPublicRefSearch('');
                     setLoading(false);
@@ -2531,30 +2549,6 @@ const App = () => {
                                                 <p className="text-gray-500">{t('noGamesAssigned')}</p>
                                             )}
                                          </>
-                                    )}
-                                </div>
-                                <div className={activeTab === 'stats' ? 'tab-content active' : 'tab-content'}>
-                                    {isSuperAdmin && (
-                                        <>
-                                            <h2 className="text-2xl font-bold text-gray-800 mb-4">{t('gameStats')}</h2>
-                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                                <div className="bg-purple-100 p-4 rounded-lg text-center">
-                                                    <p className="text-sm text-purple-800 font-semibold">{t('2digitRaffle')}</p>
-                                                    <p className="text-3xl font-bold text-purple-900">{nextRaffleRefs.even.count}</p>
-                                                    <p className="text-xs text-purple-700">{t('gamesPlayed')}</p>
-                                                </div>
-                                                <div className="bg-blue-100 p-4 rounded-lg text-center">
-                                                    <p className="text-sm text-blue-800 font-semibold">{t('3digitRaffle')}</p>
-                                                    <p className="text-3xl font-bold text-blue-900">{nextRaffleRefs.odd.count}</p>
-                                                    <p className="text-xs text-blue-700">{t('gamesPlayed')}</p>
-                                                </div>
-                                                <div className="bg-red-100 p-4 rounded-lg text-center">
-                                                    <p className="text-sm text-red-800 font-semibold">{t('infiniteRaffle')}</p>
-                                                    <p className="text-3xl font-bold text-red-900">{nextRaffleRefs.infinite.count}</p>
-                                                    <p className="text-xs text-red-700">{t('gamesPlayed')}</p>
-                                                </div>
-                                            </div>
-                                        </>
                                     )}
                                 </div>
                                 {isCurrentUserAdmin && (
