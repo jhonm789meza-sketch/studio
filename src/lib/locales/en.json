@@ -264,5 +264,9 @@
     "activationInstructionBody": "To get your raffle board, first pay to the account number displayed on the screen for the raffle you want. Then, contact us through the 'Contact' option in the menu so we can assign you your reference.",
     "statsTab": "Stats",
     "gameStats": "Game Statistics",
-    "gamesPlayed": "Games Played"
+    "gamesPlayed": "Games Played",
+    "sales": "Sales",
+    "activationSales": "Activation Sales",
+    "salesFrom": "Sales from {count} games at {price} each",
+    "totalSales": "Total Sales"
 }

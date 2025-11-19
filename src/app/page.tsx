@@ -179,6 +179,7 @@ const App = () => {
     const [newPassword, setNewPassword] = useState('');
     const [confirmNewPassword, setConfirmNewPassword] = useState('');
     const [isSuperAdminChangePasswordOpen, setIsSuperAdminChangePasswordOpen] = useState(false);
+    const [isSalesStatsDialogOpen, setIsSalesStatsDialogOpen] = useState(false);
 
     
     const isCurrentUserAdmin = !!raffleState.adminId && !!currentAdminId && raffleState.adminId === currentAdminId;
@@ -516,7 +517,7 @@ const App = () => {
     const formatValue = (value: string | number) => {
         const currencySymbol = raffleState.currencySymbol || '$';
         if (!value) return `${currencySymbol} 0`;
-        const numericValue = String(value).replace(/\D/g, '');
+        const numericValue = String(value).replace(/[^\d.,]/g, '').replace(',', '.');
         if (numericValue === '') return `${currencySymbol} 0`;
         
         const number = parseFloat(numericValue);
@@ -1092,7 +1093,7 @@ const App = () => {
     };
 
     const handlePriceButtonClick = async (mode: RaffleMode) => {
-        if (isCurrentUserAdmin || isSuperAdmin) {
+        if (isSuperAdmin) {
             await handleActivateBoard(mode, undefined, undefined, true);
             return;
         }
@@ -1954,6 +1955,10 @@ const App = () => {
                                                 <Phone className="mr-2 h-4 w-4" />
                                                 <span>{t('secondaryContact')}</span>
                                             </DropdownMenuItem>
+                                            <DropdownMenuItem onSelect={() => setIsSalesStatsDialogOpen(true)}>
+                                                <DollarSign className="mr-2 h-4 w-4" />
+                                                <span>{t('sales')}</span>
+                                            </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setIsSuperAdminChangePasswordOpen(true)}>
                                                 <KeyRound className="mr-2 h-4 w-4" />
                                                 <span>{t('changePasswordTitle')}</span>
@@ -2192,133 +2197,8 @@ const App = () => {
                                     >
                                         <TicketIcon className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">{t('board')}</span>
                                     </button>
-                                     <div className={activeTab === 'stats' ? 'tab-content active' : 'tab-content'}>
-                                        {isSuperAdmin && (
-                                            <>
-                                                <div className={activeTab === 'activations' ? 'tab-content active' : 'tab-content'}>
-                                                    <h2 className="text-2xl font-bold text-gray-800 mb-4">{t('pendingActivations')}</h2>
-                                                    {pendingActivations.length > 0 ? (
-                                                        <div className="overflow-x-auto">
-                                                            <table className="min-w-full divide-y divide-gray-200">
-                                                                <thead className="bg-gray-50">
-                                                                    <tr>
-                                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('transactionId')}</th>
-                                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('raffleType')}</th>
-                                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('date')}</th>
-                                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('action')}</th>
-                                                                    </tr>
-                                                                </thead>
-                                                                <tbody className="bg-white divide-y divide-gray-200">
-                                                                    {pendingActivations.sort((a, b) => b.createdAt.toDate().getTime() - a.createdAt.toDate().getTime()).map((p) => (
-                                                                        <tr key={p.id}>
-                                                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{p.transactionId}</td>
-                                                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{p.raffleMode}</td>
-                                                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                                                {p.createdAt && p.createdAt.toDate ? format(p.createdAt.toDate(), 'PPpp', { locale: language === 'es' ? es : enUS }) : 'N/A'}
-                                                                            </td>
-                                                                            <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                                                                <Button onClick={() => handleApproveActivation(p)} size="sm" className="bg-green-500 hover:bg-green-600 text-white">
-                                                                                    {t('activateBoard')}
-                                                                                </Button>
-                                                                            </td>
-                                                                        </tr>
-                                                                    ))}
-                                                                </tbody>
-                                                            </table>
-                                                        </div>
-                                                    ) : (
-                                                        <p className="text-gray-500">{t('noPendingActivations')}</p>
-                                                    )}
-                                                </div>
-                                                <div className={activeTab === 'games' ? 'tab-content active' : 'tab-content'}>
-                                                    <h2 className="text-2xl font-bold text-gray-800 mb-4">{t('assignedGames')}</h2>
-                                                    <div className="mb-4">
-                                                        <Input
-                                                            type="text"
-                                                            placeholder={t('searchGamePlaceholder')}
-                                                            value={gameSearchQuery}
-                                                            onChange={(e) => setGameSearchQuery(e.target.value)}
-                                                            className="max-w-sm"
-                                                        />
-                                                    </div>
-                                                    
-                                                    {filteredGames.length > 0 ? (
-                                                        <div className="overflow-x-auto">
-                                                            <table className="min-w-full divide-y divide-gray-200">
-                                                                <thead className="bg-gray-50">
-                                                                    <tr>
-                                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('reference')}</th>
-                                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('prize')}</th>
-                                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('whoOrganizes')}</th>
-                                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('gameDate')}</th>
-                                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('password')}</th>
-                                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('collected')}</th>
-                                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('action')}</th>
-                                                                    </tr>
-                                                                </thead>
-                                                                <tbody className="bg-white divide-y divide-gray-200">
-                                                                    {filteredGames
-                                                                        .sort((a, b) => (b.raffleRef || '').localeCompare(a.raffleRef || ''))
-                                                                        .map((raffle) => {
-                                                                        const collected = ((raffle.participants || []).filter(p => p.paymentStatus === 'confirmed').length * parseFloat(String(raffle.value).replace(/\D/g, ''))) || 0;
-                                                                        const canDelete = (raffle.participants || []).length === 0;
-                                                                        return (
-                                                                            <tr key={`${raffle.raffleRef}-${raffle.adminId}`}>
-                                                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{raffle.raffleRef}</td>
-                                                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{raffle.raffleMode === 'infinite' ? formatValue(raffle.prize) : raffle.prize}</td>
-                                                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{raffle.organizerName}</td>
-                                                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{raffle.gameDate}</td>
-                                                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setRaffleToChangePassword(raffle); setIsChangePasswordDialogOpen(true); }}>
-                                                                                        <KeyRound className="h-4 w-4 text-gray-500" />
-                                                                                    </Button>
-                                                                                </td>
-                                                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-600">{formatValue(collected)}</td>
-                                                                                <td className="px-6 py-4 whitespace-nowrap text-sm space-x-2">
-                                                                                    <Button onClick={() => handleAdminSearch({ refToSearch: raffle.raffleRef, isPublicSearch: true })} size="sm" variant="outline">
-                                                                                        {t('manage')}
-                                                                                    </Button>
-                                                                                    {canDelete && (
-                                                                                        <Button onClick={() => handleDeleteRaffle(raffle.raffleRef)} size="sm" variant="destructive">
-                                                                                            <Trash2 className="h-4 w-4"/>
-                                                                                        </Button>
-                                                                                    )}
-                                                                                </td>
-                                                                            </tr>
-                                                                        )
-                                                                    })}
-                                                                </tbody>
-                                                            </table>
-                                                        </div>
-                                                    ) : (
-                                                        <p className="text-gray-500">{t('noGamesAssigned')}</p>
-                                                    )}
-                                                </div>
-                                                <div className={activeTab === 'stats' ? 'tab-content active' : 'tab-content'}>
-                                                    <h2 className="text-2xl font-bold text-gray-800 mb-4">{t('gameStats')}</h2>
-                                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                                        <div className="bg-purple-100 p-4 rounded-lg text-center">
-                                                            <p className="text-sm text-purple-800 font-semibold">{t('2digitRaffle')}</p>
-                                                            <p className="text-3xl font-bold text-purple-900">{nextRaffleRefs.even.count}</p>
-                                                            <p className="text-xs text-purple-700">{t('gamesPlayed')}</p>
-                                                        </div>
-                                                        <div className="bg-blue-100 p-4 rounded-lg text-center">
-                                                            <p className="text-sm text-blue-800 font-semibold">{t('3digitRaffle')}</p>
-                                                            <p className="text-3xl font-bold text-blue-900">{nextRaffleRefs.odd.count}</p>
-                                                            <p className="text-xs text-blue-700">{t('gamesPlayed')}</p>
-                                                        </div>
-                                                        <div className="bg-red-100 p-4 rounded-lg text-center">
-                                                            <p className="text-sm text-red-800 font-semibold">{t('infiniteRaffle')}</p>
-                                                            <p className="text-3xl font-bold text-red-900">{nextRaffleRefs.infinite.count}</p>
-                                                            <p className="text-xs text-red-700">{t('gamesPlayed')}</p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </>
-                                        )}
-                                    </div>
-                                     {isSuperAdmin && (
-                                        <>
+                                    {isSuperAdmin && (
+                                    <>
                                         <button 
                                             className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'activations' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
                                             onClick={() => handleTabClick('activations')}
@@ -2337,7 +2217,7 @@ const App = () => {
                                         >
                                            <span>{t('statsTab')}</span>
                                         </button>
-                                        </>
+                                    </>
                                     )}
                                     <button 
                                         className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'register' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
@@ -2547,6 +2427,137 @@ const App = () => {
                                             <p className="font-bold">{t('gameFinished')}</p>
                                             <p>{t('gameFinishedRegistrationDisabled')}</p>
                                         </div>
+                                    )}
+                                </div>
+                                <div className={activeTab === 'activations' ? 'tab-content active' : 'tab-content'}>
+                                    {isSuperAdmin && (
+                                        <>
+                                            <h2 className="text-2xl font-bold text-gray-800 mb-4">{t('pendingActivations')}</h2>
+                                            {pendingActivations.length > 0 ? (
+                                                <div className="overflow-x-auto">
+                                                    <table className="min-w-full divide-y divide-gray-200">
+                                                        <thead className="bg-gray-50">
+                                                            <tr>
+                                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('transactionId')}</th>
+                                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('raffleType')}</th>
+                                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('date')}</th>
+                                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('action')}</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody className="bg-white divide-y divide-gray-200">
+                                                            {pendingActivations.sort((a, b) => b.createdAt.toDate().getTime() - a.createdAt.toDate().getTime()).map((p) => (
+                                                                <tr key={p.id}>
+                                                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{p.transactionId}</td>
+                                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{p.raffleMode}</td>
+                                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                                        {p.createdAt && p.createdAt.toDate ? format(p.createdAt.toDate(), 'PPpp', { locale: language === 'es' ? es : enUS }) : 'N/A'}
+                                                                    </td>
+                                                                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                                                        <Button onClick={() => handleApproveActivation(p)} size="sm" className="bg-green-500 hover:bg-green-600 text-white">
+                                                                            {t('activateBoard')}
+                                                                        </Button>
+                                                                    </td>
+                                                                </tr>
+                                                            ))}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            ) : (
+                                                <p className="text-gray-500">{t('noPendingActivations')}</p>
+                                            )}
+                                        </>
+                                    )}
+                                </div>
+                                <div className={activeTab === 'games' ? 'tab-content active' : 'tab-content'}>
+                                    {isSuperAdmin && (
+                                         <>
+                                            <h2 className="text-2xl font-bold text-gray-800 mb-4">{t('assignedGames')}</h2>
+                                            <div className="mb-4">
+                                                <Input
+                                                    type="text"
+                                                    placeholder={t('searchGamePlaceholder')}
+                                                    value={gameSearchQuery}
+                                                    onChange={(e) => setGameSearchQuery(e.target.value)}
+                                                    className="max-w-sm"
+                                                />
+                                            </div>
+                                            
+                                            {filteredGames.length > 0 ? (
+                                                <div className="overflow-x-auto">
+                                                    <table className="min-w-full divide-y divide-gray-200">
+                                                        <thead className="bg-gray-50">
+                                                            <tr>
+                                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('reference')}</th>
+                                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('prize')}</th>
+                                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('whoOrganizes')}</th>
+                                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('gameDate')}</th>
+                                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('password')}</th>
+                                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('collected')}</th>
+                                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('action')}</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody className="bg-white divide-y divide-gray-200">
+                                                            {filteredGames
+                                                                .sort((a, b) => (b.raffleRef || '').localeCompare(a.raffleRef || ''))
+                                                                .map((raffle) => {
+                                                                const collected = ((raffle.participants || []).filter(p => p.paymentStatus === 'confirmed').length * parseFloat(String(raffle.value).replace(/\D/g, ''))) || 0;
+                                                                const canDelete = (raffle.participants || []).length === 0;
+                                                                return (
+                                                                    <tr key={`${raffle.raffleRef}-${raffle.adminId}`}>
+                                                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{raffle.raffleRef}</td>
+                                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{raffle.raffleMode === 'infinite' ? formatValue(raffle.prize) : raffle.prize}</td>
+                                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{raffle.organizerName}</td>
+                                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{raffle.gameDate}</td>
+                                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setRaffleToChangePassword(raffle); setIsChangePasswordDialogOpen(true); }}>
+                                                                                <KeyRound className="h-4 w-4 text-gray-500" />
+                                                                            </Button>
+                                                                        </td>
+                                                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-600">{formatValue(collected)}</td>
+                                                                        <td className="px-6 py-4 whitespace-nowrap text-sm space-x-2">
+                                                                            <Button onClick={() => handleAdminSearch({ refToSearch: raffle.raffleRef, isPublicSearch: true })} size="sm" variant="outline">
+                                                                                {t('manage')}
+                                                                            </Button>
+                                                                            {canDelete && (
+                                                                                <Button onClick={() => handleDeleteRaffle(raffle.raffleRef)} size="sm" variant="destructive">
+                                                                                    <Trash2 className="h-4 w-4"/>
+                                                                                </Button>
+                                                                            )}
+                                                                        </td>
+                                                                    </tr>
+                                                                )
+                                                            })}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            ) : (
+                                                <p className="text-gray-500">{t('noGamesAssigned')}</p>
+                                            )}
+                                         </>
+                                    )}
+                                </div>
+                                <div className={activeTab === 'stats' ? 'tab-content active' : 'tab-content'}>
+                                    {isSuperAdmin && (
+                                        <>
+                                            <h2 className="text-2xl font-bold text-gray-800 mb-4">{t('gameStats')}</h2>
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                <div className="bg-purple-100 p-4 rounded-lg text-center">
+                                                    <p className="text-sm text-purple-800 font-semibold">{t('2digitRaffle')}</p>
+                                                    <p className="text-3xl font-bold text-purple-900">{nextRaffleRefs.even.count}</p>
+                                                    <p className="text-xs text-purple-700">{t('gamesPlayed')}</p>
+                                                </div>
+                                                <div className="bg-blue-100 p-4 rounded-lg text-center">
+                                                    <p className="text-sm text-blue-800 font-semibold">{t('3digitRaffle')}</p>
+                                                    <p className="text-3xl font-bold text-blue-900">{nextRaffleRefs.odd.count}</p>
+                                                    <p className="text-xs text-blue-700">{t('gamesPlayed')}</p>
+                                                </div>
+                                                <div className="bg-red-100 p-4 rounded-lg text-center">
+                                                    <p className="text-sm text-red-800 font-semibold">{t('infiniteRaffle')}</p>
+                                                    <p className="text-3xl font-bold text-red-900">{nextRaffleRefs.infinite.count}</p>
+                                                    <p className="text-xs text-red-700">{t('gamesPlayed')}</p>
+                                                </div>
+                                            </div>
+                                        </>
                                     )}
                                 </div>
                                 {isCurrentUserAdmin && (
@@ -3186,6 +3197,48 @@ const App = () => {
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setIsSuperAdminChangePasswordOpen(false)}>{t('cancel')}</Button>
                         <Button onClick={handleChangeSuperAdminPassword}>{t('changePasswordButton')}</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={isSalesStatsDialogOpen} onOpenChange={setIsSalesStatsDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{t('activationSales')}</DialogTitle>
+                    </DialogHeader>
+                    <div className="py-4 space-y-4">
+                        <div className="flex justify-between items-center bg-purple-50 p-3 rounded-lg">
+                            <div>
+                                <p className="font-semibold text-purple-800">{t('2digitRaffle')}</p>
+                                <p className="text-sm text-purple-600">{t('salesFrom', { count: nextRaffleRefs.even.count, price: formatValue(12000) })}</p>
+                            </div>
+                            <p className="font-bold text-xl text-purple-900">{formatValue(nextRaffleRefs.even.count * 12000)}</p>
+                        </div>
+                        <div className="flex justify-between items-center bg-blue-50 p-3 rounded-lg">
+                            <div>
+                                <p className="font-semibold text-blue-800">{t('3digitRaffle')}</p>
+                                <p className="text-sm text-blue-600">{t('salesFrom', { count: nextRaffleRefs.odd.count, price: formatValue(15000) })}</p>
+                            </div>
+                            <p className="font-bold text-xl text-blue-900">{formatValue(nextRaffleRefs.odd.count * 15000)}</p>
+                        </div>
+                        <div className="flex justify-between items-center bg-red-50 p-3 rounded-lg">
+                            <div>
+                                <p className="font-semibold text-red-800">{t('infiniteRaffle')}</p>
+                                <p className="text-sm text-red-600">{t('salesFrom', { count: nextRaffleRefs.infinite.count, price: formatValue(30000) })}</p>
+                            </div>
+                            <p className="font-bold text-xl text-red-900">{formatValue(nextRaffleRefs.infinite.count * 30000)}</p>
+                        </div>
+                        <div className="flex justify-between items-center bg-green-100 p-4 rounded-lg mt-4 border-t-2 border-green-300">
+                             <p className="font-bold text-green-800 text-lg">{t('totalSales')}</p>
+                             <p className="font-extrabold text-2xl text-green-900">{formatValue(
+                                (nextRaffleRefs.even.count * 12000) +
+                                (nextRaffleRefs.odd.count * 15000) +
+                                (nextRaffleRefs.infinite.count * 30000)
+                             )}</p>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsSalesStatsDialogOpen(false)}>{t('close')}</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
