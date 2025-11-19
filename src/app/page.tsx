@@ -968,6 +968,9 @@ const App = () => {
                     const currentUrl = new URL(window.location.href);
                     if (currentUrl.searchParams.get('ref') !== aRef) {
                         const newUrl = new URL(window.location.origin + window.location.pathname);
+                        if(isCurrentUserAdmin) {
+                           newUrl.searchParams.set('adminId', currentAdminId!);
+                        }
                         newUrl.searchParams.set('ref', aRef);
                         window.history.pushState({}, '', newUrl);
                     }
@@ -1268,7 +1271,7 @@ const App = () => {
     };
     
     const handleShareToWhatsApp = () => {
-        const urlToShare = window.location.origin;
+        const urlToShare = `${window.location.origin}`;
         const message = encodeURIComponent(t('shareRaffleAppDescription'));
         const whatsappUrl = `https://wa.me/?text=${message} ${encodeURIComponent(urlToShare)}`;
         window.open(whatsappUrl, '_blank');
@@ -1276,7 +1279,7 @@ const App = () => {
     };
 
     const handleShareToFacebook = () => {
-        const urlToShare = window.location.origin;
+        const urlToShare = `${window.location.origin}`;
         const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(urlToShare)}`;
         window.open(facebookUrl, '_blank');
         setIsShareDialogOpen(false);
@@ -2211,12 +2214,6 @@ const App = () => {
                                         >
                                            <Gamepad2 className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">{t('gamesTab')}</span>
                                         </button>
-                                        <button 
-                                            className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'stats' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
-                                            onClick={() => handleTabClick('stats')}
-                                        >
-                                           <span>{t('statsTab')}</span>
-                                        </button>
                                     </>
                                     )}
                                     <button 
@@ -3027,7 +3024,7 @@ const App = () => {
                         <div className="flex justify-center items-center p-4">
                             <div className="relative inline-block p-4 bg-white rounded-lg shadow-md">
                                 <Image
-                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(appUrl)}&qzone=1&ecc=H`}
+                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(window.location.origin)}&qzone=1&ecc=H`}
                                     alt={t('appQRCodeAlt')}
                                     width={200}
                                     height={200}
