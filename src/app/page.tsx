@@ -179,7 +179,6 @@ const App = () => {
     const [newPassword, setNewPassword] = useState('');
     const [confirmNewPassword, setConfirmNewPassword] = useState('');
     const [isSuperAdminChangePasswordOpen, setIsSuperAdminChangePasswordOpen] = useState(false);
-    const [isSalesStatsDialogOpen, setIsSalesStatsDialogOpen] = useState(false);
     const [isPaymentLinksDialogOpen, setIsPaymentLinksDialogOpen] = useState(false);
     const [paymentLinks, setPaymentLinks] = useState({
         twoDigit: '',
@@ -1998,10 +1997,6 @@ const App = () => {
                                                 <Phone className="mr-2 h-4 w-4" />
                                                 <span>{t('secondaryContact')}</span>
                                             </DropdownMenuItem>
-                                            <DropdownMenuItem onSelect={() => setIsSalesStatsDialogOpen(true)}>
-                                                <DollarSign className="mr-2 h-4 w-4" />
-                                                <span>{t('sales')}</span>
-                                            </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setIsPaymentLinksDialogOpen(true)}>
                                                 <LinkIcon className="mr-2 h-4 w-4" />
                                                 <span>{t('paymentLinks')}</span>
@@ -3193,48 +3188,6 @@ const App = () => {
                 </DialogContent>
             </Dialog>
 
-            <Dialog open={isSalesStatsDialogOpen} onOpenChange={setIsSalesStatsDialogOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>{t('activationSales')}</DialogTitle>
-                    </DialogHeader>
-                    <div className="py-4 space-y-4">
-                        <div className="flex justify-between items-center bg-purple-50 p-3 rounded-lg">
-                            <div>
-                                <p className="font-semibold text-purple-800">{t('2digitRaffle')}</p>
-                                <p className="text-sm text-purple-600">{t('salesFrom', { count: nextRaffleRefs.even.count, price: formatValue(12000) })}</p>
-                            </div>
-                            <p className="font-bold text-xl text-purple-900">{formatValue(nextRaffleRefs.even.count * 12000)}</p>
-                        </div>
-                        <div className="flex justify-between items-center bg-blue-50 p-3 rounded-lg">
-                            <div>
-                                <p className="font-semibold text-blue-800">{t('3digitRaffle')}</p>
-                                <p className="text-sm text-blue-600">{t('salesFrom', { count: nextRaffleRefs.odd.count, price: formatValue(15000) })}</p>
-                            </div>
-                            <p className="font-bold text-xl text-blue-900">{formatValue(nextRaffleRefs.odd.count * 15000)}</p>
-                        </div>
-                        <div className="flex justify-between items-center bg-red-50 p-3 rounded-lg">
-                            <div>
-                                <p className="font-semibold text-red-800">{t('infiniteRaffle')}</p>
-                                <p className="text-sm text-red-600">{t('salesFrom', { count: nextRaffleRefs.infinite.count, price: formatValue(30000) })}</p>
-                            </div>
-                            <p className="font-bold text-xl text-red-900">{formatValue(nextRaffleRefs.infinite.count * 30000)}</p>
-                        </div>
-                        <div className="flex justify-between items-center bg-green-100 p-4 rounded-lg mt-4 border-t-2 border-green-300">
-                             <p className="font-bold text-green-800 text-lg">{t('totalSales')}</p>
-                             <p className="font-extrabold text-2xl text-green-900">{formatValue(
-                                (nextRaffleRefs.even.count * 12000) +
-                                (nextRaffleRefs.odd.count * 15000) +
-                                (nextRaffleRefs.infinite.count * 30000)
-                             )}</p>
-                        </div>
-                    </div>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsSalesStatsDialogOpen(false)}>{t('close')}</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-
             <Dialog open={isPaymentLinksDialogOpen} onOpenChange={setIsPaymentLinksDialogOpen}>
                 <DialogContent>
                     <DialogHeader>
@@ -3320,5 +3273,3 @@ const App = () => {
 };
 
 export default App;
-
-    
