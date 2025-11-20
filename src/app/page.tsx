@@ -180,6 +180,12 @@ const App = () => {
     const [confirmNewPassword, setConfirmNewPassword] = useState('');
     const [isSuperAdminChangePasswordOpen, setIsSuperAdminChangePasswordOpen] = useState(false);
     const [isSalesStatsDialogOpen, setIsSalesStatsDialogOpen] = useState(false);
+    const [isPaymentLinksDialogOpen, setIsPaymentLinksDialogOpen] = useState(false);
+    const [paymentLinks, setPaymentLinks] = useState({
+        twoDigit: '',
+        threeDigit: '',
+        infinite: '',
+    });
 
     
     const isCurrentUserAdmin = !!raffleState.adminId && !!currentAdminId && raffleState.adminId === currentAdminId;
@@ -211,6 +217,11 @@ const App = () => {
                 setAppSettings(settings);
                 if (isSuperAdmin) {
                     setSecondaryContact(settings.secondaryContact || '');
+                    setPaymentLinks({
+                        twoDigit: settings.paymentLinkTwoDigit || '',
+                        threeDigit: settings.paymentLinkThreeDigit || '',
+                        infinite: settings.paymentLinkInfinite || '',
+                    });
                 }
             }
         });
@@ -219,17 +230,17 @@ const App = () => {
 
 
     useEffect(() => {
-        const fetchNextRefs = async () => {
-            if (isSuperAdmin && !raffleState.raffleRef) {
+        if (isSuperAdmin && !raffleState.raffleRef) {
+            const fetchNextRefs = async () => {
                 const evenInfo = await raffleManager.peekNextRaffleRef('two-digit', 2);
                 const oddInfo = await raffleManager.peekNextRaffleRef('three-digit', 2);
                 const infiniteInfo = await raffleManager.peekNextRaffleRef('infinite', 2);
                 setNextRaffleRefs({ even: evenInfo, odd: oddInfo, infinite: infiniteInfo });
-            } else {
-                setNextRaffleRefs({ even: { refs: [], count: 0 }, odd: { refs: [], count: 0 }, infinite: { refs: [], count: 0 } });
-            }
-        };
-        fetchNextRefs();
+            };
+            fetchNextRefs();
+        } else {
+            setNextRaffleRefs({ even: { refs: [], count: 0 }, odd: { refs: [], count: 0 }, infinite: { refs: [], count: 0 } });
+        }
     }, [isSuperAdmin, raffleState.raffleRef]);
 
     useEffect(() => {
@@ -893,13 +904,13 @@ const App = () => {
                     setNextRaffleRefs(prev => {
                         const newRefs = { ...prev };
                         if (mode === 'two-digit') {
-                            newRefs.even.count += 1;
+                            newRefs.even.count = (newRefs.even.count || 0) + 1;
                             newRefs.even.refs = newRefs.even.refs.filter(r => r !== aRef);
                         } else if (mode === 'three-digit') {
-                            newRefs.odd.count += 1;
+                            newRefs.odd.count = (newRefs.odd.count || 0) + 1;
                             newRefs.odd.refs = newRefs.odd.refs.filter(r => r !== aRef);
                         } else if (mode === 'infinite') {
-                            newRefs.infinite.count += 1;
+                            newRefs.infinite.count = (newRefs.infinite.count || 0) + 1;
                             newRefs.infinite.refs = newRefs.infinite.refs.filter(r => r !== aRef);
                         }
                         return newRefs;
@@ -1120,21 +1131,23 @@ const App = () => {
         }
 
         const activationRef = `TXN_${mode}_${Date.now()}`;
-        
         const redirectUrl = new URL(window.location.origin);
         redirectUrl.searchParams.set('raffleMode', mode);
 
         let paymentLink = '';
         if (mode === 'two-digit') {
-            paymentLink = `https://checkout.nequi.wompi.co/l/GWZUpk?redirect-url=${encodeURIComponent(redirectUrl.href)}&reference=${activationRef}`;
+            paymentLink = appSettings.paymentLinkTwoDigit || 'https://checkout.nequi.wompi.co/l/GWZUpk';
         } else if (mode === 'three-digit') {
-            paymentLink = `https://checkout.wompi.co/l/9wH9fR?redirect-url=${encodeURIComponent(redirectUrl.href)}&reference=${activationRef}`;
+            paymentLink = appSettings.paymentLinkThreeDigit || `https://checkout.wompi.co/l/9wH9fR`;
         } else if (mode === 'infinite') {
-            paymentLink = `https://checkout.wompi.co/l/lwSfQT?redirect-url=${encodeURIComponent(redirectUrl.href)}&reference=${activationRef}`;
+            paymentLink = appSettings.paymentLinkInfinite || `https://checkout.wompi.co/l/lwSfQT`;
         }
 
         if (paymentLink) {
-            window.location.href = paymentLink;
+            const url = new URL(paymentLink);
+            url.searchParams.set('redirect-url', redirectUrl.href);
+            url.searchParams.set('reference', activationRef);
+            window.location.href = url.toString();
         }
     };
 
@@ -1332,6 +1345,22 @@ const App = () => {
         } catch (error) {
             console.error("Error saving secondary contact:", error);
             showNotification(t('errorSavingSecondaryContact'), 'error');
+        }
+    };
+
+    const handleSavePaymentLinks = async () => {
+        try {
+            const settingsDocRef = doc(db, 'internal', 'settings');
+            await setDoc(settingsDocRef, { 
+                paymentLinkTwoDigit: paymentLinks.twoDigit,
+                paymentLinkThreeDigit: paymentLinks.threeDigit,
+                paymentLinkInfinite: paymentLinks.infinite,
+             }, { merge: true });
+            showNotification(t('paymentLinksSaved'), 'success');
+            setIsPaymentLinksDialogOpen(false);
+        } catch (error) {
+            console.error("Error saving payment links:", error);
+            showNotification(t('errorSavingPaymentLinks'), 'error');
         }
     };
 
@@ -1964,6 +1993,10 @@ const App = () => {
                                             <DropdownMenuItem onSelect={() => setIsSalesStatsDialogOpen(true)}>
                                                 <DollarSign className="mr-2 h-4 w-4" />
                                                 <span>{t('sales')}</span>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onSelect={() => setIsPaymentLinksDialogOpen(true)}>
+                                                <LinkIcon className="mr-2 h-4 w-4" />
+                                                <span>{t('paymentLinks')}</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setIsSuperAdminChangePasswordOpen(true)}>
                                                 <KeyRound className="mr-2 h-4 w-4" />
@@ -3219,6 +3252,45 @@ const App = () => {
                 </DialogContent>
             </Dialog>
 
+            <Dialog open={isPaymentLinksDialogOpen} onOpenChange={setIsPaymentLinksDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{t('managePaymentLinks')}</DialogTitle>
+                        <DialogDescription>{t('managePaymentLinksDescription')}</DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="payment-link-two-digit">{t('paymentLinkTwoDigit')}</Label>
+                            <Input
+                                id="payment-link-two-digit"
+                                value={paymentLinks.twoDigit}
+                                onChange={(e) => setPaymentLinks(p => ({ ...p, twoDigit: e.target.value }))}
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="payment-link-three-digit">{t('paymentLinkThreeDigit')}</Label>
+                            <Input
+                                id="payment-link-three-digit"
+                                value={paymentLinks.threeDigit}
+                                onChange={(e) => setPaymentLinks(p => ({ ...p, threeDigit: e.target.value }))}
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="payment-link-infinite">{t('paymentLinkInfinite')}</Label>
+                            <Input
+                                id="payment-link-infinite"
+                                value={paymentLinks.infinite}
+                                onChange={(e) => setPaymentLinks(p => ({ ...p, infinite: e.target.value }))}
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsPaymentLinksDialogOpen(false)}>{t('cancel')}</Button>
+                        <Button onClick={handleSavePaymentLinks}>{t('save')}</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
             <CountrySelectionDialog
               isOpen={isCountrySelectionOpen}
               onClose={() => setIsCountrySelectionOpen(false)}
@@ -3236,5 +3308,3 @@ const App = () => {
 };
 
 export default App;
-
-    

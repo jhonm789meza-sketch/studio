@@ -21,6 +21,9 @@ export interface PendingActivation {
 export interface AppSettings {
     secondaryContact?: string;
     superAdminPassword?: string;
+    paymentLinkTwoDigit?: string;
+    paymentLinkThreeDigit?: string;
+    paymentLinkInfinite?: string;
 }
 
 
@@ -68,6 +71,7 @@ export interface Raffle {
     
 
     
+
 
 
 

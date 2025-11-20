@@ -267,7 +267,13 @@
     "salesFrom": "Sales from {count} games at {price} each",
     "totalSales": "Total Sales",
     "bankAccountNumber": "Bank account number: 24096711314",
-    "accountNumberCopied": "Account number for {bank} copied to clipboard."
+    "accountNumberCopied": "Account number for {bank} copied to clipboard.",
+    "paymentLinks": "Payment Links",
+    "managePaymentLinks": "Manage Payment Links",
+    "managePaymentLinksDescription": "Update the payment links for each raffle type.",
+    "paymentLinkTwoDigit": "Payment Link (2-Digit)",
+    "paymentLinkThreeDigit": "Payment Link (3-Digit)",
+    "paymentLinkInfinite": "Payment Link (Infinite)",
+    "paymentLinksSaved": "Payment links saved successfully.",
+    "errorSavingPaymentLinks": "Error saving payment links."
 }
-
-    

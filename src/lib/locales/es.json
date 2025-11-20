@@ -265,9 +265,15 @@
     "sales": "Ventas",
     "activationSales": "Ventas por Activación",
     "salesFrom": "Ventas de {count} juegos a {price} c/u",
-    "totalSales": "Total Sales",
+    "totalSales": "Total Ventas",
     "bankAccountNumber": "Número de cuenta Banco Caja Social: 24096711314",
-    "accountNumberCopied": "Número de cuenta de {bank} copiado al portapapeles."
+    "accountNumberCopied": "Número de cuenta de {bank} copiado al portapapeles.",
+    "paymentLinks": "Links de Pago",
+    "managePaymentLinks": "Gestionar Links de Pago",
+    "managePaymentLinksDescription": "Actualiza los links de pago para cada tipo de rifa.",
+    "paymentLinkTwoDigit": "Link de Pago (2 Cifras)",
+    "paymentLinkThreeDigit": "Link de Pago (3 Cifras)",
+    "paymentLinkInfinite": "Link de Pago (Infinita)",
+    "paymentLinksSaved": "Links de pago guardados con éxito.",
+    "errorSavingPaymentLinks": "Error al guardar los links de pago."
 }
-
-    
