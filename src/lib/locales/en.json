@@ -244,7 +244,7 @@
     "errorSavingSecondaryContact": "Error saving secondary contact.",
     "contactDialogDescription": "Choose a contact option.",
     "assignReference": "Assign Reference",
-    "webSupport": "Web Support",
+    "webSupport": "Assign Reference",
     "searchGamePlaceholder": "Search by reference...",
     "changePasswordTitle": "Change Password",
     "changePasswordDescription": "You are about to change the password for raffle {ref}.",
