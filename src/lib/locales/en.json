@@ -280,5 +280,6 @@
     "copyPaymentDescription": "Choose which information to copy to make the payment.",
     "copyAccountNumber": "Copy Account Number",
     "copyBrebKey": "Copy Bre-B Key",
-    "brebKeyCopied": "Bre-B key copied to clipboard."
+    "brebKeyCopied": "Bre-B key copied to clipboard.",
+    "enableCountries": "Enable Countries"
 }

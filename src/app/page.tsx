@@ -11,7 +11,7 @@ import { requestNotificationPermission } from '@/lib/notification';
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House, Clock as ClockIcon, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Upload, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages, Trophy, Trash2, Copy, Shield, LogOut, Eye, EyeOff, Gamepad2, Phone, TrendingUp } from 'lucide-react';
+import { Menu, Award, Lock, House, Clock as ClockIcon, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Upload, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages, Trophy, Trash2, Copy, Shield, LogOut, Eye, EyeOff, Gamepad2, Phone, TrendingUp, Globe } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -1136,7 +1136,12 @@ const App = () => {
 
     const handlePriceButtonClick = async (mode: RaffleMode) => {
         if (isSuperAdmin) {
-            await handleActivateBoard(mode, undefined, undefined, true);
+            if (appSettings.showAllCountries) {
+                setSelectedRaffleMode(mode);
+                setIsCountrySelectionOpen(true);
+            } else {
+                await handleActivateBoard(mode, 'CO');
+            }
             return;
         }
 
@@ -1198,7 +1203,7 @@ const App = () => {
         setLoading(true);
     
         try {
-            const {adminId, finalRaffleRef} = await handleActivateBoard(activation.raffleMode, activation.transactionId, undefined, false);
+            const {adminId, finalRaffleRef} = await handleActivateBoard(activation.raffleMode, 'CO', activation.transactionId, undefined, false);
             
             const activationDocRef = doc(db, 'pendingActivations', activation.id);
             await setDoc(activationDocRef, { status: 'completed' }, { merge: true });
@@ -1215,7 +1220,7 @@ const App = () => {
         }
     };
 
-    const handleActivateBoard = async (mode: RaffleMode, transactionId: string | undefined, newRef?: string, loadBoard = true): Promise<{ adminId: string | null, finalRaffleRef: string | null }> => {
+    const handleActivateBoard = async (mode: RaffleMode, countryCode: string, transactionId?: string, newRef?: string, loadBoard = true): Promise<{ adminId: string | null, finalRaffleRef: string | null }> => {
         if (loadBoard) setLoading(true);
 
         const finalTransactionId = transactionId || `SUPERADMIN_${Date.now()}`;
@@ -1254,11 +1259,11 @@ const App = () => {
                 isPaid: true,
                 prizeImageUrl: '',
                 value: '0', 
-                currencySymbol: getCurrencySymbol('CO'),
+                currencySymbol: getCurrencySymbol(countryCode),
                 infiniteModeDigits: 4,
             };
             
-            await setDoc(doc(db, "raffles", finalRaffleRef), newRaffleData);
+            await setDoc(doc(db, "raffles", finalRaffleRef), newRffleData);
             
             if (!finalTransactionId.startsWith('SUPERADMIN')) {
                  await setDoc(transactionDocRef, {
@@ -1409,6 +1414,17 @@ const App = () => {
         } catch (error) {
             console.error("Error changing super admin password:", error);
             showNotification(t('passwordChangeError'), 'error');
+        }
+    };
+
+    const handleToggleAllCountries = async (enabled: boolean) => {
+        try {
+            const settingsDocRef = doc(db, 'internal', 'settings');
+            await setDoc(settingsDocRef, { showAllCountries: enabled }, { merge: true });
+            showNotification(enabled ? 'All countries enabled' : 'Default countries enabled', 'success');
+        } catch (error) {
+            console.error("Error updating country settings:", error);
+            showNotification('Error updating settings', 'error');
         }
     };
 
@@ -2000,6 +2016,20 @@ const App = () => {
                                             <DropdownMenuItem onSelect={() => setIsPaymentLinksDialogOpen(true)}>
                                                 <LinkIcon className="mr-2 h-4 w-4" />
                                                 <span>{t('paymentLinks')}</span>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                                <div className="flex items-center justify-between w-full">
+                                                    <Label htmlFor="enable-all-countries" className="flex items-center gap-2 cursor-pointer">
+                                                         <Globe className="mr-2 h-4 w-4" />
+                                                         <span>{t('enableCountries')}</span>
+                                                    </Label>
+                                                    <Switch
+                                                        id="enable-all-countries"
+                                                        checked={appSettings.showAllCountries}
+                                                        onCheckedChange={handleToggleAllCountries}
+                                                        className="ml-4"
+                                                    />
+                                                </div>
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setIsSuperAdminChangePasswordOpen(true)}>
                                                 <KeyRound className="mr-2 h-4 w-4" />
@@ -3261,11 +3291,12 @@ const App = () => {
               onClose={() => setIsCountrySelectionOpen(false)}
               onSelectCountry={(countryCode) => {
                 if (selectedRaffleMode) {
-                  // handleActivateBoard(selectedRaffleMode, countryCode);
+                  handleActivateBoard(selectedRaffleMode, countryCode);
                 }
               }}
               raffleMode={selectedRaffleMode}
               t={t}
+              showAllCountries={appSettings.showAllCountries || false}
             />
 
         </div>

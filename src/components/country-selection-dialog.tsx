@@ -20,10 +20,31 @@ interface CountrySelectionDialogProps {
   onSelectCountry: (countryCode: string) => void;
   raffleMode: RaffleMode | null;
   t: (key: string, params?: any) => string;
+  showAllCountries: boolean;
 }
 
-const countries = [
+const allCountries = [
     { name: 'Colombia', flag: '🇨🇴', code: 'CO' },
+    { name: 'Argentina', flag: '🇦🇷', code: 'AR' },
+    { name: 'Bolivia', flag: '🇧🇴', code: 'BO' },
+    { name: 'Chile', flag: '🇨🇱', code: 'CL' },
+    { name: 'Costa Rica', flag: '🇨🇷', code: 'CR' },
+    { name: 'Cuba', flag: '🇨🇺', code: 'CU' },
+    { name: 'Ecuador', flag: '🇪🇨', code: 'EC' },
+    { name: 'El Salvador', flag: '🇸🇻', code: 'SV' },
+    { name: 'España', flag: '🇪🇸', code: 'ES' },
+    { name: 'Guatemala', flag: '🇬🇹', code: 'GT' },
+    { name: 'Honduras', flag: '🇭🇳', code: 'HN' },
+    { name: 'México', flag: '🇲🇽', code: 'MX' },
+    { name: 'Nicaragua', flag: '🇳🇮', code: 'NI' },
+    { name: 'Panamá', flag: '🇵🇦', code: 'PA' },
+    { name: 'Paraguay', flag: '🇵🇾', code: 'PY' },
+    { name: 'Perú', flag: '🇵🇪', code: 'PE' },
+    { name: 'República Dominicana', flag: '🇩🇴', code: 'DO' },
+    { name: 'Uruguay', flag: '🇺🇾', code: 'UY' },
+    { name: 'Venezuela', flag: '🇻🇪', code: 'VE' },
+    { name: 'Puerto Rico', flag: '🇵🇷', code: 'PR' },
+    { name: 'Estados Unidos', flag: '🇺🇸', code: 'US' },
 ];
 
 export const getCurrencySymbol = (countryCode: string): string => {
@@ -53,7 +74,7 @@ export const getCurrencySymbol = (countryCode: string): string => {
 const getPriceForCountry = (raffleMode: RaffleMode | null, countryCode: string): string | null => {
     if (!raffleMode) return null;
 
-    const isUSDCountry = ['AR', 'PE', 'EC', 'MX', 'DO', 'CR', 'UY', 'PR', 'VE', 'US', 'SV', 'GT', 'HN', 'NI', 'PA', 'CL'].includes(countryCode);
+    const isUSDCountry = ['AR', 'PE', 'EC', 'MX', 'DO', 'CR', 'UY', 'PR', 'VE', 'US', 'SV', 'GT', 'HN', 'NI', 'PA', 'CL', 'BO', 'CU', 'ES', 'PY'].includes(countryCode);
 
     if (isUSDCountry) {
         if (raffleMode === 'two-digit') return '10 USD';
@@ -62,15 +83,18 @@ const getPriceForCountry = (raffleMode: RaffleMode | null, countryCode: string):
     }
 
     if (countryCode === 'CO') {
-        if (raffleMode === 'two-digit') return null; // Price handled by payment link
-        if (raffleMode === 'three-digit') return '15,000 COP';
-        if (raffleMode === 'infinite') return '30,000 COP';
+        if (raffleMode === 'two-digit') return '12.000 COP';
+        if (raffleMode === 'three-digit') return '15.000 COP';
+        if (raffleMode === 'infinite') return '30.000 COP';
     }
     
     return null;
 }
 
-export function CountrySelectionDialog({ isOpen, onClose, onSelectCountry, raffleMode, t }: CountrySelectionDialogProps) {
+export function CountrySelectionDialog({ isOpen, onClose, onSelectCountry, raffleMode, t, showAllCountries }: CountrySelectionDialogProps) {
+  
+  const countries = showAllCountries ? allCountries : [{ name: 'Colombia', flag: '🇨🇴', code: 'CO' }];
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
