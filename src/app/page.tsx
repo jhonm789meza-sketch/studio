@@ -1215,7 +1215,7 @@ const App = () => {
         }
     };
 
-    const handleActivateBoard = async (mode: RaffleMode, countryCode: string, transactionId?: string, newRef?: string, loadBoard = true): Promise<{ adminId: string | null, finalRaffleRef: string | null }> => {
+    const handleActivateBoard = async (mode: RaffleMode, countryCode: string = 'CO', transactionId?: string, newRef?: string, loadBoard = true): Promise<{ adminId: string | null, finalRaffleRef: string | null }> => {
         if (loadBoard) setLoading(true);
 
         const finalTransactionId = transactionId || `SUPERADMIN_${Date.now()}`;
@@ -3140,7 +3140,7 @@ const App = () => {
                                 className="w-full bg-green-500 text-white hover:bg-green-600 flex items-center justify-center gap-2"
                             >
                                 <WhatsappIcon />
-                                <span>{t('assignReference')} {index + 1}</span>
+                                <span>{t('assignReference')} {index + 2}</span>
                             </Button>
                         ))}
                     </div>
@@ -3240,27 +3240,42 @@ const App = () => {
                     <div className="grid gap-4 py-4">
                         <div className="grid gap-2">
                             <Label htmlFor="payment-link-two-digit">{t('paymentLinkTwoDigit')}</Label>
-                            <Input
-                                id="payment-link-two-digit"
-                                value={paymentLinks.twoDigit}
-                                onChange={(e) => setPaymentLinks(p => ({ ...p, twoDigit: e.target.value }))}
-                            />
+                            <div className="flex gap-2">
+                                <Input
+                                    id="payment-link-two-digit"
+                                    value={paymentLinks.twoDigit}
+                                    onChange={(e) => setPaymentLinks(p => ({ ...p, twoDigit: e.target.value }))}
+                                />
+                                <Button variant="ghost" size="icon" onClick={() => setPaymentLinks(p => ({ ...p, twoDigit: '' }))}>
+                                    <Trash2 className="h-4 w-4 text-red-500" />
+                                </Button>
+                            </div>
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="payment-link-three-digit">{t('paymentLinkThreeDigit')}</Label>
-                            <Input
-                                id="payment-link-three-digit"
-                                value={paymentLinks.threeDigit}
-                                onChange={(e) => setPaymentLinks(p => ({ ...p, threeDigit: e.target.value }))}
-                            />
+                            <div className="flex gap-2">
+                                <Input
+                                    id="payment-link-three-digit"
+                                    value={paymentLinks.threeDigit}
+                                    onChange={(e) => setPaymentLinks(p => ({ ...p, threeDigit: e.target.value }))}
+                                />
+                                <Button variant="ghost" size="icon" onClick={() => setPaymentLinks(p => ({ ...p, threeDigit: '' }))}>
+                                    <Trash2 className="h-4 w-4 text-red-500" />
+                                </Button>
+                            </div>
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="payment-link-infinite">{t('paymentLinkInfinite')}</Label>
-                            <Input
-                                id="payment-link-infinite"
-                                value={paymentLinks.infinite}
-                                onChange={(e) => setPaymentLinks(p => ({ ...p, infinite: e.target.value }))}
-                            />
+                             <div className="flex gap-2">
+                                <Input
+                                    id="payment-link-infinite"
+                                    value={paymentLinks.infinite}
+                                    onChange={(e) => setPaymentLinks(p => ({ ...p, infinite: e.target.value }))}
+                                />
+                                <Button variant="ghost" size="icon" onClick={() => setPaymentLinks(p => ({ ...p, infinite: '' }))}>
+                                    <Trash2 className="h-4 w-4 text-red-500" />
+                                </Button>
+                            </div>
                         </div>
                     </div>
                     <DialogFooter>
