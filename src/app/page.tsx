@@ -846,7 +846,29 @@ const App = () => {
     };
 
     const handleShare = () => {
-        setIsShareDialogOpen(true);
+        if (!raffleState.raffleRef) {
+            setIsShareDialogOpen(true);
+            return;
+        }
+
+        const url = new URL(window.location.origin);
+        url.searchParams.set('ref', raffleState.raffleRef);
+        const shareData = {
+            title: t('shareRaffle'),
+            text: t('shareRaffleMessage', { prize: raffleState.prize || 'un gran premio' }),
+            url: url.toString(),
+        };
+
+        if (navigator.share) {
+          try {
+             navigator.share(shareData);
+          } catch (error) {
+            console.error('Error sharing:', error);
+            setIsShareDialogOpen(true);
+          }
+        } else {
+          setIsShareDialogOpen(true);
+        }
     };
 
     const handleShareTicket = () => {
@@ -1286,7 +1308,7 @@ const App = () => {
     };
     
     const handleShareToWhatsApp = () => {
-        const urlToShare = window.location.origin;
+        const urlToShare = !raffleState.raffleRef ? window.location.origin : `${window.location.origin}?ref=${raffleState.raffleRef}`;
         const message = encodeURIComponent(t('shareRaffleAppDescription'));
         const whatsappUrl = `https://wa.me/?text=${message} ${encodeURIComponent(urlToShare)}`;
         window.open(whatsappUrl, '_blank');
@@ -1294,7 +1316,7 @@ const App = () => {
     };
 
     const handleShareToFacebook = () => {
-        const urlToShare = window.location.origin;
+        const urlToShare = !raffleState.raffleRef ? window.location.origin : `${window.location.origin}?ref=${raffleState.raffleRef}`;
         const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(urlToShare)}`;
         window.open(facebookUrl, '_blank');
         setIsShareDialogOpen(false);
@@ -2097,8 +2119,7 @@ const App = () => {
                                                                 </button>
                                                                 {index < nextRaffleRefs.even.refs.length - 1 ? ', ' : ''}
                                                             </span>
-                                                        ))}{' '}
-                                                        ({t('playedCount')}: {nextRaffleRefs.even.count})
+                                                        ))}
                                                     </div>
                                                 )}
                                             </div>
@@ -2149,8 +2170,7 @@ const App = () => {
                                                                 </button>
                                                                 {index < nextRaffleRefs.odd.refs.length - 1 ? ', ' : ''}
                                                             </span>
-                                                        ))}{' '}
-                                                        ({t('playedCount')}: {nextRaffleRefs.odd.count})
+                                                        ))}
                                                     </div>
                                                 )}
                                             </div>
@@ -2201,8 +2221,7 @@ const App = () => {
                                                                 </button>
                                                                 {index < nextRaffleRefs.infinite.refs.length - 1 ? ', ' : ''}
                                                             </span>
-                                                        ))}{' '}
-                                                        ({t('playedCount')}: {nextRaffleRefs.infinite.count})
+                                                        ))}
                                                     </div>
                                                 )}
                                             </div>
@@ -3013,7 +3032,7 @@ const App = () => {
                         <div className="flex justify-center items-center p-4">
                             <div className="relative inline-block p-4 bg-white rounded-lg shadow-md">
                                 <Image
-                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(window.location.origin)}&qzone=1&ecc=H`}
+                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(!raffleState.raffleRef ? window.location.origin : `${window.location.origin}?ref=${raffleState.raffleRef}`)}&qzone=1&ecc=H`}
                                     alt={t('appQRCodeAlt')}
                                     width={200}
                                     height={200}
