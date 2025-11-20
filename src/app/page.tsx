@@ -23,7 +23,7 @@ import { es, enUS } from 'date-fns/locale';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { CountrySelectionDialog, getCurrencySymbol } from '@/components/country-selection-dialog';
-import { WhatsappIcon, FacebookIcon, TicketIcon, NequiIcon, InlineTicket } from '@/components/raffle-components';
+import { WhatsappIcon, FacebookIcon, TicketIcon, NequiIcon, InlineTicket, BankIcon } from '@/components/raffle-components';
 
 
 type RaffleMode = 'two-digit' | 'three-digit' | 'infinite';
@@ -1138,26 +1138,11 @@ const App = () => {
         }
     };
 
-    const handleNequiActivationClick = (mode: RaffleMode) => {
-        const nequiNumber = '3145696687';
-        let value = '';
-        let description = 'Activación Rifa ';
-    
-        if (mode === 'two-digit') {
-            value = '12000';
-            description += '2 cifras';
-        } else if (mode === 'three-digit') {
-            value = '15000';
-            description += '3 cifras';
-        } else if (mode === 'infinite') {
-            value = '30000';
-            description += 'infinita';
-        }
-    
-        if (value) {
-            const nequiUrl = `nequi://app/pay?phoneNumber=${nequiNumber}&value=${value}&currency=COP&description=${encodeURIComponent(description)}`;
-            window.location.href = nequiUrl;
-        }
+    const handleActivationClick = (mode: RaffleMode) => {
+        const accountNumber = '24096711314';
+        navigator.clipboard.writeText(accountNumber).then(() => {
+            showNotification(t('accountNumberCopied', { bank: 'Banco Caja Social' }), 'success');
+        });
     };
     
     const handleManualActivation = async (mode: RaffleMode) => {
@@ -2060,11 +2045,11 @@ const App = () => {
                                                 )}
                                                 {!isSuperAdmin && (
                                                     <div className="text-center">
-                                                        <Button onClick={() => handleNequiActivationClick('two-digit')} size="lg" className="w-full bg-[#A454C4] hover:bg-[#8e49a8] text-white font-bold flex items-center gap-2">
-                                                            <NequiIcon />
-                                                            Nequi (12.000)
+                                                        <Button onClick={() => handleActivationClick('two-digit')} size="lg" className="w-full bg-gray-700 hover:bg-gray-800 text-white font-bold flex items-center gap-2">
+                                                            <BankIcon />
+                                                            {t('activate')} (12.000)
                                                         </Button>
-                                                        <p className="text-xs text-gray-500 mt-2">Numero cuenta Nequi: 3145696687</p>
+                                                        <p className="text-xs text-gray-500 mt-2">{t('bankAccountNumber')}</p>
                                                     </div>
                                                 )}
                                                 {isSuperAdmin && nextRaffleRefs.even.refs.length > 0 && (
@@ -2112,11 +2097,11 @@ const App = () => {
                                                 )}
                                                  {!isSuperAdmin && (
                                                     <div className="text-center">
-                                                        <Button onClick={() => handleNequiActivationClick('three-digit')} size="lg" className="w-full bg-[#A454C4] hover:bg-[#8e49a8] text-white font-bold flex items-center gap-2">
-                                                            <NequiIcon />
-                                                            Nequi (15.000)
+                                                        <Button onClick={() => handleActivationClick('three-digit')} size="lg" className="w-full bg-gray-700 hover:bg-gray-800 text-white font-bold flex items-center gap-2">
+                                                            <BankIcon />
+                                                            {t('activate')} (15.000)
                                                         </Button>
-                                                        <p className="text-xs text-gray-500 mt-2">Numero cuenta Nequi: 3145696687</p>
+                                                         <p className="text-xs text-gray-500 mt-2">{t('bankAccountNumber')}</p>
                                                     </div>
                                                 )}
                                                 {isSuperAdmin && nextRaffleRefs.odd.refs.length > 0 && (
@@ -2164,11 +2149,11 @@ const App = () => {
                                                 )}
                                                  {!isSuperAdmin && (
                                                     <div className="text-center">
-                                                        <Button onClick={() => handleNequiActivationClick('infinite')} size="lg" className="w-full bg-[#A454C4] hover:bg-[#8e49a8] text-white font-bold flex items-center gap-2">
-                                                            <NequiIcon />
-                                                            Nequi (30.000)
+                                                        <Button onClick={() => handleActivationClick('infinite')} size="lg" className="w-full bg-gray-700 hover:bg-gray-800 text-white font-bold flex items-center gap-2">
+                                                           <BankIcon />
+                                                           {t('activate')} (30.000)
                                                         </Button>
-                                                        <p className="text-xs text-gray-500 mt-2">Numero cuenta Nequi: 3145696687</p>
+                                                         <p className="text-xs text-gray-500 mt-2">{t('bankAccountNumber')}</p>
                                                     </div>
                                                 )}
                                                 {isSuperAdmin && nextRaffleRefs.infinite.refs.length > 0 && (
@@ -3251,3 +3236,5 @@ const App = () => {
 };
 
 export default App;
+
+    

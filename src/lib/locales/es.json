@@ -262,11 +262,12 @@
     "gameDeletedError": "Error al eliminar el juego.",
     "activationInstructionTitle": "Cómo Activar tu Tablero",
     "activationInstructionBody": "Para obtener tu tablero de rifa, primero cancela al número de cuenta que aparece en pantalla para la rifa que deseas. Luego, comunícate con nosotros a través de la opción 'Contacto' en el menú para que te asignemos tu referencia.",
-    "statsTab": "Estadísticas",
-    "gameStats": "Estadísticas de Juegos",
-    "gamesPlayed": "Juegos Jugados",
     "sales": "Ventas",
     "activationSales": "Ventas por Activación",
     "salesFrom": "Ventas de {count} juegos a {price} c/u",
-    "totalSales": "Ventas Totales"
+    "totalSales": "Total Sales",
+    "bankAccountNumber": "Número de cuenta Banco Caja Social: 24096711314",
+    "accountNumberCopied": "Número de cuenta de {bank} copiado al portapapeles."
 }
+
+    

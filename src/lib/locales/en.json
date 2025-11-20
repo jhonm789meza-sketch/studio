@@ -262,11 +262,12 @@
     "gameDeletedError": "Error deleting the game.",
     "activationInstructionTitle": "How to Activate Your Board",
     "activationInstructionBody": "To get your raffle board, first pay to the account number displayed on the screen for the raffle you want. Then, contact us through the 'Contact' option in the menu so we can assign you your reference.",
-    "statsTab": "Stats",
-    "gameStats": "Game Statistics",
-    "gamesPlayed": "Games Played",
     "sales": "Sales",
     "activationSales": "Activation Sales",
     "salesFrom": "Sales from {count} games at {price} each",
-    "totalSales": "Total Sales"
+    "totalSales": "Total Sales",
+    "bankAccountNumber": "Bank account number: 24096711314",
+    "accountNumberCopied": "Account number for {bank} copied to clipboard."
 }
+
+    

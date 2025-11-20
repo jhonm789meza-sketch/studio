@@ -19,7 +19,7 @@ export const FacebookIcon = () => (
 
 export const TicketIcon = ({ className }: { className?: string }) => (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-        <path d="M2 9a3 3 0 0 1 0 6v1a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-1a3 3 0 0 1 0-6V8a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/>
+        <path d="M2 9a3 3 0 0 1 0 6v1a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-1a3 3 0 0 1 0-6V8a2 2 0 0 0-2-2H4a2 2 0 0-2 2Z"/>
         <path d="M13 5v2"/>
         <path d="M13 17v2"/>
         <path d="M13 11v2"/>
@@ -32,6 +32,16 @@ export const NequiIcon = () => (
         <path d="M13.2 7.02H10.8V16.98H13.2V7.02Z" fill="white" />
         <path d="M9.66 16.98V14.58H7.14V12.18H9.66V9.78H7.14V7.38H9.66V4.86H5.94V19.14H9.66V16.98Z" fill="#A454C4" />
         <path d="M14.34 16.98V14.58H16.86V12.18H14.34V9.78H16.86V7.38H14.34V4.86H18.06V19.14H14.34V16.98Z" fill="#A454C4" />
+    </svg>
+);
+
+export const BankIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+        <path d="m3 21 18-0"/>
+        <path d="M5 21V7l7-4 7 4v14"/>
+        <path d="M11 21V11"/>
+        <path d="M11 11 5 8"/>
+        <path d="m19 8-6 3"/>
     </svg>
 );
 
@@ -121,5 +131,7 @@ export const InlineTicket = ({ ticketModalRef, ticketData, setGeneratedTicketDat
        </div>
     );
 };
+
+    
 
     
