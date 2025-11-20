@@ -3111,7 +3111,7 @@ const App = () => {
                         </div>
                         <div className="space-y-2 mt-4">
                              <Label>{t('savedContacts')}</Label>
-                             {secondaryContacts.length > 0 ? (
+                             {Array.isArray(secondaryContacts) && secondaryContacts.length > 0 ? (
                                 secondaryContacts.map((contact, index) => (
                                     <div key={index} className="flex items-center justify-between bg-gray-100 p-2 rounded-md">
                                         <span>{contact}</span>
@@ -3151,7 +3151,7 @@ const App = () => {
                             <WhatsappIcon />
                             <span>{t('assignReference')}</span>
                         </Button>
-                        {appSettings.secondaryContact?.map((contact, index) => (
+                        {Array.isArray(appSettings.secondaryContact) && appSettings.secondaryContact?.map((contact, index) => (
                             <Button
                                 key={index}
                                 onClick={() => {
