@@ -281,9 +281,9 @@
     "copyAccountNumber": "Copy Account Number",
     "copyBrebKey": "Copy Bre-B Key",
     "brebKeyCopied": "Bre-B key copied to clipboard.",
-    "enableCountries": "Enable Countries",
     "add": "Add",
     "addNewContact": "Add New Contact",
     "savedContacts": "Saved Contacts",
     "noSavedContacts": "No saved contacts."
 }
+

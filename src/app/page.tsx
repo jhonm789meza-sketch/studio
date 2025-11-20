@@ -148,7 +148,6 @@ const App = () => {
     const [isQrDialogOpen, setIsQrDialogOpen] = useState(false);
     const [showAdminPassword, setShowAdminPassword] = useState(false);
     
-    const [isCountrySelectionOpen, setIsCountrySelectionOpen] = useState(false);
     const [selectedRaffleMode, setSelectedRaffleMode] = useState<RaffleMode | null>(null);
     const [partialWinners, setPartialWinners] = useState<PartialWinnerInfo[]>([]);
 
@@ -1137,12 +1136,7 @@ const App = () => {
 
     const handlePriceButtonClick = async (mode: RaffleMode) => {
         if (isSuperAdmin) {
-            if (appSettings.showAllCountries) {
-                setSelectedRaffleMode(mode);
-                setIsCountrySelectionOpen(true);
-            } else {
-                await handleActivateBoard(mode, 'CO');
-            }
+            await handleActivateBoard(mode, 'CO');
             return;
         }
 
@@ -1437,17 +1431,6 @@ const App = () => {
         } catch (error) {
             console.error("Error changing super admin password:", error);
             showNotification(t('passwordChangeError'), 'error');
-        }
-    };
-
-    const handleToggleAllCountries = async (enabled: boolean) => {
-        try {
-            const settingsDocRef = doc(db, 'internal', 'settings');
-            await setDoc(settingsDocRef, { showAllCountries: enabled }, { merge: true });
-            showNotification(enabled ? 'All countries enabled' : 'Default countries enabled', 'success');
-        } catch (error) {
-            console.error("Error updating country settings:", error);
-            showNotification('Error updating settings', 'error');
         }
     };
 
@@ -2039,20 +2022,6 @@ const App = () => {
                                             <DropdownMenuItem onSelect={() => setIsPaymentLinksDialogOpen(true)}>
                                                 <LinkIcon className="mr-2 h-4 w-4" />
                                                 <span>{t('paymentLinks')}</span>
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                                                <div className="flex items-center justify-between w-full">
-                                                    <Label htmlFor="enable-all-countries" className="flex items-center gap-2 cursor-pointer">
-                                                         <Globe className="mr-2 h-4 w-4" />
-                                                         <span>{t('enableCountries')}</span>
-                                                    </Label>
-                                                    <Switch
-                                                        id="enable-all-countries"
-                                                        checked={appSettings.showAllCountries}
-                                                        onCheckedChange={handleToggleAllCountries}
-                                                        className="ml-4"
-                                                    />
-                                                </div>
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setIsSuperAdminChangePasswordOpen(true)}>
                                                 <KeyRound className="mr-2 h-4 w-4" />
@@ -3171,7 +3140,7 @@ const App = () => {
                                 className="w-full bg-green-500 text-white hover:bg-green-600 flex items-center justify-center gap-2"
                             >
                                 <WhatsappIcon />
-                                <span>{t('webSupport')} {index + 1}</span>
+                                <span>{t('assignReference')} {index + 1}</span>
                             </Button>
                         ))}
                     </div>
@@ -3330,21 +3299,9 @@ const App = () => {
                 </DialogContent>
             </Dialog>
 
-            <CountrySelectionDialog
-              isOpen={isCountrySelectionOpen}
-              onClose={() => setIsCountrySelectionOpen(false)}
-              onSelectCountry={(countryCode) => {
-                if (selectedRaffleMode) {
-                  handleActivateBoard(selectedRaffleMode, countryCode);
-                }
-              }}
-              raffleMode={selectedRaffleMode}
-              t={t}
-              showAllCountries={appSettings.showAllCountries || false}
-            />
-
         </div>
     );
 };
 
 export default App;
+

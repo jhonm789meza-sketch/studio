@@ -25,7 +25,6 @@ export interface AppSettings {
     paymentLinkTwoDigit?: string;
     paymentLinkThreeDigit?: string;
     paymentLinkInfinite?: string;
-    showAllCountries?: boolean;
 }
 
 
@@ -73,6 +72,8 @@ export interface Raffle {
     
 
     
+
+
 
 
 
