@@ -2082,7 +2082,7 @@ const App = () => {
                                                             <BankIcon />
                                                             {t('activate')} (12.000)
                                                         </Button>
-                                                        <p className="text-xs text-gray-500 mt-2">{t('bankAccountNumber')}</p>
+                                                        <p className="text-xs text-gray-500 mt-2 whitespace-pre-wrap">{t('bankAccountNumber')}</p>
                                                     </div>
                                                 )}
                                                 {isSuperAdmin && nextRaffleRefs.even.refs.length > 0 && (
@@ -2134,7 +2134,7 @@ const App = () => {
                                                             <BankIcon />
                                                             {t('activate')} (15.000)
                                                         </Button>
-                                                         <p className="text-xs text-gray-500 mt-2">{t('bankAccountNumber')}</p>
+                                                         <p className="text-xs text-gray-500 mt-2 whitespace-pre-wrap">{t('bankAccountNumber')}</p>
                                                     </div>
                                                 )}
                                                 {isSuperAdmin && nextRaffleRefs.odd.refs.length > 0 && (
@@ -2186,7 +2186,7 @@ const App = () => {
                                                            <BankIcon />
                                                            {t('activate')} (30.000)
                                                         </Button>
-                                                         <p className="text-xs text-gray-500 mt-2">{t('bankAccountNumber')}</p>
+                                                         <p className="text-xs text-gray-500 mt-2 whitespace-pre-wrap">{t('bankAccountNumber')}</p>
                                                     </div>
                                                 )}
                                                 {isSuperAdmin && nextRaffleRefs.infinite.refs.length > 0 && (
@@ -2379,28 +2379,6 @@ const App = () => {
                                                     )}
                                                 </div>
                                                 <div className="flex flex-wrap gap-2">
-                                                    {raffleState.isNequiEnabled && raffleState.nequiAccountNumber && raffleState.value && (
-                                                        <a
-                                                            href={`nequi://app/pay?phoneNumber=${raffleState.nequiAccountNumber}&value=${String(raffleState.value).replace(/\D/g, '')}&currency=COP&description=Pago Rifa`}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className="flex-1"
-                                                            onClick={async (e) => {
-                                                                if (!isRegisterFormValidForSubmit) {
-                                                                    e.preventDefault();
-                                                                    handleRegisterParticipant(); // Show validation errors
-                                                                } else {
-                                                                    const success = await handleRegisterParticipant(true);
-                                                                    if (!success) e.preventDefault();
-                                                                }
-                                                            }}
-                                                        >
-                                                            <Button className="w-full bg-[#A454C4] hover:bg-[#8e49a8] text-white" disabled={!isRegisterFormValidForSubmit}>
-                                                                <NequiIcon />
-                                                                <span className="ml-2">{t('payWithNequi')}</span>
-                                                            </Button>
-                                                        </a>
-                                                    )}
                                                     {raffleState.isPaymentLinkEnabled && raffleState.paymentLink && (
                                                         <Button
                                                             className="flex-1 w-full bg-blue-500 hover:bg-blue-600 text-white"
