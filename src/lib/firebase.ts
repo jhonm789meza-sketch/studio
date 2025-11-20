@@ -1,5 +1,5 @@
 
-import { initializeApp, getApp, FirebaseApp } from 'firebase/app';
+import { initializeApp, getApp, getApps, FirebaseApp } from 'firebase/app';
 import { getFirestore, Firestore } from 'firebase/firestore';
 import { getStorage, FirebaseStorage } from 'firebase/storage';
 import { getMessaging, Messaging } from 'firebase/messaging';
@@ -19,21 +19,21 @@ let db: Firestore;
 let storage: FirebaseStorage;
 let messaging: Messaging | null = null;
 
-
-try {
-  app = getApp();
-} catch (e) {
+if (getApps().length === 0) {
   app = initializeApp(firebaseConfig);
+} else {
+  app = getApp();
 }
 
 db = getFirestore(app);
 storage = getStorage(app);
 
 if (typeof window !== 'undefined') {
-    messaging = getMessaging(app);
+    try {
+        messaging = getMessaging(app);
+    } catch (e) {
+        console.error("Could not initialize messaging", e);
+    }
 }
-
-
-
 
 export { db, storage, messaging, app };
