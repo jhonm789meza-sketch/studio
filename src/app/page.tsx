@@ -1354,7 +1354,6 @@ const App = () => {
             const settingsDocRef = doc(db, 'internal', 'settings');
             await setDoc(settingsDocRef, { secondaryContact: secondaryContacts }, { merge: true });
             showNotification(t('secondaryContactSaved'), 'success');
-            setIsSecondaryContactDialogOpen(false);
             setNewSecondaryContact('');
         } catch (error) {
             console.error("Error saving secondary contact:", error);
@@ -1364,8 +1363,9 @@ const App = () => {
 
     const handleAddSecondaryContact = () => {
         if (newSecondaryContact && !secondaryContacts.includes(newSecondaryContact)) {
-            setSecondaryContacts([...secondaryContacts, newSecondaryContact.replace(/\D/g, '')]);
-            setNewSecondaryContact('');
+            const updatedContacts = [...secondaryContacts, newSecondaryContact.replace(/\D/g, '')];
+            setSecondaryContacts(updatedContacts);
+            handleSaveSecondaryContacts();
         }
     };
 
@@ -3338,3 +3338,5 @@ const App = () => {
 };
 
 export default App;
+
+    
