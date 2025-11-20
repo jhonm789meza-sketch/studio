@@ -162,7 +162,8 @@ const App = () => {
     const [isSuperAdmin, setIsSuperAdmin] = useState(false);
     const [pendingActivations, setPendingActivations] = useState<PendingActivation[]>([]);
     const [allRaffles, setAllRaffles] = useState<Raffle[]>([]);
-    const [secondaryContact, setSecondaryContact] = useState('');
+    const [secondaryContacts, setSecondaryContacts] = useState<string[]>([]);
+    const [newSecondaryContact, setNewSecondaryContact] = useState('');
     const [isSecondaryContactDialogOpen, setIsSecondaryContactDialogOpen] = useState(false);
     const [gameSearchQuery, setGameSearchQuery] = useState('');
 
@@ -217,7 +218,7 @@ const App = () => {
                 const settings = docSnap.data() as AppSettings;
                 setAppSettings(settings);
                 if (isSuperAdmin) {
-                    setSecondaryContact(settings.secondaryContact || '');
+                    setSecondaryContacts(settings.secondaryContact || []);
                     setPaymentLinks({
                         twoDigit: settings.paymentLinkTwoDigit || '',
                         threeDigit: settings.paymentLinkThreeDigit || '',
@@ -1263,7 +1264,7 @@ const App = () => {
                 infiniteModeDigits: 4,
             };
             
-            await setDoc(doc(db, "raffles", finalRaffleRef), newRffleData);
+            await setDoc(doc(db, "raffles", finalRaffleRef), newRaffleData);
             
             if (!finalTransactionId.startsWith('SUPERADMIN')) {
                  await setDoc(transactionDocRef, {
@@ -1290,7 +1291,7 @@ const App = () => {
     };
 
     const handleContactSupport = () => {
-        if (appSettings.secondaryContact && !raffleState.raffleRef) {
+        if (appSettings.secondaryContact && appSettings.secondaryContact.length > 0 && !raffleState.raffleRef) {
             setIsContactDialogOpen(true);
         } else {
             const whatsappUrl = `https://wa.me/3145696687`;
@@ -1348,16 +1349,28 @@ const App = () => {
         showNotification(t('logoutSuccess'), 'info');
     };
 
-    const handleSaveSecondaryContact = async () => {
+    const handleSaveSecondaryContacts = async () => {
         try {
             const settingsDocRef = doc(db, 'internal', 'settings');
-            await setDoc(settingsDocRef, { secondaryContact: secondaryContact }, { merge: true });
+            await setDoc(settingsDocRef, { secondaryContact: secondaryContacts }, { merge: true });
             showNotification(t('secondaryContactSaved'), 'success');
             setIsSecondaryContactDialogOpen(false);
+            setNewSecondaryContact('');
         } catch (error) {
             console.error("Error saving secondary contact:", error);
             showNotification(t('errorSavingSecondaryContact'), 'error');
         }
+    };
+
+    const handleAddSecondaryContact = () => {
+        if (newSecondaryContact && !secondaryContacts.includes(newSecondaryContact)) {
+            setSecondaryContacts([...secondaryContacts, newSecondaryContact.replace(/\D/g, '')]);
+            setNewSecondaryContact('');
+        }
+    };
+
+    const handleRemoveSecondaryContact = (contactToRemove: string) => {
+        setSecondaryContacts(secondaryContacts.filter(contact => contact !== contactToRemove));
     };
 
     const handleSavePaymentLinks = async () => {
@@ -3079,24 +3092,42 @@ const App = () => {
                 </DialogContent>
             </Dialog>
 
-             <Dialog open={isSecondaryContactDialogOpen} onOpenChange={setIsSecondaryContactDialogOpen}>
+            <Dialog open={isSecondaryContactDialogOpen} onOpenChange={setIsSecondaryContactDialogOpen}>
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>{t('secondaryContact')}</DialogTitle>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
-                        <Label htmlFor="secondary-contact-input">{t('enterPhoneNumber')}</Label>
-                        <Input
-                            id="secondary-contact-input"
-                            type="tel"
-                            value={secondaryContact}
-                            onChange={(e) => setSecondaryContact(e.target.value.replace(/\D/g, ''))}
-                            placeholder="3001234567"
-                        />
+                        <Label htmlFor="new-secondary-contact-input">{t('addNewContact')}</Label>
+                        <div className="flex gap-2">
+                            <Input
+                                id="new-secondary-contact-input"
+                                type="tel"
+                                value={newSecondaryContact}
+                                onChange={(e) => setNewSecondaryContact(e.target.value.replace(/\D/g, ''))}
+                                placeholder="3001234567"
+                            />
+                            <Button onClick={handleAddSecondaryContact} disabled={!newSecondaryContact}>{t('add')}</Button>
+                        </div>
+                        <div className="space-y-2 mt-4">
+                             <Label>{t('savedContacts')}</Label>
+                             {secondaryContacts.length > 0 ? (
+                                secondaryContacts.map((contact, index) => (
+                                    <div key={index} className="flex items-center justify-between bg-gray-100 p-2 rounded-md">
+                                        <span>{contact}</span>
+                                        <Button variant="ghost" size="icon" onClick={() => handleRemoveSecondaryContact(contact)}>
+                                            <Trash2 className="h-4 w-4 text-red-500" />
+                                        </Button>
+                                    </div>
+                                ))
+                             ) : (
+                                <p className="text-sm text-gray-500">{t('noSavedContacts')}</p>
+                             )}
+                        </div>
                     </div>
                     <DialogFooter>
                         <Button type="button" variant="outline" onClick={() => setIsSecondaryContactDialogOpen(false)}>{t('cancel')}</Button>
-                        <Button type="button" onClick={handleSaveSecondaryContact}>{t('save')}</Button>
+                        <Button type="button" onClick={handleSaveSecondaryContacts}>{t('save')}</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
@@ -3110,7 +3141,7 @@ const App = () => {
                         </DialogDescription>
                     </DialogHeader>
                     <div className="flex flex-col space-y-4 py-4">
-                         <Button
+                        <Button
                             onClick={() => {
                                 window.open(`https://wa.me/3145696687`, '_blank');
                                 setIsContactDialogOpen(false);
@@ -3120,16 +3151,19 @@ const App = () => {
                             <WhatsappIcon />
                             <span>{t('assignReference')}</span>
                         </Button>
-                        <Button
-                            onClick={() => {
-                                window.open(`https://wa.me/${appSettings.secondaryContact}`, '_blank');
-                                setIsContactDialogOpen(false);
-                            }}
-                            className="w-full bg-green-500 text-white hover:bg-green-600 flex items-center justify-center gap-2"
-                        >
-                            <WhatsappIcon />
-                            <span>{t('assignReference')}</span>
-                        </Button>
+                        {appSettings.secondaryContact?.map((contact, index) => (
+                            <Button
+                                key={index}
+                                onClick={() => {
+                                    window.open(`https://wa.me/${contact}`, '_blank');
+                                    setIsContactDialogOpen(false);
+                                }}
+                                className="w-full bg-green-500 text-white hover:bg-green-600 flex items-center justify-center gap-2"
+                            >
+                                <WhatsappIcon />
+                                <span>{t('webSupport')} {index + 1}</span>
+                            </Button>
+                        ))}
                     </div>
                 </DialogContent>
             </Dialog>
