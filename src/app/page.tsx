@@ -846,29 +846,7 @@ const App = () => {
     };
 
     const handleShare = () => {
-        if (!raffleState.raffleRef) {
-            setIsShareDialogOpen(true);
-            return;
-        }
-
-        const url = new URL(window.location.origin);
-        url.searchParams.set('ref', raffleState.raffleRef);
-        const shareData = {
-            title: t('shareRaffle'),
-            text: t('shareRaffleMessage', { prize: raffleState.prize || 'un gran premio' }),
-            url: url.toString(),
-        };
-
-        if (navigator.share) {
-          try {
-             navigator.share(shareData);
-          } catch (error) {
-            console.error('Error sharing:', error);
-            setIsShareDialogOpen(true);
-          }
-        } else {
-          setIsShareDialogOpen(true);
-        }
+        setIsShareDialogOpen(true);
     };
 
     const handleShareTicket = () => {
@@ -928,14 +906,23 @@ const App = () => {
                     setNextRaffleRefs(prev => {
                         const newRefs = { ...prev };
                         if (mode === 'two-digit') {
-                            newRefs.even.count = (newRefs.even.count || 0) + 1;
-                            newRefs.even.refs = newRefs.even.refs.filter(r => r !== aRef);
+                            newRefs.even = {
+                                ...newRefs.even,
+                                count: (newRefs.even.count || 0) + 1,
+                                refs: newRefs.even.refs.filter(r => r !== aRef),
+                            };
                         } else if (mode === 'three-digit') {
-                            newRefs.odd.count = (newRefs.odd.count || 0) + 1;
-                            newRefs.odd.refs = newRefs.odd.refs.filter(r => r !== aRef);
+                             newRefs.odd = {
+                                ...newRefs.odd,
+                                count: (newRefs.odd.count || 0) + 1,
+                                refs: newRefs.odd.refs.filter(r => r !== aRef),
+                            };
                         } else if (mode === 'infinite') {
-                            newRefs.infinite.count = (newRefs.infinite.count || 0) + 1;
-                            newRefs.infinite.refs = newRefs.infinite.refs.filter(r => r !== aRef);
+                            newRefs.infinite = {
+                                ...newRefs.infinite,
+                                count: (newRefs.infinite.count || 0) + 1,
+                                refs: newRefs.infinite.refs.filter(r => r !== aRef),
+                            };
                         }
                         return newRefs;
                     });
@@ -1308,7 +1295,7 @@ const App = () => {
     };
     
     const handleShareToWhatsApp = () => {
-        const urlToShare = !raffleState.raffleRef ? window.location.origin : `${window.location.origin}?ref=${raffleState.raffleRef}`;
+        const urlToShare = window.location.origin;
         const message = encodeURIComponent(t('shareRaffleAppDescription'));
         const whatsappUrl = `https://wa.me/?text=${message} ${encodeURIComponent(urlToShare)}`;
         window.open(whatsappUrl, '_blank');
@@ -1316,7 +1303,7 @@ const App = () => {
     };
 
     const handleShareToFacebook = () => {
-        const urlToShare = !raffleState.raffleRef ? window.location.origin : `${window.location.origin}?ref=${raffleState.raffleRef}`;
+        const urlToShare = window.location.origin;
         const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(urlToShare)}`;
         window.open(facebookUrl, '_blank');
         setIsShareDialogOpen(false);
@@ -3032,7 +3019,7 @@ const App = () => {
                         <div className="flex justify-center items-center p-4">
                             <div className="relative inline-block p-4 bg-white rounded-lg shadow-md">
                                 <Image
-                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(!raffleState.raffleRef ? window.location.origin : `${window.location.origin}?ref=${raffleState.raffleRef}`)}&qzone=1&ecc=H`}
+                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(window.location.origin)}&qzone=1&ecc=H`}
                                     alt={t('appQRCodeAlt')}
                                     width={200}
                                     height={200}
@@ -3333,3 +3320,5 @@ const App = () => {
 };
 
 export default App;
+
+    
