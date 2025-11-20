@@ -1152,7 +1152,7 @@ const App = () => {
     };
 
     const handleActivationClick = (mode: RaffleMode) => {
-        const textToCopy = '24096711314 llave Bre-B @AMIGO1045715054';
+        const textToCopy = 'llave Bre-B @AMIGO1045715054';
         navigator.clipboard.writeText(textToCopy).then(() => {
             showNotification(t('accountNumberCopied', { bank: 'Banco Caja Social' }), 'success');
         });
@@ -3286,5 +3286,3 @@ const App = () => {
 };
 
 export default App;
-
-    
