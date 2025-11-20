@@ -995,12 +995,12 @@ const App = () => {
                     handleTabClick('board');
     
                     const currentUrl = new URL(window.location.href);
-                    if (currentUrl.searchParams.get('ref') !== aRef) {
-                        const newUrl = new URL(window.location.origin + window.location.pathname);
-                        if(isCurrentUserAdmin) {
-                           newUrl.searchParams.set('adminId', currentAdminId!);
-                        }
-                        newUrl.searchParams.set('ref', aRef);
+                    const newUrl = new URL(window.location.origin);
+                    newUrl.searchParams.set('ref', aRef);
+                    if (data.adminId && data.adminId === localStorage.getItem('rifaAdminId') && !isPublicSearch) {
+                        newUrl.searchParams.set('adminId', data.adminId);
+                    }
+                    if (currentUrl.href !== newUrl.href) {
                         window.history.pushState({}, '', newUrl);
                     }
                 } else if (!isInitialLoad) {
@@ -1152,8 +1152,8 @@ const App = () => {
     };
 
     const handleActivationClick = (mode: RaffleMode) => {
-        const accountNumber = '24096711314';
-        navigator.clipboard.writeText(accountNumber).then(() => {
+        const textToCopy = '24096711314 llave Bre-B @AMIGO1045715054';
+        navigator.clipboard.writeText(textToCopy).then(() => {
             showNotification(t('accountNumberCopied', { bank: 'Banco Caja Social' }), 'success');
         });
     };
@@ -3286,3 +3286,5 @@ const App = () => {
 };
 
 export default App;
+
+    
