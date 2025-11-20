@@ -267,7 +267,7 @@
     "salesFrom": "Sales from {count} games at {price} each",
     "totalSales": "Total Sales",
     "bankAccountNumber": "24096711314 , @AMIGO1045715054",
-    "accountNumberCopied": "Account number copied to clipboard.",
+    "accountNumberCopied": "Account information copied to clipboard.",
     "paymentLinks": "Payment Links",
     "managePaymentLinks": "Manage Payment Links",
     "managePaymentLinksDescription": "Update the payment links for each raffle type.",
@@ -275,5 +275,10 @@
     "paymentLinkThreeDigit": "Payment Link (3-Digit)",
     "paymentLinkInfinite": "Payment Link (Infinite)",
     "paymentLinksSaved": "Payment links saved successfully.",
-    "errorSavingPaymentLinks": "Error saving payment links."
+    "errorSavingPaymentLinks": "Error saving payment links.",
+    "copyPaymentTitle": "Copy Payment Information",
+    "copyPaymentDescription": "Choose which information to copy to make the payment.",
+    "copyAccountNumber": "Copy Account Number",
+    "copyBrebKey": "Copy Bre-B Key",
+    "brebKeyCopied": "Bre-B key copied to clipboard."
 }

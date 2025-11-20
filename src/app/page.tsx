@@ -186,6 +186,8 @@ const App = () => {
         threeDigit: '',
         infinite: '',
     });
+    const [isCopyOptionsDialogOpen, setIsCopyOptionsDialogOpen] = useState(false);
+
 
     
     const isCurrentUserAdmin = !!raffleState.adminId && !!currentAdminId && raffleState.adminId === currentAdminId;
@@ -1151,11 +1153,8 @@ const App = () => {
         }
     };
 
-    const handleActivationClick = (mode: RaffleMode) => {
-        const textToCopy = '24096711314 , @AMIGO1045715054';
-        navigator.clipboard.writeText(textToCopy).then(() => {
-            showNotification(t('accountNumberCopied'), 'success');
-        });
+    const handleActivationClick = () => {
+        setIsCopyOptionsDialogOpen(true);
     };
     
     const handleManualActivation = async (mode: RaffleMode) => {
@@ -1287,7 +1286,7 @@ const App = () => {
     };
     
     const handleShareToWhatsApp = () => {
-        const urlToShare = isCurrentUserAdmin && raffleState.raffleRef ? `${window.location.origin}?ref=${raffleState.raffleRef}` : window.location.origin;
+        const urlToShare = window.location.origin;
         const message = encodeURIComponent(t('shareRaffleAppDescription'));
         const whatsappUrl = `https://wa.me/?text=${message} ${encodeURIComponent(urlToShare)}`;
         window.open(whatsappUrl, '_blank');
@@ -1295,7 +1294,7 @@ const App = () => {
     };
 
     const handleShareToFacebook = () => {
-        const urlToShare = isCurrentUserAdmin && raffleState.raffleRef ? `${window.location.origin}?ref=${raffleState.raffleRef}` : window.location.origin;
+        const urlToShare = window.location.origin;
         const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(urlToShare)}`;
         window.open(facebookUrl, '_blank');
         setIsShareDialogOpen(false);
@@ -2078,7 +2077,7 @@ const App = () => {
                                                 )}
                                                 {!isSuperAdmin && (
                                                     <div className="text-center">
-                                                        <Button onClick={() => handleActivationClick('two-digit')} size="lg" className="w-full bg-gray-700 hover:bg-gray-800 text-white font-bold flex items-center gap-2">
+                                                        <Button onClick={() => handleActivationClick()} size="lg" className="w-full bg-gray-700 hover:bg-gray-800 text-white font-bold flex items-center gap-2">
                                                             <BankIcon />
                                                             {t('activate')} (12.000)
                                                         </Button>
@@ -2130,7 +2129,7 @@ const App = () => {
                                                 )}
                                                  {!isSuperAdmin && (
                                                     <div className="text-center">
-                                                        <Button onClick={() => handleActivationClick('three-digit')} size="lg" className="w-full bg-gray-700 hover:bg-gray-800 text-white font-bold flex items-center gap-2">
+                                                        <Button onClick={() => handleActivationClick()} size="lg" className="w-full bg-gray-700 hover:bg-gray-800 text-white font-bold flex items-center gap-2">
                                                             <BankIcon />
                                                             {t('activate')} (15.000)
                                                         </Button>
@@ -2182,7 +2181,7 @@ const App = () => {
                                                 )}
                                                  {!isSuperAdmin && (
                                                     <div className="text-center">
-                                                        <Button onClick={() => handleActivationClick('infinite')} size="lg" className="w-full bg-gray-700 hover:bg-gray-800 text-white font-bold flex items-center gap-2">
+                                                        <Button onClick={() => handleActivationClick()} size="lg" className="w-full bg-gray-700 hover:bg-gray-800 text-white font-bold flex items-center gap-2">
                                                            <BankIcon />
                                                            {t('activate')} (30.000)
                                                         </Button>
@@ -3266,6 +3265,35 @@ const App = () => {
                         <Button variant="outline" onClick={() => setIsPaymentLinksDialogOpen(false)}>{t('cancel')}</Button>
                         <Button onClick={handleSavePaymentLinks}>{t('save')}</Button>
                     </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={isCopyOptionsDialogOpen} onOpenChange={setIsCopyOptionsDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{t('copyPaymentTitle')}</DialogTitle>
+                        <DialogDescription>{t('copyPaymentDescription')}</DialogDescription>
+                    </DialogHeader>
+                    <div className="flex flex-col space-y-3 py-4">
+                        <Button
+                            onClick={() => {
+                                navigator.clipboard.writeText('24096711314');
+                                showNotification(t('accountNumberCopied'), 'success');
+                                setIsCopyOptionsDialogOpen(false);
+                            }}
+                        >
+                            {t('copyAccountNumber')}
+                        </Button>
+                        <Button
+                             onClick={() => {
+                                navigator.clipboard.writeText('@AMIGO1045715054');
+                                showNotification(t('brebKeyCopied'), 'success');
+                                setIsCopyOptionsDialogOpen(false);
+                            }}
+                        >
+                            {t('copyBrebKey')}
+                        </Button>
+                    </div>
                 </DialogContent>
             </Dialog>
 

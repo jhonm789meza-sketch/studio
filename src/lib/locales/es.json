@@ -267,7 +267,7 @@
     "salesFrom": "Ventas de {count} juegos a {price} c/u",
     "totalSales": "Total Ventas",
     "bankAccountNumber": "24096711314 , @AMIGO1045715054",
-    "accountNumberCopied": "Número de cuenta copiado al portapapeles.",
+    "accountNumberCopied": "Información de cuenta copiada al portapapeles.",
     "paymentLinks": "Links de Pago",
     "managePaymentLinks": "Gestionar Links de Pago",
     "managePaymentLinksDescription": "Actualiza los links de pago para cada tipo de rifa.",
@@ -275,5 +275,10 @@
     "paymentLinkThreeDigit": "Link de Pago (3 Cifras)",
     "paymentLinkInfinite": "Link de Pago (Infinita)",
     "paymentLinksSaved": "Links de pago guardados con éxito.",
-    "errorSavingPaymentLinks": "Error al guardar los links de pago."
+    "errorSavingPaymentLinks": "Error al guardar los links de pago.",
+    "copyPaymentTitle": "Copiar Información de Pago",
+    "copyPaymentDescription": "Elige qué información copiar para realizar el pago.",
+    "copyAccountNumber": "Copiar Número de Cuenta",
+    "copyBrebKey": "Copiar Llave Bre-B",
+    "brebKeyCopied": "Llave Bre-B copiada al portapapeles."
 }
