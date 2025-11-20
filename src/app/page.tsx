@@ -1152,9 +1152,9 @@ const App = () => {
     };
 
     const handleActivationClick = (mode: RaffleMode) => {
-        const textToCopy = 'llave Bre-B @AMIGO1045715054';
+        const textToCopy = '24096711314 , @AMIGO1045715054';
         navigator.clipboard.writeText(textToCopy).then(() => {
-            showNotification(t('accountNumberCopied', { bank: 'Banco Caja Social' }), 'success');
+            showNotification(t('accountNumberCopied'), 'success');
         });
     };
     
@@ -1287,7 +1287,7 @@ const App = () => {
     };
     
     const handleShareToWhatsApp = () => {
-        const urlToShare = `${window.location.origin}`;
+        const urlToShare = isCurrentUserAdmin && raffleState.raffleRef ? `${window.location.origin}?ref=${raffleState.raffleRef}` : window.location.origin;
         const message = encodeURIComponent(t('shareRaffleAppDescription'));
         const whatsappUrl = `https://wa.me/?text=${message} ${encodeURIComponent(urlToShare)}`;
         window.open(whatsappUrl, '_blank');
@@ -1295,7 +1295,7 @@ const App = () => {
     };
 
     const handleShareToFacebook = () => {
-        const urlToShare = `${window.location.origin}`;
+        const urlToShare = isCurrentUserAdmin && raffleState.raffleRef ? `${window.location.origin}?ref=${raffleState.raffleRef}` : window.location.origin;
         const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(urlToShare)}`;
         window.open(facebookUrl, '_blank');
         setIsShareDialogOpen(false);
