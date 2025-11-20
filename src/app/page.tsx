@@ -218,7 +218,7 @@ const App = () => {
                 const settings = docSnap.data() as AppSettings;
                 setAppSettings(settings);
                 if (isSuperAdmin) {
-                    setSecondaryContacts(settings.secondaryContact || []);
+                    setSecondaryContacts(Array.isArray(settings.secondaryContact) ? settings.secondaryContact : []);
                     setPaymentLinks({
                         twoDigit: settings.paymentLinkTwoDigit || '',
                         threeDigit: settings.paymentLinkThreeDigit || '',
@@ -1354,18 +1354,28 @@ const App = () => {
             const settingsDocRef = doc(db, 'internal', 'settings');
             await setDoc(settingsDocRef, { secondaryContact: secondaryContacts }, { merge: true });
             showNotification(t('secondaryContactSaved'), 'success');
-            setNewSecondaryContact('');
         } catch (error) {
             console.error("Error saving secondary contact:", error);
             showNotification(t('errorSavingSecondaryContact'), 'error');
         }
     };
 
-    const handleAddSecondaryContact = () => {
+    const handleAddSecondaryContact = async () => {
         if (newSecondaryContact && !secondaryContacts.includes(newSecondaryContact)) {
             const updatedContacts = [...secondaryContacts, newSecondaryContact.replace(/\D/g, '')];
             setSecondaryContacts(updatedContacts);
-            handleSaveSecondaryContacts();
+            setNewSecondaryContact('');
+
+            try {
+                const settingsDocRef = doc(db, 'internal', 'settings');
+                await setDoc(settingsDocRef, { secondaryContact: updatedContacts }, { merge: true });
+                showNotification(t('secondaryContactSaved'), 'success');
+            } catch (error) {
+                console.error("Error saving secondary contact:", error);
+                showNotification(t('errorSavingSecondaryContact'), 'error');
+                // Revert state if save fails
+                setSecondaryContacts(secondaryContacts);
+            }
         }
     };
 
@@ -1960,7 +1970,7 @@ const App = () => {
                                         <p className="font-bold">{t('boardLocked')}</p>
                                         <p>{t('boardLockedConfirmDetails')}</p>
                                     </div>
-                                )}
+                               )}
                            </div>
                         ) : (
                             <div className="text-center p-8 bg-gray-50 rounded-lg">
@@ -2616,7 +2626,7 @@ const App = () => {
                                                                     target="_blank"
                                                                     rel="noopener noreferrer"
                                                                     className="flex items-center gap-2 text-blue-600 hover:underline"
-                                                                >
+                                                                    >
                                                                     <WhatsappIcon className="h-4 w-4 text-green-500" />
                                                                     {p.phoneNumber}
                                                                 </a>
@@ -3338,5 +3348,3 @@ const App = () => {
 };
 
 export default App;
-
-    
