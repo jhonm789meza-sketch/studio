@@ -1172,7 +1172,9 @@ const App = () => {
     };
 
     const handleActivationClick = () => {
-        setIsCopyOptionsDialogOpen(true);
+        const textToCopy = `${appSettings.bankInfoLine1 || 'Banco Caja Social: 24096711314'}\n${appSettings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054'}`;
+        navigator.clipboard.writeText(textToCopy);
+        showNotification(t('accountNumberCopied'), 'success');
     };
     
     const handleManualActivation = async (mode: RaffleMode) => {
@@ -3384,7 +3386,7 @@ const App = () => {
                     <div className="flex flex-col space-y-3 py-4">
                         <Button
                             onClick={() => {
-                                navigator.clipboard.writeText(appSettings.bankInfoLine1 || '24096711314');
+                                navigator.clipboard.writeText(appSettings.bankInfoLine1 || 'Banco Caja Social: 24096711314');
                                 showNotification(t('accountNumberCopied'), 'success');
                                 setIsCopyOptionsDialogOpen(false);
                             }}
@@ -3393,7 +3395,7 @@ const App = () => {
                         </Button>
                         <Button
                              onClick={() => {
-                                navigator.clipboard.writeText(appSettings.bankInfoLine2 || '@AMIGO1045715054');
+                                navigator.clipboard.writeText(appSettings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054');
                                 showNotification(t('brebKeyCopied'), 'success');
                                 setIsCopyOptionsDialogOpen(false);
                             }}
