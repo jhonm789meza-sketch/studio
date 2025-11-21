@@ -1139,26 +1139,7 @@ const App = () => {
             await handleActivateBoard(mode, 'CO');
             return;
         }
-
-        const activationRef = `TXN_${mode}_${Date.now()}`;
-        const redirectUrl = new URL(window.location.origin);
-        redirectUrl.searchParams.set('raffleMode', mode);
-
-        let paymentLink = '';
-        if (mode === 'two-digit') {
-            paymentLink = appSettings.paymentLinkTwoDigit || 'https://checkout.nequi.wompi.co/l/GWZUpk';
-        } else if (mode === 'three-digit') {
-            paymentLink = appSettings.paymentLinkThreeDigit || `https://checkout.wompi.co/l/9wH9fR`;
-        } else if (mode === 'infinite') {
-            paymentLink = appSettings.paymentLinkInfinite || `https://checkout.wompi.co/l/lwSfQT`;
-        }
-
-        if (paymentLink) {
-            const url = new URL(paymentLink);
-            url.searchParams.set('redirect-url', redirectUrl.href);
-            url.searchParams.set('reference', activationRef);
-            window.location.href = url.toString();
-        }
+        setIsCopyOptionsDialogOpen(true);
     };
 
     const handleActivationClick = () => {
@@ -2092,24 +2073,16 @@ const App = () => {
                                                 </div>
                                             </div>
                                             <div className="p-6 pt-0 space-y-4">
-                                                {isSuperAdmin ? (
-                                                    <Button onClick={() => handlePriceButtonClick('two-digit')} size="lg" className="w-full bg-green-500 hover:bg-green-600 text-white font-bold">
-                                                        {t('activate')}
-                                                    </Button>
-                                                ) : (
                                                     <Button onClick={() => handlePriceButtonClick('two-digit')} size="lg" className="w-full bg-green-500 hover:bg-green-600 text-white font-bold">
                                                         {t('price')}
                                                     </Button>
-                                                )}
-                                                {!isSuperAdmin && (
-                                                    <div className="text-center">
-                                                        <Button onClick={() => handleActivationClick()} size="lg" className="w-full bg-gray-700 hover:bg-gray-800 text-white font-bold flex items-center gap-2">
-                                                            <BankIcon />
-                                                            {t('activate')} (12.000)
-                                                        </Button>
-                                                        <p className="text-xs text-gray-500 mt-2 whitespace-pre-wrap">{t('bankAccountNumber')}</p>
-                                                    </div>
-                                                )}
+                                                <div className="text-center">
+                                                    <Button onClick={() => handleActivationClick()} size="lg" className="w-full bg-gray-700 hover:bg-gray-800 text-white font-bold flex items-center gap-2">
+                                                        <BankIcon />
+                                                        {t('activate')} (12.000)
+                                                    </Button>
+                                                    <p className="text-xs text-gray-500 mt-2 whitespace-pre-wrap">{t('bankAccountNumber')}</p>
+                                                </div>
                                                 {isSuperAdmin && nextRaffleRefs.even.refs.length > 0 && (
                                                     <div className="text-xs text-center text-gray-500 font-semibold">
                                                         {t('nextRefsEven')}{' '}
@@ -2143,24 +2116,16 @@ const App = () => {
                                                 </div>
                                             </div>
                                             <div className="p-6 pt-0 space-y-4">
-                                                {isSuperAdmin ? (
-                                                    <Button onClick={() => handlePriceButtonClick('three-digit')} size="lg" className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold">
-                                                        {t('activate')}
-                                                    </Button>
-                                                ) : (
                                                     <Button onClick={() => handlePriceButtonClick('three-digit')} size="lg" className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold">
                                                         {t('price')}
                                                     </Button>
-                                                )}
-                                                 {!isSuperAdmin && (
-                                                    <div className="text-center">
-                                                        <Button onClick={() => handleActivationClick()} size="lg" className="w-full bg-gray-700 hover:bg-gray-800 text-white font-bold flex items-center gap-2">
-                                                            <BankIcon />
-                                                            {t('activate')} (15.000)
-                                                        </Button>
-                                                         <p className="text-xs text-gray-500 mt-2 whitespace-pre-wrap">{t('bankAccountNumber')}</p>
-                                                    </div>
-                                                )}
+                                                 <div className="text-center">
+                                                    <Button onClick={() => handleActivationClick()} size="lg" className="w-full bg-gray-700 hover:bg-gray-800 text-white font-bold flex items-center gap-2">
+                                                        <BankIcon />
+                                                        {t('activate')} (15.000)
+                                                    </Button>
+                                                     <p className="text-xs text-gray-500 mt-2 whitespace-pre-wrap">{t('bankAccountNumber')}</p>
+                                                </div>
                                                 {isSuperAdmin && nextRaffleRefs.odd.refs.length > 0 && (
                                                     <div className="text-xs text-center text-gray-500 font-semibold">
                                                         {t('nextRefsOdd')}{' '}
@@ -2194,24 +2159,16 @@ const App = () => {
                                                 </div>
                                             </div>
                                             <div className="p-6 pt-0 space-y-4">
-                                                {isSuperAdmin ? (
-                                                     <Button onClick={() => handlePriceButtonClick('infinite')} size="lg" className="w-full bg-red-500 hover:bg-red-600 text-white font-bold">
-                                                        {t('activate')}
-                                                     </Button>
-                                                ) : (
-                                                    <Button onClick={() => handlePriceButtonClick('infinite')} size="lg" className="w-full bg-red-500 hover:bg-red-600 text-white font-bold">
-                                                        {t('price')}
+                                                <Button onClick={() => handlePriceButtonClick('infinite')} size="lg" className="w-full bg-red-500 hover:bg-red-600 text-white font-bold">
+                                                    {t('price')}
+                                                </Button>
+                                                 <div className="text-center">
+                                                    <Button onClick={() => handleActivationClick()} size="lg" className="w-full bg-gray-700 hover:bg-gray-800 text-white font-bold flex items-center gap-2">
+                                                       <BankIcon />
+                                                       {t('activate')} (30.000)
                                                     </Button>
-                                                )}
-                                                 {!isSuperAdmin && (
-                                                    <div className="text-center">
-                                                        <Button onClick={() => handleActivationClick()} size="lg" className="w-full bg-gray-700 hover:bg-gray-800 text-white font-bold flex items-center gap-2">
-                                                           <BankIcon />
-                                                           {t('activate')} (30.000)
-                                                        </Button>
-                                                         <p className="text-xs text-gray-500 mt-2 whitespace-pre-wrap">{t('bankAccountNumber')}</p>
-                                                    </div>
-                                                )}
+                                                     <p className="text-xs text-gray-500 mt-2 whitespace-pre-wrap">{t('bankAccountNumber')}</p>
+                                                </div>
                                                 {isSuperAdmin && nextRaffleRefs.infinite.refs.length > 0 && (
                                                     <div className="text-xs text-center text-gray-500 font-semibold">
                                                         {t('nextRefsInfinite')}{' '}
@@ -3319,4 +3276,3 @@ const App = () => {
 };
 
 export default App;
-
