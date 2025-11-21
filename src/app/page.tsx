@@ -3386,7 +3386,8 @@ const App = () => {
                     <div className="flex flex-col space-y-3 py-4">
                         <Button
                             onClick={() => {
-                                navigator.clipboard.writeText(appSettings.bankInfoLine1 || 'Banco Caja Social: 24096711314');
+                                const line1 = (appSettings.bankInfoLine1 || 'Banco Caja Social: 24096711314').split(':').pop()?.trim() || '';
+                                navigator.clipboard.writeText(line1);
                                 showNotification(t('accountNumberCopied'), 'success');
                                 setIsCopyOptionsDialogOpen(false);
                             }}
@@ -3395,7 +3396,8 @@ const App = () => {
                         </Button>
                         <Button
                              onClick={() => {
-                                navigator.clipboard.writeText(appSettings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054');
+                                const line2 = (appSettings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054').split(':').pop()?.trim() || '';
+                                navigator.clipboard.writeText(line2);
                                 showNotification(t('brebKeyCopied'), 'success');
                                 setIsCopyOptionsDialogOpen(false);
                             }}
@@ -3484,6 +3486,7 @@ const App = () => {
 };
 
 export default App;
+
 
 
 
