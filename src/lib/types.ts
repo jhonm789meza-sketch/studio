@@ -28,6 +28,8 @@ export interface AppSettings {
     activationPriceTwoDigit?: string;
     activationPriceThreeDigit?: string;
     activationPriceInfinite?: string;
+    bankInfoLine1?: string;
+    bankInfoLine2?: string;
 }
 
 
@@ -75,6 +77,7 @@ export interface Raffle {
     
 
     
+
 
 
 

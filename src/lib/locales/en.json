@@ -266,7 +266,7 @@
     "activationSales": "Activation Sales",
     "salesFrom": "Sales from {count} games at {price} each",
     "totalSales": "Total Sales",
-    "bankAccountNumber": "Banco Caja Social: 24096711314\nllave Bre-B @AMIGO1045715054",
+    "bankAccountNumber": "Social Savings Bank: 24096711314\nBre-B Key @AMIGO1045715054",
     "accountNumberCopied": "Account information copied to clipboard.",
     "paymentLinks": "Payment Links",
     "managePaymentLinks": "Manage Payment Links",
@@ -292,7 +292,15 @@
     "activationPriceThreeDigit": "Price (3-Digit)",
     "activationPriceInfinite": "Price (Infinite)",
     "activationPricesSaved": "Activation prices saved successfully.",
-    "errorSavingActivationPrices": "Error saving activation prices."
+    "errorSavingActivationPrices": "Error saving activation prices.",
+    "paymentInfo": "Payment Information",
+    "managePaymentInfo": "Manage Payment Information",
+    "managePaymentInfoDescription": "Update the bank details displayed to users.",
+    "bankInfoLine1Label": "Bank Information (Line 1)",
+    "bankInfoLine2Label": "Key/Additional Info (Line 2)",
+    "paymentInfoSaved": "Payment information saved successfully.",
+    "errorSavingPaymentInfo": "Error saving payment information."
 }
+
 
 

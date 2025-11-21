@@ -292,7 +292,15 @@
     "activationPriceThreeDigit": "Precio (3 Cifras)",
     "activationPriceInfinite": "Precio (Infinita)",
     "activationPricesSaved": "Precios de activación guardados con éxito.",
-    "errorSavingActivationPrices": "Error al guardar los precios de activación."
+    "errorSavingActivationPrices": "Error al guardar los precios de activación.",
+    "paymentInfo": "Información de Pago",
+    "managePaymentInfo": "Gestionar Información de Pago",
+    "managePaymentInfoDescription": "Actualiza los datos bancarios que se muestran a los usuarios.",
+    "bankInfoLine1Label": "Información Bancaria (Línea 1)",
+    "bankInfoLine2Label": "Llave / Información adicional (Línea 2)",
+    "paymentInfoSaved": "Información de pago guardada con éxito.",
+    "errorSavingPaymentInfo": "Error al guardar la información de pago."
 }
+
 
 

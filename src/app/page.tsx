@@ -11,7 +11,7 @@ import { requestNotificationPermission } from '@/lib/notification';
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House, Clock as ClockIcon, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Upload, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages, Trophy, Trash2, Copy, Shield, LogOut, Eye, EyeOff, Gamepad2, Phone, TrendingUp, Globe } from 'lucide-react';
+import { Menu, Award, Lock, House, Clock as ClockIcon, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Upload, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages, Trophy, Trash2, Copy, Shield, LogOut, Eye, EyeOff, Gamepad2, Phone, TrendingUp, Globe, Landmark } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -192,7 +192,11 @@ const App = () => {
         threeDigit: '',
         infinite: '',
     });
-
+    const [isPaymentInfoDialogOpen, setIsPaymentInfoDialogOpen] = useState(false);
+    const [paymentInfo, setPaymentInfo] = useState({
+        line1: '',
+        line2: '',
+    });
 
     
     const isCurrentUserAdmin = !!raffleState.adminId && !!currentAdminId && raffleState.adminId === currentAdminId;
@@ -230,9 +234,13 @@ const App = () => {
                         infinite: settings.paymentLinkInfinite || '',
                     });
                     setActivationPrices({
-                        twoDigit: settings.activationPriceTwoDigit || '12.000',
-                        threeDigit: settings.activationPriceThreeDigit || '15.000',
-                        infinite: settings.activationPriceInfinite || '30.000',
+                        twoDigit: settings.activationPriceTwoDigit || '',
+                        threeDigit: settings.activationPriceThreeDigit || '',
+                        infinite: settings.activationPriceInfinite || '',
+                    });
+                    setPaymentInfo({
+                        line1: settings.bankInfoLine1 || 'Banco Caja Social: 24096711314',
+                        line2: settings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054',
                     });
                 }
             }
@@ -1451,6 +1459,22 @@ const App = () => {
         }
     };
 
+    const handleSavePaymentInfo = async () => {
+        if (!isSuperAdmin) return;
+        try {
+            const settingsDocRef = doc(db, 'internal', 'settings');
+            await setDoc(settingsDocRef, {
+                bankInfoLine1: paymentInfo.line1,
+                bankInfoLine2: paymentInfo.line2,
+            }, { merge: true });
+            showNotification(t('paymentInfoSaved'), 'success');
+            setIsPaymentInfoDialogOpen(false);
+        } catch (error) {
+            console.error("Error saving payment info:", error);
+            showNotification(t('errorSavingPaymentInfo'), 'error');
+        }
+    };
+
 
     const allNumbers = Array.from({ length: totalNumbers }, (_, i) => i);
     
@@ -2044,6 +2068,10 @@ const App = () => {
                                                 <DollarSign className="mr-2 h-4 w-4" />
                                                 <span>{t('activationPrices')}</span>
                                             </DropdownMenuItem>
+                                            <DropdownMenuItem onSelect={() => setIsPaymentInfoDialogOpen(true)}>
+                                                <Landmark className="mr-2 h-4 w-4" />
+                                                <span>{t('paymentInfo')}</span>
+                                            </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setIsSuperAdminChangePasswordOpen(true)}>
                                                 <KeyRound className="mr-2 h-4 w-4" />
                                                 <span>{t('changePasswordTitle')}</span>
@@ -2114,14 +2142,14 @@ const App = () => {
                                             </div>
                                             <div className="p-6 pt-0 space-y-4">
                                                     <Button onClick={() => handlePriceButtonClick('two-digit')} size="lg" className="w-full bg-green-500 hover:bg-green-600 text-white font-bold">
-                                                        {t('price')}
+                                                        {t('price')} {appSettings.activationPriceTwoDigit ? `(${appSettings.activationPriceTwoDigit})` : ''}
                                                     </Button>
                                                 <div className="text-center">
                                                     <Button onClick={() => handleActivationClick()} size="lg" className="w-full bg-gray-700 hover:bg-gray-800 text-white font-bold flex items-center gap-2">
                                                         <BankIcon />
-                                                        {t('activate')} ({appSettings.activationPriceTwoDigit || '12.000'})
+                                                        {t('activate')}
                                                     </Button>
-                                                    <p className="text-xs text-gray-500 mt-2 whitespace-pre-wrap">{t('bankAccountNumber')}</p>
+                                                    <p className="text-xs text-gray-500 mt-2 whitespace-pre-wrap">{appSettings.bankInfoLine1 || 'Banco Caja Social: 24096711314'}{'\n'}{appSettings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054'}</p>
                                                 </div>
                                                 {isSuperAdmin && nextRaffleRefs.even.refs.length > 0 && (
                                                     <div className="text-xs text-center text-gray-500 font-semibold">
@@ -2157,14 +2185,14 @@ const App = () => {
                                             </div>
                                             <div className="p-6 pt-0 space-y-4">
                                                     <Button onClick={() => handlePriceButtonClick('three-digit')} size="lg" className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold">
-                                                        {t('price')}
+                                                        {t('price')} {appSettings.activationPriceThreeDigit ? `(${appSettings.activationPriceThreeDigit})` : ''}
                                                     </Button>
                                                  <div className="text-center">
                                                     <Button onClick={() => handleActivationClick()} size="lg" className="w-full bg-gray-700 hover:bg-gray-800 text-white font-bold flex items-center gap-2">
                                                         <BankIcon />
-                                                        {t('activate')} ({appSettings.activationPriceThreeDigit || '15.000'})
+                                                        {t('activate')}
                                                     </Button>
-                                                     <p className="text-xs text-gray-500 mt-2 whitespace-pre-wrap">{t('bankAccountNumber')}</p>
+                                                     <p className="text-xs text-gray-500 mt-2 whitespace-pre-wrap">{appSettings.bankInfoLine1 || 'Banco Caja Social: 24096711314'}{'\n'}{appSettings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054'}</p>
                                                 </div>
                                                 {isSuperAdmin && nextRaffleRefs.odd.refs.length > 0 && (
                                                     <div className="text-xs text-center text-gray-500 font-semibold">
@@ -2200,14 +2228,14 @@ const App = () => {
                                             </div>
                                             <div className="p-6 pt-0 space-y-4">
                                                 <Button onClick={() => handlePriceButtonClick('infinite')} size="lg" className="w-full bg-red-500 hover:bg-red-600 text-white font-bold">
-                                                    {t('price')}
+                                                    {t('price')} {appSettings.activationPriceInfinite ? `(${appSettings.activationPriceInfinite})` : ''}
                                                 </Button>
                                                  <div className="text-center">
                                                     <Button onClick={() => handleActivationClick()} size="lg" className="w-full bg-gray-700 hover:bg-gray-800 text-white font-bold flex items-center gap-2">
                                                        <BankIcon />
-                                                       {t('activate')} ({appSettings.activationPriceInfinite || '30.000'})
+                                                       {t('activate')}
                                                     </Button>
-                                                     <p className="text-xs text-gray-500 mt-2 whitespace-pre-wrap">{t('bankAccountNumber')}</p>
+                                                     <p className="text-xs text-gray-500 mt-2 whitespace-pre-wrap">{appSettings.bankInfoLine1 || 'Banco Caja Social: 24096711314'}{'\n'}{appSettings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054'}</p>
                                                 </div>
                                                 {isSuperAdmin && nextRaffleRefs.infinite.refs.length > 0 && (
                                                     <div className="text-xs text-center text-gray-500 font-semibold">
@@ -3291,7 +3319,7 @@ const App = () => {
                     <div className="flex flex-col space-y-3 py-4">
                         <Button
                             onClick={() => {
-                                navigator.clipboard.writeText('24096711314');
+                                navigator.clipboard.writeText(appSettings.bankInfoLine1 || '24096711314');
                                 showNotification(t('accountNumberCopied'), 'success');
                                 setIsCopyOptionsDialogOpen(false);
                             }}
@@ -3300,7 +3328,7 @@ const App = () => {
                         </Button>
                         <Button
                              onClick={() => {
-                                navigator.clipboard.writeText('@AMIGO1045715054');
+                                navigator.clipboard.writeText(appSettings.bankInfoLine2 || '@AMIGO1045715054');
                                 showNotification(t('brebKeyCopied'), 'success');
                                 setIsCopyOptionsDialogOpen(false);
                             }}
@@ -3349,6 +3377,37 @@ const App = () => {
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setIsActivationPricesDialogOpen(false)}>{t('cancel')}</Button>
                         <Button onClick={handleSaveActivationPrices}>{t('save')}</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={isPaymentInfoDialogOpen} onOpenChange={setIsPaymentInfoDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{t('managePaymentInfo')}</DialogTitle>
+                        <DialogDescription>{t('managePaymentInfoDescription')}</DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="payment-info-line1">{t('bankInfoLine1Label')}</Label>
+                            <Input
+                                id="payment-info-line1"
+                                value={paymentInfo.line1}
+                                onChange={(e) => setPaymentInfo(p => ({ ...p, line1: e.target.value }))}
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="payment-info-line2">{t('bankInfoLine2Label')}</Label>
+                            <Input
+                                id="payment-info-line2"
+                                value={paymentInfo.line2}
+                                onChange={(e) => setPaymentInfo(p => ({ ...p, line2: e.target.value }))}
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsPaymentInfoDialogOpen(false)}>{t('cancel')}</Button>
+                        <Button onClick={handleSavePaymentInfo}>{t('save')}</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
