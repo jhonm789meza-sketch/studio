@@ -178,6 +178,7 @@ const App = () => {
     const [raffleToChangePassword, setRaffleToChangePassword] = useState<Raffle | null>(null);
     const [newPassword, setNewPassword] = useState('');
     const [confirmNewPassword, setConfirmNewPassword] = useState('');
+    const [showNewPassword, setShowNewPassword] = useState(false);
     const [isSuperAdminChangePasswordOpen, setIsSuperAdminChangePasswordOpen] = useState(false);
     const [isPaymentLinksDialogOpen, setIsPaymentLinksDialogOpen] = useState(false);
     const [paymentLinks, setPaymentLinks] = useState({
@@ -1434,6 +1435,7 @@ const App = () => {
             setNewPassword('');
             setConfirmNewPassword('');
             setRaffleToChangePassword(null);
+            setShowNewPassword(false);
         } catch (error) {
             console.error("Error changing password:", error);
             showNotification(t('passwordChangeError'), 'error');
@@ -1453,6 +1455,7 @@ const App = () => {
             setIsSuperAdminChangePasswordOpen(false);
             setNewPassword('');
             setConfirmNewPassword('');
+            setShowNewPassword(false);
         } catch (error) {
             console.error("Error changing super admin password:", error);
             showNotification(t('passwordChangeError'), 'error');
@@ -3172,7 +3175,14 @@ const App = () => {
                 </DialogContent>
             </Dialog>
 
-            <Dialog open={isChangePasswordDialogOpen} onOpenChange={setIsChangePasswordDialogOpen}>
+            <Dialog open={isChangePasswordDialogOpen} onOpenChange={(isOpen) => {
+                if (!isOpen) {
+                    setNewPassword('');
+                    setConfirmNewPassword('');
+                    setShowNewPassword(false);
+                }
+                setIsChangePasswordDialogOpen(isOpen);
+            }}>
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>{t('changePasswordTitle')}</DialogTitle>
@@ -3197,21 +3207,45 @@ const App = () => {
                          </div>
                         <div className="grid gap-2">
                             <Label htmlFor="new-password">{t('newPassword')}</Label>
-                            <Input
-                                id="new-password"
-                                type="password"
-                                value={newPassword}
-                                onChange={(e) => setNewPassword(e.target.value)}
-                            />
+                            <div className="relative">
+                                <Input
+                                    id="new-password"
+                                    type={showNewPassword ? 'text' : 'password'}
+                                    value={newPassword}
+                                    onChange={(e) => setNewPassword(e.target.value)}
+                                />
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    className="absolute inset-y-0 right-0 h-full px-3"
+                                    onClick={() => setShowNewPassword(!showNewPassword)}
+                                >
+                                    {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                    <span className="sr-only">{showNewPassword ? 'Ocultar' : 'Mostrar'}</span>
+                                </Button>
+                            </div>
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="confirm-new-password">{t('confirmNewPassword')}</Label>
-                            <Input
-                                id="confirm-new-password"
-                                type="password"
-                                value={confirmNewPassword}
-                                onChange={(e) => setConfirmNewPassword(e.target.value)}
-                            />
+                             <div className="relative">
+                                <Input
+                                    id="confirm-new-password"
+                                    type={showNewPassword ? 'text' : 'password'}
+                                    value={confirmNewPassword}
+                                    onChange={(e) => setConfirmNewPassword(e.target.value)}
+                                />
+                                 <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    className="absolute inset-y-0 right-0 h-full px-3"
+                                    onClick={() => setShowNewPassword(!showNewPassword)}
+                                >
+                                    {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                    <span className="sr-only">{showNewPassword ? 'Ocultar' : 'Mostrar'}</span>
+                                </Button>
+                            </div>
                         </div>
                     </div>
                     <DialogFooter>
@@ -3221,7 +3255,14 @@ const App = () => {
                 </DialogContent>
             </Dialog>
 
-            <Dialog open={isSuperAdminChangePasswordOpen} onOpenChange={setIsSuperAdminChangePasswordOpen}>
+            <Dialog open={isSuperAdminChangePasswordOpen} onOpenChange={(isOpen) => {
+                 if (!isOpen) {
+                    setNewPassword('');
+                    setConfirmNewPassword('');
+                    setShowNewPassword(false);
+                }
+                setIsSuperAdminChangePasswordOpen(isOpen);
+            }}>
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>{t('changeExecutivePasswordTitle')}</DialogTitle>
@@ -3232,21 +3273,45 @@ const App = () => {
                     <div className="grid gap-4 py-4">
                         <div className="grid gap-2">
                             <Label htmlFor="new-super-admin-password">{t('newPassword')}</Label>
-                            <Input
-                                id="new-super-admin-password"
-                                type="password"
-                                value={newPassword}
-                                onChange={(e) => setNewPassword(e.target.value)}
-                            />
+                            <div className="relative">
+                                <Input
+                                    id="new-super-admin-password"
+                                    type={showNewPassword ? 'text' : 'password'}
+                                    value={newPassword}
+                                    onChange={(e) => setNewPassword(e.target.value)}
+                                />
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    className="absolute inset-y-0 right-0 h-full px-3"
+                                    onClick={() => setShowNewPassword(!showNewPassword)}
+                                >
+                                    {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                    <span className="sr-only">{showNewPassword ? 'Ocultar' : 'Mostrar'}</span>
+                                </Button>
+                            </div>
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="confirm-new-super-admin-password">{t('confirmNewPassword')}</Label>
-                            <Input
-                                id="confirm-new-super-admin-password"
-                                type="password"
-                                value={confirmNewPassword}
-                                onChange={(e) => setConfirmNewPassword(e.target.value)}
-                            />
+                            <div className="relative">
+                                <Input
+                                    id="confirm-new-super-admin-password"
+                                    type={showNewPassword ? 'text' : 'password'}
+                                    value={confirmNewPassword}
+                                    onChange={(e) => setConfirmNewPassword(e.target.value)}
+                                />
+                                 <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    className="absolute inset-y-0 right-0 h-full px-3"
+                                    onClick={() => setShowNewPassword(!showNewPassword)}
+                                >
+                                    {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                    <span className="sr-only">{showNewPassword ? 'Ocultar' : 'Mostrar'}</span>
+                                </Button>
+                            </div>
                         </div>
                     </div>
                     <DialogFooter>
