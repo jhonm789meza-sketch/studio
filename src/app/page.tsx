@@ -1134,12 +1134,21 @@ const App = () => {
         await setDoc(doc(db, "raffles", raffleState.raffleRef), { [field]: value }, { merge: true });
     };
 
-    const handlePriceButtonClick = async (mode: RaffleMode) => {
-        if (isSuperAdmin) {
-            await handleActivateBoard(mode, 'CO');
-            return;
+    const handlePriceButtonClick = (mode: RaffleMode) => {
+        const link =
+          mode === 'two-digit'
+            ? appSettings.paymentLinkTwoDigit
+            : mode === 'three-digit'
+            ? appSettings.paymentLinkThreeDigit
+            : appSettings.paymentLinkInfinite;
+    
+        if (link) {
+          const url = new URL(link);
+          url.searchParams.set('raffleMode', mode);
+          window.location.href = url.toString();
+        } else {
+          setIsCopyOptionsDialogOpen(true);
         }
-        setIsCopyOptionsDialogOpen(true);
     };
 
     const handleActivationClick = () => {
