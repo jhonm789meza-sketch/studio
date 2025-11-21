@@ -25,6 +25,9 @@ export interface AppSettings {
     paymentLinkTwoDigit?: string;
     paymentLinkThreeDigit?: string;
     paymentLinkInfinite?: string;
+    activationPriceTwoDigit?: string;
+    activationPriceThreeDigit?: string;
+    activationPriceInfinite?: string;
 }
 
 
@@ -72,6 +75,7 @@ export interface Raffle {
     
 
     
+
 
 
 

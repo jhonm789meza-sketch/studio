@@ -284,6 +284,15 @@
     "add": "Añadir",
     "addNewContact": "Añadir Nuevo Contacto",
     "savedContacts": "Contactos Guardados",
-    "noSavedContacts": "No hay contactos guardados."
+    "noSavedContacts": "No hay contactos guardados.",
+    "activationPrices": "Precios de Activación",
+    "manageActivationPrices": "Gestionar Precios de Activación",
+    "manageActivationPricesDescription": "Actualiza los precios de activación para cada tipo de rifa.",
+    "activationPriceTwoDigit": "Precio (2 Cifras)",
+    "activationPriceThreeDigit": "Precio (3 Cifras)",
+    "activationPriceInfinite": "Precio (Infinita)",
+    "activationPricesSaved": "Precios de activación guardados con éxito.",
+    "errorSavingActivationPrices": "Error al guardar los precios de activación."
 }
+
 

@@ -284,6 +284,15 @@
     "add": "Add",
     "addNewContact": "Add New Contact",
     "savedContacts": "Saved Contacts",
-    "noSavedContacts": "No saved contacts."
+    "noSavedContacts": "No saved contacts.",
+    "activationPrices": "Activation Prices",
+    "manageActivationPrices": "Manage Activation Prices",
+    "manageActivationPricesDescription": "Update the activation prices for each raffle type.",
+    "activationPriceTwoDigit": "Price (2-Digit)",
+    "activationPriceThreeDigit": "Price (3-Digit)",
+    "activationPriceInfinite": "Price (Infinite)",
+    "activationPricesSaved": "Activation prices saved successfully.",
+    "errorSavingActivationPrices": "Error saving activation prices."
 }
+
 

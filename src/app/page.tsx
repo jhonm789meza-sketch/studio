@@ -186,6 +186,12 @@ const App = () => {
         infinite: '',
     });
     const [isCopyOptionsDialogOpen, setIsCopyOptionsDialogOpen] = useState(false);
+    const [isActivationPricesDialogOpen, setIsActivationPricesDialogOpen] = useState(false);
+    const [activationPrices, setActivationPrices] = useState({
+        twoDigit: '',
+        threeDigit: '',
+        infinite: '',
+    });
 
 
     
@@ -222,6 +228,11 @@ const App = () => {
                         twoDigit: settings.paymentLinkTwoDigit || '',
                         threeDigit: settings.paymentLinkThreeDigit || '',
                         infinite: settings.paymentLinkInfinite || '',
+                    });
+                    setActivationPrices({
+                        twoDigit: settings.activationPriceTwoDigit || '12.000',
+                        threeDigit: settings.activationPriceThreeDigit || '15.000',
+                        infinite: settings.activationPriceInfinite || '30.000',
                     });
                 }
             }
@@ -1383,6 +1394,22 @@ const App = () => {
         }
     };
 
+    const handleSaveActivationPrices = async () => {
+        try {
+            const settingsDocRef = doc(db, 'internal', 'settings');
+            await setDoc(settingsDocRef, {
+                activationPriceTwoDigit: activationPrices.twoDigit,
+                activationPriceThreeDigit: activationPrices.threeDigit,
+                activationPriceInfinite: activationPrices.infinite,
+            }, { merge: true });
+            showNotification(t('activationPricesSaved'), 'success');
+            setIsActivationPricesDialogOpen(false);
+        } catch (error) {
+            console.error("Error saving activation prices:", error);
+            showNotification(t('errorSavingActivationPrices'), 'error');
+        }
+    };
+
     const handleChangePassword = async () => {
         if (!raffleToChangePassword || !raffleToChangePassword.raffleRef) return;
     
@@ -2013,6 +2040,10 @@ const App = () => {
                                                 <LinkIcon className="mr-2 h-4 w-4" />
                                                 <span>{t('paymentLinks')}</span>
                                             </DropdownMenuItem>
+                                            <DropdownMenuItem onSelect={() => setIsActivationPricesDialogOpen(true)}>
+                                                <DollarSign className="mr-2 h-4 w-4" />
+                                                <span>{t('activationPrices')}</span>
+                                            </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setIsSuperAdminChangePasswordOpen(true)}>
                                                 <KeyRound className="mr-2 h-4 w-4" />
                                                 <span>{t('changePasswordTitle')}</span>
@@ -2088,7 +2119,7 @@ const App = () => {
                                                 <div className="text-center">
                                                     <Button onClick={() => handleActivationClick()} size="lg" className="w-full bg-gray-700 hover:bg-gray-800 text-white font-bold flex items-center gap-2">
                                                         <BankIcon />
-                                                        {t('activate')} (12.000)
+                                                        {t('activate')} ({appSettings.activationPriceTwoDigit || '12.000'})
                                                     </Button>
                                                     <p className="text-xs text-gray-500 mt-2 whitespace-pre-wrap">{t('bankAccountNumber')}</p>
                                                 </div>
@@ -2131,7 +2162,7 @@ const App = () => {
                                                  <div className="text-center">
                                                     <Button onClick={() => handleActivationClick()} size="lg" className="w-full bg-gray-700 hover:bg-gray-800 text-white font-bold flex items-center gap-2">
                                                         <BankIcon />
-                                                        {t('activate')} (15.000)
+                                                        {t('activate')} ({appSettings.activationPriceThreeDigit || '15.000'})
                                                     </Button>
                                                      <p className="text-xs text-gray-500 mt-2 whitespace-pre-wrap">{t('bankAccountNumber')}</p>
                                                 </div>
@@ -2174,7 +2205,7 @@ const App = () => {
                                                  <div className="text-center">
                                                     <Button onClick={() => handleActivationClick()} size="lg" className="w-full bg-gray-700 hover:bg-gray-800 text-white font-bold flex items-center gap-2">
                                                        <BankIcon />
-                                                       {t('activate')} (30.000)
+                                                       {t('activate')} ({appSettings.activationPriceInfinite || '30.000'})
                                                     </Button>
                                                      <p className="text-xs text-gray-500 mt-2 whitespace-pre-wrap">{t('bankAccountNumber')}</p>
                                                 </div>
@@ -3277,6 +3308,48 @@ const App = () => {
                             {t('copyBrebKey')}
                         </Button>
                     </div>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={isActivationPricesDialogOpen} onOpenChange={setIsActivationPricesDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{t('manageActivationPrices')}</DialogTitle>
+                        <DialogDescription>{t('manageActivationPricesDescription')}</DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="price-two-digit">{t('activationPriceTwoDigit')}</Label>
+                            <Input
+                                id="price-two-digit"
+                                value={activationPrices.twoDigit}
+                                onChange={(e) => setActivationPrices(p => ({ ...p, twoDigit: e.target.value }))}
+                                placeholder="Ej: 12.000"
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="price-three-digit">{t('activationPriceThreeDigit')}</Label>
+                            <Input
+                                id="price-three-digit"
+                                value={activationPrices.threeDigit}
+                                onChange={(e) => setActivationPrices(p => ({ ...p, threeDigit: e.target.value }))}
+                                placeholder="Ej: 15.000"
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="price-infinite">{t('activationPriceInfinite')}</Label>
+                            <Input
+                                id="price-infinite"
+                                value={activationPrices.infinite}
+                                onChange={(e) => setActivationPrices(p => ({ ...p, infinite: e.target.value }))}
+                                placeholder="Ej: 30.000"
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsActivationPricesDialogOpen(false)}>{t('cancel')}</Button>
+                        <Button onClick={handleSaveActivationPrices}>{t('save')}</Button>
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
 
