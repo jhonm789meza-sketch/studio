@@ -1160,7 +1160,9 @@ const App = () => {
             ? appSettings.paymentLinkTwoDigit
             : mode === 'three-digit'
             ? appSettings.paymentLinkThreeDigit
-            : appSettings.paymentLinkInfinite;
+            : mode === 'infinite'
+            ? appSettings.paymentLinkInfinite
+            : '';
     
         if (link) {
           const url = new URL(link);
@@ -1172,9 +1174,7 @@ const App = () => {
     };
 
     const handleActivationClick = () => {
-        const textToCopy = `${appSettings.bankInfoLine1 || 'Banco Caja Social: 24096711314'}\n${appSettings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054'}`;
-        navigator.clipboard.writeText(textToCopy);
-        showNotification(t('accountNumberCopied'), 'success');
+        setIsCopyOptionsDialogOpen(true);
     };
     
     const handleManualActivation = async (mode: RaffleMode) => {
@@ -2146,9 +2146,9 @@ const App = () => {
                                                 </div>
                                             </div>
                                             <div className="p-6 pt-0 space-y-4">
-                                                    <Button onClick={() => handlePriceButtonClick('two-digit')} size="lg" className="w-full bg-green-500 hover:bg-green-600 text-white font-bold">
-                                                        {t('price')} {appSettings.activationPriceTwoDigit ? `(${appSettings.activationPriceTwoDigit})` : ''}
-                                                    </Button>
+                                                <Button onClick={() => handlePriceButtonClick('two-digit')} size="lg" className="w-full bg-green-500 hover:bg-green-600 text-white font-bold">
+                                                    {t('price')} {appSettings.activationPriceTwoDigit ? `(${appSettings.activationPriceTwoDigit})` : ''}
+                                                </Button>
                                                 <div className="text-center">
                                                     <Button onClick={() => handleActivationClick()} size="lg" className="w-full bg-gray-700 hover:bg-gray-800 text-white font-bold flex items-center gap-2">
                                                         <BankIcon />
@@ -2189,9 +2189,9 @@ const App = () => {
                                                 </div>
                                             </div>
                                             <div className="p-6 pt-0 space-y-4">
-                                                    <Button onClick={() => handlePriceButtonClick('three-digit')} size="lg" className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold">
-                                                        {t('price')} {appSettings.activationPriceThreeDigit ? `(${appSettings.activationPriceThreeDigit})` : ''}
-                                                    </Button>
+                                                <Button onClick={() => handlePriceButtonClick('three-digit')} size="lg" className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold">
+                                                    {t('price')} {appSettings.activationPriceThreeDigit ? `(${appSettings.activationPriceThreeDigit})` : ''}
+                                                </Button>
                                                  <div className="text-center">
                                                     <Button onClick={() => handleActivationClick()} size="lg" className="w-full bg-gray-700 hover:bg-gray-800 text-white font-bold flex items-center gap-2">
                                                         <BankIcon />
@@ -3484,3 +3484,6 @@ const App = () => {
 };
 
 export default App;
+
+
+
