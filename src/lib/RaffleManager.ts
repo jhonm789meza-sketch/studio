@@ -16,10 +16,6 @@ class RaffleManager {
         this.db = db;
     }
 
-    private getCounterRef(mode: RaffleMode): DocumentReference {
-        return doc(this.db, 'internal', `raffleCounter_${mode}`);
-    }
-
     public async getNextRefInfo(mode: RaffleMode, peek: boolean = false, count: number = 1): Promise<{ numbers: number[], playedCount: number }> {
         if (typeof window === 'undefined') {
             return { numbers: Array.from({ length: count }, (_, i) => i + 1), playedCount: 0 };
@@ -27,9 +23,8 @@ class RaffleManager {
         
         try {
             let nextNumbers: number[] = [];
-            const playedCount = 0; // No longer tracking count from firestore
+            const playedCount = 0; // No longer tracking count
 
-            // All modes will generate a large random number
             const min = 100000;
             const max = 999999;
             
@@ -42,8 +37,7 @@ class RaffleManager {
 
         } catch (error) {
             console.error(`Error in getNextRefInfo for mode ${mode}:`, error);
-            // Fallback to a simple random number if transaction fails
-            return { numbers: [Math.floor(Math.random() * 1000)], playedCount: 0 };
+            return { numbers: [Math.floor(Math.random() * 1000000)], playedCount: 0 };
         }
     }
 
@@ -68,17 +62,6 @@ class RaffleManager {
         const refs = numbers.map(num => `${prefix}${String(num)}`);
 
         return { refs, count: playedCount };
-    }
-
-    public async resetCounters(): Promise<void> {
-        if (typeof window !== 'undefined') {
-            const batch = writeBatch(this.db);
-            const modes: RaffleMode[] = ['two-digit', 'three-digit', 'infinite'];
-            for (const mode of modes) {
-                batch.set(this.getCounterRef(mode), { count: 0 });
-            }
-            await batch.commit();
-        }
     }
 }
 
