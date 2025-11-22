@@ -1164,7 +1164,7 @@ const App = () => {
                      if (!newRefsState[modeKey]) {
                          newRefsState[modeKey] = { refs: [], count: 0 };
                      }
-                     if (newRefsState[modeKey] && newRefsState[modeKey].refs) {
+                     if (newRefsState[modeKey]?.refs) {
                         newRefsState[modeKey].refs.push(newRef);
                      } else if (newRefsState[modeKey]) {
                         newRefsState[modeKey].refs = [newRef];
@@ -3124,7 +3124,7 @@ const App = () => {
                              {Array.isArray(secondaryContacts) && secondaryContacts.length > 0 ? (
                                 secondaryContacts.map((contact, index) => (
                                     <div key={index} className="flex items-center justify-between bg-gray-100 p-2 rounded-md">
-                                        <span>{contact}</span>
+                                        <span>+57 {contact}</span>
                                         <Button variant="ghost" size="icon" onClick={() => handleRemoveSecondaryContact(contact)}>
                                             <Trash2 className="h-4 w-4 text-red-500" />
                                         </Button>
@@ -3491,5 +3491,6 @@ const App = () => {
 };
 
 export default App;
+
 
 
