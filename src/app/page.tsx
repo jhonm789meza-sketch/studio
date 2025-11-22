@@ -972,7 +972,7 @@ const App = () => {
                         newUrl.searchParams.set('adminId', data.adminId);
                     }
                     if (currentUrl.href !== newUrl.href) {
-                        window.history.pushState({}, '', newUrl);
+                        window.history.pushState({}, '', newUrl.href);
                     }
                 } else if (!isInitialLoad) {
                     showNotification(t('raffleNotFound'), 'error');
@@ -3398,7 +3398,7 @@ const App = () => {
                         </Button>
                         <Button
                              onClick={() => {
-                                const line2 = (appSettings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054').split('@').pop()?.trim() || '';
+                                const line2 = (appSettings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054');
                                 navigator.clipboard.writeText(line2);
                                 showNotification(t('brebKeyCopied'), 'success');
                                 setIsCopyOptionsDialogOpen(false);
