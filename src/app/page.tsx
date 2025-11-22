@@ -254,9 +254,9 @@ const App = () => {
     useEffect(() => {
         if (isSuperAdmin && !raffleState.raffleRef) {
             const fetchNextRefs = async () => {
-                const twoDigitInfo = await raffleManager.peekNextRaffleRef('two-digit', 2);
-                const threeDigitInfo = await raffleManager.peekNextRaffleRef('three-digit', 2);
-                const infiniteInfo = await raffleManager.peekNextRaffleRef('infinite', 2);
+                const twoDigitInfo = await raffleManager.peekNextRaffleRef('two-digit', 5);
+                const threeDigitInfo = await raffleManager.peekNextRaffleRef('three-digit', 5);
+                const infiniteInfo = await raffleManager.peekNextRaffleRef('infinite', 5);
                 setNextRaffleRefs({ twoDigit: twoDigitInfo, threeDigit: threeDigitInfo, infinite: infiniteInfo });
             };
             fetchNextRefs();
@@ -912,13 +912,13 @@ const App = () => {
                 else if (isInfinite) mode = 'infinite';
 
                 if (mode) {
-                    const { adminId } = await handleActivateBoard(mode, undefined, aRef, false);
+                    const { adminId, finalRaffleRef } = await handleActivateBoard(mode, undefined, aRef, false);
                     if (adminId) {
-                        const adminUrl = `${window.location.origin}?ref=${aRef}&adminId=${adminId}`;
+                        const adminUrl = `${window.location.origin}?ref=${finalRaffleRef}&adminId=${adminId}`;
                         navigator.clipboard.writeText(adminUrl).then(() => {
-                            showNotification(t('boardActivatedAndCopied', { ref: aRef }), 'success');
+                            showNotification(t('boardActivatedAndCopied', { ref: finalRaffleRef }), 'success');
                         }, () => {
-                            showNotification(t('boardActivatedSuccessfullyWithRef', { ref: aRef }), 'success');
+                            showNotification(t('boardActivatedSuccessfullyWithRef', { ref: finalRaffleRef }), 'success');
                         });
                     }
                     
@@ -948,9 +948,9 @@ const App = () => {
                     });
                     
                     // Fetch the next refs to keep the list fresh, without awaiting
-                    raffleManager.peekNextRaffleRef('two-digit', 2).then(info => setNextRaffleRefs(p => ({...p, twoDigit: info})));
-                    raffleManager.peekNextRaffleRef('three-digit', 2).then(info => setNextRaffleRefs(p => ({...p, threeDigit: info})));
-                    raffleManager.peekNextRaffleRef('infinite', 2).then(info => setNextRaffleRefs(p => ({...p, infinite: info})));
+                    raffleManager.peekNextRaffleRef('two-digit', 5).then(info => setNextRaffleRefs(p => ({...p, twoDigit: info})));
+                    raffleManager.peekNextRaffleRef('three-digit', 5).then(info => setNextRaffleRefs(p => ({...p, threeDigit: info})));
+                    raffleManager.peekNextRaffleRef('infinite', 5).then(info => setNextRaffleRefs(p => ({...p, infinite: info})));
 
                     setIsPublicSearchOpen(false);
                     setPublicRefSearch('');
@@ -1191,14 +1191,14 @@ const App = () => {
     };
 
     const handleRefClick = async (ref: string, mode: RaffleMode) => {
-        const { adminId } = await handleActivateBoard(mode, undefined, ref, false);
+        const { adminId, finalRaffleRef } = await handleActivateBoard(mode, undefined, ref, false);
     
-        if (adminId) {
-            const adminUrl = `${window.location.origin}?ref=${ref}&adminId=${adminId}`;
+        if (adminId && finalRaffleRef) {
+            const adminUrl = `${window.location.origin}?ref=${finalRaffleRef}&adminId=${adminId}`;
             navigator.clipboard.writeText(adminUrl).then(() => {
-                showNotification(t('boardActivatedAndCopied', { ref: ref }), 'success');
+                showNotification(t('boardActivatedAndCopied', { ref: finalRaffleRef }), 'success');
             }, () => {
-                showNotification(t('boardActivatedSuccessfullyWithRef', { ref: ref }), 'success');
+                showNotification(t('boardActivatedSuccessfullyWithRef', { ref: finalRaffleRef }), 'success');
             });
     
             // Update the local state immediately to reflect the new sale
@@ -1214,7 +1214,7 @@ const App = () => {
             });
     
             // Fetch the next refs to keep the list fresh
-            raffleManager.peekNextRaffleRef(mode, 2).then(info => {
+            raffleManager.peekNextRaffleRef(mode, 5).then(info => {
                  const key = mode === 'two-digit' ? 'twoDigit' : mode === 'three-digit' ? 'threeDigit' : 'infinite';
                  setNextRaffleRefs(p => ({ ...p, [key]: info }));
             });
@@ -2181,7 +2181,7 @@ const App = () => {
                                                     {t('price')} {appSettings.activationPriceTwoDigit ? `(${appSettings.activationPriceTwoDigit})` : ''}
                                                 </Button>
                                                 <div className="text-center">
-                                                    <Button onClick={() => handleActivationClick()} size="lg" className="w-full bg-gray-700 hover:bg-gray-800 text-white font-bold flex items-center gap-2">
+                                                    <Button onClick={handleActivationClick} size="lg" className="w-full bg-gray-700 hover:bg-gray-800 text-white font-bold flex items-center gap-2">
                                                         <BankIcon />
                                                         {t('activate')}
                                                     </Button>
@@ -2224,7 +2224,7 @@ const App = () => {
                                                     {t('price')} {appSettings.activationPriceThreeDigit ? `(${appSettings.activationPriceThreeDigit})` : ''}
                                                 </Button>
                                                  <div className="text-center">
-                                                    <Button onClick={() => handleActivationClick()} size="lg" className="w-full bg-gray-700 hover:bg-gray-800 text-white font-bold flex items-center gap-2">
+                                                    <Button onClick={handleActivationClick} size="lg" className="w-full bg-gray-700 hover:bg-gray-800 text-white font-bold flex items-center gap-2">
                                                         <BankIcon />
                                                         {t('activate')}
                                                     </Button>
@@ -2267,7 +2267,7 @@ const App = () => {
                                                     {t('price')} {appSettings.activationPriceInfinite ? `(${appSettings.activationPriceInfinite})` : ''}
                                                 </Button>
                                                  <div className="text-center">
-                                                    <Button onClick={() => handleActivationClick()} size="lg" className="w-full bg-gray-700 hover:bg-gray-800 text-white font-bold flex items-center gap-2">
+                                                    <Button onClick={handleActivationClick} size="lg" className="w-full bg-gray-700 hover:bg-gray-800 text-white font-bold flex items-center gap-2">
                                                        <BankIcon />
                                                        {t('activate')}
                                                     </Button>
@@ -3524,3 +3524,4 @@ export default App;
 
 
     
+

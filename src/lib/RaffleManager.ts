@@ -120,7 +120,7 @@ class RaffleManager {
         return `${prefix}${numStr}`;
     }
     
-    public async peekNextRaffleRef(mode: RaffleMode, count: number = 2): Promise<NextRaffleInfo> {
+    public async peekNextRaffleRef(mode: RaffleMode, count: number = 5): Promise<NextRaffleInfo> {
         const { numbers, playedCount } = await this.getNextRefInfo(mode, true, count);
         
         let refs: string[];
