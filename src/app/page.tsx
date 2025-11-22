@@ -310,7 +310,7 @@ const App = () => {
 
         const ticketData = {
             ...participant,
-            raffleName: raffleState.prize,
+            prize: raffleState.prize,
             organizerName: raffleState.organizerName,
             gameDate: raffleState.gameDate,
             lottery: raffleState.lottery === 'Otro' ? raffleState.customLottery : raffleState.lottery,
@@ -765,13 +765,15 @@ const App = () => {
         }));
         
         if (isNequiPayment && !confirmPayment) {
+            const nequiUrl = `nequi://payment?phoneNumber=${raffleState.nequiAccountNumber}&value=${raffleState.value}&message=${raffleState.raffleNumber}`;
+            window.location.href = nequiUrl;
             showNotification(t('nequiPaymentPendingNotification', { number: formattedRaffleNumber, name: participantName }), 'success');
         } else if (confirmPayment) {
             showNotification(t('participantRegisteredNotification', { name: participantName, number: formattedRaffleNumber }), 'success');
              if (raffleState.prize) {
                 const ticketData = {
                     ...newParticipant,
-                    raffleName: raffleState.prize,
+                    prize: raffleState.prize,
                     organizerName: raffleState.organizerName,
                     gameDate: raffleState.gameDate,
                     lottery: raffleState.lottery === 'Otro' ? raffleState.customLottery : raffleState.lottery,
@@ -2192,7 +2194,7 @@ const App = () => {
                                                     <div className="text-xs text-center text-gray-500 font-semibold">
                                                         {t('nextRefs2Digit')}{' '}
                                                         {nextRaffleRefs.twoDigit.refs.map((ref, index) => (
-                                                            <span key={`2-digit-ref-${index}`}>
+                                                            <span key={`ref-2-digit-${index}`}>
                                                                 <button
                                                                     className="cursor-pointer hover:underline"
                                                                     onClick={() => handleRefClick(ref, 'two-digit')}
@@ -2235,7 +2237,7 @@ const App = () => {
                                                     <div className="text-xs text-center text-gray-500 font-semibold">
                                                         {t('nextRefs3Digit')}{' '}
                                                         {nextRaffleRefs.threeDigit.refs.map((ref, index) => (
-                                                             <span key={`3-digit-ref-${index}`}>
+                                                             <span key={`ref-3-digit-${index}`}>
                                                                 <button
                                                                     className="cursor-pointer hover:underline"
                                                                     onClick={() => handleRefClick(ref, 'three-digit')}
@@ -2278,7 +2280,7 @@ const App = () => {
                                                     <div className="text-xs text-center text-gray-500 font-semibold">
                                                         {t('nextRefsInfinite')}{' '}
                                                         {nextRaffleRefs.infinite.refs.map((ref, index) => (
-                                                            <span key={`infinite-ref-${index}`}>
+                                                            <span key={`ref-infinite-${index}`}>
                                                                 <button
                                                                     className="cursor-pointer hover:underline"
                                                                     onClick={() => handleRefClick(ref, 'infinite')}
@@ -2497,17 +2499,7 @@ const App = () => {
                                                         <Button
                                                             className="flex-1 w-full sm:w-auto bg-purple-500 hover:bg-purple-600 text-white"
                                                             disabled={!isRegisterFormValidForSubmit}
-                                                            onClick={async () => {
-                                                                if (!isRegisterFormValidForSubmit) {
-                                                                    showNotification(t('completeAllFieldsWarning'), 'warning');
-                                                                    return;
-                                                                }
-                                                                const participantId = await handleRegisterParticipant(true, false);
-                                                                if (participantId) {
-                                                                    const nequiUrl = `nequi://payment?phoneNumber=${raffleState.nequiAccountNumber}&value=${raffleState.value}&message=${raffleState.raffleNumber}`;
-                                                                    window.location.href = nequiUrl;
-                                                                }
-                                                            }}
+                                                            onClick={() => handleRegisterParticipant(true, false)}
                                                         >
                                                             <NequiIcon />
                                                             <span>{t('payWithNequi')}</span>
@@ -2885,7 +2877,7 @@ const App = () => {
                                     <div className="border-t border-dashed border-gray-400 my-4"></div>
                                     <h4 className="font-bold text-center mb-2">{t('raffleDetails')}</h4>
                                     <div className="space-y-1">
-                                        <div className="flex justify-between"><span>{t('prize_caps')}:</span><span className="font-semibold text-right">{formatValue(ticketInfo.raffleName)}</span></div>
+                                        <div className="flex justify-between"><span>{t('prize_caps')}:</span><span className="font-semibold text-right">{isNaN(Number(ticketInfo.prize)) ? ticketInfo.prize : formatValue(ticketInfo.prize)}</span></div>
                                         <div className="flex justify-between"><span>{t('ticketValue_caps')}:</span><span className="font-semibold text-right">{formatValue(ticketInfo.value)}</span></div>
                                         <div className="flex justify-between"><span>{t('drawDate_caps')}:</span><span className="font-semibold text-right">{ticketInfo.gameDate ? format(new Date(ticketInfo.gameDate + 'T00:00:00'), "d 'de' MMMM 'de' yyyy", { locale: language === 'es' ? es : enUS }) : 'N/A'}</span></div>
                                         <div className="flex justify-between"><span>{t('playedWith_caps')}:</span><span className="font-semibold text-right">{ticketInfo.lottery}</span></div>
@@ -3549,3 +3541,4 @@ export default App;
 
 
     
+

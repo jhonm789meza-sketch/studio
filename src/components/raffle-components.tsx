@@ -62,6 +62,7 @@ export const InlineTicket = ({ ticketModalRef, ticketData, setGeneratedTicketDat
     const locale = language === 'es' ? es : enUS;
     const receiptDate = ticketData.timestamp?.toDate ? format(ticketData.timestamp.toDate(), "d 'de' MMMM 'de' yyyy - h:mm a", { locale }) : format(new Date(), "d 'de' MMMM 'de' yyyy - h:mm a", { locale });
     const gameDateFormatted = ticketData.gameDate ? format(new Date(ticketData.gameDate + 'T00:00:00'), "d 'de' MMMM 'de' yyyy", { locale }) : 'N/A';
+    const prizeDisplay = isNaN(Number(ticketData.prize)) ? ticketData.prize : formatValue(ticketData.prize);
 
     return (
         <div className="mt-8 max-w-xs mx-auto">
@@ -98,7 +99,7 @@ export const InlineTicket = ({ ticketModalRef, ticketData, setGeneratedTicketDat
                     <div className="border-t border-dashed border-gray-400 my-4"></div>
                     <h4 className="font-bold text-center mb-2">{t('raffleDetails')}</h4>
                     <div className="space-y-1">
-                        <div className="flex justify-between"><span>{t('prize_caps')}:</span><span className="font-semibold text-right">{formatValue(ticketData.raffleName)}</span></div>
+                        <div className="flex justify-between"><span>{t('prize_caps')}:</span><span className="font-semibold text-right">{prizeDisplay}</span></div>
                         <div className="flex justify-between"><span>{t('ticketValue_caps')}:</span><span className="font-semibold text-right">{formatValue(ticketData.value)}</span></div>
                         <div className="flex justify-between"><span>{t('drawDate_caps')}:</span><span className="font-semibold text-right">{gameDateFormatted}</span></div>
                         <div className="flex justify-between"><span>{t('playedWith_caps')}:</span><span className="font-semibold text-right">{ticketData.lottery}</span></div>
@@ -131,7 +132,3 @@ export const InlineTicket = ({ ticketModalRef, ticketData, setGeneratedTicketDat
        </div>
     );
 };
-
-    
-
-    
