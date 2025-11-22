@@ -1135,7 +1135,6 @@ const App = () => {
             return;
         }
     
-        // Call handleActivateBoard with loadBoard = false
         const { adminId, finalRaffleRef } = await handleActivateBoard(mode, 'CO', undefined, ref, false);
     
         if (adminId && finalRaffleRef) {
@@ -1148,7 +1147,6 @@ const App = () => {
                 showNotification(t('boardActivatedSuccessfullyWithRef', { ref: finalRaffleRef }), 'success');
             }
     
-            // Optimistically update the UI by removing the used ref
             setNextRaffleRefs(prev => {
                 const newRefsState = { ...prev };
                 const modeKey = mode as keyof typeof newRefsState;
@@ -1158,7 +1156,6 @@ const App = () => {
                 return newRefsState;
             });
     
-            // Fetch a new ref to replace the one used
              const { refs: [newRef] } = await raffleManager.peekNextRaffleRef(mode, 1);
              if (newRef) {
                   setNextRaffleRefs(prev => {
@@ -1167,9 +1164,9 @@ const App = () => {
                      if (!newRefsState[modeKey]) {
                          newRefsState[modeKey] = { refs: [], count: 0 };
                      }
-                     if (newRefsState[modeKey].refs) {
+                     if (newRefsState[modeKey] && newRefsState[modeKey].refs) {
                         newRefsState[modeKey].refs.push(newRef);
-                     } else {
+                     } else if (newRefsState[modeKey]) {
                         newRefsState[modeKey].refs = [newRef];
                      }
                      return newRefsState;
@@ -3107,13 +3104,19 @@ const App = () => {
                     <div className="grid gap-4 py-4">
                         <Label htmlFor="new-secondary-contact-input">{t('addNewContact')}</Label>
                         <div className="flex gap-2">
-                            <Input
-                                id="new-secondary-contact-input"
-                                type="tel"
-                                value={newSecondaryContact}
-                                onChange={(e) => setNewSecondaryContact(e.target.value.replace(/\D/g, ''))}
-                                placeholder="3001234567"
-                            />
+                            <div className="relative flex-grow">
+                                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                                    <span className="text-gray-500 sm:text-sm">+57</span>
+                                </div>
+                                <Input
+                                    id="new-secondary-contact-input"
+                                    type="tel"
+                                    value={newSecondaryContact}
+                                    onChange={(e) => setNewSecondaryContact(e.target.value.replace(/\D/g, ''))}
+                                    placeholder="3001234567"
+                                    className="pl-12"
+                                />
+                            </div>
                             <Button onClick={handleAddSecondaryContact} disabled={!newSecondaryContact}>{t('add')}</Button>
                         </div>
                         <div className="space-y-2 mt-4">
@@ -3396,7 +3399,7 @@ const App = () => {
                              onClick={() => {
                                 const line2 = (appSettings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054');
                                 const match = line2.match(/(@\S+)/);
-                                const keyToCopy = match ? match[0] : '';
+                                const keyToCopy = match ? match[0] : line2;
                                 if (keyToCopy) {
                                   navigator.clipboard.writeText(keyToCopy);
                                   showNotification(t('brebKeyCopied'), 'success');
@@ -3488,4 +3491,5 @@ const App = () => {
 };
 
 export default App;
+
 
