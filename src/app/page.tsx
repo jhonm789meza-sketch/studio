@@ -753,24 +753,21 @@ const App = () => {
         
         const updatedParticipants = [...raffleState.participants, newParticipant];
 
-        await setDoc(doc(db, "raffles", raffleState.raffleRef), {
-            participants: updatedParticipants,
-        }, { merge: true });
-                
-        setRaffleState((s:any) => ({
-            ...s,
-            name: '',
-            phoneNumber: '',
-            raffleNumber: '',
-        }));
-        
         if (isNequiPayment && !confirmPayment) {
+            // First, optimistically update state but as 'pending'
+            await setDoc(doc(db, "raffles", raffleState.raffleRef), { participants: updatedParticipants }, { merge: true });
+            setRaffleState(s => ({ ...s, name: '', phoneNumber: '', raffleNumber: '' }));
+            
             const nequiUrl = `nequi://payment?phoneNumber=${raffleState.nequiAccountNumber}&value=${raffleState.value}&message=${raffleState.raffleNumber}`;
             window.location.href = nequiUrl;
             showNotification(t('nequiPaymentPendingNotification', { number: formattedRaffleNumber, name: participantName }), 'success');
-        } else if (confirmPayment) {
+        } else {
+             // For admin confirmation or other non-redirecting payments
+            await setDoc(doc(db, "raffles", raffleState.raffleRef), { participants: updatedParticipants }, { merge: true });
+            setRaffleState(s => ({ ...s, name: '', phoneNumber: '', raffleNumber: '' }));
             showNotification(t('participantRegisteredNotification', { name: participantName, number: formattedRaffleNumber }), 'success');
-             if (raffleState.prize) {
+            
+            if (confirmPayment && raffleState.prize) {
                 const ticketData = {
                     ...newParticipant,
                     prize: raffleState.prize,
@@ -782,10 +779,10 @@ const App = () => {
                     currencySymbol: raffleState.currencySymbol,
                 };
                 setGeneratedTicketData(ticketData);
-             }
+            }
         }
 
-        if (!confirmPayment) {
+        if (!confirmPayment && !isNequiPayment) {
             handleTabClick('board');
         }
 
@@ -1104,7 +1101,9 @@ const App = () => {
             ? appSettings.paymentLinkTwoDigit
             : mode === 'three-digit'
             ? appSettings.paymentLinkThreeDigit
-            : appSettings.paymentLinkInfinite;
+            : mode === 'infinite'
+            ? appSettings.paymentLinkInfinite
+            : undefined;
     
         if (link) {
           const url = new URL(link);
@@ -1152,34 +1151,29 @@ const App = () => {
                 showNotification(t('boardActivatedSuccessfullyWithRef', { ref: finalRaffleRef }), 'success');
             }
     
-            // Optimistically update the UI
+            // Optimistically update the UI by removing the used ref
             setNextRaffleRefs(prev => {
-                const newRefs = { ...prev };
+                const newRefsState = { ...prev };
                 if (mode === 'two-digit') {
-                    newRefs.twoDigit = { ...newRefs.twoDigit, refs: newRefs.twoDigit.refs.filter(r => r !== ref) };
+                    newRefsState.twoDigit.refs = newRefsState.twoDigit.refs.filter(r => r !== ref);
                 } else if (mode === 'three-digit') {
-                    newRefs.threeDigit = { ...newRefs.threeDigit, refs: newRefs.threeDigit.refs.filter(r => r !== ref) };
+                    newRefsState.threeDigit.refs = newRefsState.threeDigit.refs.filter(r => r !== ref);
                 } else {
-                    newRefs.infinite = { ...newRefs.infinite, refs: newRefs.infinite.refs.filter(r => r !== ref) };
+                    newRefsState.infinite.refs = newRefsState.infinite.refs.filter(r => r !== ref);
                 }
-                return newRefs;
+                return newRefsState;
             });
     
             // Fetch a new ref to replace the one used
-            const { refs: [newRef] } = await raffleManager.peekNextRaffleRef(mode, 1);
-            if (newRef) {
-                 setNextRaffleRefs(prev => {
-                    const newRefs = { ...prev };
-                    if (mode === 'two-digit') {
-                        newRefs.twoDigit.refs.push(newRef);
-                    } else if (mode === 'three-digit') {
-                        newRefs.threeDigit.refs.push(newRef);
-                    } else {
-                        newRefs.infinite.refs.push(newRef);
-                    }
-                    return newRefs;
-                });
-            }
+             const { refs: [newRef] } = await raffleManager.peekNextRaffleRef(mode, 1);
+             if (newRef) {
+                  setNextRaffleRefs(prev => {
+                     const newRefsState = { ...prev };
+                     const modeKey = mode as keyof typeof newRefsState;
+                     newRefsState[modeKey].refs.push(newRef);
+                     return newRefsState;
+                 });
+             }
         }
     };
 
@@ -1197,7 +1191,7 @@ const App = () => {
         setLoading(true);
     
         try {
-            const {adminId, finalRaffleRef} = await handleActivateBoard(activation.raffleMode, 'CO', activation.transactionId, undefined, false);
+            const {adminId, finalRaffleRef} = await handleActivateBoard(activation.raffleMode, 'CO', activation.transactionId, newRaffleRef, false);
             
             const activationDocRef = doc(db, 'pendingActivations', activation.id);
             await setDoc(activationDocRef, { status: 'completed' }, { merge: true });
@@ -3489,17 +3483,3 @@ const App = () => {
 };
 
 export default App;
-
-
-
-
-
-
-    
-
-
-
-    
-
-
-
