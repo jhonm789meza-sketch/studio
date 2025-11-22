@@ -2462,10 +2462,10 @@ const App = () => {
                                                         <p className="text-red-500 text-sm mt-1">{t('numberAlreadyAssignedWarning')}</p>
                                                     )}
                                                 </div>
-                                                <div className="flex flex-wrap gap-2">
+                                                <div className="flex flex-col sm:flex-row flex-wrap gap-2">
                                                     {raffleState.isPaymentLinkEnabled && raffleState.paymentLink && (
                                                         <Button
-                                                            className="flex-1 w-full bg-blue-500 hover:bg-blue-600 text-white"
+                                                            className="flex-1 w-full sm:w-auto bg-blue-500 hover:bg-blue-600 text-white"
                                                             disabled={!isRegisterFormValidForSubmit}
                                                             onClick={() => {
                                                                 if (!isRegisterFormValidForSubmit) {
@@ -2493,9 +2493,29 @@ const App = () => {
                                                             <span>{t('payWithLink')}</span>
                                                         </Button>
                                                     )}
+                                                    {raffleState.isNequiEnabled && raffleState.nequiAccountNumber && (
+                                                        <Button
+                                                            className="flex-1 w-full sm:w-auto bg-purple-500 hover:bg-purple-600 text-white"
+                                                            disabled={!isRegisterFormValidForSubmit}
+                                                            onClick={async () => {
+                                                                if (!isRegisterFormValidForSubmit) {
+                                                                    showNotification(t('completeAllFieldsWarning'), 'warning');
+                                                                    return;
+                                                                }
+                                                                const participantId = await handleRegisterParticipant(true, false);
+                                                                if (participantId) {
+                                                                    const nequiUrl = `nequi://payment?phoneNumber=${raffleState.nequiAccountNumber}&value=${raffleState.value}&message=${raffleState.raffleNumber}`;
+                                                                    window.location.href = nequiUrl;
+                                                                }
+                                                            }}
+                                                        >
+                                                            <NequiIcon />
+                                                            <span>{t('payWithNequi')}</span>
+                                                        </Button>
+                                                    )}
                                                      {isCurrentUserAdmin && (
                                                         <Button 
-                                                            className="w-full bg-green-600 hover:bg-green-700" 
+                                                            className="w-full sm:flex-1 bg-green-600 hover:bg-green-700" 
                                                             onClick={() => handleRegisterParticipant(false, true)}
                                                             disabled={!isRegisterFormValidForSubmit}
                                                         >
@@ -3428,7 +3448,7 @@ const App = () => {
                         </Button>
                         <Button
                              onClick={() => {
-                                const line2 = (appSettings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054').split(':').pop()?.trim() || '';
+                                const line2 = (appSettings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054').split('@').pop()?.trim() || '';
                                 navigator.clipboard.writeText(line2);
                                 showNotification(t('brebKeyCopied'), 'success');
                                 setIsCopyOptionsDialogOpen(false);
