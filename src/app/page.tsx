@@ -1101,9 +1101,7 @@ const App = () => {
             ? appSettings.paymentLinkTwoDigit
             : mode === 'three-digit'
             ? appSettings.paymentLinkThreeDigit
-            : mode === 'infinite'
-            ? appSettings.paymentLinkInfinite
-            : undefined;
+            : appSettings.paymentLinkInfinite;
     
         if (link) {
           const url = new URL(link);
@@ -1137,10 +1135,8 @@ const App = () => {
             return;
         }
     
-        setLoading(true);
         // Call handleActivateBoard with loadBoard = false
         const { adminId, finalRaffleRef } = await handleActivateBoard(mode, 'CO', undefined, ref, false);
-        setLoading(false);
     
         if (adminId && finalRaffleRef) {
             const adminUrl = `${window.location.origin}?ref=${finalRaffleRef}&adminId=${adminId}`;
@@ -3399,8 +3395,12 @@ const App = () => {
                         <Button
                              onClick={() => {
                                 const line2 = (appSettings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054');
-                                navigator.clipboard.writeText('@AMIGO1045715054');
-                                showNotification(t('brebKeyCopied'), 'success');
+                                const match = line2.match(/(@\S+)/);
+                                const keyToCopy = match ? match[0] : '';
+                                if (keyToCopy) {
+                                  navigator.clipboard.writeText(keyToCopy);
+                                  showNotification(t('brebKeyCopied'), 'success');
+                                }
                                 setIsCopyOptionsDialogOpen(false);
                             }}
                         >
