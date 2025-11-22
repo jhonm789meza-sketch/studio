@@ -1162,7 +1162,7 @@ const App = () => {
             ? appSettings.paymentLinkThreeDigit
             : mode === 'infinite'
             ? appSettings.paymentLinkInfinite
-            : '';
+            : null;
     
         if (link) {
           const url = new URL(link);
@@ -1431,7 +1431,7 @@ const App = () => {
     
         try {
             const raffleDocRef = doc(db, 'raffles', raffleToChangePassword.raffleRef);
-            await updateDoc(raffleDocRef, { password: newPassword });
+            await setDoc(raffleDocRef, { password: newPassword }, { merge: true });
             showNotification(t('passwordChangedSuccess'), 'success');
             setIsChangePasswordDialogOpen(false);
             setNewPassword('');
@@ -1452,7 +1452,7 @@ const App = () => {
 
         try {
             const settingsDocRef = doc(db, 'internal', 'settings');
-            await updateDoc(settingsDocRef, { superAdminPassword: newPassword });
+            await setDoc(settingsDocRef, { superAdminPassword: newPassword }, { merge: true });
             showNotification(t('passwordChangedSuccess'), 'success');
             setIsSuperAdminChangePasswordOpen(false);
             setNewPassword('');
@@ -3490,3 +3490,6 @@ export default App;
 
 
 
+
+
+    
