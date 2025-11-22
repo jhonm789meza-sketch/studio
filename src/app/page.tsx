@@ -13,7 +13,7 @@ import { requestNotificationPermission } from '@/lib/notification';
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House, Clock as ClockIcon, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Upload, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages, Trophy, Trash2, Copy, Shield, LogOut, Eye, EyeOff, Gamepad2, Phone, TrendingUp, Globe, Landmark } from 'lucide-react';
+import { Menu, Award, Lock, House, Clock as ClockIcon, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Upload, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages, Trophy, Trash2, Copy, Shield, LogOut, Eye, EyeOff, Gamepad2, Phone, TrendingUp, Globe, Landmark, RefreshCcw } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -252,14 +252,15 @@ const App = () => {
     }, [isSuperAdmin]);
 
 
+    const fetchNextRefs = async () => {
+        const twoDigitInfo = await raffleManager.peekNextRaffleRef('two-digit', 5);
+        const threeDigitInfo = await raffleManager.peekNextRaffleRef('three-digit', 5);
+        const infiniteInfo = await raffleManager.peekNextRaffleRef('infinite', 5);
+        setNextRaffleRefs({ twoDigit: twoDigitInfo, threeDigit: threeDigitInfo, infinite: infiniteInfo });
+    };
+
     useEffect(() => {
         if (isSuperAdmin && !raffleState.raffleRef) {
-            const fetchNextRefs = async () => {
-                const twoDigitInfo = await raffleManager.peekNextRaffleRef('two-digit', 5);
-                const threeDigitInfo = await raffleManager.peekNextRaffleRef('three-digit', 5);
-                const infiniteInfo = await raffleManager.peekNextRaffleRef('infinite', 5);
-                setNextRaffleRefs({ twoDigit: twoDigitInfo, threeDigit: threeDigitInfo, infinite: infiniteInfo });
-            };
             fetchNextRefs();
         } else {
             setNextRaffleRefs({ twoDigit: { refs: [], count: 0 }, threeDigit: { refs: [], count: 0 }, infinite: { refs: [], count: 0 } });
@@ -1131,9 +1132,7 @@ const App = () => {
     };
 
     const handleRefClick = async (ref: string, mode: RaffleMode) => {
-        if (!isSuperAdmin) {
-            return;
-        }
+        if (!isSuperAdmin) return;
     
         const { adminId, finalRaffleRef } = await handleActivateBoard(mode, 'CO', undefined, ref, false);
     
@@ -1147,32 +1146,7 @@ const App = () => {
                 showNotification(t('boardActivatedSuccessfullyWithRef', { ref: finalRaffleRef }), 'success');
             }
     
-            setNextRaffleRefs(prev => {
-                const newRefsState = { ...prev };
-                const modeKey = mode as keyof typeof newRefsState;
-                if (newRefsState[modeKey]) {
-                    newRefsState[modeKey].refs = newRefsState[modeKey].refs.filter(r => r !== ref);
-                }
-                return newRefsState;
-            });
-    
-             // Fetch a new ref to replace the one that was just used
-             const { refs: [newRef] } = await raffleManager.peekNextRaffleRef(mode, 1);
-             if (newRef) {
-                  setNextRaffleRefs(prev => {
-                     const newRefsState = { ...prev };
-                     const modeKey = mode as keyof typeof newRefsState;
-                     // Ensure the refs array exists before pushing to it
-                     if (!newRefsState[modeKey]) {
-                         newRefsState[modeKey] = { refs: [], count: 0 };
-                     }
-                     if (!newRefsState[modeKey].refs) {
-                        newRefsState[modeKey].refs = [];
-                     }
-                     newRefsState[modeKey].refs.push(newRef);
-                     return newRefsState;
-                 });
-             }
+            await fetchNextRefs();
         }
     };
 
@@ -2066,6 +2040,10 @@ const App = () => {
                                             <DropdownMenuItem onSelect={() => setIsSuperAdminChangePasswordOpen(true)}>
                                                 <KeyRound className="mr-2 h-4 w-4" />
                                                 <span>{t('changePasswordTitle')}</span>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onSelect={fetchNextRefs}>
+                                                <RefreshCcw className="mr-2 h-4 w-4" />
+                                                <span>{t('refreshRefs')}</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={handleSuperAdminLogout}>
                                                 <LogOut className="mr-2 h-4 w-4" />
@@ -3154,7 +3132,7 @@ const App = () => {
                     <div className="flex flex-col space-y-4 py-4">
                         <Button
                             onClick={() => {
-                                window.open(`https://wa.me/3145696687`, '_blank');
+                                window.open(`https://wa.me/573145696687`, '_blank');
                                 setIsContactDialogOpen(false);
                             }}
                             className="w-full bg-green-500 text-white hover:bg-green-600 flex items-center justify-center gap-2"
@@ -3492,6 +3470,7 @@ const App = () => {
 };
 
 export default App;
+
 
 
 
