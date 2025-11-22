@@ -229,9 +229,9 @@
     "confirmActivationDescription": "You are about to activate a new board. Please confirm the details.",
     "newRaffleRef": "New Raffle Ref",
     "confirmAndActivate": "Confirm and Activate",
-    "nextRefsEven": "Next Even Refs:",
-    "nextRefsOdd": "Next Odd Refs:",
-    "nextRefsInfinite": "Next Infinite Refs:",
+    "nextRefs2Digit": "Next Refs (2-Digit):",
+    "nextRefs3Digit": "Next Refs (3-Digit):",
+    "nextRefsInfinite": "Next Refs (Infinite):",
     "playedCount": "Played Count",
     "gamesTab": "Games",
     "assignedGames": "Assigned Games",
@@ -301,6 +301,7 @@
     "paymentInfoSaved": "Payment information saved successfully.",
     "errorSavingPaymentInfo": "Error saving payment information."
 }
+
 
 
 

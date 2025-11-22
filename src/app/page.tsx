@@ -171,7 +171,7 @@ const App = () => {
     const [activationConfirmationOpen, setActivationConfirmationOpen] = useState(false);
     const [activationToConfirm, setActivationToConfirm] = useState<{ activation: PendingActivation; newRaffleRef: string; } | null>(null);
 
-    const [nextRaffleRefs, setNextRaffleRefs] = useState<{ even: NextRaffleInfo, odd: NextRaffleInfo, infinite: NextRaffleInfo }>({ even: { refs: [], count: 0 }, odd: { refs: [], count: 0 }, infinite: { refs: [], count: 0 } });
+    const [nextRaffleRefs, setNextRaffleRefs] = useState<{ twoDigit: NextRaffleInfo, threeDigit: NextRaffleInfo, infinite: NextRaffleInfo }>({ twoDigit: { refs: [], count: 0 }, threeDigit: { refs: [], count: 0 }, infinite: { refs: [], count: 0 } });
 
     const [appSettings, setAppSettings] = useState<AppSettings>({});
     const [isContactDialogOpen, setIsContactDialogOpen] = useState(false);
@@ -254,14 +254,14 @@ const App = () => {
     useEffect(() => {
         if (isSuperAdmin && !raffleState.raffleRef) {
             const fetchNextRefs = async () => {
-                const evenInfo = await raffleManager.peekNextRaffleRef('two-digit', 2);
-                const oddInfo = await raffleManager.peekNextRaffleRef('three-digit', 2);
+                const twoDigitInfo = await raffleManager.peekNextRaffleRef('two-digit', 2);
+                const threeDigitInfo = await raffleManager.peekNextRaffleRef('three-digit', 2);
                 const infiniteInfo = await raffleManager.peekNextRaffleRef('infinite', 2);
-                setNextRaffleRefs({ even: evenInfo, odd: oddInfo, infinite: infiniteInfo });
+                setNextRaffleRefs({ twoDigit: twoDigitInfo, threeDigit: threeDigitInfo, infinite: infiniteInfo });
             };
             fetchNextRefs();
         } else {
-            setNextRaffleRefs({ even: { refs: [], count: 0 }, odd: { refs: [], count: 0 }, infinite: { refs: [], count: 0 } });
+            setNextRaffleRefs({ twoDigit: { refs: [], count: 0 }, threeDigit: { refs: [], count: 0 }, infinite: { refs: [], count: 0 } });
         }
     }, [isSuperAdmin, raffleState.raffleRef]);
 
@@ -902,13 +902,13 @@ const App = () => {
     
             // Super Admin Activation/Search Flow
             if (isSuperAdmin && isPublicSearch) {
-                const isEven = nextRaffleRefs.even.refs.includes(aRef);
-                const isOdd = nextRaffleRefs.odd.refs.includes(aRef);
+                const isTwoDigit = nextRaffleRefs.twoDigit.refs.includes(aRef);
+                const isThreeDigit = nextRaffleRefs.threeDigit.refs.includes(aRef);
                 const isInfinite = nextRaffleRefs.infinite.refs.includes(aRef);
 
                 let mode: RaffleMode | null = null;
-                if (isEven) mode = 'two-digit';
-                else if (isOdd) mode = 'three-digit';
+                if (isTwoDigit) mode = 'two-digit';
+                else if (isThreeDigit) mode = 'three-digit';
                 else if (isInfinite) mode = 'infinite';
 
                 if (mode) {
@@ -926,16 +926,16 @@ const App = () => {
                     setNextRaffleRefs(prev => {
                         const newRefs = { ...prev };
                         if (mode === 'two-digit') {
-                            newRefs.even = {
-                                ...newRefs.even,
-                                count: (newRefs.even.count || 0) + 1,
-                                refs: newRefs.even.refs.filter(r => r !== aRef),
+                            newRefs.twoDigit = {
+                                ...newRefs.twoDigit,
+                                count: (newRefs.twoDigit.count || 0) + 1,
+                                refs: newRefs.twoDigit.refs.filter(r => r !== aRef),
                             };
                         } else if (mode === 'three-digit') {
-                             newRefs.odd = {
-                                ...newRefs.odd,
-                                count: (newRefs.odd.count || 0) + 1,
-                                refs: newRefs.odd.refs.filter(r => r !== aRef),
+                             newRefs.threeDigit = {
+                                ...newRefs.threeDigit,
+                                count: (newRefs.threeDigit.count || 0) + 1,
+                                refs: newRefs.threeDigit.refs.filter(r => r !== aRef),
                             };
                         } else if (mode === 'infinite') {
                             newRefs.infinite = {
@@ -948,8 +948,8 @@ const App = () => {
                     });
                     
                     // Fetch the next refs to keep the list fresh, without awaiting
-                    raffleManager.peekNextRaffleRef('two-digit', 2).then(info => setNextRaffleRefs(p => ({...p, even: info})));
-                    raffleManager.peekNextRaffleRef('three-digit', 2).then(info => setNextRaffleRefs(p => ({...p, odd: info})));
+                    raffleManager.peekNextRaffleRef('two-digit', 2).then(info => setNextRaffleRefs(p => ({...p, twoDigit: info})));
+                    raffleManager.peekNextRaffleRef('three-digit', 2).then(info => setNextRaffleRefs(p => ({...p, threeDigit: info})));
                     raffleManager.peekNextRaffleRef('infinite', 2).then(info => setNextRaffleRefs(p => ({...p, infinite: info})));
 
                     setIsPublicSearchOpen(false);
@@ -1161,9 +1161,7 @@ const App = () => {
             ? appSettings.paymentLinkTwoDigit
             : mode === 'three-digit'
             ? appSettings.paymentLinkThreeDigit
-            : mode === 'infinite'
-            ? appSettings.paymentLinkInfinite
-            : null;
+            : appSettings.paymentLinkInfinite;
     
         if (link) {
           const url = new URL(link);
@@ -1193,7 +1191,7 @@ const App = () => {
     };
 
     const handleRefClick = async (ref: string, mode: RaffleMode) => {
-        const { adminId } = await handleActivateBoard(mode, 'CO', `MANUAL_${Date.now()}`, ref, false);
+        const { adminId } = await handleActivateBoard(mode, undefined, ref, false);
     
         if (adminId) {
             const adminUrl = `${window.location.origin}?ref=${ref}&adminId=${adminId}`;
@@ -1206,7 +1204,7 @@ const App = () => {
             // Update the local state immediately to reflect the new sale
             setNextRaffleRefs(prev => {
                 const newRefs = { ...prev };
-                const key = mode === 'two-digit' ? 'even' : mode === 'three-digit' ? 'odd' : 'infinite';
+                const key = mode === 'two-digit' ? 'twoDigit' : mode === 'three-digit' ? 'threeDigit' : 'infinite';
                 newRefs[key] = {
                     ...newRefs[key],
                     count: (newRefs[key].count || 0) + 1,
@@ -1217,7 +1215,7 @@ const App = () => {
     
             // Fetch the next refs to keep the list fresh
             raffleManager.peekNextRaffleRef(mode, 2).then(info => {
-                 const key = mode === 'two-digit' ? 'even' : mode === 'three-digit' ? 'odd' : 'infinite';
+                 const key = mode === 'two-digit' ? 'twoDigit' : mode === 'three-digit' ? 'threeDigit' : 'infinite';
                  setNextRaffleRefs(p => ({ ...p, [key]: info }));
             });
         }
@@ -2189,10 +2187,10 @@ const App = () => {
                                                     </Button>
                                                     <p className="text-xs text-gray-500 mt-2 whitespace-pre-wrap">{appSettings.bankInfoLine1 || 'Banco Caja Social: 24096711314'}{'\n'}{appSettings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054'}</p>
                                                 </div>
-                                                {isSuperAdmin && nextRaffleRefs.even.refs.length > 0 && (
+                                                {isSuperAdmin && nextRaffleRefs.twoDigit.refs.length > 0 && (
                                                     <div className="text-xs text-center text-gray-500 font-semibold">
-                                                        {t('nextRefsEven')}{' '}
-                                                        {nextRaffleRefs.even.refs.map((ref, index) => (
+                                                        {t('nextRefs2Digit')}{' '}
+                                                        {nextRaffleRefs.twoDigit.refs.map((ref, index) => (
                                                             <span key={ref}>
                                                                 <button
                                                                     className="cursor-pointer hover:underline"
@@ -2200,7 +2198,7 @@ const App = () => {
                                                                 >
                                                                     {ref}
                                                                 </button>
-                                                                {index < nextRaffleRefs.even.refs.length - 1 ? ', ' : ''}
+                                                                {index < nextRaffleRefs.twoDigit.refs.length - 1 ? ', ' : ''}
                                                             </span>
                                                         ))}
                                                     </div>
@@ -2232,10 +2230,10 @@ const App = () => {
                                                     </Button>
                                                      <p className="text-xs text-gray-500 mt-2 whitespace-pre-wrap">{appSettings.bankInfoLine1 || 'Banco Caja Social: 24096711314'}{'\n'}{appSettings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054'}</p>
                                                 </div>
-                                                {isSuperAdmin && nextRaffleRefs.odd.refs.length > 0 && (
+                                                {isSuperAdmin && nextRaffleRefs.threeDigit.refs.length > 0 && (
                                                     <div className="text-xs text-center text-gray-500 font-semibold">
-                                                        {t('nextRefsOdd')}{' '}
-                                                        {nextRaffleRefs.odd.refs.map((ref, index) => (
+                                                        {t('nextRefs3Digit')}{' '}
+                                                        {nextRaffleRefs.threeDigit.refs.map((ref, index) => (
                                                              <span key={ref}>
                                                                 <button
                                                                     className="cursor-pointer hover:underline"
@@ -2243,7 +2241,7 @@ const App = () => {
                                                                 >
                                                                     {ref}
                                                                 </button>
-                                                                {index < nextRaffleRefs.odd.refs.length - 1 ? ', ' : ''}
+                                                                {index < nextRaffleRefs.threeDigit.refs.length - 1 ? ', ' : ''}
                                                             </span>
                                                         ))}
                                                     </div>

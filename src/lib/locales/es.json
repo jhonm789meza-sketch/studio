@@ -229,8 +229,8 @@
     "confirmActivationDescription": "Estás a punto de activar un nuevo tablero. Por favor confirma los detalles.",
     "newRaffleRef": "Nueva Referencia de Rifa",
     "confirmAndActivate": "Confirmar y Activar",
-    "nextRefsEven": "Prox. Refs (Par):",
-    "nextRefsOdd": "Prox. Refs (Impar):",
+    "nextRefs2Digit": "Prox. Refs (2 Cifras):",
+    "nextRefs3Digit": "Prox. Refs (3 Cifras):",
     "nextRefsInfinite": "Prox. Refs (Infinita):",
     "playedCount": "Jugados",
     "gamesTab": "Juegos",
@@ -301,6 +301,7 @@
     "paymentInfoSaved": "Información de pago guardada con éxito.",
     "errorSavingPaymentInfo": "Error al guardar la información de pago."
 }
+
 
 
 
