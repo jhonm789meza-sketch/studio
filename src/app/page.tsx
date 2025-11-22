@@ -1154,12 +1154,9 @@ const App = () => {
             // Optimistically update the UI by removing the used ref
             setNextRaffleRefs(prev => {
                 const newRefsState = { ...prev };
-                if (mode === 'two-digit') {
-                    newRefsState.twoDigit.refs = newRefsState.twoDigit.refs.filter(r => r !== ref);
-                } else if (mode === 'three-digit') {
-                    newRefsState.threeDigit.refs = newRefsState.threeDigit.refs.filter(r => r !== ref);
-                } else {
-                    newRefsState.infinite.refs = newRefsState.infinite.refs.filter(r => r !== ref);
+                const modeKey = mode as keyof typeof newRefsState;
+                if (newRefsState[modeKey]) {
+                    newRefsState[modeKey].refs = newRefsState[modeKey].refs.filter(r => r !== ref);
                 }
                 return newRefsState;
             });
@@ -1170,7 +1167,14 @@ const App = () => {
                   setNextRaffleRefs(prev => {
                      const newRefsState = { ...prev };
                      const modeKey = mode as keyof typeof newRefsState;
-                     newRefsState[modeKey].refs.push(newRef);
+                     if (!newRefsState[modeKey]) {
+                         newRefsState[modeKey] = { refs: [], count: 0 };
+                     }
+                     if (newRefsState[modeKey].refs) {
+                        newRefsState[modeKey].refs.push(newRef);
+                     } else {
+                        newRefsState[modeKey].refs = [newRef];
+                     }
                      return newRefsState;
                  });
              }
