@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect, useRef, useTransition } from 'react';
 import jsPDF from 'jspdf';
@@ -2192,15 +2193,12 @@ const App = () => {
                                                     <div className="text-xs text-center text-gray-500 font-semibold">
                                                         {t('nextRefsEven')}{' '}
                                                         {nextRaffleRefs.even.refs.map((ref, index) => (
-                                                            <span key={ref} className="inline-flex items-center gap-1">
+                                                            <span key={ref}>
                                                                 <button
                                                                     className="cursor-pointer hover:underline"
                                                                     onClick={() => handleRefClick(ref, 'two-digit')}
                                                                 >
                                                                     {ref}
-                                                                </button>
-                                                                <button onClick={() => handleShareRefToWhatsapp(ref)} className="text-green-500 hover:text-green-700">
-                                                                    <WhatsappIcon className="h-3 w-3" />
                                                                 </button>
                                                                 {index < nextRaffleRefs.even.refs.length - 1 ? ', ' : ''}
                                                             </span>
@@ -2238,15 +2236,12 @@ const App = () => {
                                                     <div className="text-xs text-center text-gray-500 font-semibold">
                                                         {t('nextRefsOdd')}{' '}
                                                         {nextRaffleRefs.odd.refs.map((ref, index) => (
-                                                             <span key={ref} className="inline-flex items-center gap-1">
+                                                             <span key={ref}>
                                                                 <button
                                                                     className="cursor-pointer hover:underline"
                                                                     onClick={() => handleRefClick(ref, 'three-digit')}
                                                                 >
                                                                     {ref}
-                                                                </button>
-                                                                <button onClick={() => handleShareRefToWhatsapp(ref)} className="text-green-500 hover:text-green-700">
-                                                                    <WhatsappIcon className="h-3 w-3" />
                                                                 </button>
                                                                 {index < nextRaffleRefs.odd.refs.length - 1 ? ', ' : ''}
                                                             </span>
@@ -2284,15 +2279,12 @@ const App = () => {
                                                     <div className="text-xs text-center text-gray-500 font-semibold">
                                                         {t('nextRefsInfinite')}{' '}
                                                         {nextRaffleRefs.infinite.refs.map((ref, index) => (
-                                                            <span key={ref} className="inline-flex items-center gap-1">
+                                                            <span key={ref}>
                                                                 <button
                                                                     className="cursor-pointer hover:underline"
                                                                     onClick={() => handleRefClick(ref, 'infinite')}
                                                                 >
                                                                     {ref}
-                                                                </button>
-                                                                <button onClick={() => handleShareRefToWhatsapp(ref)} className="text-green-500 hover:text-green-700">
-                                                                    <WhatsappIcon className="h-3 w-3" />
                                                                 </button>
                                                                 {index < nextRaffleRefs.infinite.refs.length - 1 ? ', ' : ''}
                                                             </span>
