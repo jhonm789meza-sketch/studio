@@ -3399,7 +3399,7 @@ const App = () => {
                         <Button
                              onClick={() => {
                                 const line2 = (appSettings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054');
-                                navigator.clipboard.writeText(line2);
+                                navigator.clipboard.writeText('@AMIGO1045715054');
                                 showNotification(t('brebKeyCopied'), 'success');
                                 setIsCopyOptionsDialogOpen(false);
                             }}
