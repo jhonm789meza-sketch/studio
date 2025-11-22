@@ -1192,8 +1192,34 @@ const App = () => {
     };
 
     const handleRefClick = async (ref: string, mode: RaffleMode) => {
-        setPublicRefSearch(ref);
-        setIsPublicSearchOpen(true);
+        const { adminId } = await handleActivateBoard(mode, 'CO', `MANUAL_${Date.now()}`, ref, false);
+    
+        if (adminId) {
+            const adminUrl = `${window.location.origin}?ref=${ref}&adminId=${adminId}`;
+            navigator.clipboard.writeText(adminUrl).then(() => {
+                showNotification(t('boardActivatedAndCopied', { ref: ref }), 'success');
+            }, () => {
+                showNotification(t('boardActivatedSuccessfullyWithRef', { ref: ref }), 'success');
+            });
+    
+            // Update the local state immediately to reflect the new sale
+            setNextRaffleRefs(prev => {
+                const newRefs = { ...prev };
+                const key = mode === 'two-digit' ? 'even' : mode === 'three-digit' ? 'odd' : 'infinite';
+                newRefs[key] = {
+                    ...newRefs[key],
+                    count: (newRefs[key].count || 0) + 1,
+                    refs: newRefs[key].refs.filter(r => r !== ref),
+                };
+                return newRefs;
+            });
+    
+            // Fetch the next refs to keep the list fresh
+            raffleManager.peekNextRaffleRef(mode, 2).then(info => {
+                 const key = mode === 'two-digit' ? 'even' : mode === 'three-digit' ? 'odd' : 'infinite';
+                 setNextRaffleRefs(p => ({ ...p, [key]: info }));
+            });
+        }
     };
 
 
@@ -1236,7 +1262,7 @@ const App = () => {
             const transactionDocRef = doc(db, 'usedTransactions', finalTransactionId);
             const transactionDoc = await getDoc(transactionDocRef);
 
-            if (transactionDoc.exists() && !finalTransactionId.startsWith('SUPERADMIN')) {
+            if (transactionDoc.exists() && !finalTransactionId.startsWith('SUPERADMIN') && !finalTransactionId.startsWith('MANUAL_')) {
                 showNotification(t('transactionAlreadyUsed'), 'error');
                 if (loadBoard) setLoading(false);
                 return { adminId: null, finalRaffleRef: null };
