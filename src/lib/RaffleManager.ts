@@ -16,10 +16,6 @@ class RaffleManager {
         this.db = db;
     }
 
-    private getUsedNumbersRef(mode: RaffleMode): DocumentReference {
-        return doc(this.db, 'internal', `usedNumbers_${mode}`);
-    }
-
     private getCounterRef(mode: RaffleMode): DocumentReference {
         return doc(this.db, 'internal', `raffleCounter_${mode}`);
     }
@@ -60,12 +56,7 @@ class RaffleManager {
             }
 
             if (!peek) {
-                await updateDoc(counterRef, { count: increment(count) }).catch(async (err) => {
-                     // If document doesn't exist, create it.
-                    if (err.code === 'not-found') {
-                        await setDoc(counterRef, { count: count });
-                    }
-                });
+                 await setDoc(counterRef, { count: increment(count) }, { merge: true });
             }
             
             return { numbers: nextNumbers, playedCount };
@@ -130,7 +121,6 @@ class RaffleManager {
             const modes: RaffleMode[] = ['two-digit', 'three-digit', 'infinite'];
             for (const mode of modes) {
                 batch.set(this.getCounterRef(mode), { count: 0 });
-                batch.set(this.getUsedNumbersRef(mode), { numbers: [] });
             }
             await batch.commit();
         }
