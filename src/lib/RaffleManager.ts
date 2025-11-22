@@ -35,55 +35,38 @@ class RaffleManager {
             let nextNumbers: number[] = [];
             let playedCount = 0;
 
-            await runTransaction(this.db, async (transaction) => {
-                const counterDoc = await transaction.get(counterRef);
-                playedCount = counterDoc.exists() ? counterDoc.data().count : 0;
-                
-                const usedNumbersRef = this.getUsedNumbersRef(mode);
-                const usedNumbersDoc = await transaction.get(usedNumbersRef);
-                const usedNumbersData = usedNumbersDoc.data();
-                const usedNumbers = usedNumbersData && Array.isArray(usedNumbersData.numbers) ? usedNumbersData.numbers : [];
-                const usedNumbersSet = new Set(usedNumbers);
+            const counterDoc = await getDoc(counterRef);
+            playedCount = counterDoc.exists() ? counterDoc.data().count : 0;
 
-                let min: number, max: number;
-                switch (mode) {
-                    case 'two-digit':
-                        min = 0;
-                        max = 99;
-                        break;
-                    case 'three-digit':
-                        min = 0;
-                        max = 999;
-                        break;
-                    case 'infinite':
-                        min = 100000;
-                        max = 999999;
-                        break;
-                }
-                
-                nextNumbers = [];
-                for (let i = 0; i < count; i++) {
-                    let randomNumber;
-                    let attempts = 0;
-                    do {
-                        randomNumber = Math.floor(Math.random() * (max - min + 1)) + min;
-                        attempts++;
-                        // Prevent infinite loop if all numbers are used
-                        if (attempts > (max - min + 1)) {
-                            throw new Error(`No available numbers for mode ${mode}`);
-                        }
-                    } while (usedNumbersSet.has(randomNumber));
-                    
-                    nextNumbers.push(randomNumber);
-                    usedNumbersSet.add(randomNumber);
-                }
+            let min: number, max: number;
+            switch (mode) {
+                case 'two-digit':
+                    min = 0;
+                    max = 99;
+                    break;
+                case 'three-digit':
+                    min = 0;
+                    max = 999;
+                    break;
+                case 'infinite':
+                    min = 100000;
+                    max = 999999;
+                    break;
+            }
+            
+            for (let i = 0; i < count; i++) {
+                const randomNumber = Math.floor(Math.random() * (max - min + 1)) + min;
+                nextNumbers.push(randomNumber);
+            }
 
-                if (!peek) {
-                    transaction.update(counterRef, { count: increment(count) });
-                    const updatedUsedNumbers = [...usedNumbers, ...nextNumbers];
-                    transaction.set(usedNumbersRef, { numbers: updatedUsedNumbers }, { merge: true });
-                }
-            });
+            if (!peek) {
+                await updateDoc(counterRef, { count: increment(count) }).catch(async (err) => {
+                     // If document doesn't exist, create it.
+                    if (err.code === 'not-found') {
+                        await setDoc(counterRef, { count: count });
+                    }
+                });
+            }
             
             return { numbers: nextNumbers, playedCount };
 
