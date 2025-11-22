@@ -25,38 +25,17 @@ class RaffleManager {
             return { numbers: Array.from({ length: count }, (_, i) => i + 1), playedCount: 0 };
         }
         
-        const counterRef = this.getCounterRef(mode);
-
         try {
             let nextNumbers: number[] = [];
-            let playedCount = 0;
+            const playedCount = 0; // No longer tracking count from firestore
 
-            const counterDoc = await getDoc(counterRef);
-            playedCount = counterDoc.exists() ? counterDoc.data().count : 0;
-
-            let min: number, max: number;
-            switch (mode) {
-                case 'two-digit':
-                    min = 0;
-                    max = 99;
-                    break;
-                case 'three-digit':
-                    min = 0;
-                    max = 999;
-                    break;
-                case 'infinite':
-                    min = 100000;
-                    max = 999999;
-                    break;
-            }
+            // All modes will generate a large random number
+            const min = 100000;
+            const max = 999999;
             
             for (let i = 0; i < count; i++) {
                 const randomNumber = Math.floor(Math.random() * (max - min + 1)) + min;
                 nextNumbers.push(randomNumber);
-            }
-
-            if (!peek) {
-                 await setDoc(counterRef, { count: increment(count) }, { merge: true });
             }
             
             return { numbers: nextNumbers, playedCount };
@@ -77,19 +56,7 @@ class RaffleManager {
         const { numbers: [nextNumber] } = await this.getNextRefInfo(mode, !shouldConsume, 1);
         
         const prefix = 'JM';
-        let numStr = '';
-
-        switch (mode) {
-            case 'two-digit':
-                numStr = String(nextNumber).padStart(2, '0');
-                break;
-            case 'three-digit':
-                numStr = String(nextNumber).padStart(3, '0');
-                break;
-            case 'infinite':
-                numStr = String(nextNumber);
-                break;
-        }
+        let numStr = String(nextNumber);
         
         return `${prefix}${numStr}`;
     }
@@ -97,20 +64,8 @@ class RaffleManager {
     public async peekNextRaffleRef(mode: RaffleMode, count: number = 5): Promise<NextRaffleInfo> {
         const { numbers, playedCount } = await this.getNextRefInfo(mode, true, count);
         
-        let refs: string[];
         const prefix = 'JM';
-        
-        switch (mode) {
-            case 'two-digit':
-                refs = numbers.map(num => `${prefix}${String(num).padStart(2, '0')}`);
-                break;
-            case 'three-digit':
-                refs = numbers.map(num => `${prefix}${String(num).padStart(3, '0')}`);
-                break;
-            case 'infinite':
-                refs = numbers.map(num => `${prefix}${num}`);
-                break;
-        }
+        const refs = numbers.map(num => `${prefix}${String(num)}`);
 
         return { refs, count: playedCount };
     }
