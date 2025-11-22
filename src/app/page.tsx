@@ -903,66 +903,6 @@ const App = () => {
                 return;
             }
     
-            // Super Admin Activation/Search Flow
-            if (isSuperAdmin && isPublicSearch) {
-                const isTwoDigit = nextRaffleRefs.twoDigit.refs.includes(aRef);
-                const isThreeDigit = nextRaffleRefs.threeDigit.refs.includes(aRef);
-                const isInfinite = nextRaffleRefs.infinite.refs.includes(aRef);
-
-                let mode: RaffleMode | null = null;
-                if (isTwoDigit) mode = 'two-digit';
-                else if (isThreeDigit) mode = 'three-digit';
-                else if (isInfinite) mode = 'infinite';
-
-                if (mode) {
-                    const { adminId, finalRaffleRef } = await handleActivateBoard(mode, undefined, aRef, false);
-                    if (adminId) {
-                        const adminUrl = `${window.location.origin}?ref=${finalRaffleRef}&adminId=${adminId}`;
-                        navigator.clipboard.writeText(adminUrl).then(() => {
-                            showNotification(t('boardActivatedAndCopied', { ref: finalRaffleRef }), 'success');
-                        }, () => {
-                            showNotification(t('boardActivatedSuccessfullyWithRef', { ref: finalRaffleRef }), 'success');
-                        });
-                    }
-                    
-                    // Update the local state immediately to reflect the new sale
-                    setNextRaffleRefs(prev => {
-                        const newRefs = { ...prev };
-                        if (mode === 'two-digit') {
-                            newRefs.twoDigit = {
-                                ...newRefs.twoDigit,
-                                count: (newRefs.twoDigit.count || 0) + 1,
-                                refs: newRefs.twoDigit.refs.filter(r => r !== aRef),
-                            };
-                        } else if (mode === 'three-digit') {
-                             newRefs.threeDigit = {
-                                ...newRefs.threeDigit,
-                                count: (newRefs.threeDigit.count || 0) + 1,
-                                refs: newRefs.threeDigit.refs.filter(r => r !== aRef),
-                            };
-                        } else if (mode === 'infinite') {
-                            newRefs.infinite = {
-                                ...newRefs.infinite,
-                                count: (newRefs.infinite.count || 0) + 1,
-                                refs: newRefs.infinite.refs.filter(r => r !== aRef),
-                            };
-                        }
-                        return newRefs;
-                    });
-                    
-                    // Fetch the next refs to keep the list fresh, without awaiting
-                    raffleManager.peekNextRaffleRef('two-digit', 5).then(info => setNextRaffleRefs(p => ({...p, twoDigit: info})));
-                    raffleManager.peekNextRaffleRef('three-digit', 5).then(info => setNextRaffleRefs(p => ({...p, threeDigit: info})));
-                    raffleManager.peekNextRaffleRef('infinite', 5).then(info => setNextRaffleRefs(p => ({...p, infinite: info})));
-
-                    setIsPublicSearchOpen(false);
-                    setPublicRefSearch('');
-                    setLoading(false);
-                    resolve();
-                    return;
-                }
-            }
-    
             // Admin Recovery Flow
             if (!isInitialLoad && !isPublicSearch) {
                  try {
@@ -1194,12 +1134,52 @@ const App = () => {
     };
 
     const handleRefClick = async (ref: string, mode: RaffleMode) => {
-        try {
-            await navigator.clipboard.writeText(ref);
-            showNotification(t('referenceCopied', { ref }), 'success');
-        } catch (err) {
-            showNotification(t('errorCopyingReference'), 'error');
-            console.error('Failed to copy text: ', err);
+        if (!isSuperAdmin) {
+            return;
+        }
+    
+        setLoading(true);
+        const { adminId, finalRaffleRef } = await handleActivateBoard(mode, undefined, ref, false);
+        setLoading(false);
+    
+        if (adminId && finalRaffleRef) {
+            const adminUrl = `${window.location.origin}?ref=${finalRaffleRef}&adminId=${adminId}`;
+            try {
+                await navigator.clipboard.writeText(adminUrl);
+                showNotification(t('boardActivatedAndCopied', { ref: finalRaffleRef }), 'success');
+            } catch (err) {
+                console.error('Failed to copy admin URL:', err);
+                showNotification(t('boardActivatedSuccessfullyWithRef', { ref: finalRaffleRef }), 'success');
+            }
+    
+            // Optimistically update the UI
+            setNextRaffleRefs(prev => {
+                const newRefs = { ...prev };
+                if (mode === 'two-digit') {
+                    newRefs.twoDigit = { ...newRefs.twoDigit, refs: newRefs.twoDigit.refs.filter(r => r !== ref) };
+                } else if (mode === 'three-digit') {
+                    newRefs.threeDigit = { ...newRefs.threeDigit, refs: newRefs.threeDigit.refs.filter(r => r !== ref) };
+                } else {
+                    newRefs.infinite = { ...newRefs.infinite, refs: newRefs.infinite.refs.filter(r => r !== ref) };
+                }
+                return newRefs;
+            });
+    
+            // Fetch a new ref to replace the one used
+            const { refs: [newRef] } = await raffleManager.peekNextRaffleRef(mode, 1);
+            if (newRef) {
+                 setNextRaffleRefs(prev => {
+                    const newRefs = { ...prev };
+                    if (mode === 'two-digit') {
+                        newRefs.twoDigit.refs.push(newRef);
+                    } else if (mode === 'three-digit') {
+                        newRefs.threeDigit.refs.push(newRef);
+                    } else {
+                        newRefs.infinite.refs.push(newRef);
+                    }
+                    return newRefs;
+                });
+            }
         }
     };
 
@@ -2476,7 +2456,7 @@ const App = () => {
                                                     )}
                                                     {raffleState.isNequiEnabled && raffleState.nequiAccountNumber && (
                                                         <Button
-                                                            className="flex-1 w-full sm:w-auto bg-purple-500 hover:bg-purple-600 text-white"
+                                                            className="flex-1 w-full sm:w-auto bg-purple-500 hover:bg-purple-600 text-white flex items-center justify-center gap-2"
                                                             disabled={!isRegisterFormValidForSubmit}
                                                             onClick={() => handleRegisterParticipant(true, false)}
                                                         >
@@ -3520,5 +3500,6 @@ export default App;
 
 
     
+
 
 
