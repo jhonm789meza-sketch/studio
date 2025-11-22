@@ -1156,19 +1156,20 @@ const App = () => {
                 return newRefsState;
             });
     
+             // Fetch a new ref to replace the one that was just used
              const { refs: [newRef] } = await raffleManager.peekNextRaffleRef(mode, 1);
              if (newRef) {
                   setNextRaffleRefs(prev => {
                      const newRefsState = { ...prev };
                      const modeKey = mode as keyof typeof newRefsState;
+                     // Ensure the refs array exists before pushing to it
                      if (!newRefsState[modeKey]) {
                          newRefsState[modeKey] = { refs: [], count: 0 };
                      }
-                     if (newRefsState[modeKey]?.refs) {
-                        newRefsState[modeKey].refs.push(newRef);
-                     } else if (newRefsState[modeKey]) {
-                        newRefsState[modeKey].refs = [newRef];
+                     if (!newRefsState[modeKey].refs) {
+                        newRefsState[modeKey].refs = [];
                      }
+                     newRefsState[modeKey].refs.push(newRef);
                      return newRefsState;
                  });
              }
@@ -3165,7 +3166,7 @@ const App = () => {
                             <Button
                                 key={index}
                                 onClick={() => {
-                                    window.open(`https://wa.me/${contact}`, '_blank');
+                                    window.open(`https://wa.me/57${contact}`, '_blank');
                                     setIsContactDialogOpen(false);
                                 }}
                                 className="w-full bg-green-500 text-white hover:bg-green-600 flex items-center justify-center gap-2"
@@ -3491,6 +3492,7 @@ const App = () => {
 };
 
 export default App;
+
 
 
 
