@@ -229,9 +229,9 @@
     "confirmActivationDescription": "Estás a punto de activar un nuevo tablero. Por favor confirma los detalles.",
     "newRaffleRef": "Nueva Referencia de Rifa",
     "confirmAndActivate": "Confirmar y Activar",
-    "nextRefs2Digit": "Prox. Refs (2 Cifras):",
-    "nextRefs3Digit": "Prox. Refs (3 Cifras):",
-    "nextRefsInfinite": "Prox. Refs (Infinita):",
+    "nextRefs2Digit": "Próximas Refs (2 Cifras):",
+    "nextRefs3Digit": "Próximas Refs (3 Cifras):",
+    "nextRefsInfinite": "Próximas Refs (Infinita):",
     "playedCount": "Jugados",
     "gamesTab": "Juegos",
     "assignedGames": "Juegos Asignados",
@@ -299,8 +299,11 @@
     "bankInfoLine1Label": "Información Bancaria (Línea 1)",
     "bankInfoLine2Label": "Llave / Información adicional (Línea 2)",
     "paymentInfoSaved": "Información de pago guardada con éxito.",
-    "errorSavingPaymentInfo": "Error al guardar la información de pago."
+    "errorSavingPaymentInfo": "Error al guardar la información de pago.",
+    "referenceCopied": "Referencia {ref} copiada al portapapeles.",
+    "errorCopyingReference": "Error al copiar la referencia al portapapeles."
 }
+
 
 
 

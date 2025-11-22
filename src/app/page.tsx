@@ -1194,33 +1194,12 @@ const App = () => {
     };
 
     const handleRefClick = async (ref: string, mode: RaffleMode) => {
-        const { adminId, finalRaffleRef } = await handleActivateBoard(mode, undefined, ref, false);
-    
-        if (adminId && finalRaffleRef) {
-            const adminUrl = `${window.location.origin}?ref=${finalRaffleRef}&adminId=${adminId}`;
-            navigator.clipboard.writeText(adminUrl).then(() => {
-                showNotification(t('boardActivatedAndCopied', { ref: finalRaffleRef }), 'success');
-            }, () => {
-                showNotification(t('boardActivatedSuccessfullyWithRef', { ref: finalRaffleRef }), 'success');
-            });
-    
-            // Update the local state immediately to reflect the new sale
-            setNextRaffleRefs(prev => {
-                const newRefs = { ...prev };
-                const key = mode === 'two-digit' ? 'twoDigit' : mode === 'three-digit' ? 'threeDigit' : 'infinite';
-                newRefs[key] = {
-                    ...newRefs[key],
-                    count: (newRefs[key].count || 0) + 1,
-                    refs: newRefs[key].refs.filter(r => r !== ref),
-                };
-                return newRefs;
-            });
-    
-            // Fetch the next refs to keep the list fresh
-            raffleManager.peekNextRaffleRef(mode, 5).then(info => {
-                 const key = mode === 'two-digit' ? 'twoDigit' : mode === 'three-digit' ? 'threeDigit' : 'infinite';
-                 setNextRaffleRefs(p => ({ ...p, [key]: info }));
-            });
+        try {
+            await navigator.clipboard.writeText(ref);
+            showNotification(t('referenceCopied', { ref }), 'success');
+        } catch (err) {
+            showNotification(t('errorCopyingReference'), 'error');
+            console.error('Failed to copy text: ', err);
         }
     };
 
@@ -3541,4 +3520,5 @@ export default App;
 
 
     
+
 

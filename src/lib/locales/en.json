@@ -299,8 +299,11 @@
     "bankInfoLine1Label": "Bank Information (Line 1)",
     "bankInfoLine2Label": "Key/Additional Info (Line 2)",
     "paymentInfoSaved": "Payment information saved successfully.",
-    "errorSavingPaymentInfo": "Error saving payment information."
+    "errorSavingPaymentInfo": "Error saving payment information.",
+    "referenceCopied": "Reference {ref} copied to clipboard.",
+    "errorCopyingReference": "Error copying reference to clipboard."
 }
+
 
 
 
