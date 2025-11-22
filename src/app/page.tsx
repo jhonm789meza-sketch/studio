@@ -1,4 +1,5 @@
 
+
 'use client';
 import { useState, useEffect, useRef, useTransition } from 'react';
 import jsPDF from 'jspdf';
@@ -2191,7 +2192,7 @@ const App = () => {
                                                     <div className="text-xs text-center text-gray-500 font-semibold">
                                                         {t('nextRefs2Digit')}{' '}
                                                         {nextRaffleRefs.twoDigit.refs.map((ref, index) => (
-                                                            <span key={ref}>
+                                                            <span key={`2-digit-ref-${index}`}>
                                                                 <button
                                                                     className="cursor-pointer hover:underline"
                                                                     onClick={() => handleRefClick(ref, 'two-digit')}
@@ -2234,7 +2235,7 @@ const App = () => {
                                                     <div className="text-xs text-center text-gray-500 font-semibold">
                                                         {t('nextRefs3Digit')}{' '}
                                                         {nextRaffleRefs.threeDigit.refs.map((ref, index) => (
-                                                             <span key={ref}>
+                                                             <span key={`3-digit-ref-${index}`}>
                                                                 <button
                                                                     className="cursor-pointer hover:underline"
                                                                     onClick={() => handleRefClick(ref, 'three-digit')}
@@ -2277,7 +2278,7 @@ const App = () => {
                                                     <div className="text-xs text-center text-gray-500 font-semibold">
                                                         {t('nextRefsInfinite')}{' '}
                                                         {nextRaffleRefs.infinite.refs.map((ref, index) => (
-                                                            <span key={ref}>
+                                                            <span key={`infinite-ref-${index}`}>
                                                                 <button
                                                                     className="cursor-pointer hover:underline"
                                                                     onClick={() => handleRefClick(ref, 'infinite')}
@@ -3525,3 +3526,6 @@ export default App;
 
     
 
+
+
+    
