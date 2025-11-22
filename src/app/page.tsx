@@ -1138,7 +1138,8 @@ const App = () => {
         }
     
         setLoading(true);
-        const { adminId, finalRaffleRef } = await handleActivateBoard(mode, undefined, ref, false);
+        // Call handleActivateBoard with loadBoard = false
+        const { adminId, finalRaffleRef } = await handleActivateBoard(mode, 'CO', undefined, ref, false);
         setLoading(false);
     
         if (adminId && finalRaffleRef) {
@@ -3488,4 +3489,3 @@ const App = () => {
 
 export default App;
 
-    
