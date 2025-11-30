@@ -627,7 +627,8 @@ const App = () => {
     const confirmedParticipants = raffleState.participants.filter((p: Participant) => p.paymentStatus === 'confirmed') || [];
 
     const filteredPendingParticipants = pendingParticipants.filter(p =>
-        p.raffleNumber.toLowerCase().includes(pendingSearchQuery.toLowerCase())
+        p.raffleNumber.toLowerCase().includes(pendingSearchQuery.toLowerCase()) ||
+        p.phoneNumber.toLowerCase().includes(pendingSearchQuery.toLowerCase())
     );
 
     const totalCollected = confirmedParticipants.length * (raffleState.value ? parseFloat(String(raffleState.value).replace(/[^\d.,]/g, '').replace(',', '.')) : 0);
@@ -1276,7 +1277,7 @@ const App = () => {
         if (appSettings.secondaryContact && appSettings.secondaryContact.length > 0 && !raffleState.raffleRef) {
             setIsContactDialogOpen(true);
         } else {
-            const whatsappUrl = `https://wa.me/3145696687`;
+            const whatsappUrl = `https://wa.me/573145696687`;
             window.open(whatsappUrl, '_blank');
         }
     };
@@ -2619,7 +2620,7 @@ const App = () => {
                                     <div className="mb-4 max-w-sm">
                                         <Input
                                             type="text"
-                                            placeholder={t('searchByNumber')}
+                                            placeholder={t('searchByNumberOrPhone')}
                                             value={pendingSearchQuery}
                                             onChange={(e) => setPendingSearchQuery(e.target.value)}
                                         />
@@ -3519,6 +3520,7 @@ const App = () => {
 };
 
 export default App;
+
 
 
 

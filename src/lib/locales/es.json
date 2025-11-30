@@ -305,8 +305,10 @@
     "refreshRefs": "Refrescar Referencias",
     "winnerCorrected": "Ganador corregido. Puedes sortear de nuevo.",
     "correctWinner": "Corregir Ganador",
-    "searchByNumber": "Buscar por número..."
+    "searchByNumber": "Buscar por número...",
+    "searchByNumberOrPhone": "Buscar por número o celular..."
 }
+
 
 
 

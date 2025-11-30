@@ -305,8 +305,10 @@
     "refreshRefs": "Refresh References",
     "winnerCorrected": "Winner corrected. You can draw again.",
     "correctWinner": "Correct Winner",
-    "searchByNumber": "Search by number..."
+    "searchByNumber": "Search by number...",
+    "searchByNumberOrPhone": "Search by number or phone..."
 }
+
 
 
 
