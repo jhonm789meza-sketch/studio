@@ -301,8 +301,13 @@
     "paymentInfoSaved": "Payment information saved successfully.",
     "errorSavingPaymentInfo": "Error saving payment information.",
     "referenceCopied": "Reference {ref} copied to clipboard.",
-    "errorCopyingReference": "Error copying reference to clipboard."
+    "errorCopyingReference": "Error copying reference to clipboard.",
+    "refreshRefs": "Refresh References",
+    "winnerCorrected": "Winner corrected. You can draw again.",
+    "correctWinner": "Correct Winner",
+    "searchByNumber": "Search by number..."
 }
+
 
 
 

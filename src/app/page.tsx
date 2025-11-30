@@ -13,7 +13,7 @@ import { requestNotificationPermission } from '@/lib/notification';
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House, Clock as ClockIcon, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Upload, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages, Trophy, Trash2, Copy, Shield, LogOut, Eye, EyeOff, Gamepad2, Phone, TrendingUp, Globe, Landmark, RefreshCcw } from 'lucide-react';
+import { Menu, Award, Lock, House, Clock as ClockIcon, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Upload, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages, Trophy, Trash2, Copy, Shield, LogOut, Eye, EyeOff, Gamepad2, Phone, TrendingUp, Globe, Landmark, RefreshCcw, LockKeyhole } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -167,6 +167,7 @@ const App = () => {
     const [newSecondaryContact, setNewSecondaryContact] = useState('');
     const [isSecondaryContactDialogOpen, setIsSecondaryContactDialogOpen] = useState(false);
     const [gameSearchQuery, setGameSearchQuery] = useState('');
+    const [pendingSearchQuery, setPendingSearchQuery] = useState('');
 
 
     const [activationConfirmationOpen, setActivationConfirmationOpen] = useState(false);
@@ -625,6 +626,10 @@ const App = () => {
     const pendingParticipants = raffleState.participants.filter((p: Participant) => p.paymentStatus === 'pending') || [];
     const confirmedParticipants = raffleState.participants.filter((p: Participant) => p.paymentStatus === 'confirmed') || [];
 
+    const filteredPendingParticipants = pendingParticipants.filter(p =>
+        p.raffleNumber.toLowerCase().includes(pendingSearchQuery.toLowerCase())
+    );
+
     const totalCollected = confirmedParticipants.length * (raffleState.value ? parseFloat(String(raffleState.value).replace(/[^\d.,]/g, '').replace(',', '.')) : 0);
 
     const toggleNumber = (number: number) => {
@@ -840,30 +845,33 @@ const App = () => {
         const targetInfo = generatedTicketData || ticketInfo;
         if (!targetInfo) return;
         
-        // Temporarily set a fixed size for canvas rendering if needed
         const originalWidth = ticketElement.style.width;
         ticketElement.style.width = '320px';
 
-        import('html2canvas').then(html2canvas => {
-            html2canvas(ticketElement, { 
-                useCORS: true, 
-                backgroundColor: null,
-                scale: 3, // Increase scale for better quality
-            }).then(canvas => {
-                // Restore original style
-                ticketElement.style.width = originalWidth;
+        setTimeout(() => {
+            import('html2canvas').then(html2canvas => {
+                html2canvas(ticketElement, { 
+                    useCORS: true, 
+                    backgroundColor: null,
+                    scale: 3,
+                }).then(canvas => {
+                    ticketElement.style.width = originalWidth;
 
-                const imgData = canvas.toDataURL('image/png');
-                const pdf = new jsPDF({
-                    orientation: 'portrait',
-                    unit: 'px',
-                    format: [canvas.width, canvas.height]
+                    const imgData = canvas.toDataURL('image/png');
+                    const pdf = new jsPDF({
+                        orientation: 'portrait',
+                        unit: 'px',
+                        format: [canvas.width, canvas.height]
+                    });
+                    pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+                    pdf.save(`tiquete_${targetInfo.raffleNumber}.pdf`);
+                    showNotification(t('ticketDownloaded'), 'success');
+                }).catch(err => {
+                    console.error("html2canvas error:", err);
+                    ticketElement.style.width = originalWidth;
                 });
-                pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-                pdf.save(`tiquete_${targetInfo.raffleNumber}.pdf`);
-                showNotification(t('ticketDownloaded'), 'success');
             });
-        });
+        }, 50);
     };
 
     const handleShare = () => {
@@ -1031,6 +1039,20 @@ const App = () => {
             showNotification(t('housePrizeNotification', { number: winningNumberStr }), 'info');
         }
         handleTabClick('winners');
+    };
+
+    const handleCorrectWinner = async () => {
+        if (!raffleState.raffleRef || !raffleState.winner) return;
+
+        await setDoc(doc(db, "raffles", raffleState.raffleRef), { 
+            winner: null,
+            manualWinnerNumber: '',
+            manualWinnerNumber2: '',
+            manualWinnerNumber3: '',
+        }, { merge: true });
+        
+        setPartialWinners([]);
+        showNotification(t('winnerCorrected'), 'info');
     };
 
     const handleFindPartialWinners = (numLastDigits: number, prizePercentage: number) => {
@@ -1752,16 +1774,19 @@ const App = () => {
                                  <div className="flex flex-wrap gap-3 items-end">
                                      <div className="flex-grow">
                                         <Label htmlFor="manual-winner-input">{raffleState.automaticDraw ? t('winningNumber') + ' (auto)' : t('winningNumber')}</Label>
-                                        <Input
-                                            id="manual-winner-input"
-                                            type="text"
-                                            placeholder={t('winningNumberPlaceholder', { count: raffleState.raffleMode === 'infinite' ? (raffleState.infiniteModeDigits || 4) : numberLength })}
-                                            value={raffleState.manualWinnerNumber}
-                                            onChange={(e) => handleLocalFieldChange('manualWinnerNumber', e.target.value)}
-                                            maxLength={raffleState.raffleMode === 'infinite' ? raffleState.infiniteModeDigits : numberLength}
-                                            disabled={raffleState.isWinnerConfirmed || raffleState.automaticDraw}
-                                            className="w-full"
-                                        />
+                                        <div className="relative">
+                                            <Input
+                                                id="manual-winner-input"
+                                                type="text"
+                                                placeholder={t('winningNumberPlaceholder', { count: raffleState.raffleMode === 'infinite' ? (raffleState.infiniteModeDigits || 4) : numberLength })}
+                                                value={raffleState.manualWinnerNumber}
+                                                onChange={(e) => handleLocalFieldChange('manualWinnerNumber', e.target.value)}
+                                                maxLength={raffleState.raffleMode === 'infinite' ? raffleState.infiniteModeDigits : numberLength}
+                                                disabled={raffleState.isWinnerConfirmed || raffleState.automaticDraw || !!raffleState.winner}
+                                                className="w-full"
+                                            />
+                                            {!!raffleState.winner && <LockKeyhole className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />}
+                                        </div>
                                      </div>
                                      <div className="flex flex-col items-end">
                                         {raffleState.raffleMode === 'infinite' && (
@@ -1772,7 +1797,7 @@ const App = () => {
                                         )}
                                         <Button
                                             onClick={handleDrawWinner}
-                                            disabled={raffleState.isWinnerConfirmed}
+                                            disabled={raffleState.isWinnerConfirmed || !!raffleState.winner}
                                             className="bg-yellow-500 text-white font-medium rounded-lg hover:bg-yellow-600 transition-colors disabled:bg-gray-300"
                                         >
                                             {raffleState.automaticDraw ? t('automaticDraw') : t('findWinner')}
@@ -1785,16 +1810,19 @@ const App = () => {
                                         <div className="flex flex-wrap gap-3 items-end">
                                             <div className="flex-grow">
                                                 <Label htmlFor="manual-winner-3-input">{t('last3DigitsNumber')}</Label>
-                                                <Input
-                                                    id="manual-winner-3-input"
-                                                    type="text"
-                                                    placeholder={t('last3Digits')}
-                                                    value={raffleState.manualWinnerNumber3}
-                                                    onChange={(e) => handleLocalFieldChange('manualWinnerNumber3', e.target.value)}
-                                                    maxLength={3}
-                                                    disabled={raffleState.isWinnerConfirmed}
-                                                    className="w-full"
-                                                />
+                                                <div className="relative">
+                                                    <Input
+                                                        id="manual-winner-3-input"
+                                                        type="text"
+                                                        placeholder={t('last3Digits')}
+                                                        value={raffleState.manualWinnerNumber3}
+                                                        onChange={(e) => handleLocalFieldChange('manualWinnerNumber3', e.target.value)}
+                                                        maxLength={3}
+                                                        disabled={raffleState.isWinnerConfirmed || !!raffleState.winner}
+                                                        className="w-full"
+                                                    />
+                                                    {!!raffleState.winner && <LockKeyhole className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />}
+                                                </div>
                                             </div>
                                             <div className="w-24">
                                                 <Label>{t('percentage')}</Label>
@@ -1807,7 +1835,7 @@ const App = () => {
                                                     onBlur={(e) => handleFieldChange('partialWinnerPercentage3', raffleState.partialWinnerPercentage3)}
                                                     className="w-full"
                                                     placeholder="%"
-                                                    disabled={raffleState.isWinnerConfirmed}
+                                                    disabled={raffleState.isWinnerConfirmed || !!raffleState.winner}
                                                 />
                                             </div>
                                             <div className="flex flex-col items-end">
@@ -1817,7 +1845,7 @@ const App = () => {
                                                  </div>
                                                 <Button
                                                     onClick={() => handleFindPartialWinners(3, raffleState.partialWinnerPercentage3 || 0)}
-                                                    disabled={raffleState.isWinnerConfirmed}
+                                                    disabled={raffleState.isWinnerConfirmed || !!raffleState.winner}
                                                     className="bg-blue-500 text-white font-medium rounded-lg hover:bg-blue-600 transition-colors disabled:bg-gray-300"
                                                 >
                                                     {t('findWinner')}
@@ -1827,16 +1855,19 @@ const App = () => {
                                         <div className="flex flex-wrap gap-3 items-end">
                                             <div className="flex-grow">
                                                 <Label htmlFor="manual-winner-2-input">{t('last2DigitsNumber')}</Label>
-                                                <Input
-                                                    id="manual-winner-2-input"
-                                                    type="text"
-                                                    placeholder={t('last2Digits')}
-                                                    value={raffleState.manualWinnerNumber2}
-                                                    onChange={(e) => handleLocalFieldChange('manualWinnerNumber2', e.target.value)}
-                                                    maxLength={2}
-                                                    disabled={raffleState.isWinnerConfirmed}
-                                                    className="w-full"
-                                                />
+                                                <div className="relative">
+                                                    <Input
+                                                        id="manual-winner-2-input"
+                                                        type="text"
+                                                        placeholder={t('last2Digits')}
+                                                        value={raffleState.manualWinnerNumber2}
+                                                        onChange={(e) => handleLocalFieldChange('manualWinnerNumber2', e.target.value)}
+                                                        maxLength={2}
+                                                        disabled={raffleState.isWinnerConfirmed || !!raffleState.winner}
+                                                        className="w-full"
+                                                    />
+                                                    {!!raffleState.winner && <LockKeyhole className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />}
+                                                </div>
                                             </div>
                                             <div className="w-24">
                                                  <Label>{t('percentage')}</Label>
@@ -1849,7 +1880,7 @@ const App = () => {
                                                      onBlur={(e) => handleFieldChange('partialWinnerPercentage2', raffleState.partialWinnerPercentage2)}
                                                      className="w-full"
                                                      placeholder="%"
-                                                     disabled={raffleState.isWinnerConfirmed}
+                                                     disabled={raffleState.isWinnerConfirmed || !!raffleState.winner}
                                                  />
                                             </div>
                                             <div className="flex flex-col items-end">
@@ -1859,7 +1890,7 @@ const App = () => {
                                                  </div>
                                                 <Button
                                                     onClick={() => handleFindPartialWinners(2, raffleState.partialWinnerPercentage2 || 0)}
-                                                    disabled={raffleState.isWinnerConfirmed}
+                                                    disabled={raffleState.isWinnerConfirmed || !!raffleState.winner}
                                                     className="bg-blue-500 text-white font-medium rounded-lg hover:bg-blue-600 transition-colors disabled:bg-gray-300"
                                                 >
                                                     {t('findWinner')}
@@ -1871,12 +1902,20 @@ const App = () => {
 
                                  <div className="flex flex-wrap gap-3 items-center">
                                      {raffleState.winner && !raffleState.isWinnerConfirmed && (
-                                         <Button
-                                             onClick={handleConfirmWinner}
-                                             className="bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 transition-colors"
-                                         >
-                                             {t('confirmResult')}
-                                         </Button>
+                                        <>
+                                            <Button
+                                                onClick={handleConfirmWinner}
+                                                className="bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 transition-colors"
+                                            >
+                                                {t('confirmResult')}
+                                            </Button>
+                                            <Button
+                                                onClick={handleCorrectWinner}
+                                                variant="outline"
+                                            >
+                                                {t('correctWinner')}
+                                            </Button>
+                                        </>
                                      )}
                                      <Button
                                          onClick={resetBoard}
@@ -2576,7 +2615,17 @@ const App = () => {
                                 {isCurrentUserAdmin && (
                                 <div className={activeTab === 'pending' ? 'tab-content active' : 'tab-content'}>
                                     <h2 className="text-2xl font-bold text-gray-800 mb-4">{t('pendingPayments')}</h2>
-                                    {pendingParticipants.length > 0 ? (
+                                    
+                                    <div className="mb-4 max-w-sm">
+                                        <Input
+                                            type="text"
+                                            placeholder={t('searchByNumber')}
+                                            value={pendingSearchQuery}
+                                            onChange={(e) => setPendingSearchQuery(e.target.value)}
+                                        />
+                                    </div>
+
+                                    {filteredPendingParticipants.length > 0 ? (
                                         <div className="overflow-x-auto">
                                             <table className="min-w-full divide-y divide-gray-200">
                                                 <thead className="bg-gray-50">
@@ -2589,7 +2638,7 @@ const App = () => {
                                                     </tr>
                                                 </thead>
                                                 <tbody className="bg-white divide-y divide-gray-200">
-                                                    {pendingParticipants.sort((a: Participant, b: Participant) => a.raffleNumber.localeCompare(b.raffleNumber)).map((p: Participant) => (
+                                                    {filteredPendingParticipants.sort((a: Participant, b: Participant) => a.raffleNumber.localeCompare(b.raffleNumber)).map((p: Participant) => (
                                                         <tr key={p.id}>
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-purple-600">{p.raffleNumber}</td>
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{p.name}</td>
@@ -3470,6 +3519,7 @@ const App = () => {
 };
 
 export default App;
+
 
 
 

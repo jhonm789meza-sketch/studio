@@ -302,8 +302,12 @@
     "errorSavingPaymentInfo": "Error al guardar la información de pago.",
     "referenceCopied": "Referencia {ref} copiada al portapapeles.",
     "errorCopyingReference": "Error al copiar la referencia al portapapeles.",
-    "refreshRefs": "Refrescar Referencias"
+    "refreshRefs": "Refrescar Referencias",
+    "winnerCorrected": "Ganador corregido. Puedes sortear de nuevo.",
+    "correctWinner": "Corregir Ganador",
+    "searchByNumber": "Buscar por número..."
 }
+
 
 
 
