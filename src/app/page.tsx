@@ -1283,7 +1283,7 @@ const App = () => {
     };
     
     const handleShareToWhatsApp = () => {
-        const urlToShare = raffleState.raffleRef ? window.location.href : window.location.origin;
+        const urlToShare = raffleState.raffleRef ? `${window.location.origin}?ref=${raffleState.raffleRef}` : window.location.origin;
         const message = encodeURIComponent(t('shareRaffleAppDescription'));
         const whatsappUrl = `https://wa.me/?text=${message} ${encodeURIComponent(urlToShare)}`;
         window.open(whatsappUrl, '_blank');
@@ -1297,7 +1297,7 @@ const App = () => {
     };
 
     const handleShareToFacebook = () => {
-        const urlToShare = raffleState.raffleRef ? window.location.href : window.location.origin;
+        const urlToShare = raffleState.raffleRef ? `${window.location.origin}?ref=${raffleState.raffleRef}` : window.location.origin;
         const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(urlToShare)}`;
         window.open(facebookUrl, '_blank');
         setIsShareDialogOpen(false);
@@ -3520,6 +3520,7 @@ const App = () => {
 };
 
 export default App;
+
 
 
 
