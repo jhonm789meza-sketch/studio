@@ -369,7 +369,7 @@ const App = () => {
         const paramsToClean = [
             'status', 'participantId', 'pName', 'pPhone', 'pNum', 'transactionState', 
             'ref_payco', 'signature', 'transactionId', 'amount', 'currency', 
-            'id', 'reference', 'state', 'env', 'raffleMode', 'adminId' // Add adminId here
+            'id', 'reference', 'state', 'env', 'raffleMode'
         ];
         
         let needsCleanup = false;
@@ -381,10 +381,15 @@ const App = () => {
         });
         
         const currentRef = raffleState.raffleRef || new URLSearchParams(window.location.search).get('ref');
-        
+        const currentAdminId = url.searchParams.get('adminId');
+
         const finalParams = new URLSearchParams();
         if (currentRef) {
             finalParams.set('ref', currentRef);
+        }
+        // Persist adminId if it was in the original URL and is being used
+        if (currentAdminId) {
+             finalParams.set('adminId', currentAdminId);
         }
 
         const newPath = url.pathname + (finalParams.toString() ? `?${finalParams.toString()}` : '');
@@ -503,7 +508,14 @@ const App = () => {
                 setRaffleState(initialRaffleData);
                 setLoading(false);
             }
-            cleanupUrlParams(); 
+            // Cleanup params after processing, except for ref and adminId
+             const finalUrl = new URL(window.location.origin);
+             if (refFromUrl) finalUrl.searchParams.set('ref', refFromUrl);
+             if (adminIdFromUrl) finalUrl.searchParams.set('adminId', adminIdFromUrl);
+             
+             if (window.location.href !== finalUrl.href) {
+                window.history.replaceState({}, '', finalUrl.href);
+             }
         };
 
         initialize();
@@ -3520,6 +3532,7 @@ const App = () => {
 };
 
 export default App;
+
 
 
 
