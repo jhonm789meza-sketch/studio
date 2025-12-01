@@ -237,12 +237,12 @@
     "assignedGames": "Assigned Games",
     "noGamesAssigned": "No games have been assigned yet.",
     "manage": "Manage",
-    "secondaryContact": "Secondary Contact",
+    "secondaryContact": "Support Contacts",
     "enterPhoneNumber": "Enter phone number",
     "save": "Save",
-    "secondaryContactSaved": "Secondary contact saved successfully!",
-    "errorSavingSecondaryContact": "Error saving secondary contact.",
-    "contactDialogDescription": "Choose a contact option.",
+    "secondaryContactSaved": "Support contacts saved successfully!",
+    "errorSavingSecondaryContact": "Error saving support contacts.",
+    "contactDialogDescription": "Choose a contact option for support.",
     "assignReference": "Assign Reference",
     "webSupport": "Assign Reference",
     "searchGamePlaceholder": "Search by reference...",
@@ -308,6 +308,7 @@
     "searchByNumber": "Search by number...",
     "searchByNumberOrPhone": "Search by number or phone..."
 }
+
 
 
 

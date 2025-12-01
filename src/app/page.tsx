@@ -163,9 +163,9 @@ const App = () => {
     const [isSuperAdmin, setIsSuperAdmin] = useState(false);
     const [pendingActivations, setPendingActivations] = useState<PendingActivation[]>([]);
     const [allRaffles, setAllRaffles] = useState<Raffle[]>([]);
-    const [secondaryContacts, setSecondaryContacts] = useState<string[]>([]);
-    const [newSecondaryContact, setNewSecondaryContact] = useState('');
-    const [isSecondaryContactDialogOpen, setIsSecondaryContactDialogOpen] = useState(false);
+    const [supportContacts, setSupportContacts] = useState<string[]>([]);
+    const [newSupportContact, setNewSupportContact] = useState('');
+    const [isSupportContactDialogOpen, setIsSupportContactDialogOpen] = useState(false);
     const [gameSearchQuery, setGameSearchQuery] = useState('');
     const [pendingSearchQuery, setPendingSearchQuery] = useState('');
 
@@ -231,7 +231,7 @@ const App = () => {
                 const settings = docSnap.data() as AppSettings;
                 setAppSettings(settings);
                 if (isSuperAdmin) {
-                    setSecondaryContacts(Array.isArray(settings.secondaryContact) ? settings.secondaryContact : []);
+                    setSupportContacts(Array.isArray(settings.supportContacts) ? settings.supportContacts : []);
                     setPaymentLinks({
                         twoDigit: settings.paymentLinkTwoDigit || '',
                         threeDigit: settings.paymentLinkThreeDigit || '',
@@ -1286,9 +1286,16 @@ const App = () => {
     };
 
     const handleContactSupport = () => {
-        if (appSettings.secondaryContact && appSettings.secondaryContact.length > 0 && !raffleState.raffleRef) {
+        // If there are support contacts and we are on the home screen, show the dialog.
+        if (appSettings.supportContacts && appSettings.supportContacts.length > 0 && !raffleState.raffleRef) {
             setIsContactDialogOpen(true);
+        } else if (appSettings.supportContacts && appSettings.supportContacts.length > 0) {
+            // If already in a raffle, or if there's only one contact, go direct.
+            const primaryContact = appSettings.supportContacts[0];
+            const whatsappUrl = `https://wa.me/57${primaryContact}`;
+            window.open(whatsappUrl, '_blank');
         } else {
+             // Fallback if no contacts are configured
             const whatsappUrl = `https://wa.me/573145696687`;
             window.open(whatsappUrl, '_blank');
         }
@@ -1350,38 +1357,38 @@ const App = () => {
         showNotification(t('logoutSuccess'), 'info');
     };
 
-    const handleSaveSecondaryContacts = async () => {
+    const handleSaveSupportContacts = async () => {
         try {
             const settingsDocRef = doc(db, 'internal', 'settings');
-            await setDoc(settingsDocRef, { secondaryContact: secondaryContacts }, { merge: true });
+            await setDoc(settingsDocRef, { supportContacts: supportContacts }, { merge: true });
             showNotification(t('secondaryContactSaved'), 'success');
         } catch (error) {
-            console.error("Error saving secondary contact:", error);
+            console.error("Error saving support contact:", error);
             showNotification(t('errorSavingSecondaryContact'), 'error');
         }
     };
 
-    const handleAddSecondaryContact = async () => {
-        if (newSecondaryContact && !secondaryContacts.includes(newSecondaryContact)) {
-            const updatedContacts = [...secondaryContacts, newSecondaryContact.replace(/\D/g, '')];
-            setSecondaryContacts(updatedContacts);
-            setNewSecondaryContact('');
+    const handleAddSupportContact = async () => {
+        if (newSupportContact && !supportContacts.includes(newSupportContact)) {
+            const updatedContacts = [...supportContacts, newSupportContact.replace(/\D/g, '')];
+            setSupportContacts(updatedContacts);
+            setNewSupportContact('');
 
             try {
                 const settingsDocRef = doc(db, 'internal', 'settings');
-                await setDoc(settingsDocRef, { secondaryContact: updatedContacts }, { merge: true });
+                await setDoc(settingsDocRef, { supportContacts: updatedContacts }, { merge: true });
                 showNotification(t('secondaryContactSaved'), 'success');
             } catch (error) {
-                console.error("Error saving secondary contact:", error);
+                console.error("Error saving support contact:", error);
                 showNotification(t('errorSavingSecondaryContact'), 'error');
                 // Revert state if save fails
-                setSecondaryContacts(secondaryContacts);
+                setSupportContacts(supportContacts);
             }
         }
     };
 
-    const handleRemoveSecondaryContact = (contactToRemove: string) => {
-        setSecondaryContacts(secondaryContacts.filter(contact => contact !== contactToRemove));
+    const handleRemoveSupportContact = (contactToRemove: string) => {
+        setSupportContacts(supportContacts.filter(contact => contact !== contactToRemove));
     };
 
     const handleSavePaymentLinks = async () => {
@@ -2073,7 +2080,7 @@ const App = () => {
                                     </DropdownMenuItem>
                                      {isSuperAdmin && (
                                         <>
-                                            <DropdownMenuItem onSelect={() => setIsSecondaryContactDialogOpen(true)}>
+                                            <DropdownMenuItem onSelect={() => setIsSupportContactDialogOpen(true)}>
                                                 <Phone className="mr-2 h-4 w-4" />
                                                 <span>{t('secondaryContact')}</span>
                                             </DropdownMenuItem>
@@ -3137,36 +3144,36 @@ const App = () => {
                 </DialogContent>
             </Dialog>
 
-            <Dialog open={isSecondaryContactDialogOpen} onOpenChange={setIsSecondaryContactDialogOpen}>
+            <Dialog open={isSupportContactDialogOpen} onOpenChange={setIsSupportContactDialogOpen}>
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>{t('secondaryContact')}</DialogTitle>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
-                        <Label htmlFor="new-secondary-contact-input">{t('addNewContact')}</Label>
+                        <Label htmlFor="new-support-contact-input">{t('addNewContact')}</Label>
                         <div className="flex gap-2">
                             <div className="relative flex-grow">
                                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                                     <span className="text-gray-500 sm:text-sm">+57</span>
                                 </div>
                                 <Input
-                                    id="new-secondary-contact-input"
+                                    id="new-support-contact-input"
                                     type="tel"
-                                    value={newSecondaryContact}
-                                    onChange={(e) => setNewSecondaryContact(e.target.value.replace(/\D/g, ''))}
+                                    value={newSupportContact}
+                                    onChange={(e) => setNewSupportContact(e.target.value.replace(/\D/g, ''))}
                                     placeholder="3001234567"
                                     className="pl-12"
                                 />
                             </div>
-                            <Button onClick={handleAddSecondaryContact} disabled={!newSecondaryContact}>{t('add')}</Button>
+                            <Button onClick={handleAddSupportContact} disabled={!newSupportContact}>{t('add')}</Button>
                         </div>
                         <div className="space-y-2 mt-4">
                              <Label>{t('savedContacts')}</Label>
-                             {Array.isArray(secondaryContacts) && secondaryContacts.length > 0 ? (
-                                secondaryContacts.map((contact, index) => (
+                             {Array.isArray(supportContacts) && supportContacts.length > 0 ? (
+                                supportContacts.map((contact, index) => (
                                     <div key={index} className="flex items-center justify-between bg-gray-100 p-2 rounded-md">
                                         <span>+57 {contact}</span>
-                                        <Button variant="ghost" size="icon" onClick={() => handleRemoveSecondaryContact(contact)}>
+                                        <Button variant="ghost" size="icon" onClick={() => handleRemoveSupportContact(contact)}>
                                             <Trash2 className="h-4 w-4 text-red-500" />
                                         </Button>
                                     </div>
@@ -3177,8 +3184,8 @@ const App = () => {
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button type="button" variant="outline" onClick={() => setIsSecondaryContactDialogOpen(false)}>{t('cancel')}</Button>
-                        <Button type="button" onClick={handleSaveSecondaryContacts}>{t('save')}</Button>
+                        <Button type="button" variant="outline" onClick={() => setIsSupportContactDialogOpen(false)}>{t('cancel')}</Button>
+                        <Button type="button" onClick={handleSaveSupportContacts}>{t('save')}</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
@@ -3192,17 +3199,7 @@ const App = () => {
                         </DialogDescription>
                     </DialogHeader>
                     <div className="flex flex-col space-y-4 py-4">
-                        <Button
-                            onClick={() => {
-                                window.open(`https://wa.me/573145696687`, '_blank');
-                                setIsContactDialogOpen(false);
-                            }}
-                            className="w-full bg-green-500 text-white hover:bg-green-600 flex items-center justify-center gap-2"
-                        >
-                            <WhatsappIcon />
-                            <span>{t('assignReference')}</span>
-                        </Button>
-                        {Array.isArray(appSettings.secondaryContact) && appSettings.secondaryContact?.map((contact, index) => (
+                        {Array.isArray(appSettings.supportContacts) && appSettings.supportContacts?.map((contact, index) => (
                             <Button
                                 key={index}
                                 onClick={() => {
@@ -3212,7 +3209,7 @@ const App = () => {
                                 className="w-full bg-green-500 text-white hover:bg-green-600 flex items-center justify-center gap-2"
                             >
                                 <WhatsappIcon />
-                                <span>{t('assignReference')} {index + 2}</span>
+                                <span>{t('assignReference')} {appSettings.supportContacts.length > 1 ? index + 1 : ''}</span>
                             </Button>
                         ))}
                     </div>

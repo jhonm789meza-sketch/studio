@@ -20,7 +20,7 @@ export interface PendingActivation {
 }
 
 export interface AppSettings {
-    secondaryContact?: string[];
+    supportContacts?: string[];
     superAdminPassword?: string;
     paymentLinkTwoDigit?: string;
     paymentLinkThreeDigit?: string;
@@ -77,6 +77,7 @@ export interface Raffle {
     
 
     
+
 
 
 
