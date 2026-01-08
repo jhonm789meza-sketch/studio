@@ -5,7 +5,7 @@ import { useState, useEffect, useRef, useTransition } from 'react';
 import jsPDF from 'jspdf';
 import { RaffleManager } from '@/lib/RaffleManager';
 import { db, storage } from '@/lib/firebase';
-import { doc, onSnapshot, setDoc, getDoc, deleteDoc, Unsubscribe, serverTimestamp, collection, query, where, getDocs, updateDoc, addDoc } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc, getDoc, deleteDoc, Unsubscribe, serverTimestamp, collection, query, where, getDocs, updateDoc, addDoc, orderBy } from 'firebase/firestore';
 import Image from 'next/image';
 import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { useLanguage } from '@/hooks/use-language';
@@ -19,7 +19,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Confetti } from '@/components/confetti';
 import { Switch } from '@/components/ui/switch';
-import type { Participant, Raffle, PendingActivation, AppSettings } from '@/lib/types';
+import type { Participant, Raffle, PendingActivation, AppSettings, AppVisit } from '@/lib/types';
 import { format } from 'date-fns';
 import { es, enUS } from 'date-fns/locale';
 import { Textarea } from '@/components/ui/textarea';
@@ -29,7 +29,7 @@ import { WhatsappIcon, FacebookIcon, TicketIcon, NequiIcon, InlineTicket, BankIc
 
 
 type RaffleMode = 'two-digit' | 'three-digit' | 'infinite';
-type Tab = 'board' | 'register' | 'participants' | 'pending' | 'recaudado' | 'winners' | 'activations' | 'games';
+type Tab = 'board' | 'register' | 'participants' | 'pending' | 'recaudado' | 'winners' | 'activations' | 'games' | 'visits';
 
 const initialRaffleData: Raffle = {
     drawnNumbers: [],
@@ -168,6 +168,8 @@ const App = () => {
     const [isSupportContactDialogOpen, setIsSupportContactDialogOpen] = useState(false);
     const [gameSearchQuery, setGameSearchQuery] = useState('');
     const [pendingSearchQuery, setPendingSearchQuery] = useState('');
+    const [appVisits, setAppVisits] = useState<AppVisit[]>([]);
+    const [visitSearchQuery, setVisitSearchQuery] = useState('');
 
 
     const [activationConfirmationOpen, setActivationConfirmationOpen] = useState(false);
@@ -270,15 +272,17 @@ const App = () => {
 
     useEffect(() => {
         if (isSuperAdmin) {
+            // Fetch pending activations
             const q = query(collection(db, "pendingActivations"), where("status", "==", "pending"));
-            const unsubscribe = onSnapshot(q, (querySnapshot) => {
+            const unsubscribeActivations = onSnapshot(q, (querySnapshot) => {
                 const activations: PendingActivation[] = [];
                 querySnapshot.forEach((doc) => {
                     activations.push({ id: doc.id, ...doc.data() } as PendingActivation);
                 });
                 setPendingActivations(activations);
             });
-
+    
+            // Fetch all raffles
             const allRafflesQuery = query(collection(db, "raffles"));
             const unsubscribeRaffles = onSnapshot(allRafflesQuery, (querySnapshot) => {
                 const raffles: Raffle[] = [];
@@ -287,11 +291,21 @@ const App = () => {
                 });
                 setAllRaffles(raffles);
             });
-
-
+    
+            // Fetch all visits
+            const visitsQuery = query(collection(db, "visits"), orderBy("timestamp", "desc"));
+            const unsubscribeVisits = onSnapshot(visitsQuery, (querySnapshot) => {
+                const visits: AppVisit[] = [];
+                querySnapshot.forEach((doc) => {
+                    visits.push({ id: doc.id, ...doc.data() } as AppVisit);
+                });
+                setAppVisits(visits);
+            });
+    
             return () => {
-                unsubscribe();
+                unsubscribeActivations();
                 unsubscribeRaffles();
+                unsubscribeVisits();
             }
         }
     }, [isSuperAdmin]);
@@ -451,18 +465,33 @@ const App = () => {
             const urlParams = new URLSearchParams(window.location.search);
             const adminIdFromUrl = urlParams.get('adminId');
             
+            const adminIdFromStorage = localStorage.getItem('rifaAdminId');
+            const superAdminSession = sessionStorage.getItem('isSuperAdmin');
+            const isSuper = superAdminSession === 'true';
+            setIsSuperAdmin(isSuper);
+
+            let currentAdmin = null;
             if (adminIdFromUrl) {
                 localStorage.setItem('rifaAdminId', adminIdFromUrl);
-                setCurrentAdminId(adminIdFromUrl);
-            } else {
-                const adminIdFromStorage = localStorage.getItem('rifaAdminId');
-                if (adminIdFromStorage) setCurrentAdminId(adminIdFromStorage);
+                currentAdmin = adminIdFromUrl;
+            } else if (adminIdFromStorage) {
+                currentAdmin = adminIdFromStorage;
+            }
+            setCurrentAdminId(currentAdmin);
+
+            // Log visit if not an admin/superadmin
+            if (!currentAdmin && !isSuper) {
+                try {
+                    await addDoc(collection(db, 'visits'), {
+                        ref: urlParams.get('ref') || 'homepage',
+                        timestamp: serverTimestamp(),
+                        userAgent: navigator.userAgent
+                    });
+                } catch (error) {
+                    console.error("Error logging visit:", error);
+                }
             }
             
-            const superAdminSession = sessionStorage.getItem('isSuperAdmin');
-            if (superAdminSession === 'true') {
-                setIsSuperAdmin(true);
-            }
 
             const status = urlParams.get('transactionState') || urlParams.get('state');
             const transactionId = urlParams.get('reference') || urlParams.get('ref_payco'); 
@@ -990,9 +1019,14 @@ const App = () => {
                     const currentUrl = new URL(window.location.href);
                     const newUrl = new URL(window.location.origin);
                     newUrl.searchParams.set('ref', aRef);
-                    if (data.adminId && data.adminId === localStorage.getItem('rifaAdminId') && !isPublicSearch) {
+                    
+                    const adminIdForUrl = localStorage.getItem('rifaAdminId');
+                    if (data.adminId && data.adminId === adminIdForUrl && !isPublicSearch) {
                         newUrl.searchParams.set('adminId', data.adminId);
+                    } else {
+                        newUrl.searchParams.delete('adminId');
                     }
+
                     if (currentUrl.href !== newUrl.href) {
                         window.history.pushState({}, '', newUrl.href);
                     }
@@ -1494,6 +1528,10 @@ const App = () => {
 
     const filteredGames = allRaffles.filter(raffle => 
         raffle.raffleRef?.toLowerCase().includes(gameSearchQuery.toLowerCase())
+    );
+
+    const filteredVisits = appVisits.filter(visit =>
+        visit.ref?.toLowerCase().includes(visitSearchQuery.toLowerCase())
     );
 
 
@@ -2084,6 +2122,10 @@ const App = () => {
                                                 <Phone className="mr-2 h-4 w-4" />
                                                 <span>{t('secondaryContact')}</span>
                                             </DropdownMenuItem>
+                                            <DropdownMenuItem onSelect={() => handleTabClick('visits')}>
+                                                <TrendingUp className="mr-2 h-4 w-4" />
+                                                <span>{t('visualizations')}</span>
+                                            </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setIsPaymentLinksDialogOpen(true)}>
                                                 <LinkIcon className="mr-2 h-4 w-4" />
                                                 <span>{t('paymentLinks')}</span>
@@ -2324,6 +2366,12 @@ const App = () => {
                                             onClick={() => handleTabClick('games')}
                                         >
                                            <Gamepad2 className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">{t('gamesTab')}</span>
+                                        </button>
+                                        <button 
+                                            className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'visits' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
+                                            onClick={() => handleTabClick('visits')}
+                                        >
+                                           <TrendingUp className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">{t('visualizations')}</span>
                                         </button>
                                     </>
                                     )}
@@ -2630,6 +2678,46 @@ const App = () => {
                                                 <p className="text-gray-500">{t('noGamesAssigned')}</p>
                                             )}
                                          </>
+                                    )}
+                                </div>
+                                <div className={activeTab === 'visits' ? 'tab-content active' : 'tab-content'}>
+                                    {isSuperAdmin && (
+                                        <>
+                                            <h2 className="text-2xl font-bold text-gray-800 mb-4">{t('visualizations')}</h2>
+                                            <div className="mb-4">
+                                                <Input
+                                                    type="text"
+                                                    placeholder={t('searchByReference')}
+                                                    value={visitSearchQuery}
+                                                    onChange={(e) => setVisitSearchQuery(e.target.value)}
+                                                    className="max-w-sm"
+                                                />
+                                            </div>
+                                            {filteredVisits.length > 0 ? (
+                                                <div className="overflow-x-auto">
+                                                    <table className="min-w-full divide-y divide-gray-200">
+                                                        <thead className="bg-gray-50">
+                                                            <tr>
+                                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('reference')}</th>
+                                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('date')}</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody className="bg-white divide-y divide-gray-200">
+                                                            {filteredVisits.map((visit) => (
+                                                                <tr key={visit.id}>
+                                                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{visit.ref}</td>
+                                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                                        {visit.timestamp?.toDate ? format(visit.timestamp.toDate(), 'PPpp', { locale: language === 'es' ? es : enUS }) : 'N/A'}
+                                                                    </td>
+                                                                </tr>
+                                                            ))}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            ) : (
+                                                <p className="text-gray-500">{t('noVisits')}</p>
+                                            )}
+                                        </>
                                     )}
                                 </div>
                                 {isCurrentUserAdmin && (
@@ -3529,5 +3617,3 @@ const App = () => {
 };
 
 export default App;
-
-    

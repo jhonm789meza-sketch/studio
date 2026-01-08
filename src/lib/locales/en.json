@@ -306,13 +306,8 @@
     "winnerCorrected": "Winner corrected. You can draw again.",
     "correctWinner": "Correct Winner",
     "searchByNumber": "Search by number...",
-    "searchByNumberOrPhone": "Search by number or phone..."
+    "searchByNumberOrPhone": "Search by number or phone...",
+    "visualizations": "Visualizations",
+    "searchByReference": "Search by reference...",
+    "noVisits": "No visits have been recorded."
 }
-
-
-
-
-
-
-
-
