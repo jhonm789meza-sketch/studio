@@ -32,14 +32,6 @@ export interface AppSettings {
     bankInfoLine2?: string;
 }
 
-export interface AppVisit {
-    id: string;
-    ref: string;
-    timestamp: any; // Allow for Firebase Timestamp
-    userAgent: string;
-}
-
-
 export interface Raffle {
     drawnNumbers: any[];
     lastDrawnNumber: null;

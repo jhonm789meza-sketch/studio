@@ -19,7 +19,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Confetti } from '@/components/confetti';
 import { Switch } from '@/components/ui/switch';
-import type { Participant, Raffle, PendingActivation, AppSettings, AppVisit } from '@/lib/types';
+import type { Participant, Raffle, PendingActivation, AppSettings } from '@/lib/types';
 import { format } from 'date-fns';
 import { es, enUS } from 'date-fns/locale';
 import { Textarea } from '@/components/ui/textarea';
@@ -29,7 +29,7 @@ import { WhatsappIcon, FacebookIcon, TicketIcon, NequiIcon, InlineTicket, BankIc
 
 
 type RaffleMode = 'two-digit' | 'three-digit' | 'infinite';
-type Tab = 'board' | 'register' | 'participants' | 'pending' | 'recaudado' | 'winners' | 'activations' | 'games' | 'visits';
+type Tab = 'board' | 'register' | 'participants' | 'pending' | 'recaudado' | 'winners' | 'activations' | 'games';
 
 const initialRaffleData: Raffle = {
     drawnNumbers: [],
@@ -168,8 +168,6 @@ const App = () => {
     const [isSupportContactDialogOpen, setIsSupportContactDialogOpen] = useState(false);
     const [gameSearchQuery, setGameSearchQuery] = useState('');
     const [pendingSearchQuery, setPendingSearchQuery] = useState('');
-    const [appVisits, setAppVisits] = useState<AppVisit[]>([]);
-    const [visitSearchQuery, setVisitSearchQuery] = useState('');
 
 
     const [activationConfirmationOpen, setActivationConfirmationOpen] = useState(false);
@@ -292,20 +290,9 @@ const App = () => {
                 setAllRaffles(raffles);
             });
     
-            // Fetch all visits
-            const visitsQuery = query(collection(db, "visits"), orderBy("timestamp", "desc"));
-            const unsubscribeVisits = onSnapshot(visitsQuery, (querySnapshot) => {
-                const visits: AppVisit[] = [];
-                querySnapshot.forEach((doc) => {
-                    visits.push({ id: doc.id, ...doc.data() } as AppVisit);
-                });
-                setAppVisits(visits);
-            });
-    
             return () => {
                 unsubscribeActivations();
                 unsubscribeRaffles();
-                unsubscribeVisits();
             }
         }
     }, [isSuperAdmin]);
@@ -478,20 +465,6 @@ const App = () => {
                 currentAdmin = adminIdFromStorage;
             }
             setCurrentAdminId(currentAdmin);
-
-            // Log visit if not an admin/superadmin
-            if (!currentAdmin && !isSuper) {
-                try {
-                    await addDoc(collection(db, 'visits'), {
-                        ref: urlParams.get('ref') || 'homepage',
-                        timestamp: serverTimestamp(),
-                        userAgent: navigator.userAgent
-                    });
-                } catch (error) {
-                    console.error("Error logging visit:", error);
-                }
-            }
-            
 
             const status = urlParams.get('transactionState') || urlParams.get('state');
             const transactionId = urlParams.get('reference') || urlParams.get('ref_payco'); 
@@ -1336,9 +1309,13 @@ const App = () => {
     };
     
     const handleShareToWhatsApp = () => {
-        const urlToShare = raffleState.raffleRef ? `${window.location.origin}?ref=${raffleState.raffleRef}` : window.location.origin;
+        const urlToShare = new URL(window.location.origin);
+        if (raffleState.raffleRef) {
+            urlToShare.pathname = '';
+            urlToShare.search = `?ref=${raffleState.raffleRef}`;
+        }
         const message = encodeURIComponent(t('shareRaffleAppDescription'));
-        const whatsappUrl = `https://wa.me/?text=${message} ${encodeURIComponent(urlToShare)}`;
+        const whatsappUrl = `https://wa.me/?text=${message} ${encodeURIComponent(urlToShare.toString())}`;
         window.open(whatsappUrl, '_blank');
         setIsShareDialogOpen(false);
     };
@@ -1350,8 +1327,12 @@ const App = () => {
     };
 
     const handleShareToFacebook = () => {
-        const urlToShare = raffleState.raffleRef ? `${window.location.origin}?ref=${raffleState.raffleRef}` : window.location.origin;
-        const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(urlToShare)}`;
+        const urlToShare = new URL(window.location.origin);
+        if (raffleState.raffleRef) {
+            urlToShare.pathname = '';
+            urlToShare.search = `?ref=${raffleState.raffleRef}`;
+        }
+        const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(urlToShare.toString())}`;
         window.open(facebookUrl, '_blank');
         setIsShareDialogOpen(false);
     };
@@ -1528,10 +1509,6 @@ const App = () => {
 
     const filteredGames = allRaffles.filter(raffle => 
         raffle.raffleRef?.toLowerCase().includes(gameSearchQuery.toLowerCase())
-    );
-
-    const filteredVisits = appVisits.filter(visit =>
-        visit.ref?.toLowerCase().includes(visitSearchQuery.toLowerCase())
     );
 
 
@@ -2122,10 +2099,6 @@ const App = () => {
                                                 <Phone className="mr-2 h-4 w-4" />
                                                 <span>{t('secondaryContact')}</span>
                                             </DropdownMenuItem>
-                                            <DropdownMenuItem onSelect={() => handleTabClick('visits')}>
-                                                <TrendingUp className="mr-2 h-4 w-4" />
-                                                <span>{t('visualizations')}</span>
-                                            </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setIsPaymentLinksDialogOpen(true)}>
                                                 <LinkIcon className="mr-2 h-4 w-4" />
                                                 <span>{t('paymentLinks')}</span>
@@ -2366,12 +2339,6 @@ const App = () => {
                                             onClick={() => handleTabClick('games')}
                                         >
                                            <Gamepad2 className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">{t('gamesTab')}</span>
-                                        </button>
-                                        <button 
-                                            className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'visits' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
-                                            onClick={() => handleTabClick('visits')}
-                                        >
-                                           <TrendingUp className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">{t('visualizations')}</span>
                                         </button>
                                     </>
                                     )}
@@ -2678,46 +2645,6 @@ const App = () => {
                                                 <p className="text-gray-500">{t('noGamesAssigned')}</p>
                                             )}
                                          </>
-                                    )}
-                                </div>
-                                <div className={activeTab === 'visits' ? 'tab-content active' : 'tab-content'}>
-                                    {isSuperAdmin && (
-                                        <>
-                                            <h2 className="text-2xl font-bold text-gray-800 mb-4">{t('visualizations')}</h2>
-                                            <div className="mb-4">
-                                                <Input
-                                                    type="text"
-                                                    placeholder={t('searchByReference')}
-                                                    value={visitSearchQuery}
-                                                    onChange={(e) => setVisitSearchQuery(e.target.value)}
-                                                    className="max-w-sm"
-                                                />
-                                            </div>
-                                            {filteredVisits.length > 0 ? (
-                                                <div className="overflow-x-auto">
-                                                    <table className="min-w-full divide-y divide-gray-200">
-                                                        <thead className="bg-gray-50">
-                                                            <tr>
-                                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('reference')}</th>
-                                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('date')}</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody className="bg-white divide-y divide-gray-200">
-                                                            {filteredVisits.map((visit) => (
-                                                                <tr key={visit.id}>
-                                                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{visit.ref}</td>
-                                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                                        {visit.timestamp?.toDate ? format(visit.timestamp.toDate(), 'PPpp', { locale: language === 'es' ? es : enUS }) : 'N/A'}
-                                                                    </td>
-                                                                </tr>
-                                                            ))}
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                            ) : (
-                                                <p className="text-gray-500">{t('noVisits')}</p>
-                                            )}
-                                        </>
                                     )}
                                 </div>
                                 {isCurrentUserAdmin && (

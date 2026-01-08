@@ -306,8 +306,5 @@
     "winnerCorrected": "Ganador corregido. Puedes sortear de nuevo.",
     "correctWinner": "Corregir Ganador",
     "searchByNumber": "Buscar por número...",
-    "searchByNumberOrPhone": "Buscar por número o celular...",
-    "visualizations": "Visualizaciones",
-    "searchByReference": "Buscar por referencia...",
-    "noVisits": "No hay visitas registradas."
+    "searchByNumberOrPhone": "Buscar por número o celular..."
 }
