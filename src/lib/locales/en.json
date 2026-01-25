@@ -318,5 +318,12 @@
     "packageGeneratedError": "Error generating reference package.",
     "listCopied": "List copied to clipboard.",
     "linkCopied": "Link copied to clipboard.",
-    "generateToSeeRefs": "Generate a package to see the references here."
+    "generateToSeeRefs": "Generate a package to see the references here.",
+    "deleteAll": "Delete All",
+    "deleteGeneratedRefConfirmation": "Are you sure you want to delete the generated reference {ref}? This action cannot be undone.",
+    "generatedRefDeletedSuccess": "Reference {ref} deleted successfully.",
+    "generatedRefDeletedError": "Error deleting generated reference.",
+    "deleteAllGeneratedRefsConfirmation": "Are you sure you want to delete all {count} generated references? This action cannot be undone.",
+    "allGeneratedRefsDeletedSuccess": "All generated references have been deleted.",
+    "allGeneratedRefsDeletedError": "Error deleting all generated references."
 }

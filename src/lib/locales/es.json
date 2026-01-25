@@ -318,5 +318,12 @@
     "packageGeneratedError": "Error al generar el paquete de referencias.",
     "listCopied": "Lista copiada al portapapeles.",
     "linkCopied": "Enlace copiado al portapapeles.",
-    "generateToSeeRefs": "Genera un paquete para ver las referencias aquí."
+    "generateToSeeRefs": "Genera un paquete para ver las referencias aquí.",
+    "deleteAll": "Eliminar Todo",
+    "deleteGeneratedRefConfirmation": "¿Estás seguro de que quieres eliminar la referencia generada {ref}? Esta acción no se puede deshacer.",
+    "generatedRefDeletedSuccess": "Referencia {ref} eliminada con éxito.",
+    "generatedRefDeletedError": "Error al eliminar la referencia generada.",
+    "deleteAllGeneratedRefsConfirmation": "¿Estás seguro de que quieres eliminar las {count} referencias generadas? Esta acción no se puede deshacer.",
+    "allGeneratedRefsDeletedSuccess": "Todas las referencias generadas han sido eliminadas.",
+    "allGeneratedRefsDeletedError": "Error al eliminar todas las referencias generadas."
 }

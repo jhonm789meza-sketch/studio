@@ -949,9 +949,9 @@ const App = () => {
                          }
                      } else {
                          showNotification(t('raffleNotFound'), 'error');
-                         setLoading(false);
-                         resolve();
-                         return;
+                             setLoading(false);
+                             resolve();
+                             return;
                      }
                  } catch (error) {
                      console.error("Error fetching raffle for recovery:", error);
@@ -1550,6 +1550,46 @@ const App = () => {
         } finally {
             setIsGenerating(false);
         }
+    };
+
+    const handleDeleteGeneratedRef = (raffleRef: string) => {
+        showConfirmationDialog(
+            t('deleteGeneratedRefConfirmation', { ref: raffleRef }),
+            async () => {
+                try {
+                    await deleteDoc(doc(db, 'raffles', raffleRef));
+                    setGeneratedPackage((prev) => prev.filter((p) => p.ref !== raffleRef));
+                    showNotification(t('generatedRefDeletedSuccess', { ref: raffleRef }), 'success');
+                } catch (error) {
+                    console.error("Error deleting generated ref:", error);
+                    showNotification(t('generatedRefDeletedError'), 'error');
+                }
+            }
+        );
+    };
+
+    const handleDeleteAllGeneratedRefs = () => {
+        showConfirmationDialog(
+            t('deleteAllGeneratedRefsConfirmation', { count: generatedPackage.length }),
+            async () => {
+                setIsGenerating(true);
+                try {
+                    const batch = writeBatch(db);
+                    generatedPackage.forEach((p) => {
+                        const docRef = doc(db, 'raffles', p.ref);
+                        batch.delete(docRef);
+                    });
+                    await batch.commit();
+                    setGeneratedPackage([]);
+                    showNotification(t('allGeneratedRefsDeletedSuccess'), 'success');
+                } catch (error) {
+                    console.error("Error deleting all generated refs:", error);
+                    showNotification(t('allGeneratedRefsDeletedError'), 'error');
+                } finally {
+                    setIsGenerating(false);
+                }
+            }
+        );
     };
 
 
@@ -3638,18 +3678,28 @@ const App = () => {
                             <div className="flex justify-between items-center mb-2">
                                 <h4 className="font-semibold">{t('generatedReferences')}</h4>
                                 {generatedPackage.length > 0 && (
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => {
-                                            const textToCopy = generatedPackage.map(p => `Referencia: ${p.ref}, Enlace de Administrador: ${p.url}`).join('\n');
-                                            navigator.clipboard.writeText(textToCopy);
-                                            showNotification(t('listCopied'), 'success');
-                                        }}
-                                    >
-                                        <Copy className="mr-2 h-3 w-3" />
-                                        {t('copyList')}
-                                    </Button>
+                                    <div className="flex items-center gap-2">
+                                        <Button
+                                            variant="destructive"
+                                            size="sm"
+                                            onClick={handleDeleteAllGeneratedRefs}
+                                        >
+                                            <Trash2 className="mr-2 h-3 w-3" />
+                                            {t('deleteAll')}
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => {
+                                                const textToCopy = generatedPackage.map(p => `Referencia: ${p.ref}, Enlace de Administrador: ${p.url}`).join('\n');
+                                                navigator.clipboard.writeText(textToCopy);
+                                                showNotification(t('listCopied'), 'success');
+                                            }}
+                                        >
+                                            <Copy className="mr-2 h-3 w-3" />
+                                            {t('copyList')}
+                                        </Button>
+                                    </div>
                                 )}
                             </div>
                             <ScrollArea className="h-64 mt-2 border rounded-md p-4 bg-gray-50/50">
@@ -3660,10 +3710,14 @@ const App = () => {
                                 ) : generatedPackage.length > 0 ? (
                                     <div className="space-y-3 text-sm">
                                         {generatedPackage.map((p) => (
-                                            <div key={p.ref} className="p-2 bg-white rounded-md border">
-                                                <span className="font-semibold">Referencia:</span>{' '}
-                                                <span className="font-mono bg-yellow-100 text-yellow-800 px-2 py-1 rounded">{p.ref}</span>
-                                                <div className="flex items-center gap-2 mt-1">
+                                            <div key={p.ref} className="p-2 bg-white rounded-md border space-y-1">
+                                                <div className="flex justify-between items-center">
+                                                    <div>
+                                                        <span className="font-semibold">Referencia:</span>{' '}
+                                                        <span className="font-mono bg-yellow-100 text-yellow-800 px-2 py-1 rounded">{p.ref}</span>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-2">
                                                     <Input readOnly value={p.url} className="text-xs h-8" />
                                                     <Button
                                                         variant="ghost"
@@ -3675,6 +3729,14 @@ const App = () => {
                                                         }}
                                                     >
                                                         <Copy className="h-4 w-4" />
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-8 w-8 text-red-500 hover:bg-red-100"
+                                                        onClick={() => handleDeleteGeneratedRef(p.ref)}
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
                                                     </Button>
                                                 </div>
                                             </div>
