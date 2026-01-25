@@ -5,7 +5,7 @@ import { useState, useEffect, useRef, useTransition } from 'react';
 import jsPDF from 'jspdf';
 import { RaffleManager } from '@/lib/RaffleManager';
 import { db, storage } from '@/lib/firebase';
-import { doc, onSnapshot, setDoc, getDoc, deleteDoc, Unsubscribe, serverTimestamp, collection, query, where, getDocs, updateDoc, addDoc, orderBy } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc, getDoc, deleteDoc, Unsubscribe, serverTimestamp, collection, query, where, getDocs, updateDoc, addDoc, orderBy, writeBatch } from 'firebase/firestore';
 import Image from 'next/image';
 import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { useLanguage } from '@/hooks/use-language';
@@ -13,7 +13,7 @@ import { requestNotificationPermission } from '@/lib/notification';
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House, Clock as ClockIcon, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Upload, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages, Trophy, Trash2, Copy, Shield, LogOut, Eye, EyeOff, Gamepad2, Phone, TrendingUp, Globe, Landmark, RefreshCcw, LockKeyhole } from 'lucide-react';
+import { Menu, Award, Lock, House, Clock as ClockIcon, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Upload, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages, Trophy, Trash2, Copy, Shield, LogOut, Eye, EyeOff, Gamepad2, Phone, TrendingUp, Globe, Landmark, RefreshCcw, LockKeyhole, Package } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -26,6 +26,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { CountrySelectionDialog, getCurrencySymbol } from '@/components/country-selection-dialog';
 import { WhatsappIcon, FacebookIcon, TicketIcon, NequiIcon, InlineTicket, BankIcon } from '@/components/raffle-components';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 
 type RaffleMode = 'two-digit' | 'three-digit' | 'infinite';
@@ -201,6 +203,11 @@ const App = () => {
         line1: '',
         line2: '',
     });
+    const [isAssignPackageDialogOpen, setIsAssignPackageDialogOpen] = useState(false);
+    const [packageRaffleMode, setPackageRaffleMode] = useState<RaffleMode>('two-digit');
+    const [packageQuantity, setPackageQuantity] = useState<number>(10);
+    const [generatedPackage, setGeneratedPackage] = useState<{ ref: string; url: string; }[]>([]);
+    const [isGenerating, setIsGenerating] = useState(false);
 
     
     const isCurrentUserAdmin = !!raffleState.adminId && !!currentAdminId && raffleState.adminId === currentAdminId;
@@ -1497,6 +1504,54 @@ const App = () => {
         }
     };
 
+    const handleGeneratePackage = async () => {
+        if (!packageQuantity || packageQuantity <= 0) {
+            showNotification(t('enterValidQuantity'), 'warning');
+            return;
+        }
+        setIsGenerating(true);
+        setGeneratedPackage([]);
+    
+        try {
+            const batch = writeBatch(db);
+            const newPackage: { ref: string; url: string; }[] = [];
+    
+            for (let i = 0; i < packageQuantity; i++) {
+                const adminId = `admin_${Date.now()}_${Math.random()}_${i}`;
+                const raffleRef = await raffleManager.createNewRaffleRef(packageRaffleMode, false, true); 
+                
+                const newRaffleData: Raffle = {
+                    ...initialRaffleData,
+                    raffleRef: raffleRef,
+                    adminId: adminId,
+                    raffleMode: packageRaffleMode,
+                    isPaid: true,
+                    currencySymbol: getCurrencySymbol('CO'),
+                    organizerName: '',
+                    prize: '',
+                    value: '0',
+                    password: String(Math.floor(1000 + Math.random() * 9000)),
+                };
+    
+                const docRef = doc(db, "raffles", raffleRef);
+                batch.set(docRef, newRaffleData);
+    
+                const adminUrl = `${appUrl}?ref=${raffleRef}&adminId=${adminId}`;
+                newPackage.push({ ref: raffleRef, url: adminUrl });
+            }
+    
+            await batch.commit();
+            setGeneratedPackage(newPackage);
+            showNotification(t('packageGeneratedSuccess', { count: packageQuantity }), 'success');
+    
+        } catch (error) {
+            console.error("Error generating package:", error);
+            showNotification(t('packageGeneratedError'), 'error');
+        } finally {
+            setIsGenerating(false);
+        }
+    };
+
 
     const allNumbers = Array.from({ length: totalNumbers }, (_, i) => i);
     
@@ -2095,6 +2150,10 @@ const App = () => {
                                     </DropdownMenuItem>
                                      {isSuperAdmin && (
                                         <>
+                                            <DropdownMenuItem onSelect={() => setIsAssignPackageDialogOpen(true)}>
+                                                <Package className="mr-2 h-4 w-4" />
+                                                <span>{t('assignPackage')}</span>
+                                            </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setIsSupportContactDialogOpen(true)}>
                                                 <Phone className="mr-2 h-4 w-4" />
                                                 <span>{t('secondaryContact')}</span>
@@ -3536,6 +3595,97 @@ const App = () => {
                         <Button variant="outline" onClick={() => setIsPaymentInfoDialogOpen(false)}>{t('cancel')}</Button>
                         <Button onClick={handleSavePaymentInfo}>{t('save')}</Button>
                     </DialogFooter>
+                </DialogContent>
+            </Dialog>
+            <Dialog open={isAssignPackageDialogOpen} onOpenChange={setIsAssignPackageDialogOpen}>
+                <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle>{t('assignPackage')}</DialogTitle>
+                        <DialogDescription>{t('assignPackageDescription')}</DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="flex flex-col sm:flex-row gap-4 items-end">
+                            <div className="grid gap-2 flex-1 w-full">
+                                <Label htmlFor="package-quantity">{t('quantity')}</Label>
+                                <Input
+                                    id="package-quantity"
+                                    type="number"
+                                    value={packageQuantity}
+                                    onChange={(e) => setPackageQuantity(Number(e.target.value))}
+                                    placeholder="e.g., 100"
+                                />
+                            </div>
+                            <div className="grid gap-2 flex-1 w-full">
+                                <Label htmlFor="package-raffle-mode">{t('raffleType')}</Label>
+                                <Select onValueChange={(value: RaffleMode) => setPackageRaffleMode(value)} defaultValue={packageRaffleMode}>
+                                    <SelectTrigger id="package-raffle-mode">
+                                        <SelectValue placeholder={t('raffleType')} />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="two-digit">{t('2digitMode')}</SelectItem>
+                                        <SelectItem value="three-digit">{t('3digitMode')}</SelectItem>
+                                        <SelectItem value="infinite">{t('infiniteRaffle')}</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <Button onClick={handleGeneratePackage} disabled={isGenerating}>
+                                {isGenerating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                {t('generate')}
+                            </Button>
+                        </div>
+
+                        <div className="mt-4">
+                            <div className="flex justify-between items-center mb-2">
+                                <h4 className="font-semibold">{t('generatedReferences')}</h4>
+                                {generatedPackage.length > 0 && (
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => {
+                                            const textToCopy = generatedPackage.map(p => `Referencia: ${p.ref}, Enlace de Administrador: ${p.url}`).join('\n');
+                                            navigator.clipboard.writeText(textToCopy);
+                                            showNotification(t('listCopied'), 'success');
+                                        }}
+                                    >
+                                        <Copy className="mr-2 h-3 w-3" />
+                                        {t('copyList')}
+                                    </Button>
+                                )}
+                            </div>
+                            <ScrollArea className="h-64 mt-2 border rounded-md p-4 bg-gray-50/50">
+                                {isGenerating ? (
+                                     <div className="flex items-center justify-center h-full">
+                                         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                                     </div>
+                                ) : generatedPackage.length > 0 ? (
+                                    <div className="space-y-3 text-sm">
+                                        {generatedPackage.map((p) => (
+                                            <div key={p.ref} className="p-2 bg-white rounded-md border">
+                                                <span className="font-semibold">Referencia:</span>{' '}
+                                                <span className="font-mono bg-yellow-100 text-yellow-800 px-2 py-1 rounded">{p.ref}</span>
+                                                <div className="flex items-center gap-2 mt-1">
+                                                    <Input readOnly value={p.url} className="text-xs h-8" />
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-8 w-8"
+                                                        onClick={() => {
+                                                            navigator.clipboard.writeText(p.url);
+                                                            showNotification(t('linkCopied'), 'success');
+                                                        }}
+                                                    >
+                                                        <Copy className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="text-muted-foreground text-center pt-8">{t('generateToSeeRefs')}</p>
+                                )}
+                            </ScrollArea>
+                        </div>
+                    </div>
                 </DialogContent>
             </Dialog>
 

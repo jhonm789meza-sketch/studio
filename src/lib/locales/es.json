@@ -306,5 +306,17 @@
     "winnerCorrected": "Ganador corregido. Puedes sortear de nuevo.",
     "correctWinner": "Corregir Ganador",
     "searchByNumber": "Buscar por número...",
-    "searchByNumberOrPhone": "Buscar por número o celular..."
+    "searchByNumberOrPhone": "Buscar por número o celular...",
+    "assignPackage": "Asignar Paquete",
+    "assignPackageDescription": "Genera un lote de referencias de rifas con sus enlaces de administrador.",
+    "quantity": "Cantidad",
+    "generate": "Generar",
+    "generatedReferences": "Referencias Generadas",
+    "copyList": "Copiar Lista",
+    "enterValidQuantity": "Por favor, ingresa una cantidad válida.",
+    "packageGeneratedSuccess": "{count} referencias generadas con éxito.",
+    "packageGeneratedError": "Error al generar el paquete de referencias.",
+    "listCopied": "Lista copiada al portapapeles.",
+    "linkCopied": "Enlace copiado al portapapeles.",
+    "generateToSeeRefs": "Genera un paquete para ver las referencias aquí."
 }

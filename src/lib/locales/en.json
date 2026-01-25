@@ -306,5 +306,17 @@
     "winnerCorrected": "Winner corrected. You can draw again.",
     "correctWinner": "Correct Winner",
     "searchByNumber": "Search by number...",
-    "searchByNumberOrPhone": "Search by number or phone..."
+    "searchByNumberOrPhone": "Search by number or phone...",
+    "assignPackage": "Assign Package",
+    "assignPackageDescription": "Generate a batch of raffle references with their admin links.",
+    "quantity": "Quantity",
+    "generate": "Generate",
+    "generatedReferences": "Generated References",
+    "copyList": "Copy List",
+    "enterValidQuantity": "Please enter a valid quantity.",
+    "packageGeneratedSuccess": "{count} references generated successfully.",
+    "packageGeneratedError": "Error generating reference package.",
+    "listCopied": "List copied to clipboard.",
+    "linkCopied": "Link copied to clipboard.",
+    "generateToSeeRefs": "Generate a package to see the references here."
 }
