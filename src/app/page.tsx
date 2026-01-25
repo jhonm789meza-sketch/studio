@@ -131,7 +131,7 @@ const App = () => {
     const [generatedTicketData, setGeneratedTicketData] = useState<any>(null);
     const [showConfirmation, setShowConfirmation] = useState(false);
     const [confirmationMessage, setConfirmationMessage] = useState('');
-    const [confirmationAction, setConfirmationAction] = useState<(() => void) | null>(null);
+    const [confirmationAction, setConfirmationAction] = useState<(() => void | Promise<void>) | null>(null);
     const [notification, setNotification] = useState({ show: false, message: '', type: '' });
     
     const ticketModalRef = useRef<HTMLDivElement>(null);
@@ -557,7 +557,7 @@ const App = () => {
         setTimeout(() => setNotification({ show: false, message: '', type: '' }), 5000);
     };
 
-    const showConfirmationDialog = (message: string, action: () => void) => {
+    const showConfirmationDialog = (message: string, action: () => void | Promise<void>) => {
         setConfirmationMessage(message);
         setConfirmationAction(() => action);
         setShowConfirmation(true);
