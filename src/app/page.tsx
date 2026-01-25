@@ -294,7 +294,7 @@ const App = () => {
             const unsubscribeRaffles = onSnapshot(allRafflesQuery, (querySnapshot) => {
                 const raffles: Raffle[] = [];
                 querySnapshot.forEach((doc) => {
-                    raffles.push({ ...doc.data() } as Raffle);
+                    raffles.push({ ...doc.data(), raffleRef: doc.id } as Raffle);
                 });
                 setAllRaffles(raffles);
             });
@@ -3810,4 +3810,5 @@ const App = () => {
 };
 
 export default App;
+
 
