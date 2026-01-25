@@ -257,7 +257,7 @@
     "changeExecutivePasswordTitle": "Change Executive Director Password",
     "changeExecutivePasswordDescription": "You are about to change your access password.",
     "currentPassword": "Current Password",
-    "deleteGameConfirmation": "Are you sure you want to delete this game? This action is irreversible.",
+    "deleteSingleGameConfirmation": "Are you sure you want to delete game {ref}? This action is irreversible.",
     "gameDeletedSuccess": "Game deleted successfully.",
     "gameDeletedError": "Error deleting the game.",
     "activationInstructionTitle": "How to Activate Your Board",
@@ -325,5 +325,9 @@
     "generatedRefDeletedError": "Error deleting generated reference.",
     "deleteAllGeneratedRefsConfirmation": "Are you sure you want to delete all {count} generated references? This action cannot be undone.",
     "allGeneratedRefsDeletedSuccess": "All generated references have been deleted.",
-    "allGeneratedRefsDeletedError": "Error deleting all generated references."
+    "allGeneratedRefsDeletedError": "Error deleting all generated references.",
+    "deleteSelected": "Delete Selected ({count})",
+    "deleteSelectedRafflesConfirmation": "Are you sure you want to delete the {count} selected games? This action is irreversible.",
+    "selectedRafflesDeletedSuccess": "{count} games deleted successfully.",
+    "selectedRafflesDeletedError": "Error deleting selected games."
 }

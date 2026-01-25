@@ -28,6 +28,7 @@ import { CountrySelectionDialog, getCurrencySymbol } from '@/components/country-
 import { WhatsappIcon, FacebookIcon, TicketIcon, NequiIcon, InlineTicket, BankIcon } from '@/components/raffle-components';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Checkbox } from '@/components/ui/checkbox';
 
 
 type RaffleMode = 'two-digit' | 'three-digit' | 'infinite';
@@ -208,6 +209,7 @@ const App = () => {
     const [packageQuantity, setPackageQuantity] = useState<number>(10);
     const [generatedPackage, setGeneratedPackage] = useState<{ ref: string; url: string; }[]>([]);
     const [isGenerating, setIsGenerating] = useState(false);
+    const [selectedRafflesForDeletion, setSelectedRafflesForDeletion] = useState<string[]>([]);
 
     
     const isCurrentUserAdmin = !!raffleState.adminId && !!currentAdminId && raffleState.adminId === currentAdminId;
@@ -847,16 +849,36 @@ const App = () => {
     };
 
     const handleDeleteRaffle = async (raffleRef: string) => {
-        showConfirmationDialog(t('deleteGameConfirmation'), async () => {
+        showConfirmationDialog(t('deleteSingleGameConfirmation', { ref: raffleRef }), async () => {
             try {
                 await deleteDoc(doc(db, 'raffles', raffleRef));
                 showNotification(t('gameDeletedSuccess'), 'success');
-                // The onSnapshot listener for allRaffles will update the UI automatically.
+                setSelectedRafflesForDeletion(prev => prev.filter(ref => ref !== raffleRef));
             } catch (error) {
                 console.error('Error deleting raffle:', error);
                 showNotification(t('gameDeletedError'), 'error');
             }
         });
+    };
+
+    const handleDeleteSelectedRaffles = () => {
+        showConfirmationDialog(
+            t('deleteSelectedRafflesConfirmation', { count: selectedRafflesForDeletion.length }),
+            async () => {
+                const batch = writeBatch(db);
+                selectedRafflesForDeletion.forEach(raffleRef => {
+                    batch.delete(doc(db, 'raffles', raffleRef));
+                });
+                try {
+                    await batch.commit();
+                    showNotification(t('selectedRafflesDeletedSuccess', { count: selectedRafflesForDeletion.length }), 'success');
+                    setSelectedRafflesForDeletion([]);
+                } catch (error) {
+                    console.error('Error deleting selected raffles:', error);
+                    showNotification(t('selectedRafflesDeletedError'), 'error');
+                }
+            }
+        );
     };
 
 
@@ -1317,8 +1339,7 @@ const App = () => {
     
     const handleShareToWhatsApp = () => {
         const urlToShare = new URL(window.location.origin);
-        if (raffleState.raffleRef) {
-            urlToShare.pathname = '';
+        if (isCurrentUserAdmin && raffleState.raffleRef) {
             urlToShare.search = `?ref=${raffleState.raffleRef}`;
         }
         const message = encodeURIComponent(t('shareRaffleAppDescription'));
@@ -1335,8 +1356,7 @@ const App = () => {
 
     const handleShareToFacebook = () => {
         const urlToShare = new URL(window.location.origin);
-        if (raffleState.raffleRef) {
-            urlToShare.pathname = '';
+        if (isCurrentUserAdmin && raffleState.raffleRef) {
             urlToShare.search = `?ref=${raffleState.raffleRef}`;
         }
         const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(urlToShare.toString())}`;
@@ -1605,6 +1625,10 @@ const App = () => {
     const filteredGames = allRaffles.filter(raffle => 
         raffle.raffleRef?.toLowerCase().includes(gameSearchQuery.toLowerCase())
     );
+
+    const deletableRaffles = filteredGames.filter(r => (r.participants || []).length === 0);
+    const allDeletableSelected = deletableRaffles.length > 0 && deletableRaffles.every(r => selectedRafflesForDeletion.includes(r.raffleRef));
+    const isIndeterminate = selectedRafflesForDeletion.length > 0 && !allDeletableSelected;
 
 
     if (loading && !raffleState.raffleRef) {
@@ -2682,14 +2706,20 @@ const App = () => {
                                     {isSuperAdmin && (
                                          <>
                                             <h2 className="text-2xl font-bold text-gray-800 mb-4">{t('assignedGames')}</h2>
-                                            <div className="mb-4">
+                                            <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
                                                 <Input
                                                     type="text"
                                                     placeholder={t('searchGamePlaceholder')}
                                                     value={gameSearchQuery}
                                                     onChange={(e) => setGameSearchQuery(e.target.value)}
-                                                    className="max-w-sm"
+                                                    className="max-w-sm w-full"
                                                 />
+                                                {selectedRafflesForDeletion.length > 0 && (
+                                                    <Button variant="destructive" onClick={handleDeleteSelectedRaffles}>
+                                                        <Trash2 className="mr-2 h-4 w-4" />
+                                                        {t('deleteSelected', { count: selectedRafflesForDeletion.length })}
+                                                    </Button>
+                                                )}
                                             </div>
                                             
                                             {filteredGames.length > 0 ? (
@@ -2697,6 +2727,19 @@ const App = () => {
                                                     <table className="min-w-full divide-y divide-gray-200">
                                                         <thead className="bg-gray-50">
                                                             <tr>
+                                                                <th className="p-4">
+                                                                    <Checkbox
+                                                                        checked={allDeletableSelected ? true : isIndeterminate ? 'indeterminate' : false}
+                                                                        onCheckedChange={(checked) => {
+                                                                            if (checked === true) {
+                                                                                setSelectedRafflesForDeletion(deletableRaffles.map(r => r.raffleRef));
+                                                                            } else {
+                                                                                setSelectedRafflesForDeletion([]);
+                                                                            }
+                                                                        }}
+                                                                        disabled={deletableRaffles.length === 0}
+                                                                    />
+                                                                </th>
                                                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('reference')}</th>
                                                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('prize')}</th>
                                                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('whoOrganizes')}</th>
@@ -2714,6 +2757,19 @@ const App = () => {
                                                                 const canDelete = (raffle.participants || []).length === 0;
                                                                 return (
                                                                     <tr key={`${raffle.raffleRef}-${raffle.adminId}`}>
+                                                                        <td className="p-4">
+                                                                            <Checkbox
+                                                                                checked={selectedRafflesForDeletion.includes(raffle.raffleRef)}
+                                                                                onCheckedChange={(checked) => {
+                                                                                    setSelectedRafflesForDeletion(prev =>
+                                                                                        checked
+                                                                                            ? [...prev, raffle.raffleRef]
+                                                                                            : prev.filter(ref => ref !== raffle.raffleRef)
+                                                                                    );
+                                                                                }}
+                                                                                disabled={!canDelete}
+                                                                            />
+                                                                        </td>
                                                                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{raffle.raffleRef}</td>
                                                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{raffle.raffleMode === 'infinite' ? formatValue(raffle.prize) : raffle.prize}</td>
                                                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{raffle.organizerName}</td>
@@ -2728,11 +2784,9 @@ const App = () => {
                                                                             <Button onClick={() => handleAdminSearch({ refToSearch: raffle.raffleRef, isPublicSearch: true })} size="sm" variant="outline">
                                                                                 {t('manage')}
                                                                             </Button>
-                                                                            {canDelete && (
-                                                                                <Button onClick={() => handleDeleteRaffle(raffle.raffleRef)} size="sm" variant="destructive">
-                                                                                    <Trash2 className="h-4 w-4"/>
-                                                                                </Button>
-                                                                            )}
+                                                                            <Button onClick={() => handleDeleteRaffle(raffle.raffleRef)} size="sm" variant="destructive" disabled={!canDelete}>
+                                                                                <Trash2 className="h-4 w-4"/>
+                                                                            </Button>
                                                                         </td>
                                                                     </tr>
                                                                 )
@@ -3756,3 +3810,4 @@ const App = () => {
 };
 
 export default App;
+

@@ -257,7 +257,7 @@
     "changeExecutivePasswordTitle": "Cambiar Contraseña de Director Ejecutivo",
     "changeExecutivePasswordDescription": "Estás a punto de cambiar tu contraseña de acceso.",
     "currentPassword": "Contraseña Actual",
-    "deleteGameConfirmation": "¿Estás seguro de que deseas eliminar este juego? Esta acción es irreversible.",
+    "deleteSingleGameConfirmation": "¿Estás seguro de que quieres eliminar el juego {ref}? Esta acción es irreversible.",
     "gameDeletedSuccess": "Juego eliminado con éxito.",
     "gameDeletedError": "Error al eliminar el juego.",
     "activationInstructionTitle": "Cómo Activar tu Tablero",
@@ -325,5 +325,9 @@
     "generatedRefDeletedError": "Error al eliminar la referencia generada.",
     "deleteAllGeneratedRefsConfirmation": "¿Estás seguro de que quieres eliminar las {count} referencias generadas? Esta acción no se puede deshacer.",
     "allGeneratedRefsDeletedSuccess": "Todas las referencias generadas han sido eliminadas.",
-    "allGeneratedRefsDeletedError": "Error al eliminar todas las referencias generadas."
+    "allGeneratedRefsDeletedError": "Error al eliminar todas las referencias generadas.",
+    "deleteSelected": "Eliminar Seleccionados ({count})",
+    "deleteSelectedRafflesConfirmation": "¿Estás seguro de que quieres eliminar los {count} juegos seleccionados? Esta acción es irreversible.",
+    "selectedRafflesDeletedSuccess": "{count} juegos eliminados con éxito.",
+    "selectedRafflesDeletedError": "Error al eliminar los juegos seleccionados."
 }
