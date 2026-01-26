@@ -25,8 +25,8 @@ class RaffleManager {
             let nextNumbers: number[] = [];
             const playedCount = 0; // No longer tracking count
 
-            const min = 100000;
-            const max = 999999;
+            const min = 1000000;
+            const max = 9999999;
             
             for (let i = 0; i < count; i++) {
                 const randomNumber = Math.floor(Math.random() * (max - min + 1)) + min;
@@ -37,7 +37,7 @@ class RaffleManager {
 
         } catch (error) {
             console.error(`Error in getNextRefInfo for mode ${mode}:`, error);
-            return { numbers: [Math.floor(Math.random() * 1000000)], playedCount: 0 };
+            return { numbers: [Math.floor(Math.random() * 10000000)], playedCount: 0 };
         }
     }
 
