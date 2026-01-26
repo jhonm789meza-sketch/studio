@@ -1173,7 +1173,9 @@ const App = () => {
             ? appSettings.paymentLinkTwoDigit
             : mode === 'three-digit'
             ? appSettings.paymentLinkThreeDigit
-            : appSettings.paymentLinkInfinite;
+            : mode === 'infinite'
+            ? appSettings.paymentLinkInfinite
+            : undefined;
     
         if (link) {
           const url = new URL(link);
@@ -1339,7 +1341,7 @@ const App = () => {
     
     const handleShareToWhatsApp = () => {
         const urlToShare = new URL(window.location.origin);
-        if (isCurrentUserAdmin && raffleState.raffleRef) {
+        if (raffleState.raffleRef) {
             urlToShare.search = `?ref=${raffleState.raffleRef}`;
         }
         const message = encodeURIComponent(t('shareRaffleAppDescription'));
@@ -1356,7 +1358,7 @@ const App = () => {
 
     const handleShareToFacebook = () => {
         const urlToShare = new URL(window.location.origin);
-        if (isCurrentUserAdmin && raffleState.raffleRef) {
+        if (raffleState.raffleRef) {
             urlToShare.search = `?ref=${raffleState.raffleRef}`;
         }
         const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(urlToShare.toString())}`;
@@ -2705,7 +2707,12 @@ const App = () => {
                                 <div className={activeTab === 'games' ? 'tab-content active' : 'tab-content'}>
                                     {isSuperAdmin && (
                                          <>
-                                            <h2 className="text-2xl font-bold text-gray-800 mb-4">{t('assignedGames')}</h2>
+                                            <div className="flex items-center gap-4 mb-4">
+                                                <h2 className="text-2xl font-bold text-gray-800">{t('assignedGames')}</h2>
+                                                <span className="bg-gray-200 text-gray-800 text-sm font-semibold px-3 py-1 rounded-full">
+                                                    {allRaffles.length}
+                                                </span>
+                                            </div>
                                             <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
                                                 <Input
                                                     type="text"
@@ -3810,5 +3817,3 @@ const App = () => {
 };
 
 export default App;
-
-
