@@ -613,7 +613,21 @@ const App = () => {
             const numericValue = parseInt(String(value).replace(/\D/g, ''), 10);
             newState[field as keyof Raffle] = isNaN(numericValue) ? '' : numericValue;
         } else if (field === 'manualWinnerNumber' || field === 'manualWinnerNumber2' || field === 'manualWinnerNumber3') {
-             newState[field as keyof Raffle] = value.replace(/\D/g, '');
+             const cleanValue = value.replace(/\D/g, '');
+             newState[field as keyof Raffle] = cleanValue;
+ 
+             if (field === 'manualWinnerNumber' && raffleState.raffleMode === 'infinite') {
+                 if (cleanValue.length >= 3) {
+                     newState['manualWinnerNumber3'] = cleanValue.slice(-3);
+                 } else {
+                     newState['manualWinnerNumber3'] = '';
+                 }
+                 if (cleanValue.length >= 2) {
+                     newState['manualWinnerNumber2'] = cleanValue.slice(-2);
+                 } else {
+                     newState['manualWinnerNumber2'] = '';
+                 }
+             }
         } else {
             newState[field as keyof Raffle] = value;
         }
@@ -3817,3 +3831,5 @@ const App = () => {
 };
 
 export default App;
+
+    
