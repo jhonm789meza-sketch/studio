@@ -1065,12 +1065,12 @@ const App = () => {
     
     const handleDrawWinner = async () => {
         if (!raffleState.raffleRef) return;
-        
+    
         const infiniteDigits = raffleState.infiniteModeDigits || 4;
         const winningNumberLength = raffleMode === 'infinite' ? infiniteDigits : numberLength;
-
+    
         let winningNumberStr = raffleState.manualWinnerNumber;
-
+    
         // Automatic draw logic
         if (raffleMode === 'infinite' && raffleState.automaticDraw && !winningNumberStr) {
             const max = Math.pow(10, winningNumberLength);
@@ -1079,28 +1079,87 @@ const App = () => {
             // Update state to show the automatically drawn number
             handleLocalFieldChange('manualWinnerNumber', winningNumberStr);
         }
-        
+    
         if (!winningNumberStr || winningNumberStr.length < winningNumberLength) {
             showNotification(t('enterValidWinningNumber', { count: winningNumberLength }), 'warning');
             return;
         }
-
-        const winner = confirmedParticipants.find((p: Participant) => p.raffleNumber === winningNumberStr);
-
-        if (winner) {
-            await setDoc(doc(db, "raffles", raffleState.raffleRef), { winner }, { merge: true });
+    
+        const mainWinner = confirmedParticipants.find((p: Participant) => p.raffleNumber === winningNumberStr);
+        const winnerToSet = mainWinner || { name: t('housePrize'), raffleNumber: winningNumberStr, isHouse: true };
+    
+        // We set the winner in Firestore. The local state will be updated by the listener.
+        await setDoc(doc(db, "raffles", raffleState.raffleRef), { winner: winnerToSet }, { merge: true });
+    
+        if (mainWinner) {
             setShowConfetti(true);
-            showNotification(t('winnerNotification', { name: winner.name, number: winner.raffleNumber }), 'success');
+            showNotification(t('winnerNotification', { name: mainWinner.name, number: mainWinner.raffleNumber }), 'success');
             setTimeout(() => setShowConfetti(false), 8000);
         } else {
-             const houseWinner = {
-                name: t('housePrize'),
-                raffleNumber: winningNumberStr,
-                isHouse: true,
-            };
-            await setDoc(doc(db, "raffles", raffleState.raffleRef), { winner: houseWinner }, { merge: true });
             showNotification(t('housePrizeNotification', { number: winningNumberStr }), 'info');
         }
+    
+        // Automatically find partial winners if enabled
+        if (raffleMode === 'infinite' && raffleState.allowPartialWinners) {
+            const allFoundPartialWinners: { winners: Participant[]; digits: number; prize: string; }[] = [];
+            const excludedIds = new Set<number>();
+    
+            if (mainWinner) {
+                excludedIds.add(mainWinner.id);
+            }
+    
+            const prizeValue = parseFloat(String(raffleState.prize).replace(/\D/g, ''));
+    
+            if (!isNaN(prizeValue) && prizeValue > 0) {
+                // Find 3-digit winners
+                const winningNumber3 = winningNumberStr.slice(-3);
+                if (winningNumber3.length === 3) {
+                    const prizePercentage3 = raffleState.partialWinnerPercentage3 || 0;
+                    if (prizePercentage3 > 0) {
+                        const prizeAmount3 = prizeValue * (prizePercentage3 / 100);
+                        const formattedPrize3 = `${raffleState.currencySymbol || '$'} ${prizeAmount3.toLocaleString(language === 'es' ? 'es-CO' : 'en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+                        
+                        const winners3 = confirmedParticipants.filter(p => !excludedIds.has(p.id) && p.raffleNumber.endsWith(winningNumber3));
+                        
+                        if (winners3.length > 0) {
+                            winners3.forEach(w => excludedIds.add(w.id));
+                            allFoundPartialWinners.push({ winners: winners3, digits: 3, prize: formattedPrize3 });
+                            const winnerMessage = winners3.map(w => `${w.name} (${w.raffleNumber})`).join(', ');
+                            showNotification(t('partialWinnersNotification', { count: 3, digits: winningNumber3, winners: winnerMessage, prize: formattedPrize3 }), 'success');
+                        } else {
+                            showNotification(t('noPartialWinnersNotification', { count: 3, digits: winningNumber3 }), 'info');
+                        }
+                    }
+                }
+    
+                // Find 2-digit winners
+                const winningNumber2 = winningNumberStr.slice(-2);
+                if (winningNumber2.length === 2) {
+                     const prizePercentage2 = raffleState.partialWinnerPercentage2 || 0;
+                     if (prizePercentage2 > 0) {
+                        const prizeAmount2 = prizeValue * (prizePercentage2 / 100);
+                        const formattedPrize2 = `${raffleState.currencySymbol || '$'} ${prizeAmount2.toLocaleString(language === 'es' ? 'es-CO' : 'en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+                        
+                        const winners2 = confirmedParticipants.filter(p => !excludedIds.has(p.id) && p.raffleNumber.endsWith(winningNumber2));
+    
+                        if (winners2.length > 0) {
+                            allFoundPartialWinners.push({ winners: winners2, digits: 2, prize: formattedPrize2 });
+                            const winnerMessage = winners2.map(w => `${w.name} (${w.raffleNumber})`).join(', ');
+                            showNotification(t('partialWinnersNotification', { count: 2, digits: winningNumber2, winners: winnerMessage, prize: formattedPrize2 }), 'success');
+                        } else {
+                            showNotification(t('noPartialWinnersNotification', { count: 2, digits: winningNumber2 }), 'info');
+                        }
+                     }
+                }
+            } else if (raffleState.allowPartialWinners) {
+                showNotification(t('noPrizeValueWarning'), 'warning');
+            }
+            
+            if (allFoundPartialWinners.length > 0) {
+                setPartialWinners(allFoundPartialWinners);
+            }
+        }
+    
         handleTabClick('winners');
     };
 
