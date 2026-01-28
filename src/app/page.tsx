@@ -19,7 +19,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Confetti } from '@/components/confetti';
 import { Switch } from '@/components/ui/switch';
-import type { Participant, Raffle, PendingActivation, AppSettings } from '@/lib/types';
+import type { Participant, Raffle, PendingActivation, AppSettings, PartialWinnerInfo } from '@/lib/types';
 import { format } from 'date-fns';
 import { es, enUS } from 'date-fns/locale';
 import { Textarea } from '@/components/ui/textarea';
@@ -73,13 +73,8 @@ const initialRaffleData: Raffle = {
     automaticDraw: false,
     allowPartialWinners: false,
     notificationTokens: [],
+    partialWinners: [],
 };
-
-interface PartialWinnerInfo {
-    winners: Participant[];
-    digits: number;
-    prize: string;
-}
 
 interface NextRaffleInfo {
     refs: string[];
@@ -695,17 +690,57 @@ const App = () => {
             return;
         }
     
-        // Automatically find partial winners if not already found
-        if (raffleMode === 'infinite' && raffleState.allowPartialWinners) {
-            if (raffleState.manualWinnerNumber3 && !partialWinners.some(p => p.digits === 3)) {
-                handleFindPartialWinners(3, raffleState.partialWinnerPercentage3 || 0);
+        let foundPartialWinners: PartialWinnerInfo[] = [];
+
+        if (raffleMode === 'infinite' && raffleState.allowPartialWinners && raffleState.winner.raffleNumber) {
+            const winningNumberStr = raffleState.winner.raffleNumber;
+            const mainWinner = !raffleState.winner.isHouse ? raffleState.winner : null;
+
+            const excludedIds = new Set<number>();
+            if (mainWinner) {
+                excludedIds.add(mainWinner.id);
             }
-            if (raffleState.manualWinnerNumber2 && !partialWinners.some(p => p.digits === 2)) {
-                handleFindPartialWinners(2, raffleState.partialWinnerPercentage2 || 0);
+
+            const prizeValue = parseFloat(String(raffleState.prize).replace(/\D/g, ''));
+
+            if (!isNaN(prizeValue) && prizeValue > 0) {
+                // Find 3-digit winners
+                const winningNumber3 = winningNumberStr.slice(-3);
+                if (winningNumber3.length === 3) {
+                    const prizePercentage3 = raffleState.partialWinnerPercentage3 || 0;
+                    if (prizePercentage3 > 0) {
+                        const prizeAmount3 = prizeValue * (prizePercentage3 / 100);
+                        const formattedPrize3 = `${raffleState.currencySymbol || '$'} ${prizeAmount3.toLocaleString(language === 'es' ? 'es-CO' : 'en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+                        const winners3 = confirmedParticipants.filter(p => !excludedIds.has(p.id) && p.raffleNumber.endsWith(winningNumber3));
+                        if (winners3.length > 0) {
+                            winners3.forEach(w => excludedIds.add(w.id));
+                            foundPartialWinners.push({ winners: winners3, digits: 3, prize: formattedPrize3 });
+                        }
+                    }
+                }
+
+                // Find 2-digit winners
+                const winningNumber2 = winningNumberStr.slice(-2);
+                if (winningNumber2.length === 2) {
+                     const prizePercentage2 = raffleState.partialWinnerPercentage2 || 0;
+                     if (prizePercentage2 > 0) {
+                        const prizeAmount2 = prizeValue * (prizePercentage2 / 100);
+                        const formattedPrize2 = `${raffleState.currencySymbol || '$'} ${prizeAmount2.toLocaleString(language === 'es' ? 'es-CO' : 'en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+                        const winners2 = confirmedParticipants.filter(p => !excludedIds.has(p.id) && p.raffleNumber.endsWith(winningNumber2));
+                        if (winners2.length > 0) {
+                            foundPartialWinners.push({ winners: winners2, digits: 2, prize: formattedPrize2 });
+                        }
+                     }
+                }
             }
         }
+        
+        setPartialWinners(foundPartialWinners);
     
-        await setDoc(doc(db, "raffles", raffleState.raffleRef), { isWinnerConfirmed: true }, { merge: true });
+        await setDoc(doc(db, "raffles", raffleState.raffleRef), { 
+            isWinnerConfirmed: true,
+            partialWinners: foundPartialWinners 
+        }, { merge: true });
         showNotification(t('resultConfirmedNotification'), 'success');
     };
 
@@ -1171,6 +1206,7 @@ const App = () => {
             manualWinnerNumber: '',
             manualWinnerNumber2: '',
             manualWinnerNumber3: '',
+            partialWinners: [],
         }, { merge: true });
         
         setPartialWinners([]);
@@ -1443,7 +1479,6 @@ const App = () => {
         raffleSubscription.current?.();
         setRaffleState(initialRaffleData);
         setCurrentAdminId(null);
-        setPartialWinners([]);
         localStorage.removeItem('rifaAdminId');
         if (window.location.search) {
             window.history.pushState({}, '', window.location.pathname);
@@ -1711,6 +1746,9 @@ const App = () => {
     }
     
     const isRegisterFormValidForSubmit = raffleState.name && raffleState.phoneNumber && raffleState.raffleNumber && !allAssignedNumbers.has(parseInt(raffleState.raffleNumber || '0'));
+    
+    const currentPartialWinners = (raffleState.partialWinners && raffleState.partialWinners.length > 0) ? raffleState.partialWinners : partialWinners;
+
 
     const renderBoardContent = () => {
         if (!raffleState.raffleRef) return null;
@@ -2562,7 +2600,7 @@ const App = () => {
                                     >
                                         <Users className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">{t('participants')}</span>
                                     </button>
-                                    {(raffleState.winner || partialWinners.length > 0) && (
+                                    {(raffleState.winner || currentPartialWinners.length > 0) && (
                                     <button 
                                         className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'winners' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
                                         onClick={() => handleTabClick('winners')}
@@ -3024,10 +3062,10 @@ const App = () => {
                                         </div>
                                     )}
 
-                                    {partialWinners.length > 0 && (
+                                    {currentPartialWinners.length > 0 && (
                                         <div className="p-4 bg-blue-100 border-l-4 border-blue-500 text-blue-800 rounded-lg space-y-4">
                                             <h3 className="font-bold text-lg">{t('partialWinnersTitle')}</h3>
-                                            {partialWinners.map((group, index) => (
+                                            {currentPartialWinners.map((group, index) => (
                                                 <div key={index}>
                                                     <p className="font-semibold">{t('partialWinnersSubtitle', { count: group.digits, prize: group.prize })}</p>
                                                     <ul className="list-disc list-inside text-sm">
@@ -3045,7 +3083,7 @@ const App = () => {
                                         </div>
                                     )}
 
-                                    {!raffleState.winner && partialWinners.length === 0 && (
+                                    {!raffleState.winner && currentPartialWinners.length === 0 && (
                                         <p className="text-gray-500">{t('noWinnersYet')}</p>
                                     )}
                                 </div>
@@ -3890,5 +3928,3 @@ const App = () => {
 };
 
 export default App;
-
-    

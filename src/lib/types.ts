@@ -11,6 +11,12 @@ export interface Participant {
     raffleRef?: string;
 }
 
+export interface PartialWinnerInfo {
+    winners: Participant[];
+    digits: number;
+    prize: string;
+}
+
 export interface PendingActivation {
     id: string;
     transactionId: string;
@@ -71,4 +77,5 @@ export interface Raffle {
     automaticDraw?: boolean;
     allowPartialWinners?: boolean;
     notificationTokens?: string[];
+    partialWinners?: PartialWinnerInfo[];
 }
