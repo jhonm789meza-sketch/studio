@@ -2356,6 +2356,19 @@ const App = () => {
                                                 <RefreshCcw className="mr-2 h-4 w-4" />
                                                 <span>{t('refreshRefs')}</span>
                                             </DropdownMenuItem>
+                                            <DropdownMenuSeparator />
+                                            <DropdownMenuItem disabled>
+                                                <div className="flex items-center justify-between w-full">
+                                                    <div className="flex items-center">
+                                                        <Trophy className="mr-2 h-4 w-4 text-green-500" />
+                                                        <span>{t('gamesWithWinner')}</span>
+                                                    </div>
+                                                    <span className="bg-green-100 text-green-800 text-xs font-semibold px-2 py-0.5 rounded-full ml-4">
+                                                        {gamesWithWinner.length}
+                                                    </span>
+                                                </div>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuSeparator />
                                             <DropdownMenuItem onSelect={handleSuperAdminLogout}>
                                                 <LogOut className="mr-2 h-4 w-4" />
                                                 <span>{t('logout')}</span>
@@ -2824,12 +2837,6 @@ const App = () => {
                                                     <h2 className="text-2xl font-bold text-gray-800">{t('assignedGames')}</h2>
                                                     <span className="bg-gray-200 text-gray-800 text-sm font-semibold px-3 py-1 rounded-full">
                                                         {allRaffles.length}
-                                                    </span>
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    <h3 className="text-lg font-semibold text-gray-600">{t('gamesWithWinner')}</h3>
-                                                    <span className="bg-green-100 text-green-800 text-sm font-semibold px-3 py-1 rounded-full">
-                                                        {gamesWithWinner.length}
                                                     </span>
                                                 </div>
                                             </div>
