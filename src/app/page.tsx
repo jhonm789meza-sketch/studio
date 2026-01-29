@@ -1735,6 +1735,7 @@ const App = () => {
     const filteredGames = allRaffles.filter(raffle => 
         raffle.raffleRef?.toLowerCase().includes(gameSearchQuery.toLowerCase())
     );
+    const gamesWithWinner = allRaffles.filter(raffle => !!raffle.winner);
 
     const deletableRaffles = filteredGames.filter(r => (r.participants || []).length === 0);
     const allDeletableSelected = deletableRaffles.length > 0 && deletableRaffles.every(r => selectedRafflesForDeletion.includes(r.raffleRef));
@@ -2289,7 +2290,7 @@ const App = () => {
         <div className="min-h-screen bg-background font-sans relative">
             {backgroundImage && (
                 <div className="fixed inset-0 z-0 pointer-events-none">
-                    <Image src={backgroundImage} alt={t('raffleBackgroundAlt')} layout="fill" objectFit="cover" unoptimized />
+                    <Image src={backgroundImage} alt={t('raffleBackgroundAlt')} fill objectFit="cover" unoptimized />
                     <div className="absolute inset-0 bg-black/30" />
                 </div>
             )}
@@ -2818,11 +2819,19 @@ const App = () => {
                                 <div className={activeTab === 'games' ? 'tab-content active' : 'tab-content'}>
                                     {isSuperAdmin && (
                                          <>
-                                            <div className="flex items-center gap-4 mb-4">
-                                                <h2 className="text-2xl font-bold text-gray-800">{t('assignedGames')}</h2>
-                                                <span className="bg-gray-200 text-gray-800 text-sm font-semibold px-3 py-1 rounded-full">
-                                                    {allRaffles.length}
-                                                </span>
+                                            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mb-4">
+                                                <div className="flex items-center gap-2">
+                                                    <h2 className="text-2xl font-bold text-gray-800">{t('assignedGames')}</h2>
+                                                    <span className="bg-gray-200 text-gray-800 text-sm font-semibold px-3 py-1 rounded-full">
+                                                        {allRaffles.length}
+                                                    </span>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <h3 className="text-lg font-semibold text-gray-600">{t('gamesWithWinner')}</h3>
+                                                    <span className="bg-green-100 text-green-800 text-sm font-semibold px-3 py-1 rounded-full">
+                                                        {gamesWithWinner.length}
+                                                    </span>
+                                                </div>
                                             </div>
                                             <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
                                                 <Input

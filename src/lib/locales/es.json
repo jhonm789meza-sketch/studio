@@ -329,5 +329,6 @@
     "deleteSelected": "Eliminar Seleccionados ({count})",
     "deleteSelectedRafflesConfirmation": "¿Estás seguro de que quieres eliminar los {count} juegos seleccionados? Esta acción es irreversible.",
     "selectedRafflesDeletedSuccess": "{count} juegos eliminados con éxito.",
-    "selectedRafflesDeletedError": "Error al eliminar los juegos seleccionados."
+    "selectedRafflesDeletedError": "Error al eliminar los juegos seleccionados.",
+    "gamesWithWinner": "Juegos con Ganador"
 }

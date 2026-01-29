@@ -329,5 +329,6 @@
     "deleteSelected": "Delete Selected ({count})",
     "deleteSelectedRafflesConfirmation": "Are you sure you want to delete the {count} selected games? This action is irreversible.",
     "selectedRafflesDeletedSuccess": "{count} games deleted successfully.",
-    "selectedRafflesDeletedError": "Error deleting selected games."
+    "selectedRafflesDeletedError": "Error deleting selected games.",
+    "gamesWithWinner": "Games with Winner"
 }
