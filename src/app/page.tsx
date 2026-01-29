@@ -931,6 +931,27 @@ const App = () => {
         );
     };
 
+    const gamesWithWinner = allRaffles.filter(raffle => !!raffle.winner);
+
+    const handleDeleteAllWinnerRaffles = () => {
+        showConfirmationDialog(
+            t('deleteAllWinnerGamesConfirmation', { count: gamesWithWinner.length }),
+            async () => {
+                const batch = writeBatch(db);
+                gamesWithWinner.forEach(raffle => {
+                    batch.delete(doc(db, 'raffles', raffle.raffleRef));
+                });
+                try {
+                    await batch.commit();
+                    showNotification(t('selectedRafflesDeletedSuccess', { count: gamesWithWinner.length }), 'success');
+                } catch (error) {
+                    console.error('Error deleting all winner raffles:', error);
+                    showNotification(t('selectedRafflesDeletedError'), 'error');
+                }
+            }
+        );
+    };
+
 
     const handleDownloadTicket = () => {
         const ticketElement = ticketModalRef.current;
@@ -1733,8 +1754,6 @@ const App = () => {
         setTicketInfo(null);
     };
 
-    const gamesWithWinner = allRaffles.filter(raffle => !!raffle.winner);
-
     const filteredGames = allRaffles.filter(raffle => {
         const searchMatch = raffle.raffleRef?.toLowerCase().includes(gameSearchQuery.toLowerCase());
         if (!searchMatch) return false;
@@ -2378,6 +2397,12 @@ const App = () => {
                                                     </span>
                                                 </div>
                                             </DropdownMenuItem>
+                                            {gamesWithWinner.length > 0 && (
+                                                <DropdownMenuItem onSelect={handleDeleteAllWinnerRaffles} className="text-red-500 focus:bg-red-100 focus:text-red-600">
+                                                    <Trash2 className="mr-2 h-4 w-4" />
+                                                    <span>{t('deleteAllWinnerGames', { count: gamesWithWinner.length })}</span>
+                                                </DropdownMenuItem>
+                                            )}
                                             <DropdownMenuSeparator />
                                             <DropdownMenuItem onSelect={handleSuperAdminLogout}>
                                                 <LogOut className="mr-2 h-4 w-4" />

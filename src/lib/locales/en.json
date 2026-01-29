@@ -330,5 +330,7 @@
     "deleteSelectedRafflesConfirmation": "Are you sure you want to delete the {count} selected games? This action is irreversible.",
     "selectedRafflesDeletedSuccess": "{count} games deleted successfully.",
     "selectedRafflesDeletedError": "Error deleting selected games.",
-    "gamesWithWinner": "Games with Winner"
+    "gamesWithWinner": "Games with Winner",
+    "deleteAllWinnerGames": "Delete Finished Games ({count})",
+    "deleteAllWinnerGamesConfirmation": "Are you sure you want to delete the {count} games that have already finished? This action is irreversible."
 }
