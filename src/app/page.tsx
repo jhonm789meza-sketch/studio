@@ -166,6 +166,7 @@ const App = () => {
     const [isSupportContactDialogOpen, setIsSupportContactDialogOpen] = useState(false);
     const [gameSearchQuery, setGameSearchQuery] = useState('');
     const [pendingSearchQuery, setPendingSearchQuery] = useState('');
+    const [gamesFilter, setGamesFilter] = useState<'all' | 'winners'>('all');
 
 
     const [activationConfirmationOpen, setActivationConfirmationOpen] = useState(false);
@@ -1732,12 +1733,18 @@ const App = () => {
         setTicketInfo(null);
     };
 
-    const filteredGames = allRaffles.filter(raffle => 
-        raffle.raffleRef?.toLowerCase().includes(gameSearchQuery.toLowerCase())
-    );
     const gamesWithWinner = allRaffles.filter(raffle => !!raffle.winner);
 
-    const deletableRaffles = filteredGames.filter(r => (r.participants || []).length === 0);
+    const filteredGames = allRaffles.filter(raffle => {
+        const searchMatch = raffle.raffleRef?.toLowerCase().includes(gameSearchQuery.toLowerCase());
+        if (!searchMatch) return false;
+        if (gamesFilter === 'winners') {
+            return !!raffle.winner;
+        }
+        return true;
+    });
+
+    const deletableRaffles = filteredGames.filter(r => (r.participants || []).length === 0 || !!r.winner);
     const allDeletableSelected = deletableRaffles.length > 0 && deletableRaffles.every(r => selectedRafflesForDeletion.includes(r.raffleRef));
     const isIndeterminate = selectedRafflesForDeletion.length > 0 && !allDeletableSelected;
 
@@ -2050,7 +2057,7 @@ const App = () => {
                                                 value={raffleState.manualWinnerNumber}
                                                 onChange={(e) => handleLocalFieldChange('manualWinnerNumber', e.target.value)}
                                                 maxLength={raffleState.raffleMode === 'infinite' ? raffleState.infiniteModeDigits : numberLength}
-                                                disabled={raffleState.isWinnerConfirmed || raffleState.automaticDraw || !!raffleState.winner}
+                                                disabled={raffleState.isWinnerConfirmed || !!raffleState.winner}
                                                 className="w-full"
                                             />
                                             {!!raffleState.winner && <LockKeyhole className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />}
@@ -2357,7 +2364,10 @@ const App = () => {
                                                 <span>{t('refreshRefs')}</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuSeparator />
-                                            <DropdownMenuItem disabled>
+                                            <DropdownMenuItem onSelect={() => {
+                                                setGamesFilter('winners');
+                                                handleTabClick('games');
+                                            }}>
                                                 <div className="flex items-center justify-between w-full">
                                                     <div className="flex items-center">
                                                         <Trophy className="mr-2 h-4 w-4 text-green-500" />
@@ -2586,7 +2596,10 @@ const App = () => {
                                         </button>
                                         <button 
                                             className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'games' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
-                                            onClick={() => handleTabClick('games')}
+                                            onClick={() => {
+                                                setGamesFilter('all');
+                                                handleTabClick('games');
+                                            }}
                                         >
                                            <Gamepad2 className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">{t('gamesTab')}</span>
                                         </button>
@@ -2834,9 +2847,9 @@ const App = () => {
                                          <>
                                             <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mb-4">
                                                 <div className="flex items-center gap-2">
-                                                    <h2 className="text-2xl font-bold text-gray-800">{t('assignedGames')}</h2>
+                                                    <h2 className="text-2xl font-bold text-gray-800">{gamesFilter === 'winners' ? t('gamesWithWinner') : t('assignedGames')}</h2>
                                                     <span className="bg-gray-200 text-gray-800 text-sm font-semibold px-3 py-1 rounded-full">
-                                                        {allRaffles.length}
+                                                        {filteredGames.length}
                                                     </span>
                                                 </div>
                                             </div>
@@ -2888,7 +2901,7 @@ const App = () => {
                                                                 .sort((a, b) => (b.raffleRef || '').localeCompare(a.raffleRef || ''))
                                                                 .map((raffle) => {
                                                                 const collected = ((raffle.participants || []).filter(p => p.paymentStatus === 'confirmed').length * parseFloat(String(raffle.value).replace(/\D/g, ''))) || 0;
-                                                                const canDelete = (raffle.participants || []).length === 0;
+                                                                const canDelete = (raffle.participants || []).length === 0 || !!raffle.winner;
                                                                 return (
                                                                     <tr key={`${raffle.raffleRef}-${raffle.adminId}`}>
                                                                         <td className="p-4">
