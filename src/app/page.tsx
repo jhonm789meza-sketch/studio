@@ -1804,7 +1804,7 @@ const App = () => {
                         
                         <div className="mb-6 rounded-lg overflow-hidden relative aspect-video max-w-2xl mx-auto shadow-lg bg-gray-200 flex items-center justify-center">
                              {raffleState.prizeImageUrl ? (
-                                <Image src={raffleState.prizeImageUrl} alt={t('rafflePrizeAlt')} layout="fill" objectFit="cover" unoptimized key={raffleState.prizeImageUrl}/>
+                                <Image src={raffleState.prizeImageUrl} alt={t('rafflePrizeAlt')} layout="fill" objectFit="contain" unoptimized key={raffleState.prizeImageUrl}/>
                             ) : (
                                 <span className="text-gray-500">{t('noPrizeImage')}</span>
                             )}
@@ -1919,19 +1919,35 @@ const App = () => {
                                 />
                             </div>
                            {raffleState.raffleMode === 'infinite' && (
-                                <div>
-                                    <Label htmlFor="infinite-digits-input">{t('infiniteRaffleDigits')}:</Label>
-                                    <Input
-                                        id="infinite-digits-input"
-                                        type="number"
-                                        min="4"
-                                        value={raffleState.infiniteModeDigits || ''}
-                                        onChange={(e) => handleLocalFieldChange('infiniteModeDigits', e.target.value)}
-                                        onBlur={(e) => handleFieldChange('infiniteModeDigits', raffleState.infiniteModeDigits)}
-                                        placeholder={t('min4Digits')}
-                                        disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
-                                        className="w-full mt-1"
-                                    />
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <Label htmlFor="infinite-digits-input">{t('infiniteRaffleDigits')}:</Label>
+                                        <Input
+                                            id="infinite-digits-input"
+                                            type="number"
+                                            min="4"
+                                            value={raffleState.infiniteModeDigits || ''}
+                                            onChange={(e) => handleLocalFieldChange('infiniteModeDigits', e.target.value)}
+                                            onBlur={(e) => handleFieldChange('infiniteModeDigits', raffleState.infiniteModeDigits)}
+                                            placeholder={t('min4Digits')}
+                                            disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
+                                            className="w-full mt-1"
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label htmlFor="total-numbers-infinite">{t('totalNumbersToSell')}</Label>
+                                        <div className="relative mt-1">
+                                            <Input
+                                                id="total-numbers-infinite"
+                                                type="text"
+                                                readOnly
+                                                value={(raffleState.infiniteModeDigits && raffleState.infiniteModeDigits >= 4) ? Math.pow(10, raffleState.infiniteModeDigits).toLocaleString() : '0'}
+                                                disabled
+                                                className="w-full bg-slate-100 font-semibold mt-1"
+                                            />
+                                            <TicketIcon className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                                        </div>
+                                    </div>
                                 </div>
                             )}
                             {raffleState.raffleMode === 'infinite' && isCurrentUserAdmin && !raffleState.isDetailsConfirmed && (
