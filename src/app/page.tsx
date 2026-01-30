@@ -869,6 +869,39 @@ const App = () => {
         return participantId;
     };
 
+    const handleGenerateRandomNumber = () => {
+        if (raffleMode !== 'infinite' || !raffleState.infiniteModeDigits || raffleState.infiniteModeDigits < 4) {
+            showNotification(t('configureInfiniteDigitsWarning'), 'warning');
+            return;
+        }
+    
+        const digits = raffleState.infiniteModeDigits;
+        const max = Math.pow(10, digits);
+        const totalNumbers = max;
+        const soldNumbers = allAssignedNumbers.size;
+    
+        if (soldNumbers >= totalNumbers) {
+            showNotification(t('allNumbersSoldWarning'), 'warning');
+            return;
+        }
+    
+        let randomNumber: number;
+        let attempts = 0;
+        const maxAttempts = totalNumbers * 2; // Allow for some collisions, should be very rare
+    
+        do {
+            randomNumber = Math.floor(Math.random() * max);
+            attempts++;
+            if(attempts > maxAttempts) {
+                 showNotification(t('couldNotFindRandomNumber'), 'warning');
+                 return;
+            }
+        } while (allAssignedNumbers.has(randomNumber));
+    
+        const randomNumberStr = String(randomNumber).padStart(digits, '0');
+        handleLocalFieldChange('raffleNumber', randomNumberStr);
+    };
+
     const handleConfirmPayment = async (participantId: number) => {
         if (!raffleState.raffleRef || !isCurrentUserAdmin) return;
         
@@ -2759,15 +2792,29 @@ const App = () => {
                                                 </div>
                                                 <div>
                                                     <Label htmlFor="raffle-number-input">{t('raffleNumberLabel', { range: raffleState.raffleMode === 'two-digit' ? '00-99' : raffleState.raffleMode === 'three-digit' ? '000-999' : t('infiniteDigits', { count: raffleState.infiniteModeDigits || 4 }) })}:</Label>
-                                                    <Input
-                                                        id="raffle-number-input"
-                                                        type="text"
-                                                        value={raffleState.raffleNumber}
-                                                        onChange={handleRaffleNumberChange}
-                                                        placeholder={t('raffleNumberPlaceholder', { example: raffleState.raffleMode === 'two-digit' ? '05' : raffleState.raffleMode === 'three-digit' ? '142' : '2025' })}
-                                                        className="w-full mt-1"
-                                                        maxLength={raffleState.raffleMode === 'infinite' ? (raffleState.infiniteModeDigits || 4) : numberLength}
-                                                    />
+                                                    <div className="relative mt-1">
+                                                        <Input
+                                                            id="raffle-number-input"
+                                                            type="text"
+                                                            value={raffleState.raffleNumber}
+                                                            onChange={handleRaffleNumberChange}
+                                                            placeholder={t('raffleNumberPlaceholder', { example: raffleState.raffleMode === 'two-digit' ? '05' : raffleState.raffleMode === 'three-digit' ? '142' : '2025' })}
+                                                            className="w-full pr-10"
+                                                            maxLength={raffleState.raffleMode === 'infinite' ? (raffleState.infiniteModeDigits || 4) : numberLength}
+                                                        />
+                                                        {raffleState.raffleMode === 'infinite' && (
+                                                            <Button
+                                                                type="button"
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="absolute inset-y-0 right-0 h-full px-3"
+                                                                onClick={handleGenerateRandomNumber}
+                                                                title={t('generateRandomNumber')}
+                                                            >
+                                                                <Wand2 className="h-4 w-4" />
+                                                            </Button>
+                                                        )}
+                                                    </div>
                                                     {raffleState.raffleNumber && allAssignedNumbers.has(parseInt(raffleState.raffleNumber)) && (
                                                         <p className="text-red-500 text-sm mt-1">{t('numberAlreadyAssignedWarning')}</p>
                                                     )}

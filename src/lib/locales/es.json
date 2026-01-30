@@ -333,5 +333,9 @@
     "selectedRafflesDeletedError": "Error al eliminar los juegos seleccionados.",
     "gamesWithWinner": "Juegos con Ganador",
     "deleteAllWinnerGames": "Eliminar Juegos Finalizados ({count})",
-    "deleteAllWinnerGamesConfirmation": "¿Estás seguro de que deseas eliminar los {count} juegos que ya han finalizado? Esta acción es irreversible."
+    "deleteAllWinnerGamesConfirmation": "¿Estás seguro de que deseas eliminar los {count} juegos que ya han finalizado? Esta acción es irreversible.",
+    "generateRandomNumber": "Elegir número aleatorio",
+    "configureInfiniteDigitsWarning": "Por favor, configura primero el número de cifras para la rifa infinita en el tablero.",
+    "allNumbersSoldWarning": "Todos los números han sido vendidos. No se puede generar un número aleatorio.",
+    "couldNotFindRandomNumber": "No se pudo encontrar un número aleatorio disponible. Inténtalo de nuevo."
 }
