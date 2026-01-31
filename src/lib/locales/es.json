@@ -342,5 +342,8 @@
     "goalTitle": "Meta de la Rifa",
     "goalDescription": "Aquí puedes ver cuántas boletas necesitas vender para cubrir el costo del premio.",
     "prizeValue": "Valor del Premio",
-    "ticketsToCoverPrize": "Boletas para cubrir premio"
+    "ticketsToCoverPrize": "Boletas para cubrir premio",
+    "payWithQr": "Pagar con QR",
+    "scanQrToPay": "Escanea el código para realizar el pago de tu activación.",
+    "paymentQrCodeAlt": "Código QR de Pago"
 }

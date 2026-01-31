@@ -342,5 +342,8 @@
     "goalTitle": "Raffle Goal",
     "goalDescription": "Here you can see how many tickets you need to sell to cover the prize cost.",
     "prizeValue": "Prize Value",
-    "ticketsToCoverPrize": "Tickets to cover prize"
+    "ticketsToCoverPrize": "Tickets to cover prize",
+    "payWithQr": "Pay with QR",
+    "scanQrToPay": "Scan the code to make the payment for your activation.",
+    "paymentQrCodeAlt": "Payment QR Code"
 }

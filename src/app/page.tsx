@@ -205,6 +205,7 @@ const App = () => {
     const [isGenerating, setIsGenerating] = useState(false);
     const [selectedRafflesForDeletion, setSelectedRafflesForDeletion] = useState<string[]>([]);
     const [isGoalModalOpen, setIsGoalModalOpen] = useState(false);
+    const [isPaymentQrDialogOpen, setIsPaymentQrDialogOpen] = useState(false);
     
     const isCurrentUserAdmin = !!raffleState.adminId && !!currentAdminId && raffleState.adminId === currentAdminId;
     const raffleMode = raffleState.raffleMode;
@@ -570,10 +571,10 @@ const App = () => {
     const formatValue = (value: string | number) => {
         const currencySymbol = raffleState.currencySymbol || '$';
         if (!value) return `${currencySymbol} 0`;
-        const numericValue = String(value).replace(/\D/g, '');
+        const numericValue = String(value).replace(/[^\d.,]/g, '').replace(',', '.');
         if (numericValue === '') return `${currencySymbol} 0`;
     
-        const number = parseInt(numericValue, 10);
+        const number = parseFloat(numericValue);
         if (isNaN(number)) return `${currencySymbol} 0`;
     
         const locale = language === 'es' ? 'es-CO' : 'en-US';
@@ -2524,10 +2525,16 @@ const App = () => {
                                                     {t('price')} {appSettings.activationPriceTwoDigit ? `(${appSettings.activationPriceTwoDigit})` : ''}
                                                 </Button>
                                                 <div className="text-center">
-                                                    <Button onClick={handleActivationClick} size="lg" className="w-full bg-gray-700 hover:bg-gray-800 text-white font-bold flex items-center gap-2">
-                                                        <BankIcon />
-                                                        {t('activate')}
-                                                    </Button>
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        <Button onClick={handleActivationClick} size="lg" className="w-full bg-gray-700 hover:bg-gray-800 text-white font-bold flex items-center gap-2 justify-center">
+                                                            <BankIcon />
+                                                            {t('activate')}
+                                                        </Button>
+                                                        <Button onClick={() => setIsPaymentQrDialogOpen(true)} size="lg" className="w-full bg-black hover:bg-gray-900 text-white font-bold flex items-center gap-2 justify-center">
+                                                            <QrCode />
+                                                            {t('payWithQr')}
+                                                        </Button>
+                                                    </div>
                                                     <p className="text-xs text-gray-500 mt-2 whitespace-pre-wrap">{appSettings.bankInfoLine1 || 'Banco Caja Social: 24096711314'}{'\n'}{appSettings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054'}</p>
                                                 </div>
                                                 {isSuperAdmin && nextRaffleRefs.twoDigit.refs.length > 0 && (
@@ -2567,10 +2574,16 @@ const App = () => {
                                                     {t('price')} {appSettings.activationPriceThreeDigit ? `(${appSettings.activationPriceThreeDigit})` : ''}
                                                 </Button>
                                                  <div className="text-center">
-                                                    <Button onClick={handleActivationClick} size="lg" className="w-full bg-gray-700 hover:bg-gray-800 text-white font-bold flex items-center gap-2">
-                                                        <BankIcon />
-                                                        {t('activate')}
-                                                    </Button>
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        <Button onClick={handleActivationClick} size="lg" className="w-full bg-gray-700 hover:bg-gray-800 text-white font-bold flex items-center gap-2 justify-center">
+                                                            <BankIcon />
+                                                            {t('activate')}
+                                                        </Button>
+                                                        <Button onClick={() => setIsPaymentQrDialogOpen(true)} size="lg" className="w-full bg-black hover:bg-gray-900 text-white font-bold flex items-center gap-2 justify-center">
+                                                            <QrCode />
+                                                            {t('payWithQr')}
+                                                        </Button>
+                                                    </div>
                                                      <p className="text-xs text-gray-500 mt-2 whitespace-pre-wrap">{appSettings.bankInfoLine1 || 'Banco Caja Social: 24096711314'}{'\n'}{appSettings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054'}</p>
                                                 </div>
                                                 {isSuperAdmin && nextRaffleRefs.threeDigit.refs.length > 0 && (
@@ -2610,10 +2623,16 @@ const App = () => {
                                                     {t('price')} {appSettings.activationPriceInfinite ? `(${appSettings.activationPriceInfinite})` : ''}
                                                 </Button>
                                                  <div className="text-center">
-                                                    <Button onClick={handleActivationClick} size="lg" className="w-full bg-gray-700 hover:bg-gray-800 text-white font-bold flex items-center gap-2">
-                                                       <BankIcon />
-                                                       {t('activate')}
-                                                    </Button>
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        <Button onClick={handleActivationClick} size="lg" className="w-full bg-gray-700 hover:bg-gray-800 text-white font-bold flex items-center gap-2 justify-center">
+                                                           <BankIcon />
+                                                           {t('activate')}
+                                                        </Button>
+                                                        <Button onClick={() => setIsPaymentQrDialogOpen(true)} size="lg" className="w-full bg-black hover:bg-gray-900 text-white font-bold flex items-center gap-2 justify-center">
+                                                            <QrCode />
+                                                            {t('payWithQr')}
+                                                        </Button>
+                                                    </div>
                                                      <p className="text-xs text-gray-500 mt-2 whitespace-pre-wrap">{appSettings.bankInfoLine1 || 'Banco Caja Social: 24096711314'}{'\n'}{appSettings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054'}</p>
                                                 </div>
                                                 {isSuperAdmin && nextRaffleRefs.infinite.refs.length > 0 && (
@@ -4074,6 +4093,31 @@ const App = () => {
                     </div>
                     <DialogFooter>
                         <Button type="button" variant="outline" onClick={() => setIsGoalModalOpen(false)}>{t('close')}</Button>                    
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={isPaymentQrDialogOpen} onOpenChange={setIsPaymentQrDialogOpen}>
+                <DialogContent className="max-w-xs">
+                    <DialogHeader>
+                        <DialogTitle className="text-center">{t('payWithQr')}</DialogTitle>
+                        <DialogDescription className="text-center">
+                            {t('scanQrToPay')}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex justify-center items-center p-4">
+                        <div className="relative inline-block p-4 bg-white rounded-lg shadow-md">
+                            <Image
+                                src="https://picsum.photos/seed/paymentqr/250/250"
+                                alt={t('paymentQrCodeAlt')}
+                                width={250}
+                                height={250}
+                                data-ai-hint="payment qr code"
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button type="button" variant="outline" onClick={() => setIsPaymentQrDialogOpen(false)}>{t('close')}</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
