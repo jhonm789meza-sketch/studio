@@ -345,5 +345,11 @@
     "ticketsToCoverPrize": "Tickets to cover prize",
     "payWithQr": "Pay with QR",
     "scanQrToPay": "Scan the code to make the payment for your activation.",
-    "paymentQrCodeAlt": "Payment QR Code"
+    "paymentQrCodeAlt": "Payment QR Code",
+    "paymentQrImage": "Payment QR Image",
+    "managePaymentQrImage": "Manage Payment QR Image",
+    "managePaymentQrImageDescription": "Update the QR code image for payments.",
+    "paymentQrImageUrlLabel": "QR Image URL",
+    "paymentQrImageSaved": "Payment QR image saved successfully.",
+    "errorSavingPaymentQrImage": "Error saving payment QR image."
 }

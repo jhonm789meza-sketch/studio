@@ -36,6 +36,7 @@ export interface AppSettings {
     activationPriceInfinite?: string;
     bankInfoLine1?: string;
     bankInfoLine2?: string;
+    paymentQrImageUrl?: string;
 }
 
 export interface Raffle {

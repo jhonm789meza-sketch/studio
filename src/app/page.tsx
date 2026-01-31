@@ -206,6 +206,8 @@ const App = () => {
     const [selectedRafflesForDeletion, setSelectedRafflesForDeletion] = useState<string[]>([]);
     const [isGoalModalOpen, setIsGoalModalOpen] = useState(false);
     const [isPaymentQrDialogOpen, setIsPaymentQrDialogOpen] = useState(false);
+    const [isPaymentQrImageDialogOpen, setIsPaymentQrImageDialogOpen] = useState(false);
+    const [paymentQrImageUrl, setPaymentQrImageUrl] = useState('');
     
     const isCurrentUserAdmin = !!raffleState.adminId && !!currentAdminId && raffleState.adminId === currentAdminId;
     const raffleMode = raffleState.raffleMode;
@@ -250,6 +252,7 @@ const App = () => {
                         line1: settings.bankInfoLine1 || 'Banco Caja Social: 24096711314',
                         line2: settings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054',
                     });
+                    setPaymentQrImageUrl(settings.paymentQrImageUrl || '');
                 }
             }
         });
@@ -1736,6 +1739,21 @@ const App = () => {
         }
     };
 
+    const handleSavePaymentQrImage = async () => {
+        if (!isSuperAdmin) return;
+        try {
+            const settingsDocRef = doc(db, 'internal', 'settings');
+            await setDoc(settingsDocRef, {
+                paymentQrImageUrl: paymentQrImageUrl,
+            }, { merge: true });
+            showNotification(t('paymentQrImageSaved'), 'success');
+            setIsPaymentQrImageDialogOpen(false);
+        } catch (error) {
+            console.error("Error saving payment QR image:", error);
+            showNotification(t('errorSavingPaymentQrImage'), 'error');
+        }
+    };
+
     const handleDeleteGeneratedRef = (raffleRef: string) => {
         showConfirmationDialog(
             t('deleteGeneratedRefConfirmation', { ref: raffleRef }),
@@ -2425,6 +2443,10 @@ const App = () => {
                                             <DropdownMenuItem onSelect={() => setIsPaymentInfoDialogOpen(true)}>
                                                 <Landmark className="mr-2 h-4 w-4" />
                                                 <span>{t('paymentInfo')}</span>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onSelect={() => setIsPaymentQrImageDialogOpen(true)}>
+                                                <QrCode className="mr-2 h-4 w-4" />
+                                                <span>{t('paymentQrImage')}</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setIsSuperAdminChangePasswordOpen(true)}>
                                                 <KeyRound className="mr-2 h-4 w-4" />
@@ -4108,7 +4130,7 @@ const App = () => {
                     <div className="flex justify-center items-center p-4">
                         <div className="relative inline-block p-4 bg-white rounded-lg shadow-md">
                             <Image
-                                src="https://picsum.photos/seed/paymentqr/250/250"
+                                src={appSettings.paymentQrImageUrl || "https://picsum.photos/seed/paymentqr/250/250"}
                                 alt={t('paymentQrCodeAlt')}
                                 width={250}
                                 height={250}
@@ -4118,6 +4140,30 @@ const App = () => {
                     </div>
                     <DialogFooter>
                         <Button type="button" variant="outline" onClick={() => setIsPaymentQrDialogOpen(false)}>{t('close')}</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={isPaymentQrImageDialogOpen} onOpenChange={setIsPaymentQrImageDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{t('managePaymentQrImage')}</DialogTitle>
+                        <DialogDescription>{t('managePaymentQrImageDescription')}</DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="payment-qr-image-url">{t('paymentQrImageUrlLabel')}</Label>
+                            <Input
+                                id="payment-qr-image-url"
+                                value={paymentQrImageUrl}
+                                onChange={(e) => setPaymentQrImageUrl(e.target.value)}
+                                placeholder="https://example.com/qr.png"
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsPaymentQrImageDialogOpen(false)}>{t('cancel')}</Button>
+                        <Button onClick={handleSavePaymentQrImage}>{t('save')}</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

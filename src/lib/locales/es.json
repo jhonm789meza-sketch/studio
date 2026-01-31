@@ -345,5 +345,11 @@
     "ticketsToCoverPrize": "Boletas para cubrir premio",
     "payWithQr": "Pagar con QR",
     "scanQrToPay": "Escanea el código para realizar el pago de tu activación.",
-    "paymentQrCodeAlt": "Código QR de Pago"
+    "paymentQrCodeAlt": "Código QR de Pago",
+    "paymentQrImage": "Imagen QR de Pago",
+    "managePaymentQrImage": "Gestionar Imagen QR de Pago",
+    "managePaymentQrImageDescription": "Actualiza la imagen del código QR para los pagos.",
+    "paymentQrImageUrlLabel": "URL de la Imagen QR",
+    "paymentQrImageSaved": "Imagen QR de pago guardada con éxito.",
+    "errorSavingPaymentQrImage": "Error al guardar la imagen QR de pago."
 }
