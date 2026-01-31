@@ -1,5 +1,3 @@
-
-
 'use client';
 import { useState, useEffect, useRef, useTransition } from 'react';
 import jsPDF from 'jspdf';
@@ -206,7 +204,7 @@ const App = () => {
     const [generatedPackage, setGeneratedPackage] = useState<{ ref: string; url: string; }[]>([]);
     const [isGenerating, setIsGenerating] = useState(false);
     const [selectedRafflesForDeletion, setSelectedRafflesForDeletion] = useState<string[]>([]);
-
+    const [isGoalModalOpen, setIsGoalModalOpen] = useState(false);
     
     const isCurrentUserAdmin = !!raffleState.adminId && !!currentAdminId && raffleState.adminId === currentAdminId;
     const raffleMode = raffleState.raffleMode;
@@ -1800,6 +1798,10 @@ const App = () => {
     const allDeletableSelected = deletableRaffles.length > 0 && deletableRaffles.every(r => selectedRafflesForDeletion.includes(r.raffleRef));
     const isIndeterminate = selectedRafflesForDeletion.length > 0 && !allDeletableSelected;
 
+    const prizeValueForGoal = raffleState.raffleMode === 'infinite' && raffleState.prize ? parseFloat(String(raffleState.prize).replace(/\D/g, '')) : 0;
+    const ticketValueForGoal = raffleState.raffleMode === 'infinite' && raffleState.value ? parseFloat(String(raffleState.value).replace(/\D/g, '')) : 0;
+    const ticketsToCoverPrize = ticketValueForGoal > 0 ? Math.ceil(prizeValueForGoal / ticketValueForGoal) : 0;
+
 
     if (loading && !raffleState.raffleRef) {
         return <div className="flex justify-center items-center h-screen text-xl font-semibold">{t('loading')}...</div>;
@@ -2716,6 +2718,14 @@ const App = () => {
                                     >
                                         <DollarSign className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">{t('collected')}</span>
                                     </button>
+                                    )}
+                                    {isCurrentUserAdmin && raffleState.raffleMode === 'infinite' && (
+                                        <button 
+                                            className="flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap text-gray-500 hover:text-gray-700"
+                                            onClick={() => setIsGoalModalOpen(true)}
+                                        >
+                                            <TrendingUp className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">{t('goal')}</span>
+                                        </button>
                                     )}
                                 </div>
                             </div>
@@ -4037,6 +4047,34 @@ const App = () => {
                             </ScrollArea>
                         </div>
                     </div>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={isGoalModalOpen} onOpenChange={setIsGoalModalOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{t('goalTitle')}</DialogTitle>
+                        <DialogDescription>
+                            {t('goalDescription')}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4 space-y-4">
+                        <div className="flex justify-between items-center bg-gray-100 p-4 rounded-lg">
+                            <p className="font-semibold text-gray-600">{t('prizeValue')}:</p>
+                            <p className="font-bold text-xl text-gray-800">{formatValue(raffleState.prize)}</p>
+                        </div>
+                        <div className="flex justify-between items-center bg-gray-100 p-4 rounded-lg">
+                            <p className="font-semibold text-gray-600">{t('ticketValue')}:</p>
+                            <p className="font-bold text-xl text-gray-800">{formatValue(raffleState.value)}</p>
+                        </div>
+                        <div className="flex justify-between items-center bg-green-100 p-4 rounded-lg">
+                            <p className="font-semibold text-green-800">{t('ticketsToCoverPrize')}:</p>
+                            <p className="font-bold text-2xl text-green-800">{ticketsToCoverPrize.toLocaleString(language === 'es' ? 'es-CO' : 'en-US')}</p>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button type="button" variant="outline" onClick={() => setIsGoalModalOpen(false)}>{t('close')}</Button>                    
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
 

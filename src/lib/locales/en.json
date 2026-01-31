@@ -337,5 +337,10 @@
     "generateRandomNumber": "Choose random number",
     "configureInfiniteDigitsWarning": "Please configure the number of digits for the infinite raffle on the board first.",
     "allNumbersSoldWarning": "All numbers have been sold. Cannot generate a random number.",
-    "couldNotFindRandomNumber": "Could not find an available random number. Please try again."
+    "couldNotFindRandomNumber": "Could not find an available random number. Please try again.",
+    "goal": "Goal",
+    "goalTitle": "Raffle Goal",
+    "goalDescription": "Here you can see how many tickets you need to sell to cover the prize cost.",
+    "prizeValue": "Prize Value",
+    "ticketsToCoverPrize": "Tickets to cover prize"
 }

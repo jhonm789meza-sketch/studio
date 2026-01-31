@@ -337,5 +337,10 @@
     "generateRandomNumber": "Elegir número aleatorio",
     "configureInfiniteDigitsWarning": "Por favor, configura primero el número de cifras para la rifa infinita en el tablero.",
     "allNumbersSoldWarning": "Todos los números han sido vendidos. No se puede generar un número aleatorio.",
-    "couldNotFindRandomNumber": "No se pudo encontrar un número aleatorio disponible. Inténtalo de nuevo."
+    "couldNotFindRandomNumber": "No se pudo encontrar un número aleatorio disponible. Inténtalo de nuevo.",
+    "goal": "Meta",
+    "goalTitle": "Meta de la Rifa",
+    "goalDescription": "Aquí puedes ver cuántas boletas necesitas vender para cubrir el costo del premio.",
+    "prizeValue": "Valor del Premio",
+    "ticketsToCoverPrize": "Boletas para cubrir premio"
 }
