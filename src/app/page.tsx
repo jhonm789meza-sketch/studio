@@ -570,14 +570,14 @@ const App = () => {
     const formatValue = (value: string | number) => {
         const currencySymbol = raffleState.currencySymbol || '$';
         if (!value) return `${currencySymbol} 0`;
-        const numericValue = String(value).replace(/[^\d.,]/g, '').replace(',', '.');
+        const numericValue = String(value).replace(/\D/g, '');
         if (numericValue === '') return `${currencySymbol} 0`;
-        
-        const number = parseFloat(numericValue);
+    
+        const number = parseInt(numericValue, 10);
         if (isNaN(number)) return `${currencySymbol} 0`;
-        
+    
         const locale = language === 'es' ? 'es-CO' : 'en-US';
-        return `${currencySymbol} ${number.toLocaleString(locale)}`;
+        return `${currencySymbol} ${number.toLocaleString(locale, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
     };
 
     const handleRaffleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
