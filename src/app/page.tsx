@@ -1160,7 +1160,7 @@ const App = () => {
         let winningNumberStr = raffleState.manualWinnerNumber;
     
         // Automatic draw logic
-        if (raffleMode === 'infinite' && raffleState.automaticDraw && !winningNumberStr) {
+        if (raffleMode === 'infinite' && raffleState.automaticDraw) {
             const max = Math.pow(10, winningNumberLength);
             const randomNumber = Math.floor(Math.random() * max);
             winningNumberStr = String(randomNumber).padStart(winningNumberLength, '0');
@@ -2127,7 +2127,7 @@ const App = () => {
                                                 value={raffleState.manualWinnerNumber}
                                                 onChange={(e) => handleLocalFieldChange('manualWinnerNumber', e.target.value)}
                                                 maxLength={raffleState.raffleMode === 'infinite' ? raffleState.infiniteModeDigits : numberLength}
-                                                disabled={raffleState.isWinnerConfirmed || !!raffleState.winner}
+                                                disabled={raffleState.isWinnerConfirmed || !!raffleState.winner || (raffleState.raffleMode === 'infinite' && raffleState.automaticDraw)}
                                                 className="w-full"
                                             />
                                             {!!raffleState.winner && <LockKeyhole className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />}
