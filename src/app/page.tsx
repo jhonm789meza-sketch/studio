@@ -252,7 +252,7 @@ const App = () => {
                         line1: settings.bankInfoLine1 || 'Banco Caja Social: 24096711314',
                         line2: settings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054',
                     });
-                    setPaymentQrImageUrl(settings.paymentQrImageUrl || '');
+                    setPaymentQrImageUrl(settings.paymentQrImageUrl || 'https://photos.app.goo.gl/UzDxnLWbUBLYA4k26');
                 }
             }
         });
@@ -4130,7 +4130,7 @@ const App = () => {
                     <div className="flex justify-center items-center p-4">
                         <div className="relative inline-block p-4 bg-white rounded-lg shadow-md">
                             <Image
-                                src={appSettings.paymentQrImageUrl || "https://picsum.photos/seed/paymentqr/250/250"}
+                                src={appSettings.paymentQrImageUrl || "https://photos.app.goo.gl/UzDxnLWbUBLYA4k26"}
                                 alt={t('paymentQrCodeAlt')}
                                 width={250}
                                 height={250}
