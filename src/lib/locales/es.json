@@ -282,6 +282,8 @@
     "copyAccountNumber": "Copiar Número de Cuenta",
     "copyBrebKey": "Copiar Llave Bre-B",
     "brebKeyCopied": "Llave Bre-B copiada al portapapeles.",
+    "activationOptionsTitle": "Opciones de Activación",
+    "activationOptionsDescription": "Elige un método de pago. Luego, contacta al administrador con tu comprobante para obtener tu referencia.",
     "add": "Añadir",
     "addNewContact": "Añadir Nuevo Contacto",
     "savedContacts": "Contactos Guardados",

@@ -282,6 +282,8 @@
     "copyAccountNumber": "Copy Account Number",
     "copyBrebKey": "Copy Bre-B Key",
     "brebKeyCopied": "Bre-B key copied to clipboard.",
+    "activationOptionsTitle": "Activation Options",
+    "activationOptionsDescription": "Choose a payment method. Afterwards, contact the administrator with your receipt to get your reference.",
     "add": "Add",
     "addNewContact": "Add New Contact",
     "savedContacts": "Saved Contacts",
