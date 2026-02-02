@@ -213,6 +213,7 @@ const App = () => {
     const [uploadProgress2, setUploadProgress2] = useState<number | null>(null);
     const [imageFile2, setImageFile2] = useState<File | null>(null);
     
+    const prizeTextareaRef = useRef<HTMLTextAreaElement>(null);
     const isCurrentUserAdmin = !!raffleState.adminId && !!currentAdminId && raffleState.adminId === currentAdminId;
     const raffleMode = raffleState.raffleMode;
     const totalNumbers = raffleMode === 'two-digit' ? 100 : 1000;
@@ -224,6 +225,14 @@ const App = () => {
             document.documentElement.lang = language;
         }
     }, [language]);
+
+    useEffect(() => {
+        if (prizeTextareaRef.current) {
+            // We need to reset the height momentarily to get the correct scrollHeight for the current content
+            prizeTextareaRef.current.style.height = 'auto';
+            prizeTextareaRef.current.style.height = `${prizeTextareaRef.current.scrollHeight}px`;
+        }
+    }, [raffleState.prize]); // Rerun on value change
 
 
     useEffect(() => {
@@ -1993,15 +2002,16 @@ const App = () => {
                             )}
                            <div>
                                <Label htmlFor="prize-input">{t('prize')}:</Label>
-                               <Input
+                               <Textarea
+                                   ref={prizeTextareaRef}
                                    id="prize-input"
-                                   type="text"
+                                   rows={1}
                                    value={raffleState.prize}
                                    onChange={(e) => handleLocalFieldChange('prize', e.target.value)}
                                    onBlur={(e) => handleFieldChange('prize', e.target.value)}
                                    placeholder={raffleMode === 'infinite' ? t('prizePlaceholderInfinite') : t('prizePlaceholderFinite')}
                                    disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
-                                   className="w-full mt-1"
+                                   className="w-full mt-1 resize-none overflow-hidden"
                                />
                            </div>
                            {isCurrentUserAdmin && !raffleState.isDetailsConfirmed && (
