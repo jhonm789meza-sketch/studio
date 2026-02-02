@@ -359,8 +359,5 @@
     "deleteAllPastDueGames": "Delete All Past Due ({count})",
     "deleteAllPastDueGamesConfirmation": "Are you sure you want to delete the {count} past due games? This action is irreversible.",
     "uploadSecondQrImage": "Upload Second QR Image",
-    "imagePreview2": "Image Preview 2",
-    "uploadFromGallery": "Upload from Gallery",
-    "errorUploadingImage": "Error uploading image.",
-    "imageUploadedSuccess": "Image uploaded successfully."
+    "imagePreview2": "Image Preview 2"
 }

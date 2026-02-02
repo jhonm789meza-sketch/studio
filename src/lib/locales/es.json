@@ -359,8 +359,5 @@
     "deleteAllPastDueGames": "Eliminar Vencidos ({count})",
     "deleteAllPastDueGamesConfirmation": "¿Estás seguro de que deseas eliminar los {count} juegos vencidos? Esta acción es irreversible.",
     "uploadSecondQrImage": "Subir Segunda Imagen QR",
-    "imagePreview2": "Vista Previa Imagen 2",
-    "uploadFromGallery": "Subir de la galería",
-    "errorUploadingImage": "Error al subir la imagen.",
-    "imageUploadedSuccess": "Imagen subida con éxito."
+    "imagePreview2": "Vista Previa Imagen 2"
 }

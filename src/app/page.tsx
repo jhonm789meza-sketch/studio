@@ -12,7 +12,7 @@ import { getAuth, onAuthStateChanged, signInAnonymously } from 'firebase/auth';
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House, Clock as ClockIcon, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Upload, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages, Trophy, Trash2, Copy, Shield, LogOut, Eye, EyeOff, Gamepad2, Phone, TrendingUp, Globe, Landmark, RefreshCcw, LockKeyhole, Package } from 'lucide-react';
+import { Menu, Award, Lock, House, Clock as ClockIcon, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages, Trophy, Trash2, Copy, Shield, LogOut, Eye, EyeOff, Gamepad2, Phone, TrendingUp, Globe, Landmark, RefreshCcw, LockKeyhole, Package } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -213,8 +213,6 @@ const App = () => {
     const [paymentQrImageUrl2, setPaymentQrImageUrl2] = useState('');
     const [uploadProgress2, setUploadProgress2] = useState<number | null>(null);
     const [imageFile2, setImageFile2] = useState<File | null>(null);
-    const [prizeImageFile, setPrizeImageFile] = useState<File | null>(null);
-    const [prizeImageUploadProgress, setPrizeImageUploadProgress] = useState<number | null>(null);
     
     const prizeTextareaRef = useRef<HTMLTextAreaElement>(null);
     const isCurrentUserAdmin = !!raffleState.adminId && !!currentAdminId && raffleState.adminId === currentAdminId;
@@ -1796,35 +1794,6 @@ const App = () => {
         }
     };
 
-    const handlePrizeImageUpload = (file: File) => {
-        if (!raffleState.raffleRef || !isCurrentUserAdmin) return;
-
-        setPrizeImageUploadProgress(0);
-        const storageReference = storageRef(storage, `prize_images/${raffleState.raffleRef}_${Date.now()}`);
-        const uploadTask = uploadBytesResumable(storageReference, file);
-
-        uploadTask.on('state_changed',
-            (snapshot) => {
-                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                setPrizeImageUploadProgress(progress);
-            },
-            (error) => {
-                console.error("Upload failed:", error);
-                showNotification(t('errorUploadingImage'), 'error');
-                setPrizeImageUploadProgress(null);
-                setPrizeImageFile(null);
-            },
-            async () => {
-                const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                handleLocalFieldChange('prizeImageUrl', downloadURL);
-                await handleFieldChange('prizeImageUrl', downloadURL);
-                showNotification(t('imageUploadedSuccess'), 'success');
-                setPrizeImageUploadProgress(null);
-                setPrizeImageFile(null);
-            }
-        );
-    };
-
     const handleSavePaymentQrImage = async () => {
         if (!isSuperAdmin) return;
 
@@ -2080,31 +2049,6 @@ const App = () => {
                                                 className="w-full"
                                             />
                                         </div>
-                                        <div className="relative">
-                                            <Button asChild variant="outline" disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed || prizeImageUploadProgress !== null}>
-                                                <Label htmlFor="prize-image-upload" className="w-full cursor-pointer flex items-center justify-center">
-                                                    <Upload className="h-4 w-4 mr-2" />
-                                                    {t('uploadFromGallery')}
-                                                </Label>
-                                            </Button>
-                                            <Input
-                                                id="prize-image-upload"
-                                                type="file"
-                                                accept="image/*"
-                                                className="hidden"
-                                                onChange={(e) => {
-                                                    const file = e.target.files?.[0];
-                                                    if (file) {
-                                                        setPrizeImageFile(file);
-                                                        handlePrizeImageUpload(file);
-                                                    }
-                                                }}
-                                                disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed || prizeImageUploadProgress !== null}
-                                            />
-                                        </div>
-                                        {prizeImageUploadProgress !== null && (
-                                            <Progress value={prizeImageUploadProgress} className="w-full" />
-                                        )}
                                     </div>
                                 </div>
                            )}
