@@ -1935,7 +1935,7 @@ const App = () => {
                         
                         <div className="mb-6 rounded-lg overflow-hidden relative aspect-video max-w-2xl mx-auto shadow-lg bg-gray-200 flex items-center justify-center">
                              {raffleState.prizeImageUrl ? (
-                                <Image src={raffleState.prizeImageUrl} alt={t('rafflePrizeAlt')} layout="fill" objectFit="contain" unoptimized key={raffleState.prizeImageUrl}/>
+                                <Image src={raffleState.prizeImageUrl} alt={t('rafflePrizeAlt')} layout="fill" objectFit="cover" unoptimized key={raffleState.prizeImageUrl}/>
                             ) : (
                                 <span className="text-gray-500">{t('noPrizeImage')}</span>
                             )}
@@ -4326,3 +4326,5 @@ const App = () => {
 };
 
 export default App;
+
+    
