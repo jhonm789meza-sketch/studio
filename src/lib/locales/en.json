@@ -358,5 +358,3 @@
     "deleteAllPastDueGames": "Delete All Past Due ({count})",
     "deleteAllPastDueGamesConfirmation": "Are you sure you want to delete the {count} past due games? This action is irreversible."
 }
-
-    

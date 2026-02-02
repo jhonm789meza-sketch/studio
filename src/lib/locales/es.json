@@ -358,5 +358,3 @@
     "deleteAllPastDueGames": "Eliminar Vencidos ({count})",
     "deleteAllPastDueGamesConfirmation": "¿Estás seguro de que deseas eliminar los {count} juegos vencidos? Esta acción es irreversible."
 }
-
-    

@@ -2504,6 +2504,12 @@ const App = () => {
                                                     </span>
                                                 </div>
                                             </DropdownMenuItem>
+                                            {pastDateRaffles.length > 0 && (
+                                                <DropdownMenuItem onSelect={handleDeleteAllPastDueRaffles} className="text-red-500 focus:bg-red-100 focus:text-red-600">
+                                                    <Trash2 className="mr-2 h-4 w-4" />
+                                                    <span>{t('deleteAllPastDueGames', { count: pastDateRaffles.length })}</span>
+                                                </DropdownMenuItem>
+                                            )}
                                             <DropdownMenuItem onSelect={() => {
                                                 setGamesFilter('winners');
                                                 handleTabClick('games');
@@ -3034,12 +3040,6 @@ const App = () => {
                                                     className="max-w-sm w-full"
                                                 />
                                                 <div className="flex items-center gap-2">
-                                                    {gamesFilter === 'past_date' && pastDateRaffles.length > 0 && (
-                                                        <Button variant="destructive" onClick={handleDeleteAllPastDueRaffles}>
-                                                            <Trash2 className="mr-2 h-4 w-4" />
-                                                            {t('deleteAllPastDueGames', { count: pastDateRaffles.length })}
-                                                        </Button>
-                                                    )}
                                                     {selectedRafflesForDeletion.length > 0 && (
                                                         <Button variant="destructive" onClick={handleDeleteSelectedRaffles}>
                                                             <Trash2 className="mr-2 h-4 w-4" />
@@ -4226,5 +4226,3 @@ const App = () => {
 };
 
 export default App;
-
-    
