@@ -347,14 +347,17 @@
     "ticketsToCoverPrize": "Boletas para cubrir premio",
     "payWithQr": "Pagar con QR",
     "scanQrToPay": "Escanea el código para realizar el pago de tu activación.",
-    "paymentQrCodeAlt": "Código QR de Pago",
+    "paymentQrCodeAlt": "Código QR de Pago 1",
+    "paymentQrCodeAlt2": "Código QR de Pago 2",
     "paymentQrImage": "Imagen QR de Pago",
     "managePaymentQrImage": "Gestionar Imagen QR de Pago",
     "managePaymentQrImageDescription": "Actualiza la imagen del código QR para los pagos.",
-    "paymentQrImageUrlLabel": "URL de la Imagen QR",
+    "paymentQrImageUrlLabel": "URL de la Imagen QR 1",
     "paymentQrImageSaved": "Imagen QR de pago guardada con éxito.",
     "errorSavingPaymentQrImage": "Error al guardar la imagen QR de pago.",
     "pastDateGames": "Juegos Vencidos",
     "deleteAllPastDueGames": "Eliminar Vencidos ({count})",
-    "deleteAllPastDueGamesConfirmation": "¿Estás seguro de que deseas eliminar los {count} juegos vencidos? Esta acción es irreversible."
+    "deleteAllPastDueGamesConfirmation": "¿Estás seguro de que deseas eliminar los {count} juegos vencidos? Esta acción es irreversible.",
+    "uploadSecondQrImage": "Subir Segunda Imagen QR",
+    "imagePreview2": "Vista Previa Imagen 2"
 }

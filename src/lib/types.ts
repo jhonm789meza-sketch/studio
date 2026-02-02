@@ -37,6 +37,7 @@ export interface AppSettings {
     bankInfoLine1?: string;
     bankInfoLine2?: string;
     paymentQrImageUrl?: string;
+    paymentQrImageUrl2?: string;
 }
 
 export interface Raffle {
