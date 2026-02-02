@@ -1803,6 +1803,7 @@ const App = () => {
             },
             async () => {
                 const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                handleLocalFieldChange('prizeImageUrl', downloadURL);
                 await handleFieldChange('prizeImageUrl', downloadURL);
                 showNotification(t('imageUploadedSuccess'), 'success');
                 setPrizeImageUploadProgress(null);
