@@ -164,7 +164,7 @@ const App = () => {
     const [isSupportContactDialogOpen, setIsSupportContactDialogOpen] = useState(false);
     const [gameSearchQuery, setGameSearchQuery] = useState('');
     const [pendingSearchQuery, setPendingSearchQuery] = useState('');
-    const [gamesFilter, setGamesFilter] = useState<'all' | 'winners'>('all');
+    const [gamesFilter, setGamesFilter] = useState<'all' | 'winners' | 'past_date'>('all');
 
 
     const [activationConfirmationOpen, setActivationConfirmationOpen] = useState(false);
@@ -967,6 +967,15 @@ const App = () => {
     };
 
     const gamesWithWinner = allRaffles.filter(raffle => !!raffle.winner);
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const pastDateRaffles = allRaffles.filter(raffle => {
+        if (!raffle.gameDate) return false;
+        const gameDateObj = new Date(raffle.gameDate + 'T00:00:00');
+        return gameDateObj < today && !raffle.winner;
+    });
 
     const handleDeleteAllWinnerRaffles = () => {
         showConfirmationDialog(
@@ -1803,12 +1812,17 @@ const App = () => {
         setIsTicketModalOpen(false);
         setTicketInfo(null);
     };
-
+    
     const filteredGames = allRaffles.filter(raffle => {
         const searchMatch = raffle.raffleRef?.toLowerCase().includes(gameSearchQuery.toLowerCase());
         if (!searchMatch) return false;
         if (gamesFilter === 'winners') {
             return !!raffle.winner;
+        }
+        if (gamesFilter === 'past_date') {
+            if (!raffle.gameDate) return false;
+            const gameDateObj = new Date(raffle.gameDate + 'T00:00:00');
+            return gameDateObj < today && !raffle.winner;
         }
         return true;
     });
@@ -2458,6 +2472,20 @@ const App = () => {
                                             </DropdownMenuItem>
                                             <DropdownMenuSeparator />
                                             <DropdownMenuItem onSelect={() => {
+                                                setGamesFilter('past_date');
+                                                handleTabClick('games');
+                                            }}>
+                                                <div className="flex items-center justify-between w-full">
+                                                    <div className="flex items-center">
+                                                        <ClockIcon className="mr-2 h-4 w-4 text-orange-500" />
+                                                        <span>{t('pastDateGames')}</span>
+                                                    </div>
+                                                    <span className="bg-orange-100 text-orange-800 text-xs font-semibold px-2 py-0.5 rounded-full ml-4">
+                                                        {pastDateRaffles.length}
+                                                    </span>
+                                                </div>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onSelect={() => {
                                                 setGamesFilter('winners');
                                                 handleTabClick('games');
                                             }}>
@@ -2968,7 +2996,11 @@ const App = () => {
                                          <>
                                             <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mb-4">
                                                 <div className="flex items-center gap-2">
-                                                    <h2 className="text-2xl font-bold text-gray-800">{gamesFilter === 'winners' ? t('gamesWithWinner') : t('assignedGames')}</h2>
+                                                    <h2 className="text-2xl font-bold text-gray-800">{
+                                                        gamesFilter === 'winners' ? t('gamesWithWinner') :
+                                                        gamesFilter === 'past_date' ? t('pastDateGames') :
+                                                        t('assignedGames')
+                                                    }</h2>
                                                     <span className="bg-gray-200 text-gray-800 text-sm font-semibold px-3 py-1 rounded-full">
                                                         {filteredGames.length}
                                                     </span>

@@ -353,5 +353,6 @@
     "managePaymentQrImageDescription": "Update the QR code image for payments.",
     "paymentQrImageUrlLabel": "QR Image URL",
     "paymentQrImageSaved": "Payment QR image saved successfully.",
-    "errorSavingPaymentQrImage": "Error saving payment QR image."
+    "errorSavingPaymentQrImage": "Error saving payment QR image.",
+    "pastDateGames": "Past Due Games"
 }

@@ -353,5 +353,6 @@
     "managePaymentQrImageDescription": "Actualiza la imagen del código QR para los pagos.",
     "paymentQrImageUrlLabel": "URL de la Imagen QR",
     "paymentQrImageSaved": "Imagen QR de pago guardada con éxito.",
-    "errorSavingPaymentQrImage": "Error al guardar la imagen QR de pago."
+    "errorSavingPaymentQrImage": "Error al guardar la imagen QR de pago.",
+    "pastDateGames": "Juegos Vencidos"
 }
