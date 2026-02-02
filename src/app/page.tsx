@@ -2068,7 +2068,7 @@ const App = () => {
                                             />
                                         </div>
                                         <div className="relative">
-                                            <Button asChild variant="outline" disabled={prizeImageUploadProgress !== null}>
+                                            <Button asChild variant="outline" disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed || prizeImageUploadProgress !== null}>
                                                 <Label htmlFor="prize-image-upload" className="w-full cursor-pointer flex items-center justify-center">
                                                     <Upload className="h-4 w-4 mr-2" />
                                                     {t('uploadFromGallery')}
