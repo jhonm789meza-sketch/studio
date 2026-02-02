@@ -33,14 +33,6 @@ auth = getAuth(app);
 
 
 if (typeof window !== 'undefined') {
-    onAuthStateChanged(auth, (user) => {
-        if (!user) {
-            signInAnonymously(auth).catch((error) => {
-                console.error("Anonymous sign-in failed:", error);
-            });
-        }
-    });
-
     try {
         enableIndexedDbPersistence(db)
             .catch((err) => {
