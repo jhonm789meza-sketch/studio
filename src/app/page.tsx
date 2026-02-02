@@ -1993,15 +1993,15 @@ const App = () => {
                             )}
                            <div>
                                <Label htmlFor="prize-input">{t('prize')}:</Label>
-                               <Input
+                               <Textarea
                                    id="prize-input"
-                                   type="text"
                                    value={raffleState.prize}
                                    onChange={(e) => handleLocalFieldChange('prize', e.target.value)}
                                    onBlur={(e) => handleFieldChange('prize', e.target.value)}
                                    placeholder={raffleMode === 'infinite' ? t('prizePlaceholderInfinite') : t('prizePlaceholderFinite')}
                                    disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
                                    className="w-full mt-1"
+                                   rows={3}
                                />
                            </div>
                            {isCurrentUserAdmin && !raffleState.isDetailsConfirmed && (
