@@ -2,13 +2,13 @@
 import { useState, useEffect, useRef, useTransition } from 'react';
 import jsPDF from 'jspdf';
 import { RaffleManager } from '@/lib/RaffleManager';
-import { db, storage, auth } from '@/lib/firebase';
+import { db, storage, app } from '@/lib/firebase';
 import { doc, onSnapshot, setDoc, getDoc, deleteDoc, Unsubscribe, serverTimestamp, collection, query, where, getDocs, updateDoc, addDoc, orderBy, writeBatch } from 'firebase/firestore';
 import Image from 'next/image';
 import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { useLanguage } from '@/hooks/use-language';
 import { requestNotificationPermission } from '@/lib/notification';
-import { onAuthStateChanged, signInAnonymously } from 'firebase/auth';
+import { getAuth, onAuthStateChanged, signInAnonymously } from 'firebase/auth';
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
@@ -224,6 +224,7 @@ const App = () => {
 
 
     useEffect(() => {
+        const auth = getAuth(app);
         const unsubscribe = onAuthStateChanged(auth, (user) => {
             if (!user) {
                 signInAnonymously(auth).catch((error) => {
@@ -2533,7 +2534,7 @@ const App = () => {
         <div className="min-h-screen bg-background font-sans relative">
             {backgroundImage && (
                 <div className="fixed inset-0 z-0 pointer-events-none">
-                    <Image src={backgroundImage} alt={t('raffleBackgroundAlt')} fill objectFit="cover" unoptimized />
+                    <Image src={backgroundImage} alt={t('raffleBackgroundAlt')} fill style={{objectFit: "cover"}} unoptimized />
                     <div className="absolute inset-0 bg-black/30" />
                 </div>
             )}

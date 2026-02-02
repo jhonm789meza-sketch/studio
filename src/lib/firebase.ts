@@ -3,7 +3,6 @@ import { initializeApp, getApp, getApps, FirebaseApp } from 'firebase/app';
 import { getFirestore, Firestore, enableIndexedDbPersistence } from 'firebase/firestore';
 import { getStorage, FirebaseStorage } from 'firebase/storage';
 import { getMessaging, Messaging } from 'firebase/messaging';
-import { getAuth, Auth } from 'firebase/auth';
 
 const firebaseConfig = {
   "projectId": "rifaexpress",
@@ -18,7 +17,6 @@ const firebaseConfig = {
 let app: FirebaseApp;
 let db: Firestore;
 let storage: FirebaseStorage;
-let auth: Auth;
 let messaging: Messaging | null = null;
 
 if (getApps().length === 0) {
@@ -29,7 +27,6 @@ if (getApps().length === 0) {
 
 db = getFirestore(app);
 storage = getStorage(app);
-auth = getAuth(app);
 
 
 if (typeof window !== 'undefined') {
@@ -57,4 +54,4 @@ if (typeof window !== 'undefined') {
     }
 }
 
-export { db, storage, messaging, app, auth };
+export { db, storage, messaging, app };
