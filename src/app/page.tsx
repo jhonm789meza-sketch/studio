@@ -1881,7 +1881,7 @@ const App = () => {
         return true;
     });
 
-    const deletableRaffles = filteredGames.filter(r => (r.participants || []).length === 0 || !!r.winner);
+    const deletableRaffles = filteredGames.filter(r => (r.participants || []).length === 0 || !!r.winner || (new Date(r.gameDate + 'T00:00:00') < today && !r.winner));
     const allDeletableSelected = deletableRaffles.length > 0 && deletableRaffles.every(r => selectedRafflesForDeletion.includes(r.raffleRef));
     const isIndeterminate = selectedRafflesForDeletion.length > 0 && !allDeletableSelected;
 
@@ -1993,15 +1993,15 @@ const App = () => {
                             )}
                            <div>
                                <Label htmlFor="prize-input">{t('prize')}:</Label>
-                               <Textarea
+                               <Input
                                    id="prize-input"
+                                   type="text"
                                    value={raffleState.prize}
                                    onChange={(e) => handleLocalFieldChange('prize', e.target.value)}
                                    onBlur={(e) => handleFieldChange('prize', e.target.value)}
                                    placeholder={raffleMode === 'infinite' ? t('prizePlaceholderInfinite') : t('prizePlaceholderFinite')}
                                    disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
                                    className="w-full mt-1"
-                                   rows={3}
                                />
                            </div>
                            {isCurrentUserAdmin && !raffleState.isDetailsConfirmed && (
@@ -3065,6 +3065,12 @@ const App = () => {
                                                         {filteredGames.length}
                                                     </span>
                                                 </div>
+                                                {gamesFilter === 'past_date' && pastDateRaffles.length > 0 && (
+                                                    <Button variant="destructive" onClick={handleDeleteAllPastDueRaffles}>
+                                                        <Trash2 className="mr-2 h-4 w-4" />
+                                                        {t('deleteAllPastDueGames', { count: pastDateRaffles.length })}
+                                                    </Button>
+                                                )}
                                             </div>
                                             <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
                                                 <Input
