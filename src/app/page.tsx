@@ -212,6 +212,8 @@ const App = () => {
     const [paymentQrImageUrl2, setPaymentQrImageUrl2] = useState('');
     const [uploadProgress2, setUploadProgress2] = useState<number | null>(null);
     const [imageFile2, setImageFile2] = useState<File | null>(null);
+    const [prizeImageFile, setPrizeImageFile] = useState<File | null>(null);
+    const [prizeImageUploadProgress, setPrizeImageUploadProgress] = useState<number | null>(null);
     
     const prizeTextareaRef = useRef<HTMLTextAreaElement>(null);
     const isCurrentUserAdmin = !!raffleState.adminId && !!currentAdminId && raffleState.adminId === currentAdminId;
@@ -1781,6 +1783,34 @@ const App = () => {
         }
     };
 
+    const handlePrizeImageUpload = (file: File) => {
+        if (!raffleState.raffleRef || !isCurrentUserAdmin) return;
+
+        setPrizeImageUploadProgress(0);
+        const storageReference = storageRef(storage, `prize_images/${raffleState.raffleRef}_${Date.now()}`);
+        const uploadTask = uploadBytesResumable(storageReference, file);
+
+        uploadTask.on('state_changed',
+            (snapshot) => {
+                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                setPrizeImageUploadProgress(progress);
+            },
+            (error) => {
+                console.error("Upload failed:", error);
+                showNotification(t('errorUploadingImage'), 'error');
+                setPrizeImageUploadProgress(null);
+                setPrizeImageFile(null);
+            },
+            async () => {
+                const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                await handleFieldChange('prizeImageUrl', downloadURL);
+                showNotification(t('imageUploadedSuccess'), 'success');
+                setPrizeImageUploadProgress(null);
+                setPrizeImageFile(null);
+            }
+        );
+    };
+
     const handleSavePaymentQrImage = async () => {
         if (!isSuperAdmin) return;
 
@@ -2016,24 +2046,51 @@ const App = () => {
                            </div>
                            {isCurrentUserAdmin && !raffleState.isDetailsConfirmed && (
                                 <div>
-                                    <Label htmlFor="prize-image-url-input">{t('prizeImage')}</Label>
-                                    <div className="flex gap-2 mt-1">
-                                        <a href="https://www.google.com/imghp" target="_blank" rel="noopener noreferrer" className="flex-shrink-0">
-                                            <Button type="button" variant="outline">
-                                                <Search className="h-4 w-4 mr-2" />
-                                                {t('searchOnGoogle')}
+                                    <Label>{t('prizeImage')}</Label>
+                                    <div className="space-y-2 mt-1">
+                                        <div className="flex gap-2">
+                                            <a href="https://www.google.com/imghp" target="_blank" rel="noopener noreferrer" className="flex-shrink-0">
+                                                <Button type="button" variant="outline">
+                                                    <Search className="h-4 w-4 mr-2" />
+                                                    {t('searchOnGoogle')}
+                                                </Button>
+                                            </a>
+                                            <Input
+                                                id="prize-image-url-input"
+                                                type="text"
+                                                value={raffleState.prizeImageUrl}
+                                                onChange={(e) => handleLocalFieldChange('prizeImageUrl', e.target.value)}
+                                                onBlur={(e) => handleFieldChange('prizeImageUrl', e.target.value)}
+                                                placeholder={t('pasteImageLinkPlaceholder')}
+                                                disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
+                                                className="w-full"
+                                            />
+                                        </div>
+                                        <div className="relative">
+                                            <Button asChild variant="outline" disabled={prizeImageUploadProgress !== null}>
+                                                <Label htmlFor="prize-image-upload" className="w-full cursor-pointer flex items-center justify-center">
+                                                    <Upload className="h-4 w-4 mr-2" />
+                                                    {t('uploadFromGallery')}
+                                                </Label>
                                             </Button>
-                                        </a>
-                                        <Input
-                                            id="prize-image-url-input"
-                                            type="text"
-                                            value={raffleState.prizeImageUrl}
-                                            onChange={(e) => handleLocalFieldChange('prizeImageUrl', e.target.value)}
-                                            onBlur={(e) => handleFieldChange('prizeImageUrl', e.target.value)}
-                                            placeholder={t('pasteImageLinkPlaceholder')}
-                                            disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
-                                            className="w-full"
-                                        />
+                                            <Input
+                                                id="prize-image-upload"
+                                                type="file"
+                                                accept="image/*"
+                                                className="hidden"
+                                                onChange={(e) => {
+                                                    const file = e.target.files?.[0];
+                                                    if (file) {
+                                                        setPrizeImageFile(file);
+                                                        handlePrizeImageUpload(file);
+                                                    }
+                                                }}
+                                                disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed || prizeImageUploadProgress !== null}
+                                            />
+                                        </div>
+                                        {prizeImageUploadProgress !== null && (
+                                            <Progress value={prizeImageUploadProgress} className="w-full" />
+                                        )}
                                     </div>
                                 </div>
                            )}
@@ -4326,5 +4383,3 @@ const App = () => {
 };
 
 export default App;
-
-    
