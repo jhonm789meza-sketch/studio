@@ -354,5 +354,9 @@
     "paymentQrImageUrlLabel": "QR Image URL",
     "paymentQrImageSaved": "Payment QR image saved successfully.",
     "errorSavingPaymentQrImage": "Error saving payment QR image.",
-    "pastDateGames": "Past Due Games"
+    "pastDateGames": "Past Due Games",
+    "deleteAllPastDueGames": "Delete All Past Due ({count})",
+    "deleteAllPastDueGamesConfirmation": "Are you sure you want to delete the {count} past due games? This action is irreversible."
 }
+
+    

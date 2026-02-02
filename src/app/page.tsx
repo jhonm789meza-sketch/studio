@@ -996,6 +996,25 @@ const App = () => {
         );
     };
 
+    const handleDeleteAllPastDueRaffles = () => {
+        showConfirmationDialog(
+            t('deleteAllPastDueGamesConfirmation', { count: pastDateRaffles.length }),
+            async () => {
+                const batch = writeBatch(db);
+                pastDateRaffles.forEach(raffle => {
+                    batch.delete(doc(db, 'raffles', raffle.raffleRef));
+                });
+                try {
+                    await batch.commit();
+                    showNotification(t('selectedRafflesDeletedSuccess', { count: pastDateRaffles.length }), 'success');
+                } catch (error) {
+                    console.error('Error deleting all past due raffles:', error);
+                    showNotification(t('selectedRafflesDeletedError'), 'error');
+                }
+            }
+        );
+    };
+
 
     const handleDownloadTicket = () => {
         const ticketElement = ticketModalRef.current;
@@ -3014,12 +3033,20 @@ const App = () => {
                                                     onChange={(e) => setGameSearchQuery(e.target.value)}
                                                     className="max-w-sm w-full"
                                                 />
-                                                {selectedRafflesForDeletion.length > 0 && (
-                                                    <Button variant="destructive" onClick={handleDeleteSelectedRaffles}>
-                                                        <Trash2 className="mr-2 h-4 w-4" />
-                                                        {t('deleteSelected', { count: selectedRafflesForDeletion.length })}
-                                                    </Button>
-                                                )}
+                                                <div className="flex items-center gap-2">
+                                                    {gamesFilter === 'past_date' && pastDateRaffles.length > 0 && (
+                                                        <Button variant="destructive" onClick={handleDeleteAllPastDueRaffles}>
+                                                            <Trash2 className="mr-2 h-4 w-4" />
+                                                            {t('deleteAllPastDueGames', { count: pastDateRaffles.length })}
+                                                        </Button>
+                                                    )}
+                                                    {selectedRafflesForDeletion.length > 0 && (
+                                                        <Button variant="destructive" onClick={handleDeleteSelectedRaffles}>
+                                                            <Trash2 className="mr-2 h-4 w-4" />
+                                                            {t('deleteSelected', { count: selectedRafflesForDeletion.length })}
+                                                        </Button>
+                                                    )}
+                                                </div>
                                             </div>
                                             
                                             {filteredGames.length > 0 ? (
@@ -3054,7 +3081,9 @@ const App = () => {
                                                                 .sort((a, b) => (b.raffleRef || '').localeCompare(a.raffleRef || ''))
                                                                 .map((raffle) => {
                                                                 const collected = ((raffle.participants || []).filter(p => p.paymentStatus === 'confirmed').length * parseFloat(String(raffle.value).replace(/\D/g, ''))) || 0;
-                                                                const canDelete = (raffle.participants || []).length === 0 || !!raffle.winner;
+                                                                const gameDateObj = raffle.gameDate ? new Date(raffle.gameDate + 'T00:00:00') : null;
+                                                                const isPastDue = gameDateObj ? gameDateObj < today && !raffle.winner : false;
+                                                                const canDelete = (raffle.participants || []).length === 0 || !!raffle.winner || isPastDue;
                                                                 return (
                                                                     <tr key={`${raffle.raffleRef}-${raffle.adminId}`}>
                                                                         <td className="p-4">
@@ -4197,3 +4226,5 @@ const App = () => {
 };
 
 export default App;
+
+    
