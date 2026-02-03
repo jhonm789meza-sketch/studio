@@ -2,8 +2,7 @@
 import { useState, useEffect, useRef, useTransition } from 'react';
 import jsPDF from 'jspdf';
 import { RaffleManager } from '@/lib/RaffleManager';
-import { db, storage, app } from '@/lib/firebase';
-import { getAuth, signInAnonymously, onAuthStateChanged, User } from 'firebase/auth';
+import { db, storage } from '@/lib/firebase';
 import { doc, onSnapshot, setDoc, getDoc, deleteDoc, Unsubscribe, serverTimestamp, collection, query, where, getDocs, updateDoc, addDoc, orderBy, writeBatch } from 'firebase/firestore';
 import Image from 'next/image';
 import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
@@ -473,19 +472,6 @@ const App = () => {
 
     // Main initialization and URL handling effect
     useEffect(() => {
-        const auth = getAuth(app);
-        const unsubscribe = onAuthStateChanged(auth, user => {
-            if (user) {
-                // User is signed in.
-                console.log("User is signed in:", user.uid);
-            } else {
-                // User is signed out.
-                signInAnonymously(auth).catch(error => {
-                    console.error("Anonymous sign-in error:", error);
-                });
-            }
-        });
-
         const initialize = async () => {
             setLoading(true);
             setAppUrl(window.location.origin);
@@ -579,7 +565,6 @@ const App = () => {
         window.addEventListener('popstate', handlePopState);
 
         return () => {
-            unsubscribe();
             window.removeEventListener('popstate', handlePopState);
             raffleSubscription.current?.();
         };
