@@ -359,5 +359,21 @@
     "deleteAllPastDueGames": "Delete All Past Due ({count})",
     "deleteAllPastDueGamesConfirmation": "Are you sure you want to delete the {count} past due games? This action is irreversible.",
     "uploadSecondQrImage": "Upload Second QR Image",
-    "imagePreview2": "Image Preview 2"
+    "imagePreview2": "Image Preview 2",
+    "editPrizeImage": "Edit Prize Image",
+    "editPrizeImageDescription": "Use AI to modify your prize image. Describe the changes you want to make.",
+    "originalImage": "Original Image",
+    "editedImage": "Edited Image",
+    "describeChanges": "Describe the changes",
+    "describeChangesPlaceholder": "e.g., 'make the background a sunny beach', 'add a celebration hat'",
+    "generateNewImage": "Generate New Image",
+    "generatingImage": "Generating image...",
+    "previewWillAppearHere": "Preview will appear here",
+    "saveAndUseImage": "Save and Use this Image",
+    "imageEditingError": "Error editing image. Please try again.",
+    "imageUploadError": "Error uploading image. Please try again.",
+    "imageUpdatedSuccess": "Prize image updated successfully!",
+    "editedPrizeImageAlt": "Edited prize image",
+    "savingImage": "Saving image...",
+    "saving": "Saving..."
 }

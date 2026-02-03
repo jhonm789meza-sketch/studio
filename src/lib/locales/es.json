@@ -359,5 +359,21 @@
     "deleteAllPastDueGames": "Eliminar Vencidos ({count})",
     "deleteAllPastDueGamesConfirmation": "¿Estás seguro de que deseas eliminar los {count} juegos vencidos? Esta acción es irreversible.",
     "uploadSecondQrImage": "Subir Segunda Imagen QR",
-    "imagePreview2": "Vista Previa Imagen 2"
+    "imagePreview2": "Vista Previa Imagen 2",
+    "editPrizeImage": "Editar Imagen del Premio",
+    "editPrizeImageDescription": "Usa IA para modificar la imagen de tu premio. Describe los cambios que deseas hacer.",
+    "originalImage": "Imagen Original",
+    "editedImage": "Imagen Editada",
+    "describeChanges": "Describe los cambios",
+    "describeChangesPlaceholder": "Ej: 'que el fondo sea una playa soleada', 'añádele un gorro de fiesta'",
+    "generateNewImage": "Generar Nueva Imagen",
+    "generatingImage": "Generando imagen...",
+    "previewWillAppearHere": "La vista previa aparecerá aquí",
+    "saveAndUseImage": "Guardar y Usar esta Imagen",
+    "imageEditingError": "Error al editar la imagen. Por favor, inténtalo de nuevo.",
+    "imageUploadError": "Error al subir la imagen. Por favor, inténtalo de nuevo.",
+    "imageUpdatedSuccess": "¡Imagen del premio actualizada con éxito!",
+    "editedPrizeImageAlt": "Imagen del premio editada",
+    "savingImage": "Guardando imagen...",
+    "saving": "Guardando..."
 }
