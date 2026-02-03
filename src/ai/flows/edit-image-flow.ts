@@ -1,9 +1,9 @@
 'use server';
 
 import {ai} from '@/ai/genkit';
-import {z} from 'genkit/zod';
+import { z } from 'zod';
 
-export const EditImageInputSchema = z.object({
+const EditImageInputSchema = z.object({
   imageDataUri: z
     .string()
     .describe(
@@ -13,7 +13,7 @@ export const EditImageInputSchema = z.object({
 });
 export type EditImageInput = z.infer<typeof EditImageInputSchema>;
 
-export const EditImageOutputSchema = z.object({
+const EditImageOutputSchema = z.object({
   newImageDataUri: z
     .string()
     .describe(
