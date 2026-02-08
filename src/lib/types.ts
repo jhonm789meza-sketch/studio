@@ -70,7 +70,6 @@ export interface Raffle {
     adminId: null | string;
     raffleMode: 'two-digit' | 'three-digit' | 'infinite';
     prizeImageUrl: string;
-    imageGenPrompt: string;
     currencySymbol: string;
     infiniteModeDigits?: number;
     partialWinnerPercentage3?: number;

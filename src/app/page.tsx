@@ -8,7 +8,6 @@ import Image from 'next/image';
 import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { useLanguage } from '@/hooks/use-language';
 import { requestNotificationPermission } from '@/lib/notification';
-import { editImage } from '@/ai/flows/edit-image-flow';
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
@@ -64,7 +63,6 @@ const initialRaffleData: Raffle = {
     adminId: null,
     raffleMode: 'two-digit' as RaffleMode,
     prizeImageUrl: '',
-    imageGenPrompt: '',
     currencySymbol: '$',
     infiniteModeDigits: 0,
     partialWinnerPercentage3: 0,
@@ -214,12 +212,6 @@ const App = () => {
     const [uploadProgress2, setUploadProgress2] = useState<number | null>(null);
     const [imageFile2, setImageFile2] = useState<File | null>(null);
 
-    const [isImageEditDialogOpen, setIsImageEditDialogOpen] = useState(false);
-    const [imageEditPrompt, setImageEditPrompt] = useState('');
-    const [isEditingImage, setIsEditingImage] = useState(false);
-    const [editedImageUrl, setEditedImageUrl] = useState<string | null>(null);
-    const [uploadProgress, setUploadProgress] = useState<number | null>(null);
-    
     const prizeTextareaRef = useRef<HTMLTextAreaElement>(null);
     const isCurrentUserAdmin = !!raffleState.adminId && !!currentAdminId && raffleState.adminId === currentAdminId;
     const raffleMode = raffleState.raffleMode;
@@ -1872,62 +1864,6 @@ const App = () => {
         );
     };
 
-    const handleGenerateEditedImage = async () => {
-        if (!imageEditPrompt || !raffleState.prizeImageUrl) return;
-        setIsEditingImage(true);
-        setEditedImageUrl(null);
-        try {
-            const result = await editImage({
-                imageDataUri: raffleState.prizeImageUrl,
-                prompt: imageEditPrompt,
-            });
-            setEditedImageUrl(result.newImageDataUri);
-        } catch (error) {
-            console.error("Error editing image:", error);
-            showNotification(t('imageEditingError'), 'error');
-        } finally {
-            setIsEditingImage(false);
-        }
-    };
-
-    const handleSaveEditedImage = async () => {
-        if (!editedImageUrl) return;
-        
-        setUploadProgress(0);
-
-        try {
-            const fetchRes = await fetch(editedImageUrl);
-            const blob = await fetchRes.blob();
-            const storageReference = storageRef(storage, `prize_images/${raffleState.raffleRef}_${Date.now()}`);
-            const uploadTask = uploadBytesResumable(storageReference, blob);
-
-            uploadTask.on('state_changed',
-                (snapshot) => {
-                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                    setUploadProgress(progress);
-                },
-                (error) => {
-                    console.error("Upload failed:", error);
-                    showNotification(t('imageUploadError'), 'error');
-                    setUploadProgress(null);
-                },
-                async () => {
-                    const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                    await handleFieldChange('prizeImageUrl', downloadURL);
-                    handleLocalFieldChange('prizeImageUrl', downloadURL);
-                    showNotification(t('imageUpdatedSuccess'), 'success');
-                    setUploadProgress(null);
-                    setIsImageEditDialogOpen(false);
-                }
-            );
-
-        } catch (error) {
-            console.error("Error saving edited image:", error);
-            showNotification(t('imageUploadError'), 'error');
-            setUploadProgress(null);
-        }
-    };
-
 
     const allNumbers = Array.from({ length: totalNumbers }, (_, i) => i);
     
@@ -2000,23 +1936,6 @@ const App = () => {
                                 <Image src={raffleState.prizeImageUrl} alt={t('rafflePrizeAlt')} layout="fill" objectFit="contain" unoptimized key={raffleState.prizeImageUrl}/>
                             ) : (
                                 <span className="text-gray-500">{t('noPrizeImage')}</span>
-                            )}
-                            {isCurrentUserAdmin && !raffleState.isDetailsConfirmed && raffleState.prizeImageUrl && (
-                                <div className="absolute top-2 right-2">
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="icon"
-                                        className="bg-black/50 text-white hover:bg-black/70 border-white/50"
-                                        onClick={() => {
-                                            setEditedImageUrl(null);
-                                            setImageEditPrompt('');
-                                            setIsImageEditDialogOpen(true);
-                                        }}
-                                    >
-                                        <Wand2 className="h-5 w-5" />
-                                    </Button>
-                                </div>
                             )}
                         </div>
 
@@ -4399,59 +4318,6 @@ const App = () => {
                             {t('save')}
                         </Button>
                     </DialogFooter>
-                </DialogContent>
-            </Dialog>
-
-            <Dialog open={isImageEditDialogOpen} onOpenChange={setIsImageEditDialogOpen}>
-                <DialogContent className="sm:max-w-4xl">
-                    <DialogHeader>
-                        <DialogTitle>{t('editPrizeImage')}</DialogTitle>
-                        <DialogDescription>{t('editPrizeImageDescription')}</DialogDescription>
-                    </DialogHeader>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
-                        <div className="flex flex-col gap-4">
-                            <p className="font-medium text-sm text-center">{t('originalImage')}</p>
-                            <div className="aspect-video relative rounded-lg overflow-hidden border">
-                                <Image src={raffleState.prizeImageUrl} alt={t('rafflePrizeAlt')} layout="fill" objectFit="contain" unoptimized />
-                            </div>
-                            <Label htmlFor="edit-prompt">{t('describeChanges')}</Label>
-                            <Textarea
-                                id="edit-prompt"
-                                placeholder={t('describeChangesPlaceholder')}
-                                value={imageEditPrompt}
-                                onChange={(e) => setImageEditPrompt(e.target.value)}
-                                rows={3}
-                            />
-                            <Button onClick={handleGenerateEditedImage} disabled={isEditingImage || !imageEditPrompt}>
-                                {isEditingImage && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                {t('generateNewImage')}
-                            </Button>
-                        </div>
-                        <div className="flex flex-col gap-4">
-                            <p className="font-medium text-sm text-center">{t('editedImage')}</p>
-                            <div className="aspect-video relative rounded-lg overflow-hidden border bg-slate-100 flex items-center justify-center">
-                                {isEditingImage ? (
-                                    <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                                        <Loader2 className="h-8 w-8 animate-spin" />
-                                        <p>{t('generatingImage')}</p>
-                                    </div>
-                                ) : editedImageUrl ? (
-                                    <Image src={editedImageUrl} alt={t('editedPrizeImageAlt')} layout="fill" objectFit="contain" unoptimized />
-                                ) : (
-                                    <div className="text-muted-foreground">{t('previewWillAppearHere')}</div>
-                                )}
-                            </div>
-                            {uploadProgress !== null && (
-                                <div>
-                                    <Label>{t('savingImage')}</Label>
-                                    <Progress value={uploadProgress} className="w-full mt-1" />
-                                </div>
-                            )}
-                            <Button onClick={handleSaveEditedImage} disabled={!editedImageUrl || uploadProgress !== null}>
-                                {uploadProgress !== null ? t('saving') : t('saveAndUseImage')}
-                            </Button>
-                        </div>
-                    </div>
                 </DialogContent>
             </Dialog>
 
