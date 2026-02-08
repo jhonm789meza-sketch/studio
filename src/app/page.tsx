@@ -12,7 +12,7 @@ import { requestNotificationPermission } from '@/lib/notification';
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House, Clock as ClockIcon, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages, Trophy, Trash2, Copy, Shield, LogOut, Eye, EyeOff, Gamepad2, Phone, TrendingUp, Globe, Landmark, RefreshCcw, LockKeyhole, Package } from 'lucide-react';
+import { Menu, Award, Lock, House, Clock as ClockIcon, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages, Trophy, Trash2, Copy, Shield, LogOut, Eye, EyeOff, Gamepad2, Phone, TrendingUp, Globe, Landmark, RefreshCcw, LockKeyhole, Package, Camera } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -213,6 +213,12 @@ const App = () => {
     const [uploadProgress2, setUploadProgress2] = useState<number | null>(null);
     const [imageFile2, setImageFile2] = useState<File | null>(null);
     const [isPrizeImageModalOpen, setIsPrizeImageModalOpen] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+    const [isTakePhotoModalOpen, setIsTakePhotoModalOpen] = useState(false);
+    const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
+    const [stream, setStream] = useState<MediaStream | null>(null);
+    const videoRef = useRef<HTMLVideoElement>(null);
+    const canvasRef = useRef<HTMLCanvasElement>(null);
 
     const prizeTextareaRef = useRef<HTMLTextAreaElement>(null);
     const isCurrentUserAdmin = !!raffleState.adminId && !!currentAdminId && raffleState.adminId === currentAdminId;
@@ -463,6 +469,31 @@ const App = () => {
         }
     };
 
+    useEffect(() => {
+        const getCameraPermission = async () => {
+            if (!isTakePhotoModalOpen) return;
+            try {
+                const mediaStream = await navigator.mediaDevices.getUserMedia({ video: true });
+                setStream(mediaStream);
+                if (videoRef.current) {
+                    videoRef.current.srcObject = mediaStream;
+                }
+                setHasCameraPermission(true);
+            } catch (error) {
+                console.error("Error accessing camera:", error);
+                setHasCameraPermission(false);
+                showNotification(t('cameraPermissionDenied'), 'error');
+            }
+        };
+
+        getCameraPermission();
+
+        return () => {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+        };
+    }, [isTakePhotoModalOpen]);
 
     // Main initialization and URL handling effect
     useEffect(() => {
@@ -565,6 +596,59 @@ const App = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+    const handleCloseCamera = () => {
+        setIsTakePhotoModalOpen(false);
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+            setStream(null);
+        }
+    };
+
+    const handleCaptureAndUploadPhoto = () => {
+        if (!videoRef.current || !canvasRef.current || !hasCameraPermission) return;
+
+        const video = videoRef.current;
+        const canvas = canvasRef.current;
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const context = canvas.getContext('2d');
+        if (!context) return;
+
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        canvas.toBlob(async (blob) => {
+            if (!blob) {
+                showNotification(t('errorCapturingPhoto'), 'error');
+                return;
+            }
+            if (!raffleState.raffleRef) return;
+            
+            handleCloseCamera();
+            setUploadProgress(0);
+
+            const storageReference = storageRef(storage, `prize_images/${raffleState.raffleRef}_${Date.now()}`);
+            const uploadTask = uploadBytesResumable(storageReference, blob);
+
+            uploadTask.on('state_changed',
+                (snapshot) => {
+                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                    setUploadProgress(progress);
+                },
+                (error) => {
+                    console.error("Upload failed:", error);
+                    showNotification(t('errorUploadingImage'), 'error');
+                    setUploadProgress(null);
+                },
+                async () => {
+                    const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                    await handleFieldChange('prizeImageUrl', downloadURL);
+                    showNotification(t('imageUploadedSuccess'), 'success');
+                    setUploadProgress(null);
+                }
+            );
+
+        }, 'image/jpeg', 0.95);
+    };
 
     const showNotification = (message: string, type = 'info') => {
         setNotification({ show: true, message, type });
@@ -2020,13 +2104,7 @@ const App = () => {
                                 <div>
                                     <Label>{t('prizeImage')}</Label>
                                     <div className="space-y-2 mt-1">
-                                        <div className="flex gap-2">
-                                            <a href="https://www.google.com/imghp" target="_blank" rel="noopener noreferrer" className="flex-shrink-0">
-                                                <Button type="button" variant="outline">
-                                                    <Search className="h-4 w-4 mr-2" />
-                                                    {t('searchOnGoogle')}
-                                                </Button>
-                                            </a>
+                                        <div className="flex flex-wrap gap-2">
                                             <Input
                                                 id="prize-image-url-input"
                                                 type="text"
@@ -2035,9 +2113,20 @@ const App = () => {
                                                 onBlur={(e) => handleFieldChange('prizeImageUrl', e.target.value)}
                                                 placeholder={t('pasteImageLinkPlaceholder')}
                                                 disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
-                                                className="w-full"
+                                                className="flex-grow"
                                             />
+                                            <a href="https://www.google.com/imghp" target="_blank" rel="noopener noreferrer">
+                                                <Button type="button" variant="outline" className="w-full sm:w-auto">
+                                                    <Search className="h-4 w-4 mr-2" />
+                                                    {t('searchOnGoogle')}
+                                                </Button>
+                                            </a>
+                                            <Button type="button" variant="outline" onClick={() => setIsTakePhotoModalOpen(true)} className="w-full sm:w-auto">
+                                                <Camera className="h-4 w-4 mr-2" />
+                                                {t('takePhoto')}
+                                            </Button>
                                         </div>
+                                         {uploadProgress !== null && <Progress value={uploadProgress} className="w-full mt-2" />}
                                     </div>
                                 </div>
                            )}
@@ -4340,6 +4429,30 @@ const App = () => {
                             unoptimized
                         />
                     )}
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={isTakePhotoModalOpen} onOpenChange={handleCloseCamera}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{t('takePrizePhoto')}</DialogTitle>
+                    </DialogHeader>
+                    <div className="relative">
+                        <video ref={videoRef} className="w-full aspect-video rounded-md bg-black" autoPlay muted playsInline />
+                        <canvas ref={canvasRef} className="hidden" />
+                         {hasCameraPermission === false && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/50 text-white p-4 text-center rounded-md">
+                                <p>{t('cameraPermissionDenied')}</p>
+                            </div>
+                        )}
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={handleCloseCamera}>{t('cancel')}</Button>
+                        <Button onClick={handleCaptureAndUploadPhoto} disabled={!hasCameraPermission || uploadProgress !== null}>
+                            {uploadProgress !== null ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Camera className="mr-2 h-4 w-4" />}
+                            {t('capture')}
+                        </Button>
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
 

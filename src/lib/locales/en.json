@@ -359,5 +359,12 @@
     "deleteAllPastDueGames": "Delete All Past Due ({count})",
     "deleteAllPastDueGamesConfirmation": "Are you sure you want to delete the {count} past due games? This action is irreversible.",
     "uploadSecondQrImage": "Upload Second QR Image",
-    "imagePreview2": "Image Preview 2"
+    "imagePreview2": "Image Preview 2",
+    "takePhoto": "Take Photo",
+    "takePrizePhoto": "Take Prize Photo",
+    "capture": "Capture",
+    "cameraPermissionDenied": "Camera permission denied. Check your browser settings.",
+    "errorCapturingPhoto": "Error capturing photo.",
+    "errorUploadingImage": "Error uploading image.",
+    "imageUploadedSuccess": "Image uploaded and saved successfully."
 }

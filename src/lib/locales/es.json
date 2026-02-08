@@ -359,5 +359,12 @@
     "deleteAllPastDueGames": "Eliminar Vencidos ({count})",
     "deleteAllPastDueGamesConfirmation": "¿Estás seguro de que deseas eliminar los {count} juegos vencidos? Esta acción es irreversible.",
     "uploadSecondQrImage": "Subir Segunda Imagen QR",
-    "imagePreview2": "Vista Previa Imagen 2"
+    "imagePreview2": "Vista Previa Imagen 2",
+    "takePhoto": "Tomar Foto",
+    "takePrizePhoto": "Tomar Foto del Premio",
+    "capture": "Capturar",
+    "cameraPermissionDenied": "Permiso de cámara denegado. Revisa la configuración de tu navegador.",
+    "errorCapturingPhoto": "Error al capturar la foto.",
+    "errorUploadingImage": "Error al subir la imagen.",
+    "imageUploadedSuccess": "Imagen subida y guardada con éxito."
 }
