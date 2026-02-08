@@ -211,6 +211,7 @@ const App = () => {
     const [paymentQrImageUrl2, setPaymentQrImageUrl2] = useState('');
     const [uploadProgress2, setUploadProgress2] = useState<number | null>(null);
     const [imageFile2, setImageFile2] = useState<File | null>(null);
+    const [isPrizeImageModalOpen, setIsPrizeImageModalOpen] = useState(false);
 
     const prizeTextareaRef = useRef<HTMLTextAreaElement>(null);
     const isCurrentUserAdmin = !!raffleState.adminId && !!currentAdminId && raffleState.adminId === currentAdminId;
@@ -1933,7 +1934,9 @@ const App = () => {
                         
                         <div className="mb-6 rounded-lg overflow-hidden relative aspect-video max-w-2xl mx-auto shadow-lg bg-gray-200 flex items-center justify-center">
                              {raffleState.prizeImageUrl ? (
-                                <Image src={raffleState.prizeImageUrl} alt={t('rafflePrizeAlt')} layout="fill" objectFit="contain" unoptimized key={raffleState.prizeImageUrl}/>
+                                <button onClick={() => setIsPrizeImageModalOpen(true)} className="w-full h-full flex items-center justify-center cursor-pointer" aria-label={t('rafflePrizeAlt')}>
+                                    <Image src={raffleState.prizeImageUrl} alt={t('rafflePrizeAlt')} layout="fill" objectFit="contain" unoptimized key={raffleState.prizeImageUrl}/>
+                                </button>
                             ) : (
                                 <span className="text-gray-500">{t('noPrizeImage')}</span>
                             )}
@@ -4318,6 +4321,24 @@ const App = () => {
                             {t('save')}
                         </Button>
                     </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={isPrizeImageModalOpen} onOpenChange={setIsPrizeImageModalOpen}>
+                <DialogContent className="max-w-4xl w-auto bg-transparent border-none shadow-none p-2">
+                    <DialogHeader>
+                        <DialogTitle className="sr-only">{raffleState.prize || t('rafflePrizeAlt')}</DialogTitle>
+                    </DialogHeader>
+                    {raffleState.prizeImageUrl && (
+                        <Image
+                            src={raffleState.prizeImageUrl}
+                            alt={raffleState.prize || t('rafflePrizeAlt')}
+                            width={1920}
+                            height={1080}
+                            className="rounded-lg object-contain max-h-[90vh] w-auto h-auto"
+                            unoptimized
+                        />
+                    )}
                 </DialogContent>
             </Dialog>
 
