@@ -367,6 +367,7 @@
     "errorCapturingPhoto": "Error capturing photo.",
     "errorUploadingImage": "Error uploading image.",
     "imageUploadedSuccess": "Image uploaded and saved successfully.",
+    "imageUploadedAndCopied": "Image uploaded successfully. The link has been copied to your clipboard.",
     "confirmPhoto": "Confirm Photo",
     "capturedPrizePhotoAlt": "Captured prize photo",
     "retakePhoto": "Retake",

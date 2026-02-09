@@ -367,6 +367,7 @@
     "errorCapturingPhoto": "Error al capturar la foto.",
     "errorUploadingImage": "Error al subir la imagen.",
     "imageUploadedSuccess": "Imagen subida y guardada con éxito.",
+    "imageUploadedAndCopied": "Imagen subida con éxito. El enlace se ha copiado a tu portapapeles.",
     "confirmPhoto": "Confirmar Foto",
     "capturedPrizePhotoAlt": "Foto del premio capturada",
     "retakePhoto": "Tomar de Nuevo",

@@ -673,8 +673,17 @@ const App = () => {
             },
             async () => {
                 const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                
                 await handleFieldChange('prizeImageUrl', downloadURL);
-                showNotification(t('imageUploadedSuccess'), 'success');
+
+                try {
+                    await navigator.clipboard.writeText(downloadURL);
+                    showNotification(t('imageUploadedAndCopied'), 'success');
+                } catch (err) {
+                    console.error('Failed to copy link:', err);
+                    showNotification(t('imageUploadedSuccess'), 'success'); // Fallback message
+                }
+
                 setUploadProgress(null);
                 setCapturedImage(null);
             }
