@@ -4499,7 +4499,7 @@ const App = () => {
                             <>
                                 <Button variant="outline" onClick={handleRetake}>{t('retakePhoto')}</Button>
                                 <Button onClick={handleSetAsPrizePhoto} disabled={uploadProgress !== null}>
-                                    {uploadProgress !== null ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
+                                    {uploadProgress !== null ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LinkIcon className="mr-2 h-4 w-4" />}
                                     {t('setAsPrizePhoto')}
                                 </Button>
                             </>
@@ -4525,6 +4525,7 @@ const App = () => {
 };
 
 export default App;
+
 
 
 

@@ -371,6 +371,6 @@
     "confirmPhoto": "Confirm Photo",
     "capturedPrizePhotoAlt": "Captured prize photo",
     "retakePhoto": "Retake",
-    "setAsPrizePhoto": "Use as Prize Photo",
+    "setAsPrizePhoto": "Generate Image URL",
     "switchCamera": "Switch Camera"
 }
