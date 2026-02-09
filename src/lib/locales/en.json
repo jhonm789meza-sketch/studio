@@ -366,5 +366,10 @@
     "cameraPermissionDenied": "Camera permission denied. Check your browser settings.",
     "errorCapturingPhoto": "Error capturing photo.",
     "errorUploadingImage": "Error uploading image.",
-    "imageUploadedSuccess": "Image uploaded and saved successfully."
+    "imageUploadedSuccess": "Image uploaded and saved successfully.",
+    "confirmPhoto": "Confirm Photo",
+    "capturedPrizePhotoAlt": "Captured prize photo",
+    "retakePhoto": "Retake",
+    "setAsPrizePhoto": "Use as Prize Photo",
+    "switchCamera": "Switch Camera"
 }

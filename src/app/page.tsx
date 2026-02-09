@@ -12,7 +12,7 @@ import { requestNotificationPermission } from '@/lib/notification';
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House, Clock as ClockIcon, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages, Trophy, Trash2, Copy, Shield, LogOut, Eye, EyeOff, Gamepad2, Phone, TrendingUp, Globe, Landmark, RefreshCcw, LockKeyhole, Package, Camera } from 'lucide-react';
+import { Menu, Award, Lock, House, Clock as ClockIcon, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages, Trophy, Trash2, Copy, Shield, LogOut, Eye, EyeOff, Gamepad2, Phone, TrendingUp, Globe, Landmark, RefreshCcw, LockKeyhole, Package, Camera, Check } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -219,6 +219,9 @@ const App = () => {
     const [stream, setStream] = useState<MediaStream | null>(null);
     const videoRef = useRef<HTMLVideoElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
+
+    const [capturedImage, setCapturedImage] = useState<string | null>(null);
+    const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
 
     const prizeTextareaRef = useRef<HTMLTextAreaElement>(null);
     const isCurrentUserAdmin = !!raffleState.adminId && !!currentAdminId && raffleState.adminId === currentAdminId;
@@ -470,10 +473,28 @@ const App = () => {
     };
 
     useEffect(() => {
-        const getCameraPermission = async () => {
-            if (!isTakePhotoModalOpen) return;
+        // This effect manages the camera stream
+        if (!isTakePhotoModalOpen) {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                setStream(null);
+            }
+            setCapturedImage(null); // Also reset captured image on close
+            return;
+        }
+
+        let mediaStream: MediaStream | null = null;
+        
+        const getCamera = async () => {
+            // Don't start a new stream if we're just confirming a captured image
+            if (capturedImage) {
+                return;
+            }
+
             try {
-                const mediaStream = await navigator.mediaDevices.getUserMedia({ video: true });
+                mediaStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode }
+                });
                 setStream(mediaStream);
                 if (videoRef.current) {
                     videoRef.current.srcObject = mediaStream;
@@ -486,14 +507,14 @@ const App = () => {
             }
         };
 
-        getCameraPermission();
+        getCamera();
 
         return () => {
-            if (stream) {
-                stream.getTracks().forEach(track => track.stop());
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(track => track.stop());
             }
         };
-    }, [isTakePhotoModalOpen]);
+    }, [isTakePhotoModalOpen, facingMode, capturedImage]); // Rerun when any of these change
 
     // Main initialization and URL handling effect
     useEffect(() => {
@@ -598,13 +619,17 @@ const App = () => {
 
     const handleCloseCamera = () => {
         setIsTakePhotoModalOpen(false);
-        if (stream) {
-            stream.getTracks().forEach(track => track.stop());
-            setStream(null);
-        }
     };
 
-    const handleCaptureAndUploadPhoto = () => {
+    const handleSwitchCamera = () => {
+        setFacingMode(prev => prev === 'user' ? 'environment' : 'user');
+    };
+
+    const handleRetake = () => {
+        setCapturedImage(null);
+    };
+
+    const handleCapture = () => {
         if (!videoRef.current || !canvasRef.current || !hasCameraPermission) return;
 
         const video = videoRef.current;
@@ -615,40 +640,47 @@ const App = () => {
         if (!context) return;
 
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+        setCapturedImage(dataUrl);
 
-        canvas.toBlob(async (blob) => {
-            if (!blob) {
-                showNotification(t('errorCapturingPhoto'), 'error');
-                return;
-            }
-            if (!raffleState.raffleRef) return;
-            
-            handleCloseCamera();
-            setUploadProgress(0);
-
-            const storageReference = storageRef(storage, `prize_images/${raffleState.raffleRef}_${Date.now()}`);
-            const uploadTask = uploadBytesResumable(storageReference, blob);
-
-            uploadTask.on('state_changed',
-                (snapshot) => {
-                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                    setUploadProgress(progress);
-                },
-                (error) => {
-                    console.error("Upload failed:", error);
-                    showNotification(t('errorUploadingImage'), 'error');
-                    setUploadProgress(null);
-                },
-                async () => {
-                    const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                    await handleFieldChange('prizeImageUrl', downloadURL);
-                    showNotification(t('imageUploadedSuccess'), 'success');
-                    setUploadProgress(null);
-                }
-            );
-
-        }, 'image/jpeg', 0.95);
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+            setStream(null);
+        }
     };
+    
+    const handleSetAsPrizePhoto = async () => {
+        if (!capturedImage || !raffleState.raffleRef) return;
+
+        const blob = await (await fetch(capturedImage)).blob();
+        
+        setIsTakePhotoModalOpen(false); // Close the dialog
+        setUploadProgress(0);
+
+        const storageReference = storageRef(storage, `prize_images/${raffleState.raffleRef}_${Date.now()}`);
+        const uploadTask = uploadBytesResumable(storageReference, blob);
+
+        uploadTask.on('state_changed',
+            (snapshot) => {
+                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                setUploadProgress(progress);
+            },
+            (error) => {
+                console.error("Upload failed:", error);
+                showNotification(t('errorUploadingImage'), 'error');
+                setUploadProgress(null);
+                setCapturedImage(null);
+            },
+            async () => {
+                const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                await handleFieldChange('prizeImageUrl', downloadURL);
+                showNotification(t('imageUploadedSuccess'), 'success');
+                setUploadProgress(null);
+                setCapturedImage(null);
+            }
+        );
+    };
+
 
     const showNotification = (message: string, type = 'info') => {
         setNotification({ show: true, message, type });
@@ -4435,23 +4467,45 @@ const App = () => {
             <Dialog open={isTakePhotoModalOpen} onOpenChange={handleCloseCamera}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>{t('takePrizePhoto')}</DialogTitle>
+                        <DialogTitle>{capturedImage ? t('confirmPhoto') : t('takePrizePhoto')}</DialogTitle>
                     </DialogHeader>
                     <div className="relative">
-                        <video ref={videoRef} className="w-full aspect-video rounded-md bg-black" autoPlay muted playsInline />
-                        <canvas ref={canvasRef} className="hidden" />
-                         {hasCameraPermission === false && (
-                            <div className="absolute inset-0 flex items-center justify-center bg-black/50 text-white p-4 text-center rounded-md">
-                                <p>{t('cameraPermissionDenied')}</p>
-                            </div>
+                        {capturedImage ? (
+                             <Image src={capturedImage} alt={t('capturedPrizePhotoAlt')} width={400} height={300} className="w-full h-auto rounded-md" />
+                        ) : (
+                            <>
+                                <video ref={videoRef} className="w-full aspect-video rounded-md bg-black" autoPlay muted playsInline />
+                                <canvas ref={canvasRef} className="hidden" />
+                                {hasCameraPermission === false && (
+                                    <div className="absolute inset-0 flex items-center justify-center bg-black/50 text-white p-4 text-center rounded-md">
+                                        <p>{t('cameraPermissionDenied')}</p>
+                                    </div>
+                                )}
+                            </>
                         )}
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={handleCloseCamera}>{t('cancel')}</Button>
-                        <Button onClick={handleCaptureAndUploadPhoto} disabled={!hasCameraPermission || uploadProgress !== null}>
-                            {uploadProgress !== null ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Camera className="mr-2 h-4 w-4" />}
-                            {t('capture')}
-                        </Button>
+                        {capturedImage ? (
+                            <>
+                                <Button variant="outline" onClick={handleRetake}>{t('retakePhoto')}</Button>
+                                <Button onClick={handleSetAsPrizePhoto} disabled={uploadProgress !== null}>
+                                    {uploadProgress !== null ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
+                                    {t('setAsPrizePhoto')}
+                                </Button>
+                            </>
+                        ) : (
+                            <>
+                                <Button variant="outline" onClick={handleCloseCamera}>{t('cancel')}</Button>
+                                <Button onClick={handleSwitchCamera} disabled={!hasCameraPermission}>
+                                    <RefreshCcw className="mr-2 h-4 w-4" />
+                                    {t('switchCamera')}
+                                </Button>
+                                <Button onClick={handleCapture} disabled={!hasCameraPermission || uploadProgress !== null}>
+                                    <Camera className="mr-2 h-4 w-4" />
+                                    {t('capture')}
+                                </Button>
+                            </>
+                        )}
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
@@ -4461,3 +4515,4 @@ const App = () => {
 };
 
 export default App;
+

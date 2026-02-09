@@ -366,5 +366,10 @@
     "cameraPermissionDenied": "Permiso de cámara denegado. Revisa la configuración de tu navegador.",
     "errorCapturingPhoto": "Error al capturar la foto.",
     "errorUploadingImage": "Error al subir la imagen.",
-    "imageUploadedSuccess": "Imagen subida y guardada con éxito."
+    "imageUploadedSuccess": "Imagen subida y guardada con éxito.",
+    "confirmPhoto": "Confirmar Foto",
+    "capturedPrizePhotoAlt": "Foto del premio capturada",
+    "retakePhoto": "Tomar de Nuevo",
+    "setAsPrizePhoto": "Usar como Foto del Premio",
+    "switchCamera": "Cambiar Cámara"
 }
