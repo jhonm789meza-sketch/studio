@@ -674,6 +674,7 @@ const App = () => {
             async () => {
                 const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
                 
+                handleLocalFieldChange('prizeImageUrl', downloadURL);
                 await handleFieldChange('prizeImageUrl', downloadURL);
 
                 try {
@@ -4524,4 +4525,5 @@ const App = () => {
 };
 
 export default App;
+
 
