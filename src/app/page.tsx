@@ -221,6 +221,7 @@ const App = () => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
     const [capturedImage, setCapturedImage] = useState<string | null>(null);
+    const [justUploadedUrl, setJustUploadedUrl] = useState<string | null>(null);
     const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
 
     const prizeTextareaRef = useRef<HTMLTextAreaElement>(null);
@@ -480,6 +481,7 @@ const App = () => {
                 setStream(null);
             }
             setCapturedImage(null); // Also reset captured image on close
+            setJustUploadedUrl(null); // Reset the new state
             return;
         }
 
@@ -627,6 +629,7 @@ const App = () => {
 
     const handleRetake = () => {
         setCapturedImage(null);
+        setJustUploadedUrl(null);
     };
 
     const handleCapture = () => {
@@ -642,6 +645,7 @@ const App = () => {
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
         const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
         setCapturedImage(dataUrl);
+        setJustUploadedUrl(null);
 
         if (stream) {
             stream.getTracks().forEach(track => track.stop());
@@ -654,7 +658,6 @@ const App = () => {
 
         const blob = await (await fetch(capturedImage)).blob();
         
-        setIsTakePhotoModalOpen(false); // Close the dialog
         setUploadProgress(0);
 
         const storageReference = storageRef(storage, `prize_images/${raffleState.raffleRef}_${Date.now()}`);
@@ -669,13 +672,14 @@ const App = () => {
                 console.error("Upload failed:", error);
                 showNotification(t('errorUploadingImage'), 'error');
                 setUploadProgress(null);
-                setCapturedImage(null);
             },
             async () => {
                 const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
                 
                 handleLocalFieldChange('prizeImageUrl', downloadURL);
                 await handleFieldChange('prizeImageUrl', downloadURL);
+
+                setJustUploadedUrl(downloadURL);
 
                 try {
                     await navigator.clipboard.writeText(downloadURL);
@@ -686,9 +690,19 @@ const App = () => {
                 }
 
                 setUploadProgress(null);
-                setCapturedImage(null);
             }
         );
+    };
+
+    const handleCopyUrl = () => {
+        if (!justUploadedUrl) return;
+        try {
+            navigator.clipboard.writeText(justUploadedUrl);
+            showNotification(t('linkCopied'), 'success');
+        } catch (err) {
+            console.error('Failed to copy link:', err);
+            showNotification(t('errorCopyingReference'), 'error');
+        }
     };
 
 
@@ -4498,9 +4512,13 @@ const App = () => {
                         {capturedImage ? (
                             <>
                                 <Button variant="outline" onClick={handleRetake}>{t('retakePhoto')}</Button>
-                                <Button onClick={handleSetAsPrizePhoto} disabled={uploadProgress !== null}>
+                                <Button onClick={handleSetAsPrizePhoto} disabled={uploadProgress !== null || !!justUploadedUrl}>
                                     {uploadProgress !== null ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LinkIcon className="mr-2 h-4 w-4" />}
                                     {t('setAsPrizePhoto')}
+                                </Button>
+                                <Button onClick={handleCopyUrl} disabled={!justUploadedUrl}>
+                                    <Copy className="mr-2 h-4 w-4" />
+                                    {t('copyUrl')}
                                 </Button>
                             </>
                         ) : (
@@ -4525,6 +4543,7 @@ const App = () => {
 };
 
 export default App;
+
 
 
 

@@ -372,5 +372,6 @@
     "capturedPrizePhotoAlt": "Captured prize photo",
     "retakePhoto": "Retake",
     "setAsPrizePhoto": "Generate Image URL",
-    "switchCamera": "Switch Camera"
+    "switchCamera": "Switch Camera",
+    "copyUrl": "Copy URL"
 }

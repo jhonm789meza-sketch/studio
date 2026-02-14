@@ -372,5 +372,6 @@
     "capturedPrizePhotoAlt": "Foto del premio capturada",
     "retakePhoto": "Tomar de Nuevo",
     "setAsPrizePhoto": "Generar Enlace de Imagen",
-    "switchCamera": "Cambiar Cámara"
+    "switchCamera": "Cambiar Cámara",
+    "copyUrl": "Copiar URL"
 }
