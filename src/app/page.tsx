@@ -651,7 +651,6 @@ const App = () => {
     
     const handleSetAsPrizePhoto = async () => {
         if (!capturedImage || !raffleState.raffleRef) return;
-        handleRetake()
         const blob = await (await fetch(capturedImage)).blob();
         
         setUploadProgress(0);
@@ -668,6 +667,7 @@ const App = () => {
                 console.error("Upload failed:", error);
                 showNotification(t('errorUploadingImage'), 'error');
                 setUploadProgress(null);
+                setIsTakePhotoModalOpen(false);
             },
             async () => {
                 const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
@@ -2063,12 +2063,13 @@ const App = () => {
                                 </button>
                             ) : (
                                 <div className="flex flex-col items-center gap-2">
-                                    <span className="text-gray-500">{t('noPrizeImage')}</span>
-                                    {isCurrentUserAdmin && !raffleState.isDetailsConfirmed && (
+                                    {isCurrentUserAdmin && !raffleState.isDetailsConfirmed ? (
                                         <Button type="button" variant="outline" onClick={() => setIsTakePhotoModalOpen(true)}>
                                             <Camera className="h-4 w-4 mr-2" />
                                             {t('takePhoto')}
                                         </Button>
+                                    ) : (
+                                        <span className="text-gray-500">{t('noPrizeImage')}</span>
                                     )}
                                 </div>
                             )}
@@ -4541,4 +4542,5 @@ export default App;
 
 
 
+    
     
