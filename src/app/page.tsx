@@ -4511,7 +4511,7 @@ const App = () => {
                     <DialogFooter>
                         {capturedImage ? (
                             <>
-                                <Button variant="outline" onClick={handleRetake}>{t('retakePhoto')}</Button>
+                                <Button variant="outline" onClick={handleRetake} disabled={uploadProgress !== null}>{t('retakePhoto')}</Button>
                                 <Button onClick={handleSetAsPrizePhoto} disabled={uploadProgress !== null || !!justUploadedUrl}>
                                     {uploadProgress !== null ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LinkIcon className="mr-2 h-4 w-4" />}
                                     {t('setAsPrizePhoto')}
@@ -4543,6 +4543,7 @@ const App = () => {
 };
 
 export default App;
+
 
 
 
