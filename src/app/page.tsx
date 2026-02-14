@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect, useRef, useTransition } from 'react';
 import jsPDF from 'jspdf';
@@ -627,6 +626,7 @@ const App = () => {
 
     const handleRetake = () => {
         setCapturedImage(null);
+        setUploadProgress(null);
     };
 
     const handleCapture = () => {
@@ -651,7 +651,7 @@ const App = () => {
     
     const handleSetAsPrizePhoto = async () => {
         if (!capturedImage || !raffleState.raffleRef) return;
-
+        handleRetake()
         const blob = await (await fetch(capturedImage)).blob();
         
         setUploadProgress(0);
@@ -682,8 +682,7 @@ const App = () => {
                     console.error('Failed to copy link:', err);
                     showNotification(t('imageUploadedSuccess'), 'success'); // Fallback message
                 }
-
-                setUploadProgress(null);
+                
                 setIsTakePhotoModalOpen(false);
             }
         );
@@ -2063,7 +2062,15 @@ const App = () => {
                                     <Image src={raffleState.prizeImageUrl} alt={t('rafflePrizeAlt')} layout="fill" objectFit="contain" unoptimized key={raffleState.prizeImageUrl}/>
                                 </button>
                             ) : (
-                                <span className="text-gray-500">{t('noPrizeImage')}</span>
+                                <div className="flex flex-col items-center gap-2">
+                                    <span className="text-gray-500">{t('noPrizeImage')}</span>
+                                    {isCurrentUserAdmin && !raffleState.isDetailsConfirmed && (
+                                        <Button type="button" variant="outline" onClick={() => setIsTakePhotoModalOpen(true)}>
+                                            <Camera className="h-4 w-4 mr-2" />
+                                            {t('takePhoto')}
+                                        </Button>
+                                    )}
+                                </div>
                             )}
                         </div>
 
@@ -2161,10 +2168,6 @@ const App = () => {
                                                     {t('searchOnGoogle')}
                                                 </Button>
                                             </a>
-                                            <Button type="button" variant="outline" onClick={() => setIsTakePhotoModalOpen(true)} className="w-full sm:w-auto">
-                                                <Camera className="h-4 w-4 mr-2" />
-                                                {t('takePhoto')}
-                                            </Button>
                                         </div>
                                          {uploadProgress !== null && <Progress value={uploadProgress} className="w-full mt-2" />}
                                     </div>
@@ -4491,13 +4494,19 @@ const App = () => {
                                 )}
                             </>
                         )}
+                         {uploadProgress !== null && (
+                            <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center rounded-md">
+                                <Loader2 className="h-8 w-8 animate-spin text-white mb-2" />
+                                <Progress value={uploadProgress} className="w-1/2" />
+                            </div>
+                        )}
                     </div>
                     <DialogFooter>
                         {capturedImage ? (
                             <>
                                 <Button variant="outline" onClick={handleRetake} disabled={uploadProgress !== null}>{t('retakePhoto')}</Button>
                                 <Button onClick={handleSetAsPrizePhoto} disabled={uploadProgress !== null}>
-                                    {uploadProgress !== null ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LinkIcon className="mr-2 h-4 w-4" />}
+                                    <LinkIcon className="mr-2 h-4 w-4" />
                                     {t('setAsPrizePhoto')}
                                 </Button>
                             </>
