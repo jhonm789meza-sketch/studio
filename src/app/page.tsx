@@ -652,7 +652,6 @@ const App = () => {
     const handleSetAsPrizePhoto = async () => {
         if (!capturedImage || !raffleState.raffleRef) return;
         
-        // Disable retake button while processing to avoid race conditions
         const retakeButton = document.getElementById('retake-photo-btn');
         if (retakeButton) retakeButton.setAttribute('disabled', 'true');
 
@@ -676,23 +675,27 @@ const App = () => {
                 setIsTakePhotoModalOpen(false);
             },
             async () => {
-                const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                
-                handleLocalFieldChange('prizeImageUrl', downloadURL);
-                await handleFieldChange('prizeImageUrl', downloadURL);
-
                 try {
-                    await navigator.clipboard.writeText(downloadURL);
-                    showNotification(t('imageUploadedAndCopied'), 'success');
-                } catch (err) {
-                    console.error('Failed to copy link:', err);
-                    showNotification(t('imageUploadedSuccess'), 'success'); // Fallback message
+                    const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                    
+                    handleLocalFieldChange('prizeImageUrl', downloadURL);
+                    await handleFieldChange('prizeImageUrl', downloadURL);
+
+                    try {
+                        await navigator.clipboard.writeText(downloadURL);
+                        showNotification(t('imageUploadedAndCopied'), 'success');
+                    } catch (err) {
+                        console.error('Failed to copy link:', err);
+                        showNotification(t('imageUploadedSuccess'), 'success');
+                    }
+                } catch (error) {
+                     console.error("Upload completion failed:", error);
+                    showNotification(t('errorUploadingImage'), 'error');
+                } finally {
+                    setIsTakePhotoModalOpen(false);
+                    setCapturedImage(null);
+                    setUploadProgress(null);
                 }
-                
-                // This was the fix, closing the modal after success
-                setIsTakePhotoModalOpen(false);
-                setCapturedImage(null);
-                setUploadProgress(null);
             }
         );
     };
@@ -717,14 +720,22 @@ const App = () => {
                 setUploadProgress(null);
             },
             async () => {
-                const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                
-                handleLocalFieldChange('prizeImageUrl', downloadURL);
-                await handleFieldChange('prizeImageUrl', downloadURL);
+                try {
+                    const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                    
+                    handleLocalFieldChange('prizeImageUrl', downloadURL);
+                    await handleFieldChange('prizeImageUrl', downloadURL);
 
-                showNotification(t('imageUploadedSuccess'), 'success');
-                setUploadProgress(null);
-                e.target.value = ''; // Reset file input
+                    showNotification(t('imageUploadedSuccess'), 'success');
+                } catch (error) {
+                    console.error("Upload completion failed:", error);
+                    showNotification(t('errorUploadingImage'), 'error');
+                } finally {
+                    setUploadProgress(null);
+                    if (e.target) {
+                        e.target.value = ''; // Reset file input
+                    }
+                }
             }
         );
     };
