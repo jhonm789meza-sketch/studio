@@ -11,7 +11,7 @@ import { requestNotificationPermission } from '@/lib/notification';
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House, Clock as ClockIcon, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages, Trophy, Trash2, Copy, Shield, LogOut, Eye, EyeOff, Gamepad2, Phone, TrendingUp, Globe, Landmark, RefreshCcw, LockKeyhole, Package, Camera, Check } from 'lucide-react';
+import { Menu, Award, Lock, House, Clock as ClockIcon, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages, Trophy, Trash2, Copy, Shield, LogOut, Eye, EyeOff, Gamepad2, Phone, TrendingUp, Globe, Landmark, RefreshCcw, LockKeyhole, Package, Camera, Check, Upload } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -651,6 +651,11 @@ const App = () => {
     
     const handleSetAsPrizePhoto = async () => {
         if (!capturedImage || !raffleState.raffleRef) return;
+        
+        // Disable retake button while processing to avoid race conditions
+        const retakeButton = document.getElementById('retake-photo-btn');
+        if (retakeButton) retakeButton.setAttribute('disabled', 'true');
+
         const blob = await (await fetch(capturedImage)).blob();
         
         setUploadProgress(0);
@@ -667,6 +672,7 @@ const App = () => {
                 console.error("Upload failed:", error);
                 showNotification(t('errorUploadingImage'), 'error');
                 setUploadProgress(null);
+                setCapturedImage(null);
                 setIsTakePhotoModalOpen(false);
             },
             async () => {
@@ -683,7 +689,42 @@ const App = () => {
                     showNotification(t('imageUploadedSuccess'), 'success'); // Fallback message
                 }
                 
+                // This was the fix, closing the modal after success
                 setIsTakePhotoModalOpen(false);
+                setCapturedImage(null);
+                setUploadProgress(null);
+            }
+        );
+    };
+
+    const handlePrizeImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files || !e.target.files[0] || !raffleState.raffleRef) return;
+        
+        const file = e.target.files[0];
+        setUploadProgress(0);
+
+        const storageReference = storageRef(storage, `prize_images/${raffleState.raffleRef}_${Date.now()}`);
+        const uploadTask = uploadBytesResumable(storageReference, file);
+
+        uploadTask.on('state_changed',
+            (snapshot) => {
+                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                setUploadProgress(progress);
+            },
+            (error) => {
+                console.error("Upload failed:", error);
+                showNotification(t('errorUploadingImage'), 'error');
+                setUploadProgress(null);
+            },
+            async () => {
+                const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                
+                handleLocalFieldChange('prizeImageUrl', downloadURL);
+                await handleFieldChange('prizeImageUrl', downloadURL);
+
+                showNotification(t('imageUploadedSuccess'), 'success');
+                setUploadProgress(null);
+                e.target.value = ''; // Reset file input
             }
         );
     };
@@ -2064,15 +2105,35 @@ const App = () => {
                             ) : (
                                 <div className="flex flex-col items-center gap-2">
                                     {isCurrentUserAdmin && !raffleState.isDetailsConfirmed ? (
-                                        <Button type="button" variant="outline" onClick={() => setIsTakePhotoModalOpen(true)}>
-                                            <Camera className="h-4 w-4 mr-2" />
-                                            {t('takePhoto')}
-                                        </Button>
+                                        <div className="flex flex-wrap gap-2 justify-center">
+                                            <Button type="button" variant="outline" onClick={() => setIsTakePhotoModalOpen(true)}>
+                                                <Camera className="h-4 w-4 mr-2" />
+                                                {t('takePhoto')}
+                                            </Button>
+                                            <Button type="button" variant="outline" onClick={() => document.getElementById('prize-image-upload-input')?.click()}>
+                                                <Upload className="h-4 w-4 mr-2" />
+                                                {t('uploadFromFile')}
+                                            </Button>
+                                            <input 
+                                                id="prize-image-upload-input"
+                                                type="file" 
+                                                className="hidden" 
+                                                accept="image/*"
+                                                onChange={handlePrizeImageFileChange}
+                                            />
+                                        </div>
                                     ) : (
                                         <span className="text-gray-500">{t('noPrizeImage')}</span>
                                     )}
                                 </div>
                             )}
+                             {uploadProgress !== null && (
+                                <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center rounded-md p-4">
+                                    <Loader2 className="h-8 w-8 animate-spin text-white mb-2" />
+                                    <Progress value={uploadProgress} className="w-1/2" />
+                                    <p className="text-white mt-2 text-sm">{t('uploadingImage')}</p>
+                                </div>
+                             )}
                         </div>
 
                         <div className="space-y-4 mb-6">
@@ -2170,7 +2231,6 @@ const App = () => {
                                                 </Button>
                                             </a>
                                         </div>
-                                         {uploadProgress !== null && <Progress value={uploadProgress} className="w-full mt-2" />}
                                     </div>
                                 </div>
                            )}
@@ -4505,7 +4565,7 @@ const App = () => {
                     <DialogFooter>
                         {capturedImage ? (
                             <>
-                                <Button variant="outline" onClick={handleRetake} disabled={uploadProgress !== null}>{t('retakePhoto')}</Button>
+                                <Button id="retake-photo-btn" variant="outline" onClick={handleRetake} disabled={uploadProgress !== null}>{t('retakePhoto')}</Button>
                                 <Button onClick={handleSetAsPrizePhoto} disabled={uploadProgress !== null}>
                                     <LinkIcon className="mr-2 h-4 w-4" />
                                     {t('setAsPrizePhoto')}
@@ -4533,14 +4593,3 @@ const App = () => {
 };
 
 export default App;
-
-
-
-
-
-
-
-
-
-    
-    

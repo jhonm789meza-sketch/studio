@@ -373,5 +373,7 @@
     "retakePhoto": "Tomar de Nuevo",
     "setAsPrizePhoto": "Generar Enlace de Imagen",
     "switchCamera": "Cambiar Cámara",
-    "copyUrl": "Copiar URL"
+    "copyUrl": "Copiar URL",
+    "uploadFromFile": "Subir desde Archivo",
+    "uploadingImage": "Subiendo imagen..."
 }
