@@ -654,35 +654,42 @@ const App = () => {
     
         setUploadProgress(0);
     
-        const blob = await (await fetch(capturedImage)).blob();
-        const storageReference = storageRef(storage, `prize_images/${raffleState.raffleRef}_${Date.now()}`);
-        const uploadTask = uploadBytesResumable(storageReference, blob);
-    
-        uploadTask.on('state_changed', (snapshot) => {
-            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-            setUploadProgress(progress);
-        });
-    
         try {
-            await uploadTask; // Wait for the upload to complete
+            const blob = await (await fetch(capturedImage)).blob();
+            const storageReference = storageRef(storage, `prize_images/${raffleState.raffleRef}_${Date.now()}`);
+            const uploadTask = uploadBytesResumable(storageReference, blob);
     
-            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-            handleLocalFieldChange('prizeImageUrl', downloadURL);
-            await handleFieldChange('prizeImageUrl', downloadURL);
-    
-            try {
-                await navigator.clipboard.writeText(downloadURL);
-                showNotification(t('imageUploadedAndCopied'), 'success');
-            } catch (err) {
-                console.error('Failed to copy link:', err);
-                showNotification(t('imageUploadedSuccess'), 'success');
-            }
+            await new Promise<void>((resolve, reject) => {
+                uploadTask.on('state_changed',
+                    (snapshot) => {
+                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                        setUploadProgress(progress);
+                    },
+                    (error) => {
+                        console.error("Upload from camera failed:", error);
+                        showNotification(t('errorUploadingImage'), 'error');
+                        reject(error);
+                    },
+                    async () => {
+                        try {
+                            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                            handleLocalFieldChange('prizeImageUrl', downloadURL);
+                            await handleFieldChange('prizeImageUrl', downloadURL);
+                            showNotification(t('imageUploadedSuccess'), 'success');
+                            setIsTakePhotoModalOpen(false);
+                            resolve();
+                        } catch (getUrlError) {
+                            console.error("Error getting download URL from camera upload:", getUrlError);
+                            showNotification(t('errorUploadingImage'), 'error');
+                            reject(getUrlError);
+                        }
+                    }
+                );
+            });
         } catch (error) {
-            console.error("Upload failed:", error);
-            showNotification(t('errorUploadingImage'), 'error');
+            console.error("An error occurred during photo upload:", error);
         } finally {
-            // This block will run regardless of success or failure.
-            setIsTakePhotoModalOpen(false);
+            // State resets are now inside the final block of the promise logic
             setCapturedImage(null);
             setUploadProgress(null);
         }
@@ -692,31 +699,45 @@ const App = () => {
         if (!e.target.files || !e.target.files[0] || !raffleState.raffleRef) return;
         
         const file = e.target.files[0];
+        const target = e.target;
         setUploadProgress(0);
 
-        const storageReference = storageRef(storage, `prize_images/${raffleState.raffleRef}_${Date.now()}`);
-        const uploadTask = uploadBytesResumable(storageReference, file);
-
-        uploadTask.on('state_changed', (snapshot) => {
-            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-            setUploadProgress(progress);
-        });
-
         try {
-            await uploadTask; // Wait for the upload to complete
-    
-            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-            handleLocalFieldChange('prizeImageUrl', downloadURL);
-            await handleFieldChange('prizeImageUrl', downloadURL);
+            const storageReference = storageRef(storage, `prize_images/${raffleState.raffleRef}_${Date.now()}`);
+            const uploadTask = uploadBytesResumable(storageReference, file);
 
-            showNotification(t('imageUploadedSuccess'), 'success');
+            await new Promise<void>((resolve, reject) => {
+                uploadTask.on('state_changed',
+                    (snapshot) => {
+                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                        setUploadProgress(progress);
+                    },
+                    (error) => {
+                        console.error("Upload failed:", error);
+                        showNotification(t('errorUploadingImage'), 'error');
+                        reject(error);
+                    },
+                    async () => {
+                        try {
+                            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                            handleLocalFieldChange('prizeImageUrl', downloadURL);
+                            await handleFieldChange('prizeImageUrl', downloadURL);
+                            showNotification(t('imageUploadedSuccess'), 'success');
+                            resolve();
+                        } catch (getUrlError) {
+                            console.error("Error getting download URL:", getUrlError);
+                            showNotification(t('errorUploadingImage'), 'error');
+                            reject(getUrlError);
+                        }
+                    }
+                );
+            });
         } catch (error) {
-            console.error("Upload failed:", error);
-            showNotification(t('errorUploadingImage'), 'error');
+            console.error("An error occurred during file upload:", error);
         } finally {
             setUploadProgress(null);
-            if (e.target) {
-                e.target.value = ''; // Reset file input
+            if (target) {
+                target.value = '';
             }
         }
     };
