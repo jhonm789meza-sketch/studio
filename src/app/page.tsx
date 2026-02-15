@@ -5,7 +5,7 @@ import { RaffleManager } from '@/lib/RaffleManager';
 import { db, storage } from '@/lib/firebase';
 import { doc, onSnapshot, setDoc, getDoc, deleteDoc, Unsubscribe, serverTimestamp, collection, query, where, getDocs, updateDoc, addDoc, orderBy, writeBatch } from 'firebase/firestore';
 import Image from 'next/image';
-import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useLanguage } from '@/hooks/use-language';
 import { requestNotificationPermission } from '@/lib/notification';
 
@@ -652,44 +652,26 @@ const App = () => {
     const handleSetAsPrizePhoto = async () => {
         if (!capturedImage || !raffleState.raffleRef) return;
     
-        setUploadProgress(0);
+        setUploadProgress(0); // Show loading indicator
     
         try {
             const blob = await (await fetch(capturedImage)).blob();
             const storageReference = storageRef(storage, `prize_images/${raffleState.raffleRef}_${Date.now()}`);
-            const uploadTask = uploadBytesResumable(storageReference, blob);
+            
+            const uploadResult = await uploadBytes(storageReference, blob);
+            const downloadURL = await getDownloadURL(uploadResult.ref);
+
+            handleLocalFieldChange('prizeImageUrl', downloadURL);
+            await handleFieldChange('prizeImageUrl', downloadURL);
+            showNotification(t('imageUploadedSuccess'), 'success');
+
+            setIsTakePhotoModalOpen(false); // Close modal on success
     
-            await new Promise<void>((resolve, reject) => {
-                uploadTask.on('state_changed',
-                    (snapshot) => {
-                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                        setUploadProgress(progress);
-                    },
-                    (error) => {
-                        console.error("Upload from camera failed:", error);
-                        showNotification(t('errorUploadingImage'), 'error');
-                        reject(error);
-                    },
-                    async () => {
-                        try {
-                            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                            handleLocalFieldChange('prizeImageUrl', downloadURL);
-                            await handleFieldChange('prizeImageUrl', downloadURL);
-                            showNotification(t('imageUploadedSuccess'), 'success');
-                            setIsTakePhotoModalOpen(false);
-                            resolve();
-                        } catch (getUrlError) {
-                            console.error("Error getting download URL from camera upload:", getUrlError);
-                            showNotification(t('errorUploadingImage'), 'error');
-                            reject(getUrlError);
-                        }
-                    }
-                );
-            });
         } catch (error) {
             console.error("An error occurred during photo upload:", error);
+            showNotification(t('errorUploadingImage'), 'error');
         } finally {
-            // State resets are now inside the final block of the promise logic
+            // Always runs to clean up state
             setCapturedImage(null);
             setUploadProgress(null);
         }
@@ -700,41 +682,24 @@ const App = () => {
         
         const file = e.target.files[0];
         const target = e.target;
-        setUploadProgress(0);
+        setUploadProgress(0); // Show loading indicator
 
         try {
             const storageReference = storageRef(storage, `prize_images/${raffleState.raffleRef}_${Date.now()}`);
-            const uploadTask = uploadBytesResumable(storageReference, file);
+            
+            // Use a more direct upload method for reliability
+            const uploadResult = await uploadBytes(storageReference, file);
+            const downloadURL = await getDownloadURL(uploadResult.ref);
 
-            await new Promise<void>((resolve, reject) => {
-                uploadTask.on('state_changed',
-                    (snapshot) => {
-                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                        setUploadProgress(progress);
-                    },
-                    (error) => {
-                        console.error("Upload failed:", error);
-                        showNotification(t('errorUploadingImage'), 'error');
-                        reject(error);
-                    },
-                    async () => {
-                        try {
-                            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                            handleLocalFieldChange('prizeImageUrl', downloadURL);
-                            await handleFieldChange('prizeImageUrl', downloadURL);
-                            showNotification(t('imageUploadedSuccess'), 'success');
-                            resolve();
-                        } catch (getUrlError) {
-                            console.error("Error getting download URL:", getUrlError);
-                            showNotification(t('errorUploadingImage'), 'error');
-                            reject(getUrlError);
-                        }
-                    }
-                );
-            });
+            handleLocalFieldChange('prizeImageUrl', downloadURL);
+            await handleFieldChange('prizeImageUrl', downloadURL);
+            showNotification(t('imageUploadedSuccess'), 'success');
+
         } catch (error) {
             console.error("An error occurred during file upload:", error);
+            showNotification(t('errorUploadingImage'), 'error');
         } finally {
+            // This will always run, ensuring the loading indicator is hidden.
             setUploadProgress(null);
             if (target) {
                 target.value = '';
@@ -1960,46 +1925,41 @@ const App = () => {
 
     const handleSavePaymentQrImage = async () => {
         if (!isSuperAdmin) return;
-
-        const saveData = async (url2?: string) => {
-            try {
-                await setDoc(doc(db, 'internal', 'settings'), {
-                    paymentQrImageUrl: paymentQrImageUrl,
-                    paymentQrImageUrl2: url2 || paymentQrImageUrl2,
-                }, { merge: true });
-                showNotification(t('paymentQrImageSaved'), 'success');
-                setIsPaymentQrImageDialogOpen(false);
-                setImageFile2(null);
-                setUploadProgress2(null);
-            } catch (error) {
-                console.error("Error saving payment QR image:", error);
-                showNotification(t('errorSavingPaymentQrImage'), 'error');
-                setUploadProgress2(null);
-            }
+    
+        // This function only saves to Firestore. The main function handles state cleanup.
+        const saveData = async (newUrl?: string) => {
+            const finalUrl = newUrl !== undefined ? newUrl : paymentQrImageUrl2;
+            await setDoc(doc(db, 'internal', 'settings'), {
+                paymentQrImageUrl: paymentQrImageUrl,
+                paymentQrImageUrl2: finalUrl,
+            }, { merge: true });
         };
-
+    
         if (imageFile2) {
-            setUploadProgress2(0);
-            const storageReference = storageRef(storage, `qrcodes/payment_qr_2_${Date.now()}`);
-            const uploadTask = uploadBytesResumable(storageReference, imageFile2);
-
-            uploadTask.on('state_changed',
-                (snapshot) => {
-                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                    setUploadProgress2(progress);
-                },
-                (error) => {
-                    console.error("Upload failed:", error);
-                    showNotification(t('errorSavingPaymentQrImage'), 'error');
-                    setUploadProgress2(null);
-                },
-                async () => {
-                    const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                    saveData(downloadURL);
-                }
-            );
+            setUploadProgress2(0); // Show loading
+            try {
+                const storageReference = storageRef(storage, `qrcodes/payment_qr_2_${Date.now()}`);
+                const uploadResult = await uploadBytes(storageReference, imageFile2);
+                const downloadURL = await getDownloadURL(uploadResult.ref);
+                await saveData(downloadURL);
+                showNotification(t('paymentQrImageSaved'), 'success');
+                setIsPaymentQrImageDialogOpen(false); // Close on success
+            } catch (error) {
+                 console.error("Upload failed:", error);
+                 showNotification(t('errorSavingPaymentQrImage'), 'error');
+            } finally {
+                setUploadProgress2(null); // Always hide loading
+            }
         } else {
-            saveData();
+            // Just save the existing URL (if any)
+            try {
+                await saveData();
+                showNotification(t('paymentQrImageSaved'), 'success');
+                setIsPaymentQrImageDialogOpen(false); // Close on success
+            } catch (error) {
+                 console.error("Error saving payment QR image:", error);
+                 showNotification(t('errorSavingPaymentQrImage'), 'error');
+            }
         }
     };
 
@@ -4571,7 +4531,7 @@ const App = () => {
                          {uploadProgress !== null && (
                             <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center rounded-md">
                                 <Loader2 className="h-8 w-8 animate-spin text-white mb-2" />
-                                <Progress value={uploadProgress} className="w-1/2" />
+                                <Progress value={uploadProgress} className="w-full" />
                             </div>
                         )}
                     </div>
