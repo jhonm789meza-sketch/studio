@@ -651,56 +651,44 @@ const App = () => {
     
     const handleSetAsPrizePhoto = async () => {
         if (!capturedImage || !raffleState.raffleRef) return;
-        
-        const retakeButton = document.getElementById('retake-photo-btn');
-        if (retakeButton) retakeButton.setAttribute('disabled', 'true');
-
-        const blob = await (await fetch(capturedImage)).blob();
-        
+    
         setUploadProgress(0);
-
+    
+        const blob = await (await fetch(capturedImage)).blob();
         const storageReference = storageRef(storage, `prize_images/${raffleState.raffleRef}_${Date.now()}`);
         const uploadTask = uploadBytesResumable(storageReference, blob);
-
-        uploadTask.on('state_changed',
-            (snapshot) => {
-                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                setUploadProgress(progress);
-            },
-            (error) => {
-                console.error("Upload failed:", error);
-                showNotification(t('errorUploadingImage'), 'error');
-                setUploadProgress(null);
-                setCapturedImage(null);
-                setIsTakePhotoModalOpen(false);
-            },
-            async () => {
-                try {
-                    const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                    
-                    handleLocalFieldChange('prizeImageUrl', downloadURL);
-                    await handleFieldChange('prizeImageUrl', downloadURL);
-
-                    try {
-                        await navigator.clipboard.writeText(downloadURL);
-                        showNotification(t('imageUploadedAndCopied'), 'success');
-                    } catch (err) {
-                        console.error('Failed to copy link:', err);
-                        showNotification(t('imageUploadedSuccess'), 'success');
-                    }
-                } catch (error) {
-                     console.error("Upload completion failed:", error);
-                    showNotification(t('errorUploadingImage'), 'error');
-                } finally {
-                    setIsTakePhotoModalOpen(false);
-                    setCapturedImage(null);
-                    setUploadProgress(null);
-                }
+    
+        uploadTask.on('state_changed', (snapshot) => {
+            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            setUploadProgress(progress);
+        });
+    
+        try {
+            await uploadTask; // Wait for the upload to complete
+    
+            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+            handleLocalFieldChange('prizeImageUrl', downloadURL);
+            await handleFieldChange('prizeImageUrl', downloadURL);
+    
+            try {
+                await navigator.clipboard.writeText(downloadURL);
+                showNotification(t('imageUploadedAndCopied'), 'success');
+            } catch (err) {
+                console.error('Failed to copy link:', err);
+                showNotification(t('imageUploadedSuccess'), 'success');
             }
-        );
+        } catch (error) {
+            console.error("Upload failed:", error);
+            showNotification(t('errorUploadingImage'), 'error');
+        } finally {
+            // This block will run regardless of success or failure.
+            setIsTakePhotoModalOpen(false);
+            setCapturedImage(null);
+            setUploadProgress(null);
+        }
     };
 
-    const handlePrizeImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handlePrizeImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files || !e.target.files[0] || !raffleState.raffleRef) return;
         
         const file = e.target.files[0];
@@ -709,35 +697,28 @@ const App = () => {
         const storageReference = storageRef(storage, `prize_images/${raffleState.raffleRef}_${Date.now()}`);
         const uploadTask = uploadBytesResumable(storageReference, file);
 
-        uploadTask.on('state_changed',
-            (snapshot) => {
-                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                setUploadProgress(progress);
-            },
-            (error) => {
-                console.error("Upload failed:", error);
-                showNotification(t('errorUploadingImage'), 'error');
-                setUploadProgress(null);
-            },
-            async () => {
-                try {
-                    const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                    
-                    handleLocalFieldChange('prizeImageUrl', downloadURL);
-                    await handleFieldChange('prizeImageUrl', downloadURL);
+        uploadTask.on('state_changed', (snapshot) => {
+            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            setUploadProgress(progress);
+        });
 
-                    showNotification(t('imageUploadedSuccess'), 'success');
-                } catch (error) {
-                    console.error("Upload completion failed:", error);
-                    showNotification(t('errorUploadingImage'), 'error');
-                } finally {
-                    setUploadProgress(null);
-                    if (e.target) {
-                        e.target.value = ''; // Reset file input
-                    }
-                }
+        try {
+            await uploadTask; // Wait for the upload to complete
+    
+            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+            handleLocalFieldChange('prizeImageUrl', downloadURL);
+            await handleFieldChange('prizeImageUrl', downloadURL);
+
+            showNotification(t('imageUploadedSuccess'), 'success');
+        } catch (error) {
+            console.error("Upload failed:", error);
+            showNotification(t('errorUploadingImage'), 'error');
+        } finally {
+            setUploadProgress(null);
+            if (e.target) {
+                e.target.value = ''; // Reset file input
             }
-        );
+        }
     };
 
 
