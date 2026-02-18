@@ -375,5 +375,6 @@
     "switchCamera": "Switch Camera",
     "copyUrl": "Copy URL",
     "uploadFromFile": "Upload from File",
-    "uploadingImage": "Uploading image..."
+    "uploadingImage": "Uploading image...",
+    "errorGeneratingTicketImage": "Error generating ticket image. Please try again."
 }

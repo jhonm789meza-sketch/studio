@@ -375,5 +375,6 @@
     "switchCamera": "Cambiar Cámara",
     "copyUrl": "Copiar URL",
     "uploadFromFile": "Subir desde Archivo",
-    "uploadingImage": "Subiendo imagen..."
+    "uploadingImage": "Subiendo imagen...",
+    "errorGeneratingTicketImage": "Error al generar la imagen del tiquete. Por favor, intenta de nuevo."
 }

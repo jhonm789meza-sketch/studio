@@ -478,7 +478,7 @@ const App = () => {
                 stream.getTracks().forEach(track => track.stop());
                 setStream(null);
             }
-            setCapturedImage(null); // Also reset captured image on close
+            // Do not reset captured image here, it needs to persist until processing is complete.
             return;
         }
 
@@ -663,8 +663,10 @@ const App = () => {
 
             handleLocalFieldChange('prizeImageUrl', downloadURL);
             await handleFieldChange('prizeImageUrl', downloadURL);
-            showNotification(t('imageUploadedSuccess'), 'success');
 
+            showNotification(t('imageUploadedSuccess'), 'success');
+            await navigator.clipboard.writeText(downloadURL);
+            
             setIsTakePhotoModalOpen(false); // Close modal on success
     
         } catch (error) {
@@ -672,8 +674,8 @@ const App = () => {
             showNotification(t('errorUploadingImage'), 'error');
         } finally {
             // Always runs to clean up state
-            setCapturedImage(null);
             setUploadProgress(null);
+            setCapturedImage(null); // Clean up captured image after processing
         }
     };
 
@@ -1198,14 +1200,33 @@ const App = () => {
                         format: [canvas.width, canvas.height]
                     });
                     pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-                    pdf.save(`tiquete_${targetInfo.raffleNumber}.pdf`);
+                    
+                    // Check for iOS, which has issues with blob downloads
+                    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+                    
+                    if (isIOS) {
+                        // For iOS, open the PDF in a new window. It's the most reliable method.
+                        pdf.output('dataurlnewwindow');
+                    } else {
+                        // For other browsers, use the blob method which is more reliable than .save()
+                        const blob = pdf.output('blob');
+                        const link = document.createElement('a');
+                        link.href = URL.createObjectURL(blob);
+                        link.download = `tiquete_${targetInfo.raffleNumber}.pdf`;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        URL.revokeObjectURL(link.href);
+                    }
                     showNotification(t('ticketDownloaded'), 'success');
+
                 }).catch(err => {
                     console.error("html2canvas error:", err);
                     ticketElement.style.width = originalWidth;
+                    showNotification(t('errorGeneratingTicketImage'), 'error');
                 });
             });
-        }, 50);
+        }, 100);
     };
 
     const handleShare = () => {
@@ -2103,7 +2124,6 @@ const App = () => {
                              {uploadProgress !== null && (
                                 <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center rounded-md p-4">
                                     <Loader2 className="h-8 w-8 animate-spin text-white mb-2" />
-                                    <Progress value={uploadProgress} className="w-1/2" />
                                     <p className="text-white mt-2 text-sm">{t('uploadingImage')}</p>
                                 </div>
                              )}
