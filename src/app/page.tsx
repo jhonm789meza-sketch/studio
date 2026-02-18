@@ -212,7 +212,7 @@ const App = () => {
     const [uploadProgress2, setUploadProgress2] = useState<number | null>(null);
     const [imageFile2, setImageFile2] = useState<File | null>(null);
     const [isPrizeImageModalOpen, setIsPrizeImageModalOpen] = useState(false);
-    const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+    const [isUploading, setIsUploading] = useState(false);
     const [isTakePhotoModalOpen, setIsTakePhotoModalOpen] = useState(false);
     const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
     const [stream, setStream] = useState<MediaStream | null>(null);
@@ -478,7 +478,6 @@ const App = () => {
                 stream.getTracks().forEach(track => track.stop());
                 setStream(null);
             }
-            // Do not reset captured image here, it needs to persist until processing is complete.
             return;
         }
 
@@ -618,6 +617,7 @@ const App = () => {
 
     const handleCloseCamera = () => {
         setIsTakePhotoModalOpen(false);
+        setCapturedImage(null);
     };
 
     const handleSwitchCamera = () => {
@@ -626,7 +626,6 @@ const App = () => {
 
     const handleRetake = () => {
         setCapturedImage(null);
-        setUploadProgress(null);
     };
 
     const handleCapture = () => {
@@ -649,33 +648,37 @@ const App = () => {
         }
     };
     
+    const uploadImage = async (image: string | File, raffleRef: string): Promise<string> => {
+        const storageReference = storageRef(storage, `prize_images/${raffleRef}_${Date.now()}`);
+        let uploadResult;
+    
+        if (typeof image === 'string') {
+            const blob = await (await fetch(image)).blob();
+            uploadResult = await uploadBytes(storageReference, blob);
+        } else {
+            uploadResult = await uploadBytes(storageReference, image);
+        }
+        
+        return await getDownloadURL(uploadResult.ref);
+    };
+
     const handleSetAsPrizePhoto = async () => {
         if (!capturedImage || !raffleState.raffleRef) return;
     
-        setUploadProgress(0); // Show loading indicator
-    
+        setIsUploading(true);
         try {
-            const blob = await (await fetch(capturedImage)).blob();
-            const storageReference = storageRef(storage, `prize_images/${raffleState.raffleRef}_${Date.now()}`);
-            
-            const uploadResult = await uploadBytes(storageReference, blob);
-            const downloadURL = await getDownloadURL(uploadResult.ref);
-
-            handleLocalFieldChange('prizeImageUrl', downloadURL);
+            const downloadURL = await uploadImage(capturedImage, raffleState.raffleRef);
             await handleFieldChange('prizeImageUrl', downloadURL);
-
+            handleLocalFieldChange('prizeImageUrl', downloadURL);
             showNotification(t('imageUploadedSuccess'), 'success');
             await navigator.clipboard.writeText(downloadURL);
-            
-            setIsTakePhotoModalOpen(false); // Close modal on success
-    
+            setIsTakePhotoModalOpen(false);
         } catch (error) {
             console.error("An error occurred during photo upload:", error);
             showNotification(t('errorUploadingImage'), 'error');
         } finally {
-            // Always runs to clean up state
-            setUploadProgress(null);
-            setCapturedImage(null); // Clean up captured image after processing
+            setIsUploading(false);
+            setCapturedImage(null);
         }
     };
 
@@ -684,13 +687,10 @@ const App = () => {
     
         const file = e.target.files[0];
         const target = e.target;
-        setUploadProgress(0);
-    
+        
+        setIsUploading(true);
         try {
-            const storageReference = storageRef(storage, `prize_images/${raffleState.raffleRef}_${Date.now()}`);
-            const uploadResult = await uploadBytes(storageReference, file);
-            const downloadURL = await getDownloadURL(uploadResult.ref);
-    
+            const downloadURL = await uploadImage(file, raffleState.raffleRef);
             await handleFieldChange('prizeImageUrl', downloadURL);
             handleLocalFieldChange('prizeImageUrl', downloadURL);
             showNotification(t('imageUploadedSuccess'), 'success');
@@ -698,7 +698,7 @@ const App = () => {
             console.error("An error occurred during file upload:", error);
             showNotification(t('errorUploadingImage'), 'error');
         } finally {
-            setUploadProgress(null);
+            setIsUploading(false);
             if (target) {
                 target.value = '';
             }
@@ -1197,14 +1197,11 @@ const App = () => {
                     });
                     pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
                     
-                    // Check for iOS, which has issues with blob downloads
                     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
                     
                     if (isIOS) {
-                        // For iOS, open the PDF in a new window. It's the most reliable method.
                         pdf.output('dataurlnewwindow');
                     } else {
-                        // For other browsers, use the blob method which is more reliable than .save()
                         const blob = pdf.output('blob');
                         const link = document.createElement('a');
                         link.href = URL.createObjectURL(blob);
@@ -1943,7 +1940,6 @@ const App = () => {
     const handleSavePaymentQrImage = async () => {
         if (!isSuperAdmin) return;
     
-        // This function only saves to Firestore. The main function handles state cleanup.
         const saveData = async (newUrl?: string) => {
             const finalUrl = newUrl !== undefined ? newUrl : paymentQrImageUrl2;
             await setDoc(doc(db, 'internal', 'settings'), {
@@ -1952,31 +1948,21 @@ const App = () => {
             }, { merge: true });
         };
     
-        if (imageFile2) {
-            setUploadProgress2(0); // Show loading
-            try {
-                const storageReference = storageRef(storage, `qrcodes/payment_qr_2_${Date.now()}`);
-                const uploadResult = await uploadBytes(storageReference, imageFile2);
-                const downloadURL = await getDownloadURL(uploadResult.ref);
+        setIsUploading(true);
+        try {
+            if (imageFile2) {
+                const downloadURL = await uploadImage(imageFile2, 'qrcodes');
                 await saveData(downloadURL);
-                showNotification(t('paymentQrImageSaved'), 'success');
-                setIsPaymentQrImageDialogOpen(false); // Close on success
-            } catch (error) {
-                 console.error("Upload failed:", error);
-                 showNotification(t('errorSavingPaymentQrImage'), 'error');
-            } finally {
-                setUploadProgress2(null); // Always hide loading
-            }
-        } else {
-            // Just save the existing URL (if any)
-            try {
+            } else {
                 await saveData();
-                showNotification(t('paymentQrImageSaved'), 'success');
-                setIsPaymentQrImageDialogOpen(false); // Close on success
-            } catch (error) {
-                 console.error("Error saving payment QR image:", error);
-                 showNotification(t('errorSavingPaymentQrImage'), 'error');
             }
+            showNotification(t('paymentQrImageSaved'), 'success');
+            setIsPaymentQrImageDialogOpen(false);
+        } catch (error) {
+             console.error("Error saving payment QR image:", error);
+             showNotification(t('errorSavingPaymentQrImage'), 'error');
+        } finally {
+            setIsUploading(false);
         }
     };
 
@@ -2117,7 +2103,7 @@ const App = () => {
                                     )}
                                 </div>
                             )}
-                             {uploadProgress !== null && (
+                             {isUploading && (
                                 <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center rounded-md p-4">
                                     <Loader2 className="h-8 w-8 animate-spin text-white mb-2" />
                                     <p className="text-white mt-2 text-sm">{t('uploadingImage')}</p>
@@ -4426,6 +4412,11 @@ const App = () => {
                                     height={200}
                                     data-ai-hint="payment qr code"
                                 />
+                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/90 shadow-md backdrop-blur-sm">
+                                       <span className="font-bold text-3xl text-yellow-500">⚡</span>
+                                    </div>
+                                </div>
                             </div>
                         )}
                         {appSettings.paymentQrImageUrl2 && appSettings.paymentQrImageUrl2.startsWith('http') && (
@@ -4437,6 +4428,11 @@ const App = () => {
                                     height={200}
                                     data-ai-hint="payment qr code"
                                 />
+                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/90 shadow-md backdrop-blur-sm">
+                                       <span className="font-bold text-3xl text-yellow-500">⚡</span>
+                                    </div>
+                                </div>
                             </div>
                         )}
                     </div>
@@ -4477,9 +4473,9 @@ const App = () => {
                                 accept="image/*"
                                 onChange={(e) => e.target.files && setImageFile2(e.target.files[0])}
                                 className="file:text-foreground"
-                                disabled={uploadProgress2 !== null}
+                                disabled={isUploading}
                             />
-                            {uploadProgress2 !== null && <Progress value={uploadProgress2} className="w-full mt-2" />}
+                            {isUploading && <Progress value={uploadProgress2 || 0} className="w-full mt-2" />}
                             
                             {(imageFile2 || paymentQrImageUrl2) && (
                                 <div className="mt-2">
@@ -4498,9 +4494,9 @@ const App = () => {
 
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsPaymentQrImageDialogOpen(false)} disabled={uploadProgress2 !== null}>{t('cancel')}</Button>
-                        <Button onClick={handleSavePaymentQrImage} disabled={uploadProgress2 !== null}>
-                            {uploadProgress2 !== null && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        <Button variant="outline" onClick={() => setIsPaymentQrImageDialogOpen(false)} disabled={isUploading}>{t('cancel')}</Button>
+                        <Button onClick={handleSavePaymentQrImage} disabled={isUploading}>
+                            {isUploading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             {t('save')}
                         </Button>
                     </DialogFooter>
@@ -4544,18 +4540,17 @@ const App = () => {
                                 )}
                             </>
                         )}
-                         {uploadProgress !== null && (
+                         {isUploading && (
                             <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center rounded-md">
                                 <Loader2 className="h-8 w-8 animate-spin text-white mb-2" />
-                                <Progress value={uploadProgress} className="w-full" />
                             </div>
                         )}
                     </div>
                     <DialogFooter>
                         {capturedImage ? (
                             <>
-                                <Button id="retake-photo-btn" variant="outline" onClick={handleRetake} disabled={uploadProgress !== null}>{t('retakePhoto')}</Button>
-                                <Button onClick={handleSetAsPrizePhoto} disabled={uploadProgress !== null}>
+                                <Button id="retake-photo-btn" variant="outline" onClick={handleRetake} disabled={isUploading}>{t('retakePhoto')}</Button>
+                                <Button onClick={handleSetAsPrizePhoto} disabled={isUploading}>
                                     <LinkIcon className="mr-2 h-4 w-4" />
                                     {t('setAsPrizePhoto')}
                                 </Button>
@@ -4567,7 +4562,7 @@ const App = () => {
                                     <RefreshCcw className="mr-2 h-4 w-4" />
                                     {t('switchCamera')}
                                 </Button>
-                                <Button onClick={handleCapture} disabled={!hasCameraPermission || uploadProgress !== null}>
+                                <Button onClick={handleCapture} disabled={!hasCameraPermission || isUploading}>
                                     <Camera className="mr-2 h-4 w-4" />
                                     {t('capture')}
                                 </Button>
