@@ -681,27 +681,23 @@ const App = () => {
 
     const handlePrizeImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files || !e.target.files[0] || !raffleState.raffleRef) return;
-        
+    
         const file = e.target.files[0];
         const target = e.target;
-        setUploadProgress(0); // Show loading indicator
-
+        setUploadProgress(0);
+    
         try {
             const storageReference = storageRef(storage, `prize_images/${raffleState.raffleRef}_${Date.now()}`);
-            
-            // Use a more direct upload method for reliability
             const uploadResult = await uploadBytes(storageReference, file);
             const downloadURL = await getDownloadURL(uploadResult.ref);
-
-            handleLocalFieldChange('prizeImageUrl', downloadURL);
+    
             await handleFieldChange('prizeImageUrl', downloadURL);
+            handleLocalFieldChange('prizeImageUrl', downloadURL);
             showNotification(t('imageUploadedSuccess'), 'success');
-
         } catch (error) {
             console.error("An error occurred during file upload:", error);
             showNotification(t('errorUploadingImage'), 'error');
         } finally {
-            // This will always run, ensuring the loading indicator is hidden.
             setUploadProgress(null);
             if (target) {
                 target.value = '';
@@ -4413,7 +4409,7 @@ const App = () => {
             </Dialog>
 
             <Dialog open={isPaymentQrDialogOpen} onOpenChange={setIsPaymentQrDialogOpen}>
-                <DialogContent className={cn("max-w-xs", (!!appSettings.paymentQrImageUrl && !!appSettings.paymentQrImageUrl2) && "sm:max-w-lg")}>
+                <DialogContent className={cn("max-w-xs", (appSettings.paymentQrImageUrl && appSettings.paymentQrImageUrl.startsWith('http') && appSettings.paymentQrImageUrl2 && appSettings.paymentQrImageUrl2.startsWith('http')) && "sm:max-w-lg")}>
                     <DialogHeader>
                         <DialogTitle className="text-center">{t('payWithQr')}</DialogTitle>
                         <DialogDescription className="text-center">
@@ -4421,7 +4417,7 @@ const App = () => {
                         </DialogDescription>
                     </DialogHeader>
                     <div className="flex justify-center items-center p-4 gap-4 flex-wrap">
-                        {appSettings.paymentQrImageUrl && (
+                        {appSettings.paymentQrImageUrl && appSettings.paymentQrImageUrl.startsWith('http') && (
                             <div className="relative inline-block p-2 bg-white rounded-lg shadow-md">
                                 <Image
                                     src={appSettings.paymentQrImageUrl}
@@ -4432,7 +4428,7 @@ const App = () => {
                                 />
                             </div>
                         )}
-                        {appSettings.paymentQrImageUrl2 && (
+                        {appSettings.paymentQrImageUrl2 && appSettings.paymentQrImageUrl2.startsWith('http') && (
                              <div className="relative inline-block p-2 bg-white rounded-lg shadow-md">
                                 <Image
                                     src={appSettings.paymentQrImageUrl2}
