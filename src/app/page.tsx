@@ -130,6 +130,7 @@ const App = () => {
     
     const ticketModalRef = useRef<HTMLDivElement>(null);
     const raffleSubscription = useRef<Unsubscribe | null>(null);
+    const loadedRaffleIdRef = useRef<string | null>(null);
     
     const [raffleState, setRaffleState] = useState<Raffle>(initialRaffleData);
     
@@ -1296,6 +1297,14 @@ const App = () => {
                 if (docSnapshot.exists()) {
                     const data = docSnapshot.data() as Raffle;
     
+                     // If it's a new raffle being loaded, overwrite state. Otherwise, merge.
+                    if (loadedRaffleIdRef.current === aRef) {
+                        setRaffleState(prevState => ({ ...prevState, ...data }));
+                    } else {
+                        setRaffleState(data);
+                        loadedRaffleIdRef.current = aRef;
+                    }
+
                     if (isSuperAdmin) {
                         setCurrentAdminId(data.adminId);
                     } else if (!isPublicSearch) { // Only set admin from storage if not a public search
@@ -1309,36 +1318,36 @@ const App = () => {
                         setCurrentAdminId(null); // Ensure no admin access on public search
                     }
     
-                    setRaffleState(data);
-                    if (!isInitialLoad) {
+                    if (isInitialLoad) {
                         showNotification(t('loadingRaffle', { ref: aRef }), 'info');
-                    }
-                    setIsAdminLoginOpen(false);
-                    setIsPublicSearchOpen(false);
-                    setAdminRefSearch('');
-                    setAdminPhoneSearch('');
-                    setAdminPasswordSearch('');
-                    setPublicRefSearch('');
-                    setPartialWinners([]);
-                    handleTabClick('board');
-    
-                    const currentUrl = new URL(window.location.href);
-                    const newUrl = new URL(window.location.origin);
-                    newUrl.searchParams.set('ref', aRef);
-                    
-                    const adminIdForUrl = localStorage.getItem('rifaAdminId');
-                    if (data.adminId && data.adminId === adminIdForUrl && !isPublicSearch) {
-                        newUrl.searchParams.set('adminId', data.adminId);
-                    } else {
-                        newUrl.searchParams.delete('adminId');
-                    }
+                        setIsAdminLoginOpen(false);
+                        setIsPublicSearchOpen(false);
+                        setAdminRefSearch('');
+                        setAdminPhoneSearch('');
+                        setAdminPasswordSearch('');
+                        setPublicRefSearch('');
+                        setPartialWinners([]);
+                        handleTabClick('board');
+        
+                        const currentUrl = new URL(window.location.href);
+                        const newUrl = new URL(window.location.origin);
+                        newUrl.searchParams.set('ref', aRef);
+                        
+                        const adminIdForUrl = localStorage.getItem('rifaAdminId');
+                        if (data.adminId && data.adminId === adminIdForUrl && !isPublicSearch) {
+                            newUrl.searchParams.set('adminId', data.adminId);
+                        } else {
+                            newUrl.searchParams.delete('adminId');
+                        }
 
-                    if (currentUrl.href !== newUrl.href) {
-                        window.history.pushState({}, '', newUrl.href);
+                        if (currentUrl.href !== newUrl.href) {
+                            window.history.pushState({}, '', newUrl.href);
+                        }
                     }
                 } else if (!isInitialLoad) {
                     showNotification(t('raffleNotFound'), 'error');
                     setRaffleState(initialRaffleData);
+                    loadedRaffleIdRef.current = null;
                     setCurrentAdminId(null);
                     window.history.pushState({}, '', window.location.pathname);
                 }
@@ -1732,6 +1741,7 @@ const App = () => {
 
     const handleGoToHome = () => {
         raffleSubscription.current?.();
+        loadedRaffleIdRef.current = null;
         setRaffleState(initialRaffleData);
         setCurrentAdminId(null);
         localStorage.removeItem('rifaAdminId');
