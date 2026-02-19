@@ -214,15 +214,7 @@ const App = () => {
     const [imageFile2, setImageFile2] = useState<File | null>(null);
     const [isPrizeImageModalOpen, setIsPrizeImageModalOpen] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
-    const [isTakePhotoModalOpen, setIsTakePhotoModalOpen] = useState(false);
-    const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
-    const [stream, setStream] = useState<MediaStream | null>(null);
-    const videoRef = useRef<HTMLVideoElement>(null);
-    const canvasRef = useRef<HTMLCanvasElement>(null);
-
-    const [capturedImage, setCapturedImage] = useState<string | null>(null);
-    const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
-
+    
     const prizeTextareaRef = useRef<HTMLTextAreaElement>(null);
     const isCurrentUserAdmin = !!raffleState.adminId && !!currentAdminId && raffleState.adminId === currentAdminId;
     const raffleMode = raffleState.raffleMode;
@@ -472,49 +464,6 @@ const App = () => {
         }
     };
 
-    useEffect(() => {
-        // This effect manages the camera stream
-        if (!isTakePhotoModalOpen) {
-            if (stream) {
-                stream.getTracks().forEach(track => track.stop());
-                setStream(null);
-            }
-            return;
-        }
-
-        let mediaStream: MediaStream | null = null;
-        
-        const getCamera = async () => {
-            // Don't start a new stream if we're just confirming a captured image
-            if (capturedImage) {
-                return;
-            }
-
-            try {
-                mediaStream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode }
-                });
-                setStream(mediaStream);
-                if (videoRef.current) {
-                    videoRef.current.srcObject = mediaStream;
-                }
-                setHasCameraPermission(true);
-            } catch (error) {
-                console.error("Error accessing camera:", error);
-                setHasCameraPermission(false);
-                showNotification(t('cameraPermissionDenied'), 'error');
-            }
-        };
-
-        getCamera();
-
-        return () => {
-            if (mediaStream) {
-                mediaStream.getTracks().forEach(track => track.stop());
-            }
-        };
-    }, [isTakePhotoModalOpen, facingMode, capturedImage]); // Rerun when any of these change
-
     // Main initialization and URL handling effect
     useEffect(() => {
         const initialize = async () => {
@@ -615,39 +564,6 @@ const App = () => {
         };
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
-
-    const handleCloseCamera = () => {
-        setIsTakePhotoModalOpen(false);
-        setCapturedImage(null);
-    };
-
-    const handleSwitchCamera = () => {
-        setFacingMode(prev => prev === 'user' ? 'environment' : 'user');
-    };
-
-    const handleRetake = () => {
-        setCapturedImage(null);
-    };
-
-    const handleCapture = () => {
-        if (!videoRef.current || !canvasRef.current || !hasCameraPermission) return;
-
-        const video = videoRef.current;
-        const canvas = canvasRef.current;
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        const context = canvas.getContext('2d');
-        if (!context) return;
-
-        context.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
-        setCapturedImage(dataUrl);
-
-        if (stream) {
-            stream.getTracks().forEach(track => track.stop());
-            setStream(null);
-        }
-    };
     
     const uploadImage = async (image: string | File, raffleRef: string): Promise<string> => {
         const storageReference = storageRef(storage, `prize_images/${raffleRef}_${Date.now()}`);
@@ -663,26 +579,6 @@ const App = () => {
         return await getDownloadURL(uploadResult.ref);
     };
 
-    const handleSetAsPrizePhoto = async () => {
-        if (!capturedImage || !raffleState.raffleRef) return;
-    
-        setIsUploading(true);
-        try {
-            const downloadURL = await uploadImage(capturedImage, raffleState.raffleRef);
-            await handleFieldChange('prizeImageUrl', downloadURL);
-            handleLocalFieldChange('prizeImageUrl', downloadURL);
-            showNotification(t('imageUploadedSuccess'), 'success');
-            await navigator.clipboard.writeText(downloadURL);
-            setIsTakePhotoModalOpen(false);
-        } catch (error) {
-            console.error("An error occurred during photo upload:", error);
-            showNotification(t('errorUploadingImage'), 'error');
-        } finally {
-            setIsUploading(false);
-            setCapturedImage(null);
-        }
-    };
-
     const handlePrizeImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files || !e.target.files[0] || !raffleState.raffleRef) return;
     
@@ -692,8 +588,13 @@ const App = () => {
         setIsUploading(true);
         try {
             const downloadURL = await uploadImage(file, raffleState.raffleRef);
-            await handleFieldChange('prizeImageUrl', downloadURL);
+            
+            const raffleDocRef = doc(db, "raffles", raffleState.raffleRef);
+            await setDoc(raffleDocRef, { prizeImageUrl: downloadURL }, { merge: true });
+
+            // After successful save to DB, update local state
             handleLocalFieldChange('prizeImageUrl', downloadURL);
+            
             showNotification(t('imageUploadedSuccess'), 'success');
         } catch (error) {
             console.error("An error occurred during file upload:", error);
@@ -789,7 +690,12 @@ const App = () => {
     };
 
     const handleFieldChange = async (field: string, value: any) => {
-        if (!raffleState.raffleRef || !isCurrentUserAdmin) return;
+        if (!raffleState.raffleRef || !isCurrentUserAdmin) {
+            // If we are not admin or don't have a raffle ref, we should still update the local state
+            // so the user sees their changes reflected in the input.
+            handleLocalFieldChange(field, value);
+            return;
+        }
         
         let valueToSave = value;
         if (field === 'value' || field === 'partialWinnerPercentage3' || field === 'partialWinnerPercentage2') {
@@ -802,12 +708,16 @@ const App = () => {
                 return;
             }
         }
-
+    
         try {
+            // Optimistically update local state
+            handleLocalFieldChange(field, valueToSave);
+            // Then update Firestore
             await setDoc(doc(db, "raffles", raffleState.raffleRef), { [field]: valueToSave }, { merge: true });
         } catch (error) {
             console.error(`Error updating field ${field}:`, error);
             showNotification(t('fieldUpdateError', { field }), 'error');
+            // NOTE: No need to revert state if using a listener, as the listener will correct it.
         }
     };
     
@@ -2092,10 +2002,6 @@ const App = () => {
                                 <div className="flex flex-col items-center gap-2">
                                     {isCurrentUserAdmin && !raffleState.isDetailsConfirmed ? (
                                         <div className="flex flex-wrap gap-2 justify-center">
-                                            <Button type="button" variant="outline" onClick={() => setIsTakePhotoModalOpen(true)}>
-                                                <Camera className="h-4 w-4 mr-2" />
-                                                {t('takePhoto')}
-                                            </Button>
                                             <Button type="button" variant="outline" onClick={() => document.getElementById('prize-image-upload-input')?.click()}>
                                                 <Upload className="h-4 w-4 mr-2" />
                                                 {t('uploadFromFile')}
@@ -4528,57 +4434,6 @@ const App = () => {
                             unoptimized
                         />
                     )}
-                </DialogContent>
-            </Dialog>
-
-            <Dialog open={isTakePhotoModalOpen} onOpenChange={handleCloseCamera}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>{capturedImage ? t('confirmPhoto') : t('takePrizePhoto')}</DialogTitle>
-                    </DialogHeader>
-                    <div className="relative">
-                        {capturedImage ? (
-                             <Image src={capturedImage} alt={t('capturedPrizePhotoAlt')} width={400} height={300} className="w-full h-auto rounded-md" />
-                        ) : (
-                            <>
-                                <video ref={videoRef} className="w-full aspect-video rounded-md bg-black" autoPlay muted playsInline />
-                                <canvas ref={canvasRef} className="hidden" />
-                                {hasCameraPermission === false && (
-                                    <div className="absolute inset-0 flex items-center justify-center bg-black/50 text-white p-4 text-center rounded-md">
-                                        <p>{t('cameraPermissionDenied')}</p>
-                                    </div>
-                                )}
-                            </>
-                        )}
-                         {isUploading && (
-                            <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center rounded-md">
-                                <Loader2 className="h-8 w-8 animate-spin text-white mb-2" />
-                            </div>
-                        )}
-                    </div>
-                    <DialogFooter>
-                        {capturedImage ? (
-                            <>
-                                <Button id="retake-photo-btn" variant="outline" onClick={handleRetake} disabled={isUploading}>{t('retakePhoto')}</Button>
-                                <Button onClick={handleSetAsPrizePhoto} disabled={isUploading}>
-                                    <LinkIcon className="mr-2 h-4 w-4" />
-                                    {t('setAsPrizePhoto')}
-                                </Button>
-                            </>
-                        ) : (
-                            <>
-                                <Button variant="outline" onClick={handleCloseCamera}>{t('cancel')}</Button>
-                                <Button onClick={handleSwitchCamera} disabled={!hasCameraPermission}>
-                                    <RefreshCcw className="mr-2 h-4 w-4" />
-                                    {t('switchCamera')}
-                                </Button>
-                                <Button onClick={handleCapture} disabled={!hasCameraPermission || isUploading}>
-                                    <Camera className="mr-2 h-4 w-4" />
-                                    {t('capture')}
-                                </Button>
-                            </>
-                        )}
-                    </DialogFooter>
                 </DialogContent>
             </Dialog>
 
