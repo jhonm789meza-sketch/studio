@@ -580,24 +580,31 @@ const App = () => {
     };
 
     const handlePrizeImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (!e.target.files || !e.target.files[0] || !raffleState.raffleRef) return;
+        if (!e.target.files || e.target.files[0] === null || !raffleState.raffleRef) {
+            return;
+        }
     
         const file = e.target.files[0];
         const target = e.target;
-        
+    
         setIsUploading(true);
+    
         try {
             const downloadURL = await uploadImage(file, raffleState.raffleRef);
             
-            const raffleDocRef = doc(db, "raffles", raffleState.raffleRef);
-            await setDoc(raffleDocRef, { prizeImageUrl: downloadURL }, { merge: true });
-
-            // After successful save to DB, update local state
-            handleLocalFieldChange('prizeImageUrl', downloadURL);
+            // Optimistic UI update
+            setRaffleState((prevState) => ({
+                ...prevState,
+                prizeImageUrl: downloadURL,
+            }));
             
+            // Now update firestore
+            const raffleDocRef = doc(db, 'raffles', raffleState.raffleRef);
+            await updateDoc(raffleDocRef, { prizeImageUrl: downloadURL });
+    
             showNotification(t('imageUploadedSuccess'), 'success');
         } catch (error) {
-            console.error("An error occurred during file upload:", error);
+            console.error('An error occurred during file upload:', error);
             showNotification(t('errorUploadingImage'), 'error');
         } finally {
             setIsUploading(false);
@@ -3750,7 +3757,7 @@ const App = () => {
                                     height={200}
                                 />
                                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                     <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white/90 shadow-md backdrop-blur-sm">
+                                     <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/90 shadow-md backdrop-blur-sm">
                                         <span className="font-bold text-5xl text-yellow-500">⚡</span>
                                      </div>
                                  </div>
@@ -4329,9 +4336,9 @@ const App = () => {
                                     data-ai-hint="payment qr code"
                                 />
                                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/90 shadow-md backdrop-blur-sm">
-                                       <span className="font-bold text-3xl text-yellow-500">⚡</span>
-                                    </div>
+                                     <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/90 shadow-md backdrop-blur-sm">
+                                        <span className="font-bold text-3xl text-yellow-500">⚡</span>
+                                     </div>
                                 </div>
                             </div>
                         )}
@@ -4345,9 +4352,9 @@ const App = () => {
                                     data-ai-hint="payment qr code"
                                 />
                                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/90 shadow-md backdrop-blur-sm">
-                                       <span className="font-bold text-3xl text-yellow-500">⚡</span>
-                                    </div>
+                                     <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/90 shadow-md backdrop-blur-sm">
+                                        <span className="font-bold text-3xl text-yellow-500">⚡</span>
+                                     </div>
                                 </div>
                             </div>
                         )}
