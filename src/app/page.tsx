@@ -565,43 +565,30 @@ const App = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     
-    const uploadImage = async (image: string | File, raffleRef: string): Promise<string> => {
-        const storageReference = storageRef(storage, `prize_images/${raffleRef}_${Date.now()}`);
-        let uploadResult;
-    
-        if (typeof image === 'string') {
-            const blob = await (await fetch(image)).blob();
-            uploadResult = await uploadBytes(storageReference, blob);
-        } else {
-            uploadResult = await uploadBytes(storageReference, image);
-        }
-        
+    const uploadImage = async (image: File, context: string): Promise<string> => {
+        const path = `${context}/${Date.now()}_${image.name}`;
+        const storageReference = storageRef(storage, path);
+        const uploadResult = await uploadBytes(storageReference, image);
         return await getDownloadURL(uploadResult.ref);
     };
 
     const handlePrizeImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (!e.target.files || e.target.files[0] === null || !raffleState.raffleRef) {
-            return;
-        }
-    
+        if (!e.target.files || e.target.files[0] === null || !raffleState.raffleRef) return;
+        
         const file = e.target.files[0];
         const target = e.target;
-    
+        
         setIsUploading(true);
-    
         try {
-            const downloadURL = await uploadImage(file, raffleState.raffleRef);
+            const downloadURL = await uploadImage(file, 'prize_images');
             
-            // Optimistic UI update
-            setRaffleState((prevState) => ({
-                ...prevState,
-                prizeImageUrl: downloadURL,
-            }));
-            
-            // Now update firestore
+            // This will trigger the onSnapshot listener, which will update the raffleState
             const raffleDocRef = doc(db, 'raffles', raffleState.raffleRef);
             await updateDoc(raffleDocRef, { prizeImageUrl: downloadURL });
-    
+            
+            // We can also optimistically update the state to make the UI feel faster
+            setRaffleState(prevState => ({ ...prevState, prizeImageUrl: downloadURL }));
+            
             showNotification(t('imageUploadedSuccess'), 'success');
         } catch (error) {
             console.error('An error occurred during file upload:', error);
@@ -1120,14 +1107,20 @@ const App = () => {
                     if (isIOS) {
                         pdf.output('dataurlnewwindow');
                     } else {
-                        const blob = pdf.output('blob');
-                        const link = document.createElement('a');
-                        link.href = URL.createObjectURL(blob);
-                        link.download = `tiquete_${targetInfo.raffleNumber}.pdf`;
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                        URL.revokeObjectURL(link.href);
+                        try {
+                            const blob = pdf.output('blob');
+                            const url = URL.createObjectURL(blob);
+                            const link = document.createElement('a');
+                            link.href = url;
+                            link.download = `tiquete_${targetInfo.raffleNumber}.pdf`;
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                            URL.revokeObjectURL(url);
+                        } catch (e) {
+                             console.error("Error creating blob for PDF download", e);
+                             pdf.save(`tiquete_${targetInfo.raffleNumber}.pdf`);
+                        }
                     }
                     showNotification(t('ticketDownloaded'), 'success');
 
@@ -1867,28 +1860,49 @@ const App = () => {
     const handleSavePaymentQrImage = async () => {
         if (!isSuperAdmin) return;
     
-        const saveData = async (newUrl?: string) => {
-            const finalUrl = newUrl !== undefined ? newUrl : paymentQrImageUrl2;
-            await setDoc(doc(db, 'internal', 'settings'), {
-                paymentQrImageUrl: paymentQrImageUrl,
-                paymentQrImageUrl2: finalUrl,
-            }, { merge: true });
-        };
-    
+        // No file selected, but maybe the URL for the first QR code was edited.
+        if (!imageFile2) {
+             setIsUploading(true);
+             try {
+                // Just save the current URLs from state.
+                await setDoc(doc(db, 'internal', 'settings'), {
+                    paymentQrImageUrl: paymentQrImageUrl,
+                    paymentQrImageUrl2: paymentQrImageUrl2,
+                }, { merge: true });
+                showNotification(t('paymentQrImageSaved'), 'success');
+                setIsPaymentQrImageDialogOpen(false);
+             } catch (error) {
+                console.error("Error saving payment QR image URL:", error);
+                showNotification(t('errorSavingPaymentQrImage'), 'error');
+             } finally {
+                setIsUploading(false);
+             }
+             return;
+        }
+
+        // A file was selected for the second QR code, so we need to upload it.
         setIsUploading(true);
         try {
-            if (imageFile2) {
-                const downloadURL = await uploadImage(imageFile2, 'qrcodes');
-                await saveData(downloadURL);
-            } else {
-                await saveData();
-            }
+            // Upload the file to Firebase Storage.
+            const downloadURL = await uploadImage(imageFile2, 'qrcodes');
+            
+            // The upload was successful. Now, save the new URL to Firestore.
+            await setDoc(doc(db, 'internal', 'settings'), {
+                paymentQrImageUrl: paymentQrImageUrl, // The URL for the first QR might have been edited too.
+                paymentQrImageUrl2: downloadURL,      // The newly uploaded file's URL.
+            }, { merge: true });
+
+            // On success, notify the user and close the dialog.
             showNotification(t('paymentQrImageSaved'), 'success');
             setIsPaymentQrImageDialogOpen(false);
+            setImageFile2(null); // Reset the file input state.
+
         } catch (error) {
-             console.error("Error saving payment QR image:", error);
-             showNotification(t('errorSavingPaymentQrImage'), 'error');
+            // If anything fails (upload or database write), show an error.
+            console.error("Error uploading or saving payment QR image:", error);
+            showNotification(t('errorSavingPaymentQrImage'), 'error');
         } finally {
+            // CRUCIAL: This block always runs, ensuring the loading spinner is hidden.
             setIsUploading(false);
         }
     };
