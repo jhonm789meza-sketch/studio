@@ -569,35 +569,6 @@ const App = () => {
         return await getDownloadURL(uploadResult.ref);
     };
 
-    const handlePrizeImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (!e.target.files || e.target.files.length === 0 || !raffleState.raffleRef) {
-            return;
-        }
-    
-        const file = e.target.files[0];
-        const target = e.target;
-    
-        setIsUploading(true);
-    
-        try {
-            const downloadURL = await uploadImage(file, 'prize_images');
-            
-            // The onSnapshot listener will update the UI after this write.
-            await updateDoc(doc(db, 'raffles', raffleState.raffleRef), { 
-                prizeImageUrl: downloadURL 
-            });
-    
-        } catch (error) {
-            console.error('An error occurred during file upload handling:', error);
-            showNotification(t('errorUploadingImage'), 'error');
-        } finally {
-            setIsUploading(false); // This is key.
-            if (target) {
-                target.value = '';
-            }
-        }
-    };
-
 
     const showNotification = (message: string, type = 'info') => {
         setNotification({ show: true, message, type });
@@ -686,6 +657,8 @@ const App = () => {
             return;
         }
         
+        // This is a generic save indicator.
+        // It's not just for image uploads anymore.
         setIsUploading(true);
         try {
             let valueToSave = value;
@@ -696,7 +669,7 @@ const App = () => {
                 valueToSave = parseInt(String(value).replace(/\D/g, ''), 10) || 0;
                 if (valueToSave !== 0 && valueToSave < 4) {
                     showNotification(t('min4Digits'), 'warning');
-                    setIsUploading(false); 
+                    setIsUploading(false);
                     return;
                 }
             }
@@ -1212,16 +1185,19 @@ const App = () => {
                         }
 
                         // We are already viewing this raffle, merge carefully.
+                        // Check if an image URL was just added by pasting a link.
                         const isUploadingImage = isUploading && !prevState.prizeImageUrl && !!data.prizeImageUrl;
                         
                         const newState = { ...prevState, ...data };
 
-                        // If an image was just uploaded, isUploading should be false
+                        // If an image was just uploaded (or link pasted), turn off the generic "uploading" indicator.
+                        // The 'isUploading' state is also used for general field saving, which is handled in the handleFieldChange finally block.
+                        // This specifically handles the case where the image appears.
                         if (isUploadingImage) {
                             setIsUploading(false);
                         }
                         
-                        // Preserve user input fields that might be in the middle of an update
+                        // Preserve user input fields that might be in the middle of an update to prevent them from being overwritten by server data.
                         newState.manualWinnerNumber = prevState.manualWinnerNumber;
                         newState.manualWinnerNumber2 = prevState.manualWinnerNumber2;
                         newState.manualWinnerNumber3 = prevState.manualWinnerNumber3;
@@ -1896,27 +1872,6 @@ const App = () => {
         }
     };
 
-    const handlePaymentQrImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (!e.target.files || e.target.files.length === 0) return;
-        const file = e.target.files[0];
-        const target = e.target;
-
-        setIsUploading(true);
-        try {
-            const downloadURL = await uploadImage(file, 'payment_qr_images');
-            setPaymentQrImageUrl(downloadURL); // This updates the state for the input field and preview
-            showNotification(t('imageUploadedSuccess'), 'success');
-        } catch (error) {
-            console.error('Error uploading payment QR image:', error);
-            showNotification(t('errorUploadingImage'), 'error');
-        } finally {
-            setIsUploading(false);
-            if (target) {
-                target.value = '';
-            }
-        }
-    };
-
     const handleDeleteGeneratedRef = (raffleRef: string) => {
         showConfirmationDialog(
             t('deleteGeneratedRefConfirmation', { ref: raffleRef }),
@@ -2024,7 +1979,7 @@ const App = () => {
                             </div>
                         )}
                         
-                        <div className="mb-6 rounded-lg overflow-hidden relative max-w-2xl mx-auto shadow-lg bg-gray-200 flex items-center justify-center">
+                        <div className="mb-6 rounded-lg overflow-hidden relative max-w-2xl mx-auto shadow-lg bg-gray-200 flex items-center justify-center aspect-auto">
                              {raffleState.prizeImageUrl ? (
                                 <button onClick={() => setIsPrizeImageModalOpen(true)} className="w-full h-auto flex items-center justify-center cursor-pointer" aria-label={t('rafflePrizeAlt')}>
                                     <Image 
@@ -4372,17 +4327,6 @@ const App = () => {
                         <DialogDescription>{t('managePaymentQrImageDescription')}</DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
-                        <div className="grid gap-2">
-                            <Label htmlFor="payment-qr-image-upload">{t('uploadFromFile')}</Label>
-                            <Input
-                                id="payment-qr-image-upload"
-                                type="file"
-                                accept="image/png, image/jpeg, image/webp, image/svg+xml"
-                                onChange={handlePaymentQrImageFileChange}
-                                className="text-sm"
-                                disabled={isUploading}
-                            />
-                        </div>
                         {isUploading && (
                             <div className="flex justify-center items-center p-2">
                                 <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
