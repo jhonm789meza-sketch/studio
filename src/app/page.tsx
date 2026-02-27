@@ -263,7 +263,7 @@ const App = () => {
                         line1: settings.bankInfoLine1 || 'Banco Caja Social: 24096711314',
                         line2: settings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054',
                     });
-                    setPaymentQrImageUrl(settings.paymentQrImageUrl || 'https://photos.app.goo.gl/UzDxnLWbUBLYA4k26');
+                    setPaymentQrImageUrl(settings.paymentQrImageUrl || '');
                 }
             }
         });
@@ -582,16 +582,16 @@ const App = () => {
         try {
             const downloadURL = await uploadImage(file, 'prize_images');
             
+            // The onSnapshot listener will update the UI after this write.
             await updateDoc(doc(db, 'raffles', raffleState.raffleRef), { 
                 prizeImageUrl: downloadURL 
             });
     
-            showNotification(t('imageUploadedSuccess'), 'success');
         } catch (error) {
-            console.error('An error occurred during file upload:', error);
+            console.error('An error occurred during file upload handling:', error);
             showNotification(t('errorUploadingImage'), 'error');
         } finally {
-            setIsUploading(false);
+            setIsUploading(false); // This is key.
             if (target) {
                 target.value = '';
             }
@@ -1204,26 +1204,35 @@ const App = () => {
                     const data = docSnapshot.data() as Raffle;
     
                      // If it's a new raffle being loaded, overwrite state. Otherwise, merge.
-                    if (loadedRaffleIdRef.current === aRef) {
-                        setRaffleState(prevState => {
-                            const hadImage = !!prevState.prizeImageUrl;
-                            const hasImageNow = !!data.prizeImageUrl;
-                            const newState = { ...prevState, ...data };
-                            
-                            // If an image was just uploaded, isUploading should be false
-                            if (!hadImage && hasImageNow) {
-                               setIsUploading(false);
-                            } else if (isUploading && prevState.prizeImageUrl !== newState.prizeImageUrl) {
-                                setIsUploading(false);
-                            }
-                            
-                            return newState;
-                        });
-                    } else {
-                        setRaffleState(data);
-                        loadedRaffleIdRef.current = aRef;
-                        setIsUploading(false);
-                    }
+                    setRaffleState(prevState => {
+                        // This complex logic prevents the UI from flickering or having race conditions
+                        // when Firestore updates the doc while the user is interacting with it.
+                        if (loadedRaffleIdRef.current !== aRef) {
+                            return data; // First time loading this raffle, just take the server state.
+                        }
+
+                        // We are already viewing this raffle, merge carefully.
+                        const isUploadingImage = isUploading && !prevState.prizeImageUrl && !!data.prizeImageUrl;
+                        
+                        const newState = { ...prevState, ...data };
+
+                        // If an image was just uploaded, isUploading should be false
+                        if (isUploadingImage) {
+                            setIsUploading(false);
+                        }
+                        
+                        // Preserve user input fields that might be in the middle of an update
+                        newState.manualWinnerNumber = prevState.manualWinnerNumber;
+                        newState.manualWinnerNumber2 = prevState.manualWinnerNumber2;
+                        newState.manualWinnerNumber3 = prevState.manualWinnerNumber3;
+                        newState.name = prevState.name;
+                        newState.phoneNumber = prevState.phoneNumber;
+                        newState.raffleNumber = prevState.raffleNumber;
+
+                        return newState;
+                    });
+                    
+                    loadedRaffleIdRef.current = aRef;
 
                     if (isSuperAdmin) {
                         setCurrentAdminId(data.adminId);
@@ -1878,12 +1887,33 @@ const App = () => {
             });
 
             showNotification(t('paymentQrImageSaved'), 'success');
+            setIsPaymentQrImageDialogOpen(false);
         } catch (error) {
             console.error("Error saving payment QR image:", error);
             showNotification(t('errorSavingPaymentQrImage'), 'error');
         } finally {
              setIsUploading(false);
-             setIsPaymentQrImageDialogOpen(false);
+        }
+    };
+
+    const handlePaymentQrImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files || e.target.files.length === 0) return;
+        const file = e.target.files[0];
+        const target = e.target;
+
+        setIsUploading(true);
+        try {
+            const downloadURL = await uploadImage(file, 'payment_qr_images');
+            setPaymentQrImageUrl(downloadURL); // This updates the state for the input field and preview
+            showNotification(t('imageUploadedSuccess'), 'success');
+        } catch (error) {
+            console.error('Error uploading payment QR image:', error);
+            showNotification(t('errorUploadingImage'), 'error');
+        } finally {
+            setIsUploading(false);
+            if (target) {
+                target.value = '';
+            }
         }
     };
 
@@ -2002,7 +2032,7 @@ const App = () => {
                                         alt={t('rafflePrizeAlt')} 
                                         width={1200}
                                         height={1200}
-                                        className="w-full h-auto object-contain"
+                                        className="w-full h-auto object-contain max-h-[60vh]"
                                         unoptimized 
                                         key={raffleState.prizeImageUrl}
                                     />
@@ -4343,12 +4373,30 @@ const App = () => {
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                         <div className="grid gap-2">
+                            <Label htmlFor="payment-qr-image-upload">{t('uploadFromFile')}</Label>
+                            <Input
+                                id="payment-qr-image-upload"
+                                type="file"
+                                accept="image/png, image/jpeg, image/webp, image/svg+xml"
+                                onChange={handlePaymentQrImageFileChange}
+                                className="text-sm"
+                                disabled={isUploading}
+                            />
+                        </div>
+                        {isUploading && (
+                            <div className="flex justify-center items-center p-2">
+                                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                                <span className="ml-2 text-muted-foreground">{t('uploadingImage')}...</span>
+                            </div>
+                        )}
+                        <div className="grid gap-2">
                             <Label htmlFor="payment-qr-image-url">{t('paymentQrImageUrlLabel')}</Label>
                             <Input
                                 id="payment-qr-image-url"
                                 value={paymentQrImageUrl}
                                 onChange={(e) => setPaymentQrImageUrl(e.target.value)}
                                 placeholder="https://example.com/qr.png"
+                                disabled={isUploading}
                             />
                         </div>
                     </div>
