@@ -586,9 +586,6 @@ const App = () => {
             const raffleDocRef = doc(db, 'raffles', raffleState.raffleRef);
             await updateDoc(raffleDocRef, { prizeImageUrl: downloadURL });
             
-            // We can also optimistically update the state to make the UI feel faster
-            setRaffleState(prevState => ({ ...prevState, prizeImageUrl: downloadURL }));
-            
             showNotification(t('imageUploadedSuccess'), 'success');
         } catch (error) {
             console.error('An error occurred during file upload:', error);
@@ -1860,49 +1857,29 @@ const App = () => {
     const handleSavePaymentQrImage = async () => {
         if (!isSuperAdmin) return;
     
-        // No file selected, but maybe the URL for the first QR code was edited.
-        if (!imageFile2) {
-             setIsUploading(true);
-             try {
-                // Just save the current URLs from state.
-                await setDoc(doc(db, 'internal', 'settings'), {
-                    paymentQrImageUrl: paymentQrImageUrl,
-                    paymentQrImageUrl2: paymentQrImageUrl2,
-                }, { merge: true });
-                showNotification(t('paymentQrImageSaved'), 'success');
-                setIsPaymentQrImageDialogOpen(false);
-             } catch (error) {
-                console.error("Error saving payment QR image URL:", error);
-                showNotification(t('errorSavingPaymentQrImage'), 'error');
-             } finally {
-                setIsUploading(false);
-             }
-             return;
-        }
-
-        // A file was selected for the second QR code, so we need to upload it.
         setIsUploading(true);
         try {
-            // Upload the file to Firebase Storage.
-            const downloadURL = await uploadImage(imageFile2, 'qrcodes');
-            
-            // The upload was successful. Now, save the new URL to Firestore.
+            let newQr2Url = paymentQrImageUrl2;
+            if (imageFile2) {
+                // If there's a new file, upload it and get the URL
+                newQr2Url = await uploadImage(imageFile2, 'qrcodes');
+            }
+
+            // Update firestore with the potentially new URL for qr2 and the current URL for qr1
             await setDoc(doc(db, 'internal', 'settings'), {
-                paymentQrImageUrl: paymentQrImageUrl, // The URL for the first QR might have been edited too.
-                paymentQrImageUrl2: downloadURL,      // The newly uploaded file's URL.
+                paymentQrImageUrl: paymentQrImageUrl,
+                paymentQrImageUrl2: newQr2Url,
             }, { merge: true });
 
-            // On success, notify the user and close the dialog.
+            // The onSnapshot listener will update the state, so we just show success and close.
             showNotification(t('paymentQrImageSaved'), 'success');
             setIsPaymentQrImageDialogOpen(false);
-            setImageFile2(null); // Reset the file input state.
+            setImageFile2(null);
 
         } catch (error) {
-            // If anything fails (upload or database write), show an error.
             console.error("Error uploading or saving payment QR image:", error);
             showNotification(t('errorSavingPaymentQrImage'), 'error');
         } finally {
-            // CRUCIAL: This block always runs, ensuring the loading spinner is hidden.
             setIsUploading(false);
         }
     };
@@ -4351,7 +4328,7 @@ const App = () => {
                                 />
                                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/90 shadow-md backdrop-blur-sm">
-                                        <span className="font-bold text-3xl text-yellow-500">⚡</span>
+                                        <span className="font-bold text-5xl text-yellow-500">⚡</span>
                                      </div>
                                 </div>
                             </div>
@@ -4367,7 +4344,7 @@ const App = () => {
                                 />
                                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/90 shadow-md backdrop-blur-sm">
-                                        <span className="font-bold text-3xl text-yellow-500">⚡</span>
+                                        <span className="font-bold text-5xl text-yellow-500">⚡</span>
                                      </div>
                                 </div>
                             </div>
