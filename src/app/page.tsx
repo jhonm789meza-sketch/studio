@@ -209,9 +209,6 @@ const App = () => {
     const [isPaymentQrDialogOpen, setIsPaymentQrDialogOpen] = useState(false);
     const [isPaymentQrImageDialogOpen, setIsPaymentQrImageDialogOpen] = useState(false);
     const [paymentQrImageUrl, setPaymentQrImageUrl] = useState('');
-    const [paymentQrImageUrl2, setPaymentQrImageUrl2] = useState('');
-    const [uploadProgress2, setUploadProgress2] = useState<number | null>(null);
-    const [imageFile2, setImageFile2] = useState<File | null>(null);
     const [isPrizeImageModalOpen, setIsPrizeImageModalOpen] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     
@@ -267,7 +264,6 @@ const App = () => {
                         line2: settings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054',
                     });
                     setPaymentQrImageUrl(settings.paymentQrImageUrl || 'https://photos.app.goo.gl/UzDxnLWbUBLYA4k26');
-                    setPaymentQrImageUrl2(settings.paymentQrImageUrl2 || '');
                 }
             }
         });
@@ -1877,24 +1873,17 @@ const App = () => {
     
         setIsUploading(true);
         try {
-            let newQr2Url = paymentQrImageUrl2;
-            if (imageFile2) {
-                newQr2Url = await uploadImage(imageFile2, 'qrcodes');
-            }
-
             await updateDoc(doc(db, 'internal', 'settings'), {
                 paymentQrImageUrl: paymentQrImageUrl,
-                paymentQrImageUrl2: newQr2Url,
             });
 
             showNotification(t('paymentQrImageSaved'), 'success');
         } catch (error) {
-            console.error("Error uploading or saving payment QR image:", error);
+            console.error("Error saving payment QR image:", error);
             showNotification(t('errorSavingPaymentQrImage'), 'error');
         } finally {
              setIsUploading(false);
              setIsPaymentQrImageDialogOpen(false);
-             setImageFile2(null);
         }
     };
 
@@ -4315,7 +4304,7 @@ const App = () => {
             </Dialog>
 
             <Dialog open={isPaymentQrDialogOpen} onOpenChange={setIsPaymentQrDialogOpen}>
-                <DialogContent className={cn("max-w-xs", (appSettings.paymentQrImageUrl && appSettings.paymentQrImageUrl.startsWith('http') && appSettings.paymentQrImageUrl2 && appSettings.paymentQrImageUrl2.startsWith('http')) && "sm:max-w-lg")}>
+                <DialogContent className="max-w-xs">
                     <DialogHeader>
                         <DialogTitle className="text-center">{t('payWithQr')}</DialogTitle>
                         <DialogDescription className="text-center">
@@ -4339,22 +4328,6 @@ const App = () => {
                                 </div>
                             </div>
                         )}
-                        {appSettings.paymentQrImageUrl2 && appSettings.paymentQrImageUrl2.startsWith('http') && (
-                             <div className="relative inline-block p-2 bg-white rounded-lg shadow-md">
-                                <Image
-                                    src={appSettings.paymentQrImageUrl2}
-                                    alt={t('paymentQrCodeAlt2')}
-                                    width={200}
-                                    height={200}
-                                    data-ai-hint="payment qr code"
-                                />
-                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                     <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/90 shadow-md backdrop-blur-sm">
-                                        <span className="font-bold text-5xl text-yellow-500">⚡</span>
-                                     </div>
-                                </div>
-                            </div>
-                        )}
                     </div>
                     <DialogFooter>
                         <Button type="button" variant="outline" onClick={() => setIsPaymentQrDialogOpen(false)}>{t('close')}</Button>
@@ -4362,13 +4335,7 @@ const App = () => {
                 </DialogContent>
             </Dialog>
 
-            <Dialog open={isPaymentQrImageDialogOpen} onOpenChange={(isOpen) => {
-                if (!isOpen) {
-                    setImageFile2(null);
-                    setUploadProgress2(null);
-                }
-                setIsPaymentQrImageDialogOpen(isOpen)
-            }}>
+            <Dialog open={isPaymentQrImageDialogOpen} onOpenChange={setIsPaymentQrImageDialogOpen}>
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>{t('managePaymentQrImage')}</DialogTitle>
@@ -4384,34 +4351,6 @@ const App = () => {
                                 placeholder="https://example.com/qr.png"
                             />
                         </div>
-
-                        <div className="grid gap-2">
-                            <Label htmlFor="qr-image-upload-2">{t('uploadSecondQrImage')}</Label>
-                            <Input
-                                id="qr-image-upload-2"
-                                type="file"
-                                accept="image/*"
-                                onChange={(e) => e.target.files && setImageFile2(e.target.files[0])}
-                                className="file:text-foreground"
-                                disabled={isUploading}
-                            />
-                            {isUploading && <Progress value={uploadProgress2 || 0} className="w-full mt-2" />}
-                            
-                            {(imageFile2 || paymentQrImageUrl2) && (
-                                <div className="mt-2">
-                                    <p className="text-sm font-medium mb-1">{t('imagePreview2')}</p>
-                                    <Image
-                                        src={imageFile2 ? URL.createObjectURL(imageFile2) : paymentQrImageUrl2}
-                                        alt={t('imagePreview2')}
-                                        width={100}
-                                        height={100}
-                                        className="rounded-md border"
-                                        data-ai-hint="payment qr code"
-                                    />
-                                </div>
-                            )}
-                        </div>
-
                     </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setIsPaymentQrImageDialogOpen(false)} disabled={isUploading}>{t('cancel')}</Button>
