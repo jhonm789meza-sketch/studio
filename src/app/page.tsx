@@ -568,32 +568,41 @@ const App = () => {
     const uploadImage = async (image: File, context: string): Promise<string> => {
         const path = `${context}/${Date.now()}_${image.name}`;
         const storageReference = storageRef(storage, path);
+        
+        // This function now expects the full lifecycle to be handled where it's called.
+        // It's just a helper for the upload part.
         const uploadResult = await uploadBytes(storageReference, image);
         return await getDownloadURL(uploadResult.ref);
     };
 
     const handlePrizeImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (!e.target.files || e.target.files[0] === null || !raffleState.raffleRef) return;
-        
+        if (!e.target.files || e.target.files.length === 0 || !raffleState.raffleRef) {
+            return;
+        }
+    
         const file = e.target.files[0];
-        const target = e.target;
-        
+        const target = e.target; // Capture target to clear it later
+    
         setIsUploading(true);
+    
         try {
             const downloadURL = await uploadImage(file, 'prize_images');
             
             // This will trigger the onSnapshot listener, which will update the raffleState
-            const raffleDocRef = doc(db, 'raffles', raffleState.raffleRef);
-            await updateDoc(raffleDocRef, { prizeImageUrl: downloadURL });
-            
+            // with the new URL and hide the loading indicator by re-rendering.
+            await updateDoc(doc(db, 'raffles', raffleState.raffleRef), { 
+                prizeImageUrl: downloadURL 
+            });
+    
             showNotification(t('imageUploadedSuccess'), 'success');
         } catch (error) {
             console.error('An error occurred during file upload:', error);
             showNotification(t('errorUploadingImage'), 'error');
         } finally {
+            // This block will run regardless of success or failure
             setIsUploading(false);
             if (target) {
-                target.value = '';
+                target.value = ''; // Reset file input
             }
         }
     };
@@ -688,28 +697,32 @@ const App = () => {
             return;
         }
         
-        let valueToSave = value;
-        if (field === 'value' || field === 'partialWinnerPercentage3' || field === 'partialWinnerPercentage2') {
-            valueToSave = String(value).replace(/\D/g, '');
-            if (valueToSave === '') valueToSave = 0;
-        } else if (field === 'infiniteModeDigits') {
-            valueToSave = parseInt(String(value).replace(/\D/g, ''), 10) || 0;
-             if (valueToSave !== 0 && valueToSave < 4) {
-                showNotification(t('min4Digits'), 'warning');
-                return;
-            }
-        }
-    
+        // This is the single source of truth for updates. No more optimistic local state changes.
+        // The listener will handle updating the UI.
+        setIsUploading(true);
         try {
-            // Optimistically update local state
-            handleLocalFieldChange(field, valueToSave);
-            // Then update Firestore
-            await setDoc(doc(db, "raffles", raffleState.raffleRef), { [field]: valueToSave }, { merge: true });
+            let valueToSave = value;
+            if (field === 'value' || field === 'partialWinnerPercentage3' || field === 'partialWinnerPercentage2') {
+                valueToSave = String(value).replace(/\D/g, '');
+                if (valueToSave === '') valueToSave = 0;
+            } else if (field === 'infiniteModeDigits') {
+                valueToSave = parseInt(String(value).replace(/\D/g, ''), 10) || 0;
+                if (valueToSave !== 0 && valueToSave < 4) {
+                    showNotification(t('min4Digits'), 'warning');
+                    setIsUploading(false); // Make sure to stop loading
+                    return;
+                }
+            }
+            
+            await updateDoc(doc(db, "raffles", raffleState.raffleRef), { [field]: valueToSave });
+            // The listener will eventually set isUploading to false by updating the state.
+            // However, if the listener is slow, we might want a failsafe.
         } catch (error) {
             console.error(`Error updating field ${field}:`, error);
             showNotification(t('fieldUpdateError', { field }), 'error');
-            // NOTE: No need to revert state if using a listener, as the listener will correct it.
+            setIsUploading(false); // Stop loading on error
         }
+        // No finally block to set isUploading to false, we rely on the listener.
     };
     
     
@@ -1206,10 +1219,18 @@ const App = () => {
     
                      // If it's a new raffle being loaded, overwrite state. Otherwise, merge.
                     if (loadedRaffleIdRef.current === aRef) {
-                        setRaffleState(prevState => ({ ...prevState, ...data }));
+                        setRaffleState(prevState => {
+                            const newState = { ...prevState, ...data };
+                            // If the listener provides a new image URL, stop loading.
+                            if (prevState.prizeImageUrl !== newState.prizeImageUrl && isUploading) {
+                                setIsUploading(false);
+                            }
+                            return newState;
+                        });
                     } else {
                         setRaffleState(data);
                         loadedRaffleIdRef.current = aRef;
+                        setIsUploading(false);
                     }
 
                     if (isSuperAdmin) {
@@ -1259,11 +1280,18 @@ const App = () => {
                     window.history.pushState({}, '', window.location.pathname);
                 }
                 setLoading(false);
+                if (isUploading && loadedRaffleIdRef.current === aRef) {
+                    // If we are still uploading but received a state update, it means the upload finished.
+                    // This is a failsafe.
+                } else {
+                    setIsUploading(false);
+                }
                 resolve();
             }, (error) => {
                 console.error("Error subscribing to raffle:", error);
                 showNotification(t('raffleLoadError'), 'error');
                 setLoading(false);
+                setIsUploading(false);
                 resolve();
             });
         });
@@ -1866,10 +1894,10 @@ const App = () => {
             }
 
             // Update firestore with the potentially new URL for qr2 and the current URL for qr1
-            await setDoc(doc(db, 'internal', 'settings'), {
+            await updateDoc(doc(db, 'internal', 'settings'), {
                 paymentQrImageUrl: paymentQrImageUrl,
                 paymentQrImageUrl2: newQr2Url,
-            }, { merge: true });
+            });
 
             // The onSnapshot listener will update the state, so we just show success and close.
             showNotification(t('paymentQrImageSaved'), 'success');
@@ -1998,23 +2026,7 @@ const App = () => {
                                 </button>
                             ) : (
                                 <div className="flex flex-col items-center gap-2">
-                                    {isCurrentUserAdmin && !raffleState.isDetailsConfirmed ? (
-                                        <div className="flex flex-wrap gap-2 justify-center">
-                                            <Button type="button" variant="outline" onClick={() => document.getElementById('prize-image-upload-input')?.click()}>
-                                                <Upload className="h-4 w-4 mr-2" />
-                                                {t('uploadFromFile')}
-                                            </Button>
-                                            <input 
-                                                id="prize-image-upload-input"
-                                                type="file" 
-                                                className="hidden" 
-                                                accept="image/*"
-                                                onChange={handlePrizeImageFileChange}
-                                            />
-                                        </div>
-                                    ) : (
-                                        <span className="text-gray-500">{t('noPrizeImage')}</span>
-                                    )}
+                                    <span className="text-gray-500">{t('noPrizeImage')}</span>
                                 </div>
                             )}
                              {isUploading && (
