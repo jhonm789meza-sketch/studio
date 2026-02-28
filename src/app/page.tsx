@@ -1,4 +1,5 @@
 
+
 'use client';
 import { useState, useEffect, useRef, useTransition } from 'react';
 import jsPDF from 'jspdf';
@@ -1995,7 +1996,7 @@ const App = () => {
                             </div>
                         )}
                         
-                        <div className="mb-6 rounded-lg overflow-hidden relative max-w-2xl mx-auto shadow-lg bg-gray-200 flex items-center justify-center">
+                        <div className="mb-6 rounded-lg overflow-hidden relative w-full h-auto flex items-center justify-center shadow-lg bg-gray-200">
                              {raffleState.prizeImageUrl ? (
                                 <button onClick={() => setIsPrizeImageModalOpen(true)} className="w-full flex items-center justify-center cursor-pointer" aria-label={t('rafflePrizeAlt')}>
                                     <Image 
@@ -4314,12 +4315,12 @@ const App = () => {
                     </DialogHeader>
                     <div className="flex justify-center items-center p-4">
                         {appSettings.paymentQrImageUrl && appSettings.paymentQrImageUrl.startsWith('http') ? (
-                            <div className="relative inline-block p-4 bg-white rounded-lg shadow-md">
+                            <div className="relative inline-block p-4 bg-white rounded-lg shadow-md w-auto h-auto">
                                 <Image
                                     src={appSettings.paymentQrImageUrl}
                                     alt={t('paymentQrCodeAlt')}
-                                    width={300}
-                                    height={300}
+                                    width={350}
+                                    height={350}
                                     className="object-contain"
                                     data-ai-hint="payment qr code"
                                 />
@@ -4364,10 +4365,30 @@ const App = () => {
                                 disabled={isUploading}
                             />
                         </div>
+                        {paymentQrImageUrl && paymentQrImageUrl.startsWith('http') && (
+                            <div className="mt-4 p-4 border rounded-lg bg-gray-50 flex flex-col items-center gap-2">
+                                <Label>{t('preview')}</Label>
+                                <div className="relative inline-block p-2 bg-white rounded-lg shadow-md">
+                                    <Image
+                                        key={paymentQrImageUrl}
+                                        src={paymentQrImageUrl}
+                                        alt={t('paymentQrCodeAlt')}
+                                        width={150}
+                                        height={150}
+                                        className="object-contain"
+                                    />
+                                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/90 shadow-md backdrop-blur-sm">
+                                            <span className="font-bold text-4xl text-yellow-500">⚡</span>
+                                         </div>
+                                     </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setIsPaymentQrImageDialogOpen(false)} disabled={isUploading}>{t('cancel')}</Button>
-                        <Button onClick={handleSavePaymentQrImage} disabled={isUploading}>
+                        <Button onClick={handleSavePaymentQrImage} disabled={isUploading || !paymentQrImageUrl}>
                             {isUploading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             {t('save')}
                         </Button>
@@ -4398,4 +4419,5 @@ const App = () => {
 };
 
 export default App;
+
 

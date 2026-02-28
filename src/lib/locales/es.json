@@ -373,5 +373,6 @@
     "copyUrl": "Copiar URL",
     "uploadFromFile": "Subir desde Archivo",
     "uploadingImage": "Subiendo imagen...",
-    "errorGeneratingTicketImage": "Error al generar la imagen del tiquete. Por favor, intenta de nuevo."
+    "errorGeneratingTicketImage": "Error al generar la imagen del tiquete. Por favor, intenta de nuevo.",
+    "preview": "Vista Previa"
 }
