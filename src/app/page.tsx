@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect, useRef, useTransition } from 'react';
 import jsPDF from 'jspdf';
@@ -562,11 +563,30 @@ const App = () => {
     }, []);
     
     const uploadImage = async (image: File, context: string): Promise<string> => {
-        const path = `${context}/${Date.now()}_${image.name}`;
-        const storageReference = storageRef(storage, path);
-        
-        const uploadResult = await uploadBytes(storageReference, image);
-        return await getDownloadURL(uploadResult.ref);
+        setIsUploading(true);
+        try {
+            const path = `${context}/${Date.now()}_${image.name}`;
+            const storageReference = storageRef(storage, path);
+            
+            const uploadResult = await uploadBytes(storageReference, image);
+            const downloadUrl = await getDownloadURL(uploadResult.ref);
+            
+            // Optimistic UI update
+            if (context === 'prize-images') {
+                handleLocalFieldChange('prizeImageUrl', downloadUrl);
+            } else if (context === 'payment-qr') {
+                setPaymentQrImageUrl(downloadUrl);
+            }
+            
+            showNotification(t('imageUploadedSuccess'), 'success');
+            return downloadUrl;
+        } catch (error) {
+            console.error(`Error uploading image to ${context}:`, error);
+            showNotification(t('errorUploadingImage'), 'error');
+            throw error; // Re-throw to be caught by caller
+        } finally {
+            setIsUploading(false);
+        }
     };
 
 
@@ -651,37 +671,44 @@ const App = () => {
         setRaffleState(prevState => ({ ...prevState, ...newState }));
     };
 
-    const handleFieldChange = async (field: string, value: any) => {
-        if (!raffleState.raffleRef || !isCurrentUserAdmin) {
-            handleLocalFieldChange(field, value);
-            return;
-        }
-        
-        // This is a generic save indicator.
-        // It's not just for image uploads anymore.
-        setIsUploading(true);
-        try {
-            let valueToSave = value;
-            if (field === 'value' || field === 'partialWinnerPercentage3' || field === 'partialWinnerPercentage2') {
-                valueToSave = String(value).replace(/\D/g, '');
-                if (valueToSave === '') valueToSave = 0;
-            } else if (field === 'infiniteModeDigits') {
-                valueToSave = parseInt(String(value).replace(/\D/g, ''), 10) || 0;
-                if (valueToSave !== 0 && valueToSave < 4) {
-                    showNotification(t('min4Digits'), 'warning');
-                    setIsUploading(false);
-                    return;
-                }
+    const handleFieldChange = (field: string, value: any, isUploadingField = false) => {
+        return new Promise<void>(async (resolve, reject) => {
+            if (!raffleState.raffleRef || !isCurrentUserAdmin) {
+                handleLocalFieldChange(field, value);
+                resolve();
+                return;
             }
             
-            await updateDoc(doc(db, "raffles", raffleState.raffleRef), { [field]: valueToSave });
-        } catch (error) {
-            console.error(`Error updating field ${field}:`, error);
-            showNotification(t('fieldUpdateError', { field }), 'error');
-        }
-        finally {
-            setIsUploading(false);
-        }
+            // This is a generic save indicator.
+            // It's not just for image uploads anymore.
+            if (!isUploadingField) setIsUploading(true);
+
+            try {
+                let valueToSave = value;
+                if (field === 'value' || field === 'partialWinnerPercentage3' || field === 'partialWinnerPercentage2') {
+                    valueToSave = String(value).replace(/\D/g, '');
+                    if (valueToSave === '') valueToSave = 0;
+                } else if (field === 'infiniteModeDigits') {
+                    valueToSave = parseInt(String(value).replace(/\D/g, ''), 10) || 0;
+                    if (valueToSave !== 0 && valueToSave < 4) {
+                        showNotification(t('min4Digits'), 'warning');
+                        if (!isUploadingField) setIsUploading(false);
+                        reject(new Error(t('min4Digits')));
+                        return;
+                    }
+                }
+                
+                await updateDoc(doc(db, "raffles", raffleState.raffleRef), { [field]: valueToSave });
+                resolve();
+            } catch (error) {
+                console.error(`Error updating field ${field}:`, error);
+                showNotification(t('fieldUpdateError', { field }), 'error');
+                reject(error);
+            }
+            finally {
+                if (!isUploadingField) setIsUploading(false);
+            }
+        });
     };
     
     
@@ -1176,35 +1203,26 @@ const App = () => {
                 if (docSnapshot.exists()) {
                     const data = docSnapshot.data() as Raffle;
     
-                     // If it's a new raffle being loaded, overwrite state. Otherwise, merge.
                     setRaffleState(prevState => {
-                        // This complex logic prevents the UI from flickering or having race conditions
-                        // when Firestore updates the doc while the user is interacting with it.
                         if (loadedRaffleIdRef.current !== aRef) {
-                            return data; // First time loading this raffle, just take the server state.
+                            return data; 
                         }
-
-                        // We are already viewing this raffle, merge carefully.
-                        // Check if an image URL was just added by pasting a link.
+                    
                         const isUploadingImage = isUploading && !prevState.prizeImageUrl && !!data.prizeImageUrl;
                         
                         const newState = { ...prevState, ...data };
-
-                        // If an image was just uploaded (or link pasted), turn off the generic "uploading" indicator.
-                        // The 'isUploading' state is also used for general field saving, which is handled in the handleFieldChange finally block.
-                        // This specifically handles the case where the image appears.
+                    
                         if (isUploadingImage) {
                             setIsUploading(false);
                         }
                         
-                        // Preserve user input fields that might be in the middle of an update to prevent them from being overwritten by server data.
-                        newState.manualWinnerNumber = prevState.manualWinnerNumber;
-                        newState.manualWinnerNumber2 = prevState.manualWinnerNumber2;
-                        newState.manualWinnerNumber3 = prevState.manualWinnerNumber3;
                         newState.name = prevState.name;
                         newState.phoneNumber = prevState.phoneNumber;
                         newState.raffleNumber = prevState.raffleNumber;
-
+                        newState.manualWinnerNumber = prevState.manualWinnerNumber;
+                        newState.manualWinnerNumber2 = prevState.manualWinnerNumber2;
+                        newState.manualWinnerNumber3 = prevState.manualWinnerNumber3;
+                    
                         return newState;
                     });
                     
@@ -1855,13 +1873,11 @@ const App = () => {
 
     const handleSavePaymentQrImage = async () => {
         if (!isSuperAdmin) return;
-    
         setIsUploading(true);
         try {
             await updateDoc(doc(db, 'internal', 'settings'), {
                 paymentQrImageUrl: paymentQrImageUrl,
             });
-
             showNotification(t('paymentQrImageSaved'), 'success');
             setIsPaymentQrImageDialogOpen(false);
         } catch (error) {
@@ -1979,9 +1995,9 @@ const App = () => {
                             </div>
                         )}
                         
-                        <div className="mb-6 rounded-lg overflow-hidden relative max-w-2xl mx-auto shadow-lg bg-gray-200 flex items-center justify-center aspect-auto">
+                        <div className="mb-6 rounded-lg overflow-hidden relative max-w-2xl mx-auto shadow-lg bg-gray-200 flex items-center justify-center">
                              {raffleState.prizeImageUrl ? (
-                                <button onClick={() => setIsPrizeImageModalOpen(true)} className="w-full h-auto flex items-center justify-center cursor-pointer" aria-label={t('rafflePrizeAlt')}>
+                                <button onClick={() => setIsPrizeImageModalOpen(true)} className="w-full flex items-center justify-center cursor-pointer" aria-label={t('rafflePrizeAlt')}>
                                     <Image 
                                         src={raffleState.prizeImageUrl} 
                                         alt={t('rafflePrizeAlt')} 
@@ -4289,28 +4305,33 @@ const App = () => {
             </Dialog>
 
             <Dialog open={isPaymentQrDialogOpen} onOpenChange={setIsPaymentQrDialogOpen}>
-                <DialogContent className="max-w-xs">
+                <DialogContent className="max-w-md">
                     <DialogHeader>
                         <DialogTitle className="text-center">{t('payWithQr')}</DialogTitle>
                         <DialogDescription className="text-center">
                             {t('scanQrToPay')}
                         </DialogDescription>
                     </DialogHeader>
-                    <div className="flex justify-center items-center p-4 gap-4 flex-wrap">
-                        {appSettings.paymentQrImageUrl && appSettings.paymentQrImageUrl.startsWith('http') && (
-                            <div className="relative inline-block p-2 bg-white rounded-lg shadow-md">
+                    <div className="flex justify-center items-center p-4">
+                        {appSettings.paymentQrImageUrl && appSettings.paymentQrImageUrl.startsWith('http') ? (
+                            <div className="relative inline-block p-4 bg-white rounded-lg shadow-md">
                                 <Image
                                     src={appSettings.paymentQrImageUrl}
                                     alt={t('paymentQrCodeAlt')}
-                                    width={200}
-                                    height={200}
+                                    width={300}
+                                    height={300}
+                                    className="object-contain"
                                     data-ai-hint="payment qr code"
                                 />
-                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                     <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/90 shadow-md backdrop-blur-sm">
-                                        <span className="font-bold text-5xl text-yellow-500">⚡</span>
+                                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                     <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/90 shadow-md backdrop-blur-sm">
+                                        <span className="font-bold text-6xl text-yellow-500">⚡</span>
                                      </div>
-                                </div>
+                                 </div>
+                            </div>
+                        ) : (
+                            <div className="text-muted-foreground bg-gray-100 p-8 rounded-lg flex items-center justify-center h-[300px] w-[300px]">
+                                <p>{t('noPrizeImage')}</p>
                             </div>
                         )}
                     </div>
@@ -4377,3 +4398,4 @@ const App = () => {
 };
 
 export default App;
+
