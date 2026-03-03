@@ -4314,15 +4314,16 @@ const App = () => {
                         </DialogDescription>
                     </DialogHeader>
                     <div className="flex justify-center items-center p-4">
-                        {appSettings.paymentQrImageUrl && appSettings.paymentQrImageUrl.startsWith('http') ? (
+                        {appSettings.paymentQrImageUrl ? (
                             <div className="relative inline-block p-4 bg-white rounded-lg shadow-md w-auto h-auto">
                                 <Image
-                                    src={appSettings.paymentQrImageUrl}
+                                    src={appSettings.paymentQrImageUrl.startsWith('http') ? appSettings.paymentQrImageUrl : `https://api.qrserver.com/v1/create-qr-code/?size=350x350&data=${encodeURIComponent(appSettings.paymentQrImageUrl)}`}
                                     alt={t('paymentQrCodeAlt')}
                                     width={350}
                                     height={350}
                                     className="object-contain"
                                     data-ai-hint="payment qr code"
+                                    unoptimized
                                 />
                                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                                      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/90 shadow-md backdrop-blur-sm">
@@ -4365,17 +4366,18 @@ const App = () => {
                                 disabled={isUploading}
                             />
                         </div>
-                        {paymentQrImageUrl && paymentQrImageUrl.startsWith('http') && (
+                        {paymentQrImageUrl && (
                             <div className="mt-4 p-4 border rounded-lg bg-gray-50 flex flex-col items-center gap-2">
                                 <Label>{t('preview')}</Label>
                                 <div className="relative inline-block p-2 bg-white rounded-lg shadow-md">
                                     <Image
                                         key={paymentQrImageUrl}
-                                        src={paymentQrImageUrl}
+                                        src={paymentQrImageUrl.startsWith('http') ? paymentQrImageUrl : `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(paymentQrImageUrl)}`}
                                         alt={t('paymentQrCodeAlt')}
                                         width={150}
                                         height={150}
                                         className="object-contain"
+                                        unoptimized
                                     />
                                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/90 shadow-md backdrop-blur-sm">
@@ -4419,5 +4421,6 @@ const App = () => {
 };
 
 export default App;
+
 
 
