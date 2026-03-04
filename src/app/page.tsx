@@ -1996,7 +1996,7 @@ const App = () => {
                             </div>
                         )}
                         
-                        <div className="mb-6 rounded-lg overflow-hidden relative flex items-center justify-center shadow-lg bg-gray-200">
+                        <div className="mb-6 rounded-lg overflow-hidden relative flex items-center justify-center shadow-lg bg-gray-200 aspect-auto">
                              {raffleState.prizeImageUrl ? (
                                 <button onClick={() => setIsPrizeImageModalOpen(true)} className="w-full flex items-center justify-center cursor-pointer" aria-label={t('rafflePrizeAlt')}>
                                     <Image 
@@ -4315,21 +4315,16 @@ const App = () => {
                     </DialogHeader>
                     <div className="flex justify-center items-center p-4">
                         {appSettings.paymentQrImageUrl ? (
-                            <div className="relative inline-block p-4 bg-white rounded-lg shadow-md w-auto h-auto">
+                            <div className="relative inline-block p-4 bg-white rounded-lg shadow-md">
                                 <Image
                                     src={appSettings.paymentQrImageUrl}
                                     alt={t('paymentQrCodeAlt')}
-                                    width={350}
-                                    height={350}
+                                    width={400}
+                                    height={400}
                                     className="object-contain"
                                     data-ai-hint="payment qr code"
                                     unoptimized
                                 />
-                                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                     <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/90 shadow-md backdrop-blur-sm">
-                                        <span className="font-bold text-6xl text-yellow-500">⚡</span>
-                                     </div>
-                                 </div>
                             </div>
                         ) : (
                             <div className="text-muted-foreground bg-gray-100 p-8 rounded-lg flex items-center justify-center h-[300px] w-[300px]">
@@ -4366,7 +4361,7 @@ const App = () => {
                                 disabled={isUploading}
                             />
                         </div>
-                        {paymentQrImageUrl && paymentQrImageUrl.startsWith('http') && (
+                        {paymentQrImageUrl && (
                             <div className="mt-4 p-4 border rounded-lg bg-gray-50 flex flex-col items-center gap-2">
                                 <Label>{t('preview')}</Label>
                                 <div className="relative inline-block p-2 bg-white rounded-lg shadow-md">
@@ -4374,16 +4369,11 @@ const App = () => {
                                         key={paymentQrImageUrl}
                                         src={paymentQrImageUrl}
                                         alt={t('paymentQrCodeAlt')}
-                                        width={150}
-                                        height={150}
+                                        width={200}
+                                        height={200}
                                         className="object-contain"
                                         unoptimized
                                     />
-                                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/90 shadow-md backdrop-blur-sm">
-                                            <span className="font-bold text-4xl text-yellow-500">⚡</span>
-                                         </div>
-                                     </div>
                                 </div>
                             </div>
                         )}
@@ -4421,6 +4411,7 @@ const App = () => {
 };
 
 export default App;
+
 
 
 
