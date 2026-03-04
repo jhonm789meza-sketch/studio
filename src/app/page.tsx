@@ -1996,7 +1996,7 @@ const App = () => {
                             </div>
                         )}
                         
-                        <div className="mb-6 rounded-lg overflow-hidden relative w-full h-auto flex items-center justify-center shadow-lg bg-gray-200">
+                        <div className="mb-6 rounded-lg overflow-hidden relative flex items-center justify-center shadow-lg bg-gray-200">
                              {raffleState.prizeImageUrl ? (
                                 <button onClick={() => setIsPrizeImageModalOpen(true)} className="w-full flex items-center justify-center cursor-pointer" aria-label={t('rafflePrizeAlt')}>
                                     <Image 
@@ -4317,7 +4317,7 @@ const App = () => {
                         {appSettings.paymentQrImageUrl ? (
                             <div className="relative inline-block p-4 bg-white rounded-lg shadow-md w-auto h-auto">
                                 <Image
-                                    src={appSettings.paymentQrImageUrl.startsWith('http') ? appSettings.paymentQrImageUrl : `https://api.qrserver.com/v1/create-qr-code/?size=350x350&data=${encodeURIComponent(appSettings.paymentQrImageUrl)}`}
+                                    src={appSettings.paymentQrImageUrl}
                                     alt={t('paymentQrCodeAlt')}
                                     width={350}
                                     height={350}
@@ -4366,13 +4366,13 @@ const App = () => {
                                 disabled={isUploading}
                             />
                         </div>
-                        {paymentQrImageUrl && (
+                        {paymentQrImageUrl && paymentQrImageUrl.startsWith('http') && (
                             <div className="mt-4 p-4 border rounded-lg bg-gray-50 flex flex-col items-center gap-2">
                                 <Label>{t('preview')}</Label>
                                 <div className="relative inline-block p-2 bg-white rounded-lg shadow-md">
                                     <Image
                                         key={paymentQrImageUrl}
-                                        src={paymentQrImageUrl.startsWith('http') ? paymentQrImageUrl : `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(paymentQrImageUrl)}`}
+                                        src={paymentQrImageUrl}
                                         alt={t('paymentQrCodeAlt')}
                                         width={150}
                                         height={150}
@@ -4421,6 +4421,7 @@ const App = () => {
 };
 
 export default App;
+
 
 
 
