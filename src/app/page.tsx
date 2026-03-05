@@ -928,62 +928,6 @@ const App = () => {
         return participantId;
     };
 
-    const handleSeparateNumber = async () => {
-        if (!raffleState.raffleRef || !isCurrentUserAdmin) return;
-    
-        const raffleNumber = raffleState.raffleNumber?.trim();
-    
-        if (!raffleNumber) {
-            showNotification(t('enterRaffleNumberWarning'), 'warning');
-            return;
-        }
-    
-        const num = parseInt(raffleNumber, 10);
-    
-        if (raffleMode === 'infinite') {
-            const infiniteDigits = raffleState.infiniteModeDigits || 4;
-            if (infiniteDigits < 4) {
-                 showNotification(t('min4Digits'), 'warning');
-                 return;
-            }
-            if (raffleNumber.length !== infiniteDigits) {
-                showNotification(t('infiniteModeDigitsWarning', { count: infiniteDigits }), 'warning');
-                return;
-            }
-        } else if (raffleNumber.length !== numberLength) {
-             showNotification(t('numberLengthWarning', { count: numberLength }), 'warning');
-             return;
-        }
-    
-        if (allAssignedNumbers.has(num)) {
-            showNotification(t('numberAlreadyAssignedWarning'), 'warning');
-            return;
-        }
-    
-        const participantId = Date.now();
-        const newParticipant: Participant = {
-            id: participantId,
-            name: t('separated'),
-            phoneNumber: '0000000000',
-            raffleNumber: raffleNumber,
-            timestamp: new Date(),
-            paymentStatus: 'pending',
-            raffleRef: raffleState.raffleRef,
-        };
-        
-        const updatedParticipants = [...raffleState.participants, newParticipant];
-        
-        try {
-            await setDoc(doc(db, "raffles", raffleState.raffleRef), { participants: updatedParticipants }, { merge: true });
-            setRaffleState(s => ({ ...s, name: '', phoneNumber: '', raffleNumber: '' }));
-            showNotification(t('numberSeparatedSuccess', { number: raffleNumber }), 'success');
-            handleTabClick('board');
-        } catch (error) {
-            console.error("Error separating number:", error);
-            showNotification(t('numberSeparatedError'), 'error');
-        }
-    };
-
     const handleGenerateRandomNumber = () => {
         if (raffleMode !== 'infinite' || !raffleState.infiniteModeDigits || raffleState.infiniteModeDigits < 4) {
             showNotification(t('configureInfiniteDigitsWarning'), 'warning');
@@ -3143,6 +3087,15 @@ const App = () => {
                                                             <span>{t('payWithNequi')}</span>
                                                         </Button>
                                                     )}
+                                                    {raffleState.isSeparateNumberEnabled && (
+                                                        <Button
+                                                            onClick={() => handleRegisterParticipant(false, false)}
+                                                            disabled={!isRegisterFormValidForSubmit}
+                                                            className="w-full sm:flex-1 bg-gray-500 hover:bg-gray-600"
+                                                        >
+                                                            {t('separate')}
+                                                        </Button>
+                                                    )}
                                                      {isCurrentUserAdmin && (
                                                         <Button 
                                                             className="w-full sm:flex-1 bg-green-600 hover:bg-green-700" 
@@ -3150,15 +3103,6 @@ const App = () => {
                                                             disabled={!isRegisterFormValidForSubmit}
                                                         >
                                                             {t('registerAndConfirmPayment')}
-                                                        </Button>
-                                                    )}
-                                                    {isCurrentUserAdmin && raffleState.isSeparateNumberEnabled && (
-                                                        <Button
-                                                            onClick={handleSeparateNumber}
-                                                            disabled={!raffleState.raffleNumber || allAssignedNumbers.has(parseInt(raffleState.raffleNumber || '0', 10))}
-                                                            className="w-full sm:flex-1 bg-gray-500 hover:bg-gray-600"
-                                                        >
-                                                            {t('separate')}
                                                         </Button>
                                                     )}
                                                 </div>
@@ -4490,6 +4434,7 @@ const App = () => {
 };
 
 export default App;
+
 
 
 
