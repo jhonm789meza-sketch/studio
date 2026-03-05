@@ -3040,15 +3040,6 @@ const App = () => {
                                                         onCheckedChange={(checked) => handlePaymentMethodToggle('isSeparateNumberEnabled', checked)}
                                                     />
                                                 </div>
-                                                {raffleState.isSeparateNumberEnabled && (
-                                                    <Button
-                                                        onClick={handleSeparateNumber}
-                                                        disabled={!raffleState.raffleNumber || allAssignedNumbers.has(parseInt(raffleState.raffleNumber || '0', 10))}
-                                                        className="w-full bg-gray-500 hover:bg-gray-600"
-                                                    >
-                                                        {t('separate')}
-                                                    </Button>
-                                                )}
                                             </div>
                                         )}
                                         <fieldset disabled={!raffleState.raffleRef || raffleState.isWinnerConfirmed || !raffleState.isDetailsConfirmed || !!raffleState.winner} className="disabled:opacity-50 space-y-4">
@@ -3159,6 +3150,15 @@ const App = () => {
                                                             disabled={!isRegisterFormValidForSubmit}
                                                         >
                                                             {t('registerAndConfirmPayment')}
+                                                        </Button>
+                                                    )}
+                                                    {isCurrentUserAdmin && raffleState.isSeparateNumberEnabled && (
+                                                        <Button
+                                                            onClick={handleSeparateNumber}
+                                                            disabled={!raffleState.raffleNumber || allAssignedNumbers.has(parseInt(raffleState.raffleNumber || '0', 10))}
+                                                            className="w-full sm:flex-1 bg-gray-500 hover:bg-gray-600"
+                                                        >
+                                                            {t('separate')}
                                                         </Button>
                                                     )}
                                                 </div>
@@ -4490,6 +4490,7 @@ const App = () => {
 };
 
 export default App;
+
 
 
 
