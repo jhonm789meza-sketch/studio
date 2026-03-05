@@ -374,5 +374,11 @@
     "uploadFromFile": "Upload from File",
     "uploadingImage": "Uploading image...",
     "errorGeneratingTicketImage": "Error generating ticket image. Please try again.",
-    "preview": "Preview"
+    "preview": "Preview",
+    "separateNumber": "Separate Number",
+    "separateNumberDescription": "Quickly set a number aside as pending without participant data.",
+    "separate": "Separate",
+    "separated": "Separated",
+    "numberSeparatedSuccess": "Number {number} separated successfully.",
+    "numberSeparatedError": "Error separating number."
 }

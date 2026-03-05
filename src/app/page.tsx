@@ -927,6 +927,62 @@ const App = () => {
         return participantId;
     };
 
+    const handleSeparateNumber = async () => {
+        if (!raffleState.raffleRef || !isCurrentUserAdmin) return;
+    
+        const raffleNumber = raffleState.raffleNumber?.trim();
+    
+        if (!raffleNumber) {
+            showNotification(t('enterRaffleNumberWarning'), 'warning');
+            return;
+        }
+    
+        const num = parseInt(raffleNumber, 10);
+    
+        if (raffleMode === 'infinite') {
+            const infiniteDigits = raffleState.infiniteModeDigits || 4;
+            if (infiniteDigits < 4) {
+                 showNotification(t('min4Digits'), 'warning');
+                 return;
+            }
+            if (raffleNumber.length !== infiniteDigits) {
+                showNotification(t('infiniteModeDigitsWarning', { count: infiniteDigits }), 'warning');
+                return;
+            }
+        } else if (raffleNumber.length !== numberLength) {
+             showNotification(t('numberLengthWarning', { count: numberLength }), 'warning');
+             return;
+        }
+    
+        if (allAssignedNumbers.has(num)) {
+            showNotification(t('numberAlreadyAssignedWarning'), 'warning');
+            return;
+        }
+    
+        const participantId = Date.now();
+        const newParticipant: Participant = {
+            id: participantId,
+            name: t('separated'),
+            phoneNumber: '0000000000',
+            raffleNumber: raffleNumber,
+            timestamp: new Date(),
+            paymentStatus: 'pending',
+            raffleRef: raffleState.raffleRef,
+        };
+        
+        const updatedParticipants = [...raffleState.participants, newParticipant];
+        
+        try {
+            await setDoc(doc(db, "raffles", raffleState.raffleRef), { participants: updatedParticipants }, { merge: true });
+            setRaffleState(s => ({ ...s, name: '', phoneNumber: '', raffleNumber: '' }));
+            showNotification(t('numberSeparatedSuccess', { number: raffleNumber }), 'success');
+            handleTabClick('board');
+        } catch (error) {
+            console.error("Error separating number:", error);
+            showNotification(t('numberSeparatedError'), 'error');
+        }
+    };
+
     const handleGenerateRandomNumber = () => {
         if (raffleMode !== 'infinite' || !raffleState.infiniteModeDigits || raffleState.infiniteModeDigits < 4) {
             showNotification(t('configureInfiniteDigitsWarning'), 'warning');
@@ -2970,6 +3026,21 @@ const App = () => {
                                                         disabled={!raffleState.paymentLink}
                                                     />
                                                 </div>
+                                                <div className="flex items-center justify-between">
+                                                    <Label htmlFor="separate-number-button" className="flex flex-col space-y-1">
+                                                        <span>{t('separateNumber')}</span>
+                                                        <span className="font-normal leading-snug text-muted-foreground text-sm">
+                                                            {t('separateNumberDescription')}
+                                                        </span>
+                                                    </Label>
+                                                    <Button 
+                                                        id="separate-number-button" 
+                                                        onClick={handleSeparateNumber}
+                                                        disabled={!raffleState.raffleNumber || allAssignedNumbers.has(parseInt(raffleState.raffleNumber || '0', 10))}
+                                                    >
+                                                        {t('separate')}
+                                                    </Button>
+                                                </div>
                                             </div>
                                         )}
                                         <fieldset disabled={!raffleState.raffleRef || raffleState.isWinnerConfirmed || !raffleState.isDetailsConfirmed || !!raffleState.winner} className="disabled:opacity-50 space-y-4">
@@ -4411,6 +4482,7 @@ const App = () => {
 };
 
 export default App;
+
 
 
 
