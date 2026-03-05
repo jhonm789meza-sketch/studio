@@ -375,10 +375,10 @@
     "uploadingImage": "Subiendo imagen...",
     "errorGeneratingTicketImage": "Error al generar la imagen del tiquete. Por favor, intenta de nuevo.",
     "preview": "Vista Previa",
-    "separateNumber": "Separar Número",
-    "separateNumberDescription": "Aparta rápidamente un número como pendiente sin datos de participante.",
     "separate": "Separar",
     "separated": "Separado",
     "numberSeparatedSuccess": "Número {number} separado con éxito.",
-    "numberSeparatedError": "Error al separar el número."
+    "numberSeparatedError": "Error al separar el número.",
+    "enableSeparateNumber": "Habilitar botón Separar Número",
+    "enableSeparateNumberDescription": "Muestra el botón para reservar un número sin datos."
 }

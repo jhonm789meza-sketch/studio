@@ -52,6 +52,7 @@ export interface Raffle {
     nequiAccountNumber: string;
     isNequiEnabled: boolean;
     isPaymentLinkEnabled: boolean;
+    isSeparateNumberEnabled?: boolean;
     paymentLink: string;
     gameDate: string;
     lottery: string;

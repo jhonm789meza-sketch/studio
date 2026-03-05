@@ -48,6 +48,7 @@ const initialRaffleData: Raffle = {
     nequiAccountNumber: '',
     isNequiEnabled: true,
     isPaymentLinkEnabled: true,
+    isSeparateNumberEnabled: true,
     paymentLink: '',
     gameDate: '',
     lottery: '',
@@ -3026,13 +3027,28 @@ const App = () => {
                                                         disabled={!raffleState.paymentLink}
                                                     />
                                                 </div>
-                                                <Button
-                                                    onClick={handleSeparateNumber}
-                                                    disabled={!raffleState.raffleNumber || allAssignedNumbers.has(parseInt(raffleState.raffleNumber || '0', 10))}
-                                                    className="w-full bg-gray-500 hover:bg-gray-600"
-                                                >
-                                                    {t('separate')}
-                                                </Button>
+                                                <div className="flex items-center justify-between">
+                                                    <Label htmlFor="enable-separate-number" className="flex flex-col space-y-1">
+                                                        <span>{t('enableSeparateNumber')}</span>
+                                                        <span className="font-normal leading-snug text-muted-foreground text-sm">
+                                                            {t('enableSeparateNumberDescription')}
+                                                        </span>
+                                                    </Label>
+                                                    <Switch
+                                                        id="enable-separate-number"
+                                                        checked={raffleState.isSeparateNumberEnabled}
+                                                        onCheckedChange={(checked) => handlePaymentMethodToggle('isSeparateNumberEnabled', checked)}
+                                                    />
+                                                </div>
+                                                {raffleState.isSeparateNumberEnabled && (
+                                                    <Button
+                                                        onClick={handleSeparateNumber}
+                                                        disabled={!raffleState.raffleNumber || allAssignedNumbers.has(parseInt(raffleState.raffleNumber || '0', 10))}
+                                                        className="w-full bg-gray-500 hover:bg-gray-600"
+                                                    >
+                                                        {t('separate')}
+                                                    </Button>
+                                                )}
                                             </div>
                                         )}
                                         <fieldset disabled={!raffleState.raffleRef || raffleState.isWinnerConfirmed || !raffleState.isDetailsConfirmed || !!raffleState.winner} className="disabled:opacity-50 space-y-4">
@@ -4474,6 +4490,7 @@ const App = () => {
 };
 
 export default App;
+
 
 
 
