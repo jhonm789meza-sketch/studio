@@ -842,11 +842,11 @@ const App = () => {
         const raffleNumber = raffleState.raffleNumber?.trim();
         const infiniteDigits = raffleState.infiniteModeDigits || 4;
     
-        if (!name) {
+        if (confirmPayment !== 'separated' && !name) {
             showNotification(t('enterNameWarning'), 'warning');
             return null;
         }
-        if (!phoneNumber) {
+        if (confirmPayment !== 'separated' && !phoneNumber) {
             showNotification(t('enterPhoneWarning'), 'warning');
             return null;
         }
@@ -876,23 +876,23 @@ const App = () => {
             return null;
         }
     
-        const participantName = name;
+        const participantName = confirmPayment === 'separated' ? t('separated') : name;
         const formattedRaffleNumber = raffleMode === 'infinite' ? raffleNumber : String(num).padStart(numberLength, '0');
         const participantId = Date.now();
 
         const newParticipant: Participant = {
             id: participantId,
-            name: name,
-            phoneNumber: phoneNumber,
+            name: participantName,
+            phoneNumber: confirmPayment === 'separated' ? '' : phoneNumber,
             raffleNumber: formattedRaffleNumber,
             timestamp: new Date(),
-            paymentStatus: confirmPayment ? 'confirmed' : 'pending',
+            paymentStatus: confirmPayment === true ? 'confirmed' : 'pending',
             raffleRef: raffleState.raffleRef,
         };
         
         const updatedParticipants = [...raffleState.participants, newParticipant];
 
-        if (isNequiPayment && !confirmPayment) {
+        if (isNequiPayment && confirmPayment === false) {
             // First, optimistically update state but as 'pending'
             await setDoc(doc(db, "raffles", raffleState.raffleRef), { participants: updatedParticipants }, { merge: true });
             setRaffleState(s => ({ ...s, name: '', phoneNumber: '', raffleNumber: '' }));
@@ -901,12 +901,17 @@ const App = () => {
             window.location.href = nequiUrl;
             showNotification(t('nequiPaymentPendingNotification', { number: formattedRaffleNumber, name: participantName }), 'success');
         } else {
-             // For admin confirmation or other non-redirecting payments
+             // For admin confirmation, separate, or other non-redirecting payments
             await setDoc(doc(db, "raffles", raffleState.raffleRef), { participants: updatedParticipants }, { merge: true });
             setRaffleState(s => ({ ...s, name: '', phoneNumber: '', raffleNumber: '' }));
-            showNotification(t('participantRegisteredNotification', { name: participantName, number: formattedRaffleNumber }), 'success');
             
-            if (confirmPayment && raffleState.prize) {
+            if (confirmPayment === 'separated') {
+                showNotification(t('numberSeparatedSuccess', { number: formattedRaffleNumber }), 'success');
+            } else {
+                showNotification(t('participantRegisteredNotification', { name: participantName, number: formattedRaffleNumber }), 'success');
+            }
+            
+            if (confirmPayment === true && raffleState.prize) {
                 const ticketData = {
                     ...newParticipant,
                     prize: raffleState.prize,
@@ -921,7 +926,7 @@ const App = () => {
             }
         }
 
-        if (!confirmPayment && !isNequiPayment) {
+        if (confirmPayment === false || confirmPayment === 'separated') {
             handleTabClick('board');
         }
 
@@ -1968,6 +1973,8 @@ const App = () => {
     }
     
     const isRegisterFormValidForSubmit = raffleState.name && raffleState.phoneNumber && raffleState.raffleNumber && !allAssignedNumbers.has(parseInt(raffleState.raffleNumber || '0'));
+    const isSeparateFormValidForSubmit = raffleState.raffleNumber && !allAssignedNumbers.has(parseInt(raffleState.raffleNumber || '0'));
+
     
     const currentPartialWinners = (raffleState.partialWinners && raffleState.partialWinners.length > 0) ? raffleState.partialWinners : partialWinners;
 
@@ -3087,10 +3094,23 @@ const App = () => {
                                                             <span>{t('payWithNequi')}</span>
                                                         </Button>
                                                     )}
+                                                    <Button
+                                                        variant="outline"
+                                                        type="button"
+                                                        className="flex-1 w-full sm:w-auto"
+                                                        onClick={() => {
+                                                            const accountInfo = `${appSettings.bankInfoLine1 || 'Banco Caja Social: 24096711314'}\n${appSettings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054'}`;
+                                                            navigator.clipboard.writeText(accountInfo);
+                                                            showNotification(t('accountNumberCopied'), 'success');
+                                                        }}
+                                                    >
+                                                        <Copy className="mr-2 h-4 w-4" />
+                                                        {t('copyAccountNumber')}
+                                                    </Button>
                                                     {raffleState.isSeparateNumberEnabled && (
-                                                        <Button
-                                                            onClick={() => handleRegisterParticipant(false, false)}
-                                                            disabled={!isRegisterFormValidForSubmit}
+                                                         <Button
+                                                            onClick={() => handleRegisterParticipant(false, 'separated' as any)}
+                                                            disabled={!isSeparateFormValidForSubmit}
                                                             className="w-full sm:flex-1 bg-gray-500 hover:bg-gray-600"
                                                         >
                                                             {t('separate')}
@@ -4434,6 +4454,7 @@ const App = () => {
 };
 
 export default App;
+
 
 
 
