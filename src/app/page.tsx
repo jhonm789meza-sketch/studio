@@ -3098,10 +3098,12 @@ const App = () => {
                                                         variant="outline"
                                                         type="button"
                                                         className="flex-1 w-full sm:w-auto"
+                                                        disabled={!raffleState.nequiAccountNumber}
                                                         onClick={() => {
-                                                            const accountInfo = `${appSettings.bankInfoLine1 || 'Banco Caja Social: 24096711314'}\n${appSettings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054'}`;
-                                                            navigator.clipboard.writeText(accountInfo);
-                                                            showNotification(t('accountNumberCopied'), 'success');
+                                                            if (raffleState.nequiAccountNumber) {
+                                                                navigator.clipboard.writeText(raffleState.nequiAccountNumber);
+                                                                showNotification(t('accountNumberCopied'), 'success');
+                                                            }
                                                         }}
                                                     >
                                                         <Copy className="mr-2 h-4 w-4" />
@@ -4454,6 +4456,7 @@ const App = () => {
 };
 
 export default App;
+
 
 
 
