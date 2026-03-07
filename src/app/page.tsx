@@ -834,7 +834,7 @@ const App = () => {
         );
     };
 
-    const handleRegisterParticipant = async (isNequiPayment = false, confirmPayment = false): Promise<number | null> => {
+    const handleRegisterParticipant = async (isNequiPayment = false, confirmPayment: boolean | 'separated' = false): Promise<number | null> => {
         if (!raffleState.raffleRef) return null;
     
         const name = raffleState.name?.trim();
@@ -1078,62 +1078,43 @@ const App = () => {
     };
 
 
-    const handleDownloadTicket = () => {
+    const handleDownloadTicket = async () => {
         const ticketElement = ticketModalRef.current;
-        if (!ticketElement) return;
-    
+        if (!ticketElement) {
+            console.error("Ticket element not found for download.");
+            return;
+        }
+
         const targetInfo = generatedTicketData || ticketInfo;
-        if (!targetInfo) return;
+        if (!targetInfo) {
+            console.error("Ticket info not found for download.");
+            return;
+        }
         
-        const originalWidth = ticketElement.style.width;
-        ticketElement.style.width = '320px';
-
-        setTimeout(() => {
-            import('html2canvas').then(html2canvas => {
-                html2canvas(ticketElement, { 
-                    useCORS: true, 
-                    backgroundColor: null,
-                    scale: 3,
-                }).then(canvas => {
-                    ticketElement.style.width = originalWidth;
-
-                    const imgData = canvas.toDataURL('image/png');
-                    const pdf = new jsPDF({
-                        orientation: 'portrait',
-                        unit: 'px',
-                        format: [canvas.width, canvas.height]
-                    });
-                    pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-                    
-                    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
-                    
-                    if (isIOS) {
-                        pdf.output('dataurlnewwindow');
-                    } else {
-                        try {
-                            const blob = pdf.output('blob');
-                            const url = URL.createObjectURL(blob);
-                            const link = document.createElement('a');
-                            link.href = url;
-                            link.download = `tiquete_${targetInfo.raffleNumber}.pdf`;
-                            document.body.appendChild(link);
-                            link.click();
-                            document.body.removeChild(link);
-                            URL.revokeObjectURL(url);
-                        } catch (e) {
-                             console.error("Error creating blob for PDF download", e);
-                             pdf.save(`tiquete_${targetInfo.raffleNumber}.pdf`);
-                        }
-                    }
-                    showNotification(t('ticketDownloaded'), 'success');
-
-                }).catch(err => {
-                    console.error("html2canvas error:", err);
-                    ticketElement.style.width = originalWidth;
-                    showNotification(t('errorGeneratingTicketImage'), 'error');
-                });
+        try {
+            const html2canvas = (await import('html2canvas')).default;
+            const canvas = await html2canvas(ticketElement, { 
+                useCORS: true, 
+                backgroundColor: null, // transparent background
+                scale: 3, // higher scale for better resolution
             });
-        }, 100);
+
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF({
+                orientation: 'portrait',
+                unit: 'px',
+                format: [canvas.width, canvas.height]
+            });
+            pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+            
+            pdf.save(`tiquete_${targetInfo.raffleNumber}.pdf`);
+            
+            showNotification(t('ticketDownloaded'), 'success');
+
+        } catch (err) {
+            console.error("Error generating ticket image for download:", err);
+            showNotification(t('errorGeneratingTicketImage'), 'error');
+        }
     };
 
     const handleShare = () => {
@@ -3109,7 +3090,7 @@ const App = () => {
                                                         <Copy className="mr-2 h-4 w-4" />
                                                         {t('copyAccountNumber')}
                                                     </Button>
-                                                    {raffleState.isSeparateNumberEnabled && (
+                                                     {(isCurrentUserAdmin && raffleState.isSeparateNumberEnabled) && (
                                                          <Button
                                                             onClick={() => handleRegisterParticipant(false, 'separated' as any)}
                                                             disabled={!isSeparateFormValidForSubmit}
@@ -4360,7 +4341,7 @@ const App = () => {
                     </DialogHeader>
                     <div className="flex justify-center items-center p-4">
                         {appSettings.paymentQrImageUrl ? (
-                            <div className="relative inline-block p-4 bg-white rounded-lg shadow-md">
+                            <div className="relative inline-block bg-white rounded-lg shadow-md">
                                 <Image
                                     src={appSettings.paymentQrImageUrl}
                                     alt={t('paymentQrCodeAlt')}
@@ -4372,7 +4353,7 @@ const App = () => {
                                 />
                             </div>
                         ) : (
-                            <div className="text-muted-foreground bg-gray-100 p-8 rounded-lg flex items-center justify-center h-[300px] w-[300px]">
+                             <div className="text-muted-foreground bg-gray-100 p-8 rounded-lg flex items-center justify-center h-[300px] w-[300px]">
                                 <p>{t('noPrizeImage')}</p>
                             </div>
                         )}
@@ -4409,7 +4390,7 @@ const App = () => {
                         {paymentQrImageUrl && (
                             <div className="mt-4 p-4 border rounded-lg bg-gray-50 flex flex-col items-center gap-2">
                                 <Label>{t('preview')}</Label>
-                                <div className="relative inline-block p-2 bg-white rounded-lg shadow-md">
+                                <div className="relative inline-block bg-white rounded-lg shadow-md">
                                     <Image
                                         key={paymentQrImageUrl}
                                         src={paymentQrImageUrl}
@@ -4456,6 +4437,7 @@ const App = () => {
 };
 
 export default App;
+
 
 
 
