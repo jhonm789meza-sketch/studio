@@ -1,5 +1,4 @@
 
-
 'use client';
 import { useState, useEffect, useRef, useTransition } from 'react';
 import jsPDF from 'jspdf';
@@ -843,11 +842,11 @@ const App = () => {
         const raffleNumber = raffleState.raffleNumber?.trim();
         const infiniteDigits = raffleState.infiniteModeDigits || 4;
     
-        if (!name && confirmPayment !== 'separated') {
+        if (!name) {
             showNotification(t('enterNameWarning'), 'warning');
             return null;
         }
-        if (!phoneNumber && confirmPayment !== 'separated') {
+        if (!phoneNumber) {
             showNotification(t('enterPhoneWarning'), 'warning');
             return null;
         }
@@ -1956,8 +1955,6 @@ const App = () => {
     }
     
     const isRegisterFormValidForSubmit = raffleState.name && raffleState.phoneNumber && raffleState.raffleNumber && !allAssignedNumbers.has(parseInt(raffleState.raffleNumber || '0'));
-    const isSeparateFormValidForSubmit = raffleState.raffleNumber && !allAssignedNumbers.has(parseInt(raffleState.raffleNumber || '0'));
-
     
     const currentPartialWinners = (raffleState.partialWinners && raffleState.partialWinners.length > 0) ? raffleState.partialWinners : partialWinners;
 
@@ -2078,6 +2075,7 @@ const App = () => {
                                    ref={prizeTextareaRef}
                                    id="prize-input"
                                    rows={3}
+                                   style={{ overflowY: 'hidden' }}
                                    value={raffleState.prize}
                                    onChange={(e) => handleLocalFieldChange('prize', e.target.value)}
                                    onBlur={(e) => handleFieldChange('prize', e.target.value)}
@@ -3095,7 +3093,7 @@ const App = () => {
                                                      {raffleState.isSeparateNumberEnabled && (
                                                          <Button
                                                             onClick={() => handleRegisterParticipant(false, 'separated')}
-                                                            disabled={!isSeparateFormValidForSubmit}
+                                                            disabled={!isRegisterFormValidForSubmit}
                                                             className="w-full sm:flex-1 bg-yellow-500 hover:bg-yellow-600 text-white"
                                                         >
                                                             {t('separate')}
@@ -4457,5 +4455,7 @@ export default App;
 
 
 
+
+    
 
     
