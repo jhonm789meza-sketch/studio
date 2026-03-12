@@ -842,11 +842,11 @@ const App = () => {
         const raffleNumber = raffleState.raffleNumber?.trim();
         const infiniteDigits = raffleState.infiniteModeDigits || 4;
     
-        if (!name) {
+        if (!name && confirmPayment !== 'separated') {
             showNotification(t('enterNameWarning'), 'warning');
             return null;
         }
-        if (!phoneNumber) {
+        if (!phoneNumber && confirmPayment !== 'separated') {
             showNotification(t('enterPhoneWarning'), 'warning');
             return null;
         }
@@ -876,14 +876,15 @@ const App = () => {
             return null;
         }
     
-        const participantName = name;
+        const participantName = confirmPayment === 'separated' ? t('separated') : name;
+        const participantPhone = confirmPayment === 'separated' ? '' : phoneNumber;
         const formattedRaffleNumber = raffleMode === 'infinite' ? raffleNumber : String(num).padStart(numberLength, '0');
         const participantId = Date.now();
 
         const newParticipant: Participant = {
             id: participantId,
             name: participantName,
-            phoneNumber: phoneNumber,
+            phoneNumber: participantPhone,
             raffleNumber: formattedRaffleNumber,
             timestamp: new Date(),
             paymentStatus: confirmPayment === true ? 'confirmed' : 'pending',
@@ -906,7 +907,7 @@ const App = () => {
             setRaffleState(s => ({ ...s, name: '', phoneNumber: '', raffleNumber: '' }));
             
             if (confirmPayment === 'separated') {
-                showNotification(t('nequiPaymentPendingNotification', { number: formattedRaffleNumber, name: participantName }), 'success');
+                showNotification(t('numberSeparatedSuccess', { number: formattedRaffleNumber }), 'success');
             } else {
                 showNotification(t('participantRegisteredNotification', { name: participantName, number: formattedRaffleNumber }), 'success');
             }
@@ -2075,13 +2076,13 @@ const App = () => {
                                <Textarea
                                    ref={prizeTextareaRef}
                                    id="prize-input"
-                                   rows={1}
+                                   rows={3}
                                    value={raffleState.prize}
                                    onChange={(e) => handleLocalFieldChange('prize', e.target.value)}
                                    onBlur={(e) => handleFieldChange('prize', e.target.value)}
                                    placeholder={raffleMode === 'infinite' ? t('prizePlaceholderInfinite') : t('prizePlaceholderFinite')}
                                    disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
-                                   className="w-full mt-1 resize-none overflow-hidden"
+                                   className="w-full mt-1"
                                />
                            </div>
                            {isCurrentUserAdmin && !raffleState.isDetailsConfirmed && (
@@ -3092,8 +3093,8 @@ const App = () => {
                                                     </Button>
                                                      {raffleState.isSeparateNumberEnabled && (
                                                          <Button
-                                                            onClick={() => handleRegisterParticipant(false, 'separated' as any)}
-                                                            disabled={!isRegisterFormValidForSubmit}
+                                                            onClick={() => handleRegisterParticipant(false, 'separated')}
+                                                            disabled={!isSeparateFormValidForSubmit}
                                                             className="w-full sm:flex-1 bg-yellow-500 hover:bg-yellow-600 text-white"
                                                         >
                                                             {t('separate')}
@@ -4437,6 +4438,7 @@ const App = () => {
 };
 
 export default App;
+
 
 
 
