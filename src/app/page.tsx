@@ -842,11 +842,11 @@ const App = () => {
         const raffleNumber = raffleState.raffleNumber?.trim();
         const infiniteDigits = raffleState.infiniteModeDigits || 4;
     
-        if (confirmPayment !== 'separated' && !name) {
+        if (!name) {
             showNotification(t('enterNameWarning'), 'warning');
             return null;
         }
-        if (confirmPayment !== 'separated' && !phoneNumber) {
+        if (!phoneNumber) {
             showNotification(t('enterPhoneWarning'), 'warning');
             return null;
         }
@@ -876,14 +876,14 @@ const App = () => {
             return null;
         }
     
-        const participantName = confirmPayment === 'separated' ? t('separated') : name;
+        const participantName = name;
         const formattedRaffleNumber = raffleMode === 'infinite' ? raffleNumber : String(num).padStart(numberLength, '0');
         const participantId = Date.now();
 
         const newParticipant: Participant = {
             id: participantId,
             name: participantName,
-            phoneNumber: confirmPayment === 'separated' ? '' : phoneNumber,
+            phoneNumber: phoneNumber,
             raffleNumber: formattedRaffleNumber,
             timestamp: new Date(),
             paymentStatus: confirmPayment === true ? 'confirmed' : 'pending',
@@ -906,7 +906,7 @@ const App = () => {
             setRaffleState(s => ({ ...s, name: '', phoneNumber: '', raffleNumber: '' }));
             
             if (confirmPayment === 'separated') {
-                showNotification(t('numberSeparatedSuccess', { number: formattedRaffleNumber }), 'success');
+                showNotification(t('nequiPaymentPendingNotification', { number: formattedRaffleNumber, name: participantName }), 'success');
             } else {
                 showNotification(t('participantRegisteredNotification', { name: participantName, number: formattedRaffleNumber }), 'success');
             }
@@ -3090,11 +3090,11 @@ const App = () => {
                                                         <Copy className="mr-2 h-4 w-4" />
                                                         {t('copyAccountNumber')}
                                                     </Button>
-                                                     {(isCurrentUserAdmin && raffleState.isSeparateNumberEnabled) && (
+                                                     {raffleState.isSeparateNumberEnabled && (
                                                          <Button
                                                             onClick={() => handleRegisterParticipant(false, 'separated' as any)}
-                                                            disabled={!isSeparateFormValidForSubmit}
-                                                            className="w-full sm:flex-1 bg-gray-500 hover:bg-gray-600"
+                                                            disabled={!isRegisterFormValidForSubmit}
+                                                            className="w-full sm:flex-1 bg-yellow-500 hover:bg-yellow-600 text-white"
                                                         >
                                                             {t('separate')}
                                                         </Button>
@@ -4437,6 +4437,7 @@ const App = () => {
 };
 
 export default App;
+
 
 
 
