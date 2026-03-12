@@ -3,6 +3,7 @@
 'use client';
 import { useState, useEffect, useRef, useTransition } from 'react';
 import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 import { RaffleManager } from '@/lib/RaffleManager';
 import { db, storage } from '@/lib/firebase';
 import { doc, onSnapshot, setDoc, getDoc, deleteDoc, Unsubscribe, serverTimestamp, collection, query, where, getDocs, updateDoc, addDoc, orderBy, writeBatch } from 'firebase/firestore';
@@ -876,8 +877,8 @@ const App = () => {
             return null;
         }
     
-        const participantName = confirmPayment === 'separated' ? t('separated') : name;
-        const participantPhone = confirmPayment === 'separated' ? '' : phoneNumber;
+        const participantName = name;
+        const participantPhone = phoneNumber;
         const formattedRaffleNumber = raffleMode === 'infinite' ? raffleNumber : String(num).padStart(numberLength, '0');
         const participantId = Date.now();
 
@@ -919,6 +920,7 @@ const App = () => {
                     organizerName: raffleState.organizerName,
                     gameDate: raffleState.gameDate,
                     lottery: raffleState.lottery === 'Otro' ? raffleState.customLottery : raffleState.lottery,
+                    prizeImageUrl: raffleState.prizeImageUrl,
                     raffleRef: raffleState.raffleRef,
                     value: raffleState.value,
                     currencySymbol: raffleState.currencySymbol,
@@ -1093,7 +1095,6 @@ const App = () => {
         }
         
         try {
-            const html2canvas = (await import('html2canvas')).default;
             const canvas = await html2canvas(ticketElement, { 
                 useCORS: true, 
                 backgroundColor: null, // transparent background
@@ -4455,3 +4456,6 @@ export default App;
 
 
 
+
+
+    
