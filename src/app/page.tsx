@@ -13,7 +13,7 @@ import { requestNotificationPermission } from '@/lib/notification';
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House, Clock as ClockIcon, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages, Trophy, Trash2, Copy, Shield, LogOut, Eye, EyeOff, Gamepad2, Phone, TrendingUp, Globe, Landmark, RefreshCcw, LockKeyhole, Package, Camera, Check, Upload } from 'lucide-react';
+import { Menu, Award, Lock, House, Clock as ClockIcon, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages, Trophy, Trash2, Copy, Shield, LogOut, Eye, EyeOff, Gamepad2, Phone, TrendingUp, Globe, Landmark, RefreshCcw, LockKeyhole, Package, Camera, Check, Upload, FlipHorizontal } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -221,6 +221,12 @@ const App = () => {
         infinite: false,
     });
     
+    // Photo sharing functionality
+    const [isCaptureDialogOpen, setIsCaptureDialogOpen] = useState(false);
+    const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
+    const [capturedImageBlob, setCapturedImageBlob] = useState<Blob | null>(null);
+    const videoRef = useRef<HTMLVideoElement>(null);
+
     const prizeTextareaRef = useRef<HTMLTextAreaElement>(null);
     const isCurrentUserAdmin = !!raffleState.adminId && !!currentAdminId && raffleState.adminId === currentAdminId;
     const raffleMode = raffleState.raffleMode;
@@ -1673,27 +1679,87 @@ const App = () => {
         setIsShareDialogOpen(false);
     };
 
-    const handleSharePrizePhoto = async () => {
-        const raffleUrl = `${window.location.origin}?ref=${raffleState.raffleRef}`;
-        const message = `${t('shareRaffleMessage', { prize: raffleState.prize || '' })}\n${raffleUrl}`;
+    // Camera and Photo Sharing logic
+    const startCamera = async () => {
+        setIsCaptureDialogOpen(true);
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+            setCameraStream(stream);
+            if (videoRef.current) {
+                videoRef.current.srcObject = stream;
+            }
+        } catch (err) {
+            console.error("Error accessing camera:", err);
+            showNotification(t('cameraPermissionDenied'), 'error');
+            setIsCaptureDialogOpen(false);
+        }
+    };
 
-        if (navigator.share) {
-            try {
+    const stopCamera = () => {
+        if (cameraStream) {
+            cameraStream.getTracks().forEach(track => track.stop());
+            setCameraStream(null);
+        }
+        setIsCaptureDialogOpen(false);
+        setCapturedImageBlob(null);
+    };
+
+    const takePhoto = () => {
+        if (videoRef.current) {
+            const canvas = document.createElement('canvas');
+            canvas.width = videoRef.current.videoWidth;
+            canvas.height = videoRef.current.videoHeight;
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+                ctx.drawImage(videoRef.current, 0, 0);
+                canvas.toBlob((blob) => {
+                    if (blob) {
+                        setCapturedImageBlob(blob);
+                    }
+                }, 'image/jpeg', 0.8);
+            }
+        }
+    };
+
+    const handleConfirmCapture = async () => {
+        if (!capturedImageBlob) return;
+        
+        setIsUploading(true);
+        try {
+            const file = new File([capturedImageBlob], `prize_photo_${Date.now()}.jpg`, { type: 'image/jpeg' });
+            const imageUrl = await uploadImage(file, 'prize-images');
+            
+            // Update the raffle prize image
+            await handleFieldChange('prizeImageUrl', imageUrl, true);
+            
+            // Share the updated raffle
+            const raffleUrl = `${window.location.origin}?ref=${raffleState.raffleRef}`;
+            const message = `${t('shareRaffleMessage', { prize: raffleState.prize || '' })}\n${raffleUrl}`;
+
+            if (navigator.share) {
                 await navigator.share({
                     title: 'RifaExpress',
                     text: message,
                     url: raffleUrl,
                 });
-            } catch (error) {
-                console.error('Error sharing:', error);
+            } else {
+                const encodedMessage = encodeURIComponent(`${message}${imageUrl ? `\nFoto del premio: ${imageUrl}` : ''}`);
+                window.open(`https://wa.me/?text=${encodedMessage}`, '_blank');
             }
-        } else {
-            // Fallback to WhatsApp
-            const prizeImg = raffleState.prizeImageUrl;
-            const encodedMessage = encodeURIComponent(`${message}${prizeImg ? `\nFoto del premio: ${prizeImg}` : ''}`);
-            window.open(`https://wa.me/?text=${encodedMessage}`, '_blank');
+            
+            stopCamera();
+            setIsShareDialogOpen(false);
+        } catch (error) {
+            console.error("Error sharing prize photo:", error);
+            showNotification(t('errorUploadingImage'), 'error');
+        } finally {
+            setIsUploading(false);
         }
-        setIsShareDialogOpen(false);
+    };
+
+    const handleSharePrizePhoto = async () => {
+        // Trigger camera capture instead of direct share
+        startCamera();
     };
 
     const handleGoToHome = () => {
@@ -3306,7 +3372,7 @@ const App = () => {
                                                                 const collected = ((raffle.participants || []).filter(p => p.paymentStatus === 'confirmed').length * parseFloat(String(raffle.value).replace(/\D/g, ''))) || 0;
                                                                 const gameDateObj = raffle.gameDate ? new Date(raffle.gameDate + 'T00:00:00') : null;
                                                                 const isPastDue = gameDateObj ? gameDateObj < today && !raffle.winner : false;
-                                                                const canDelete = (raffle.participants || []).length === 0 || !!raffle.winner || isPastDue;
+                                                                const canDelete = (raffle.participants || []).length === 0 || !!r.winner || isPastDue;
                                                                 return (
                                                                     <tr key={`${raffle.raffleRef}-${raffle.adminId}`}>
                                                                         <td className="p-4">
@@ -3968,7 +4034,7 @@ const App = () => {
                                      size="icon"
                                      className="absolute top-1/2 right-2 -translate-y-1/2 h-7 w-7"
                                      onClick={() => navigator.clipboard.writeText(raffleToChangePassword?.password || '')}
-                                  Nus>
+                                 >
                                      <Copy className="h-4 w-4" />
                                  </Button>
                              </div>
@@ -4539,6 +4605,58 @@ const App = () => {
                             unoptimized
                         />
                     )}
+                </DialogContent>
+
+            </Dialog>
+
+            <Dialog open={isCaptureDialogOpen} onOpenChange={(open) => !open && stopCamera()}>
+                <DialogContent className="max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle>{t('takePrizePhoto')}</DialogTitle>
+                    </DialogHeader>
+                    <div className="relative aspect-video bg-black rounded-lg overflow-hidden flex items-center justify-center">
+                        {capturedImageBlob ? (
+                            <Image 
+                                src={URL.createObjectURL(capturedImageBlob)} 
+                                alt={t('capturedPrizePhotoAlt')} 
+                                fill 
+                                className="object-cover" 
+                                unoptimized
+                            />
+                        ) : (
+                            <video
+                                ref={videoRef}
+                                autoPlay
+                                playsInline
+                                className="w-full h-full object-cover"
+                            />
+                        )}
+                        {isUploading && (
+                             <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center">
+                                <Loader2 className="h-8 w-8 animate-spin text-white mb-2" />
+                                <p className="text-white text-sm">{t('uploadingImage')}...</p>
+                            </div>
+                        )}
+                    </div>
+                    <DialogFooter className="flex-row justify-center gap-4 sm:justify-center">
+                        {!capturedImageBlob ? (
+                            <>
+                                <Button variant="outline" onClick={stopCamera}>{t('cancel')}</Button>
+                                <Button onClick={takePhoto} className="bg-purple-600 text-white">
+                                    <Camera className="mr-2 h-4 w-4" />
+                                    {t('capture')}
+                                </Button>
+                            </>
+                        ) : (
+                            <>
+                                <Button variant="outline" onClick={() => setCapturedImageBlob(null)} disabled={isUploading}>{t('retakePhoto')}</Button>
+                                <Button onClick={handleConfirmCapture} disabled={isUploading} className="bg-green-600 text-white">
+                                    <Check className="mr-2 h-4 w-4" />
+                                    {t('confirmPhoto')}
+                                </Button>
+                            </>
+                        )}
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
 
