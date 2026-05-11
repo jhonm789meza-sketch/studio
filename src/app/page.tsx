@@ -1673,6 +1673,29 @@ const App = () => {
         setIsShareDialogOpen(false);
     };
 
+    const handleSharePrizePhoto = async () => {
+        const raffleUrl = `${window.location.origin}?ref=${raffleState.raffleRef}`;
+        const message = `${t('shareRaffleMessage', { prize: raffleState.prize || '' })}\n${raffleUrl}`;
+
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: 'RifaExpress',
+                    text: message,
+                    url: raffleUrl,
+                });
+            } catch (error) {
+                console.error('Error sharing:', error);
+            }
+        } else {
+            // Fallback to WhatsApp
+            const prizeImg = raffleState.prizeImageUrl;
+            const encodedMessage = encodeURIComponent(`${message}${prizeImg ? `\nFoto del premio: ${prizeImg}` : ''}`);
+            window.open(`https://wa.me/?text=${encodedMessage}`, '_blank');
+        }
+        setIsShareDialogOpen(false);
+    };
+
     const handleGoToHome = () => {
         raffleSubscription.current?.();
         loadedRaffleIdRef.current = null;
@@ -3707,7 +3730,7 @@ const App = () => {
                     </div>
                     <DialogFooter>
                         <Button type="button" variant="outline" onClick={() => setIsAdminLoginOpen(false)}>{t('cancel')}</Button>
-                        <Button type="submit" onClick={() => handleAdminSearch({ refToSearch: adminRefSearch, isPublicSearch: isSuperAdmin })}>{t('recover')}</Button>
+                        <Button type="submit" onClick={() => handleAdminSearch({ refToSearch: adminRefSearch, isPublicSearch: true })}>{t('recover')}</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
@@ -3786,6 +3809,13 @@ const App = () => {
                         >
                             <FacebookIcon />
                             <span>{t('shareOnFacebook')}</span>
+                        </Button>
+                        <Button
+                            onClick={() => handleSharePrizePhoto()}
+                            className="w-full bg-yellow-500 text-white hover:bg-yellow-600 flex items-center justify-center gap-2"
+                        >
+                            <Camera className="h-5 w-5" />
+                            <span>{t('sendPrizePhoto')}</span>
                         </Button>
                     </div>
                     <DialogFooter>
@@ -3938,7 +3968,7 @@ const App = () => {
                                      size="icon"
                                      className="absolute top-1/2 right-2 -translate-y-1/2 h-7 w-7"
                                      onClick={() => navigator.clipboard.writeText(raffleToChangePassword?.password || '')}
-                                 >
+                                  Nus>
                                      <Copy className="h-4 w-4" />
                                  </Button>
                              </div>

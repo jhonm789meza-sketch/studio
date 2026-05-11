@@ -287,7 +287,7 @@
     "add": "Add",
     "addNewContact": "Add New Contact",
     "savedContacts": "Saved Contacts",
-    "noSavedContacts": "No saved contacts.",
+    "noSavedContacts": "No skills listed.",
     "activationPrices": "Activation Prices",
     "manageActivationPrices": "Manage Activation Prices",
     "manageActivationPricesDescription": "Update the activation prices for each raffle type.",
@@ -380,5 +380,14 @@
     "numberSeparatedSuccess": "Number {number} separated successfully.",
     "numberSeparatedError": "Error separating number.",
     "enableSeparateNumber": "Enable Separate Number Button",
-    "enableSeparateNumberDescription": "Shows a button to reserve a number without data."
+    "enableSeparateNumberDescription": "Shows a button to reserve a number without data.",
+    "freeGames": "Free Games",
+    "manageFreeGames": "Manage Free Games",
+    "manageFreeGamesDescription": "Enable or disable free mode for each type independently.",
+    "freeTwoDigit": "Free 2-Digit Raffle",
+    "freeThreeDigit": "Free 3-Digit Raffle",
+    "freeInfinite": "Free Infinite Raffle",
+    "freeGamesSaved": "Free games settings saved.",
+    "freeLabel": "FREE!",
+    "sendPrizePhoto": "Send Prize Photo"
 }

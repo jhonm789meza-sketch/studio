@@ -276,7 +276,7 @@
     "paymentLinkThreeDigit": "Link de Pago (3 Cifras)",
     "paymentLinkInfinite": "Link de Pago (Infinita)",
     "paymentLinksSaved": "Links de pago guardados con éxito.",
-    "errorSavingPaymentLinks": "Error al guardar los links de pago.",
+    "errorSalvandoPaymentLinks": "Error al guardar los links de pago.",
     "copyPaymentTitle": "Copiar Información de Pago",
     "copyPaymentDescription": "Elige qué información copiar para realizar el pago.",
     "copyAccountNumber": "Copiar Número de Cuenta",
@@ -388,5 +388,6 @@
     "freeThreeDigit": "Rifa 3 Cifras Gratis",
     "freeInfinite": "Rifa Infinita Gratis",
     "freeGamesSaved": "Configuración de juegos gratuitos guardada.",
-    "freeLabel": "¡GRATIS!"
+    "freeLabel": "¡GRATIS!",
+    "sendPrizePhoto": "Enviar foto del premio"
 }
