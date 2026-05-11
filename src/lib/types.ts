@@ -1,5 +1,4 @@
 
-
 export interface Participant {
     id: number;
     name: string;
@@ -37,6 +36,9 @@ export interface AppSettings {
     bankInfoLine1?: string;
     bankInfoLine2?: string;
     paymentQrImageUrl?: string;
+    isFreeTwoDigit?: boolean;
+    isFreeThreeDigit?: boolean;
+    isFreeInfinite?: boolean;
 }
 
 export interface Raffle {

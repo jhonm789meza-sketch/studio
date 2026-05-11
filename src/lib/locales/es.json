@@ -380,5 +380,13 @@
     "numberSeparatedSuccess": "Número {number} separado con éxito.",
     "numberSeparatedError": "Error al separar el número.",
     "enableSeparateNumber": "Habilitar botón Separar Número",
-    "enableSeparateNumberDescription": "Muestra el botón para reservar un número sin datos."
+    "enableSeparateNumberDescription": "Muestra el botón para reservar un número sin datos.",
+    "freeGames": "Juegos Gratuitos",
+    "manageFreeGames": "Gestionar Juegos Gratuitos",
+    "manageFreeGamesDescription": "Habilita o deshabilita la gratuidad de cada modalidad de forma independiente.",
+    "freeTwoDigit": "Rifa 2 Cifras Gratis",
+    "freeThreeDigit": "Rifa 3 Cifras Gratis",
+    "freeInfinite": "Rifa Infinita Gratis",
+    "freeGamesSaved": "Configuración de juegos gratuitos guardada.",
+    "freeLabel": "¡GRATIS!"
 }

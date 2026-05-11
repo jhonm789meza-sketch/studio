@@ -214,6 +214,12 @@ const App = () => {
     const [paymentQrImageUrl, setPaymentQrImageUrl] = useState('');
     const [isPrizeImageModalOpen, setIsPrizeImageModalOpen] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
+    const [isFreeGamesDialogOpen, setIsFreeGamesDialogOpen] = useState(false);
+    const [freeGamesConfig, setFreeGamesConfig] = useState({
+        twoDigit: false,
+        threeDigit: false,
+        infinite: false,
+    });
     
     const prizeTextareaRef = useRef<HTMLTextAreaElement>(null);
     const isCurrentUserAdmin = !!raffleState.adminId && !!currentAdminId && raffleState.adminId === currentAdminId;
@@ -250,6 +256,11 @@ const App = () => {
             if (docSnap.exists()) {
                 const settings = docSnap.data() as AppSettings;
                 setAppSettings(settings);
+                setFreeGamesConfig({
+                    twoDigit: !!settings.isFreeTwoDigit,
+                    threeDigit: !!settings.isFreeThreeDigit,
+                    infinite: !!settings.isFreeInfinite,
+                });
                 if (isSuperAdmin) {
                     setSupportContacts(Array.isArray(settings.supportContacts) ? settings.supportContacts : []);
                     setPaymentLinks({
@@ -1454,6 +1465,16 @@ const App = () => {
     };
 
     const handlePriceButtonClick = (mode: RaffleMode) => {
+        // Check if free
+        const isFree = mode === 'two-digit' ? appSettings.isFreeTwoDigit :
+                      mode === 'three-digit' ? appSettings.isFreeThreeDigit :
+                      mode === 'infinite' ? appSettings.isFreeInfinite : false;
+
+        if (isFree) {
+            handleActivateBoard(mode, 'CO', `FREE_${Date.now()}`);
+            return;
+        }
+
         const link =
           mode === 'two-digit'
             ? appSettings.paymentLinkTwoDigit
@@ -1549,13 +1570,13 @@ const App = () => {
             const transactionDocRef = doc(db, 'usedTransactions', finalTransactionId);
             const transactionDoc = await getDoc(transactionDocRef);
 
-            if (transactionDoc.exists() && !finalTransactionId.startsWith('SUPERADMIN') && !finalTransactionId.startsWith('MANUAL_')) {
+            if (transactionDoc.exists() && !finalTransactionId.startsWith('SUPERADMIN') && !finalTransactionId.startsWith('MANUAL_') && !finalTransactionId.startsWith('FREE_')) {
                 showNotification(t('transactionAlreadyUsed'), 'error');
                 if (loadBoard) setLoading(false);
                 return { adminId: null, finalRaffleRef: null };
             }
             
-            const finalRaffleRef = newRef || await raffleManager.createNewRaffleRef(mode, false, finalTransactionId.startsWith('MANUAL_'));
+            const finalRaffleRef = newRef || await raffleManager.createNewRaffleRef(mode, false, finalTransactionId.startsWith('MANUAL_') || finalTransactionId.startsWith('FREE_'));
 
             const existingRaffleDoc = await getDoc(doc(db, "raffles", finalRaffleRef));
             if (existingRaffleDoc.exists()) {
@@ -1585,7 +1606,7 @@ const App = () => {
             
             await setDoc(doc(db, "raffles", finalRaffleRef), newRaffleData);
             
-            if (!finalTransactionId.startsWith('SUPERADMIN')) {
+            if (!finalTransactionId.startsWith('SUPERADMIN') && !finalTransactionId.startsWith('FREE_')) {
                  await setDoc(transactionDocRef, {
                      raffleRef: finalRaffleRef,
                      activatedAt: serverTimestamp(),
@@ -1749,6 +1770,22 @@ const App = () => {
             setIsActivationPricesDialogOpen(false);
         } catch (error) {
             console.error("Error saving activation prices:", error);
+            showNotification(t('errorSavingActivationPrices'), 'error');
+        }
+    };
+
+    const handleSaveFreeGamesSettings = async () => {
+        try {
+            const settingsDocRef = doc(db, 'internal', 'settings');
+            await setDoc(settingsDocRef, {
+                isFreeTwoDigit: freeGamesConfig.twoDigit,
+                isFreeThreeDigit: freeGamesConfig.threeDigit,
+                isFreeInfinite: freeGamesConfig.infinite,
+            }, { merge: true });
+            showNotification(t('freeGamesSaved'), 'success');
+            setIsFreeGamesDialogOpen(false);
+        } catch (error) {
+            console.error("Error saving free games settings:", error);
             showNotification(t('errorSavingActivationPrices'), 'error');
         }
     };
@@ -2589,6 +2626,10 @@ const App = () => {
                                                 <DollarSign className="mr-2 h-4 w-4" />
                                                 <span>{t('activationPrices')}</span>
                                             </DropdownMenuItem>
+                                            <DropdownMenuItem onSelect={() => setIsFreeGamesDialogOpen(true)}>
+                                                <RefreshCcw className="mr-2 h-4 w-4" />
+                                                <span>{t('freeGames')}</span>
+                                            </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setIsPaymentInfoDialogOpen(true)}>
                                                 <Landmark className="mr-2 h-4 w-4" />
                                                 <span>{t('paymentInfo')}</span>
@@ -2712,8 +2753,8 @@ const App = () => {
                                                 </div>
                                             </div>
                                             <div className="p-6 pt-0 space-y-4">
-                                                <Button onClick={() => handlePriceButtonClick('two-digit')} size="lg" className="w-full bg-green-500 hover:bg-green-600 text-white font-bold">
-                                                    {t('price')} {appSettings.activationPriceTwoDigit ? `(${appSettings.activationPriceTwoDigit})` : ''}
+                                                <Button onClick={() => handlePriceButtonClick('two-digit')} size="lg" className={`w-full ${appSettings.isFreeTwoDigit ? 'bg-orange-500 hover:bg-orange-600' : 'bg-green-500 hover:bg-green-600'} text-white font-bold`}>
+                                                    {appSettings.isFreeTwoDigit ? t('freeLabel') : (t('price') + (appSettings.activationPriceTwoDigit ? ` (${appSettings.activationPriceTwoDigit})` : ''))}
                                                 </Button>
                                                 <div className="text-center">
                                                     <Button onClick={handleActivationClick} size="lg" className="w-full bg-gray-700 hover:bg-gray-800 text-white font-bold flex items-center gap-2 justify-center">
@@ -2755,8 +2796,8 @@ const App = () => {
                                                 </div>
                                             </div>
                                             <div className="p-6 pt-0 space-y-4">
-                                                <Button onClick={() => handlePriceButtonClick('three-digit')} size="lg" className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold">
-                                                    {t('price')} {appSettings.activationPriceThreeDigit ? `(${appSettings.activationPriceThreeDigit})` : ''}
+                                                <Button onClick={() => handlePriceButtonClick('three-digit')} size="lg" className={`w-full ${appSettings.isFreeThreeDigit ? 'bg-orange-500 hover:bg-orange-600' : 'bg-blue-500 hover:bg-blue-600'} text-white font-bold`}>
+                                                    {appSettings.isFreeThreeDigit ? t('freeLabel') : (t('price') + (appSettings.activationPriceThreeDigit ? ` (${appSettings.activationPriceThreeDigit})` : ''))}
                                                 </Button>
                                                  <div className="text-center">
                                                     <Button onClick={handleActivationClick} size="lg" className="w-full bg-gray-700 hover:bg-gray-800 text-white font-bold flex items-center gap-2 justify-center">
@@ -2798,8 +2839,8 @@ const App = () => {
                                                 </div>
                                             </div>
                                             <div className="p-6 pt-0 space-y-4">
-                                                <Button onClick={() => handlePriceButtonClick('infinite')} size="lg" className="w-full bg-red-500 hover:bg-red-600 text-white font-bold">
-                                                    {t('price')} {appSettings.activationPriceInfinite ? `(${appSettings.activationPriceInfinite})` : ''}
+                                                <Button onClick={() => handlePriceButtonClick('infinite')} size="lg" className={`w-full ${appSettings.isFreeInfinite ? 'bg-orange-500 hover:bg-orange-600' : 'bg-red-500 hover:bg-red-600'} text-white font-bold`}>
+                                                    {appSettings.isFreeInfinite ? t('freeLabel') : (t('price') + (appSettings.activationPriceInfinite ? ` (${appSettings.activationPriceInfinite})` : ''))}
                                                 </Button>
                                                  <div className="text-center">
                                                     <Button onClick={handleActivationClick} size="lg" className="w-full bg-gray-700 hover:bg-gray-800 text-white font-bold flex items-center gap-2 justify-center">
@@ -3017,6 +3058,9 @@ const App = () => {
                                                             className="w-full pr-10"
                                                             maxLength={raffleState.raffleMode === 'infinite' ? (raffleState.infiniteModeDigits || 4) : numberLength}
                                                         />
+                                                        {raffleState.raffleNumber && allAssignedNumbers.has(parseInt(raffleState.raffleNumber)) && (
+                                                            <p className="text-red-500 text-sm mt-1">{t('numberAlreadyAssignedWarning')}</p>
+                                                        )}
                                                         {raffleState.raffleMode === 'infinite' && (
                                                             <Button
                                                                 type="button"
@@ -3030,9 +3074,6 @@ const App = () => {
                                                             </Button>
                                                         )}
                                                     </div>
-                                                    {raffleState.raffleNumber && allAssignedNumbers.has(parseInt(raffleState.raffleNumber)) && (
-                                                        <p className="text-red-500 text-sm mt-1">{t('numberAlreadyAssignedWarning')}</p>
-                                                    )}
                                                 </div>
                                                 <div className="flex flex-col sm:flex-row flex-wrap gap-2">
                                                     {raffleState.isPaymentLinkEnabled && raffleState.paymentLink && (
@@ -4159,6 +4200,45 @@ const App = () => {
                 </DialogContent>
             </Dialog>
 
+            <Dialog open={isFreeGamesDialogOpen} onOpenChange={setIsFreeGamesDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{t('manageFreeGames')}</DialogTitle>
+                        <DialogDescription>{t('manageFreeGamesDescription')}</DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="flex items-center justify-between">
+                            <Label htmlFor="free-two-digit">{t('freeTwoDigit')}</Label>
+                            <Switch
+                                id="free-two-digit"
+                                checked={freeGamesConfig.twoDigit}
+                                onCheckedChange={(checked) => setFreeGamesConfig(p => ({ ...p, twoDigit: checked }))}
+                            />
+                        </div>
+                        <div className="flex items-center justify-between">
+                            <Label htmlFor="free-three-digit">{t('freeThreeDigit')}</Label>
+                            <Switch
+                                id="free-three-digit"
+                                checked={freeGamesConfig.threeDigit}
+                                onCheckedChange={(checked) => setFreeGamesConfig(p => ({ ...p, threeDigit: checked }))}
+                            />
+                        </div>
+                        <div className="flex items-center justify-between">
+                            <Label htmlFor="free-infinite">{t('freeInfinite')}</Label>
+                            <Switch
+                                id="free-infinite"
+                                checked={freeGamesConfig.infinite}
+                                onCheckedChange={(checked) => setFreeGamesConfig(p => ({ ...p, infinite: checked }))}
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsFreeGamesDialogOpen(false)}>{t('cancel')}</Button>
+                        <Button onClick={handleSaveFreeGamesSettings}>{t('save')}</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
             <Dialog open={isPaymentInfoDialogOpen} onOpenChange={setIsPaymentInfoDialogOpen}>
                 <DialogContent>
                     <DialogHeader>
@@ -4437,25 +4517,3 @@ const App = () => {
 };
 
 export default App;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
-
-    
