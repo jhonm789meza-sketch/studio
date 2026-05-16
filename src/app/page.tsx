@@ -225,6 +225,7 @@ const App = () => {
     const [isCaptureDialogOpen, setIsCaptureDialogOpen] = useState(false);
     const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
     const [capturedImageBlob, setCapturedImageBlob] = useState<Blob | null>(null);
+    const [captureCountdown, setCaptureCountdown] = useState<number | null>(null);
     const videoRef = useRef<HTMLVideoElement>(null);
 
     const prizeTextareaRef = useRef<HTMLTextAreaElement>(null);
@@ -1682,6 +1683,7 @@ const App = () => {
     // Camera and Photo Sharing logic
     const startCamera = async () => {
         setIsCaptureDialogOpen(true);
+        setCaptureCountdown(3);
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
             setCameraStream(stream);
@@ -1695,6 +1697,18 @@ const App = () => {
         }
     };
 
+    // Auto-capture countdown logic
+    useEffect(() => {
+        if (isCaptureDialogOpen && cameraStream && captureCountdown !== null && captureCountdown > 0) {
+            const timer = setTimeout(() => setCaptureCountdown(captureCountdown - 1), 1000);
+            return () => clearTimeout(timer);
+        } else if (captureCountdown === 0) {
+            takePhoto();
+            setCaptureCountdown(null);
+        }
+    }, [isCaptureDialogOpen, cameraStream, captureCountdown]);
+
+
     const stopCamera = () => {
         if (cameraStream) {
             cameraStream.getTracks().forEach(track => track.stop());
@@ -1702,6 +1716,7 @@ const App = () => {
         }
         setIsCaptureDialogOpen(false);
         setCapturedImageBlob(null);
+        setCaptureCountdown(null);
     };
 
     const takePhoto = () => {
@@ -1715,18 +1730,21 @@ const App = () => {
                 canvas.toBlob((blob) => {
                     if (blob) {
                         setCapturedImageBlob(blob);
+                        // Automatically confirm and share after a brief delay
+                        setTimeout(() => handleConfirmCapture(blob), 500);
                     }
                 }, 'image/jpeg', 0.8);
             }
         }
     };
 
-    const handleConfirmCapture = async () => {
-        if (!capturedImageBlob) return;
+    const handleConfirmCapture = async (blobToUpload?: Blob) => {
+        const blob = blobToUpload || capturedImageBlob;
+        if (!blob) return;
         
         setIsUploading(true);
         try {
-            const file = new File([capturedImageBlob], `prize_photo_${Date.now()}.jpg`, { type: 'image/jpeg' });
+            const file = new File([blob], `prize_photo_${Date.now()}.jpg`, { type: 'image/jpeg' });
             const imageUrl = await uploadImage(file, 'prize-images');
             
             // Update the raffle prize image
@@ -1734,16 +1752,25 @@ const App = () => {
             
             // Share the updated raffle
             const raffleUrl = `${window.location.origin}?ref=${raffleState.raffleRef}`;
-            const message = `${t('shareRaffleMessage', { prize: raffleState.prize || '' })}\n${raffleUrl}`;
+            const message = `${t('shareRaffleMessage', { prize: raffleState.prize || '' })}\n\n👉 ¡Toca aquí para ver el juego!\n${raffleUrl}`;
 
-            if (navigator.share) {
-                await navigator.share({
-                    title: 'RifaExpress',
-                    text: message,
-                    url: raffleUrl,
-                });
+            if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                try {
+                    await navigator.share({
+                        title: 'RifaExpress',
+                        text: message,
+                        files: [file],
+                    });
+                } catch (shareErr) {
+                     // Fallback to text share if file share fails
+                     await navigator.share({
+                        title: 'RifaExpress',
+                        text: message,
+                        url: raffleUrl,
+                    });
+                }
             } else {
-                const encodedMessage = encodeURIComponent(`${message}${imageUrl ? `\nFoto del premio: ${imageUrl}` : ''}`);
+                const encodedMessage = encodeURIComponent(message);
                 window.open(`https://wa.me/?text=${encodedMessage}`, '_blank');
             }
             
@@ -3372,7 +3399,7 @@ const App = () => {
                                                                 const collected = ((raffle.participants || []).filter(p => p.paymentStatus === 'confirmed').length * parseFloat(String(raffle.value).replace(/\D/g, ''))) || 0;
                                                                 const gameDateObj = raffle.gameDate ? new Date(raffle.gameDate + 'T00:00:00') : null;
                                                                 const isPastDue = gameDateObj ? gameDateObj < today && !raffle.winner : false;
-                                                                const canDelete = (raffle.participants || []).length === 0 || !!r.winner || isPastDue;
+                                                                const canDelete = (raffle.participants || []).length === 0 || !!raffle.winner || isPastDue;
                                                                 return (
                                                                     <tr key={`${raffle.raffleRef}-${raffle.adminId}`}>
                                                                         <td className="p-4">
@@ -4624,12 +4651,21 @@ const App = () => {
                                 unoptimized
                             />
                         ) : (
-                            <video
-                                ref={videoRef}
-                                autoPlay
-                                playsInline
-                                className="w-full h-full object-cover"
-                            />
+                            <>
+                                <video
+                                    ref={videoRef}
+                                    autoPlay
+                                    playsInline
+                                    className="w-full h-full object-cover"
+                                />
+                                {captureCountdown !== null && (
+                                    <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                                        <span className="text-8xl font-bold text-white drop-shadow-lg animate-ping">
+                                            {captureCountdown > 0 ? captureCountdown : '📸'}
+                                        </span>
+                                    </div>
+                                )}
+                            </>
                         )}
                         {isUploading && (
                              <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center">
@@ -4639,22 +4675,14 @@ const App = () => {
                         )}
                     </div>
                     <DialogFooter className="flex-row justify-center gap-4 sm:justify-center">
-                        {!capturedImageBlob ? (
-                            <>
-                                <Button variant="outline" onClick={stopCamera}>{t('cancel')}</Button>
-                                <Button onClick={takePhoto} className="bg-purple-600 text-white">
-                                    <Camera className="mr-2 h-4 w-4" />
-                                    {t('capture')}
-                                </Button>
-                            </>
-                        ) : (
-                            <>
-                                <Button variant="outline" onClick={() => setCapturedImageBlob(null)} disabled={isUploading}>{t('retakePhoto')}</Button>
-                                <Button onClick={handleConfirmCapture} disabled={isUploading} className="bg-green-600 text-white">
-                                    <Check className="mr-2 h-4 w-4" />
-                                    {t('confirmPhoto')}
-                                </Button>
-                            </>
+                         {!capturedImageBlob && (
+                            <Button variant="outline" onClick={stopCamera}>{t('cancel')}</Button>
+                        )}
+                        {capturedImageBlob && (
+                             <div className="flex flex-col items-center gap-2">
+                                <p className="text-sm font-semibold text-green-600 animate-pulse">{t('imageUploadedSuccess')}</p>
+                                <p className="text-xs text-gray-500">{t('uploadingImage')}...</p>
+                             </div>
                         )}
                     </DialogFooter>
                 </DialogContent>
