@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect, useRef, useTransition } from 'react';
 import jsPDF from 'jspdf';
@@ -1775,17 +1776,12 @@ const App = () => {
             ctx.font = `bold ${Math.floor(bannerHeight * 0.3)}px sans-serif`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText('RIFA⚡EXPRESS', canvas.width / 2, bannerY + (bannerHeight * 0.3));
+            ctx.fillText('RIFA⚡EXPRESS', canvas.width / 2, bannerY + (bannerHeight * 0.35));
             
             // CTA
             ctx.fillStyle = '#facc15';
             ctx.font = `bold ${Math.floor(bannerHeight * 0.22)}px sans-serif`;
-            ctx.fillText('👉 TOCA EL LINK PARA JUGAR', canvas.width / 2, bannerY + (bannerHeight * 0.65));
-            
-            // URL (Smaller)
-            ctx.fillStyle = '#ffffff';
-            ctx.font = `${Math.floor(bannerHeight * 0.12)}px sans-serif`;
-            ctx.fillText(raffleUrl, canvas.width / 2, bannerY + (bannerHeight * 0.85));
+            ctx.fillText('👉 TOCA EL LINK PARA JUGAR', canvas.width / 2, bannerY + (bannerHeight * 0.7));
 
             const stampedBlob = await new Promise<Blob | null>(r => canvas.toBlob(r, 'image/jpeg', 0.9));
             if (!stampedBlob) throw new Error("Could not create stamped blob");
@@ -1879,17 +1875,12 @@ const App = () => {
             ctx.font = `bold ${Math.floor(bannerHeight * 0.3)}px sans-serif`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText('RIFA⚡EXPRESS', canvas.width / 2, bannerY + (bannerHeight * 0.3));
+            ctx.fillText('RIFA⚡EXPRESS', canvas.width / 2, bannerY + (bannerHeight * 0.35));
             
             // CTA
             ctx.fillStyle = '#facc15';
             ctx.font = `bold ${Math.floor(bannerHeight * 0.22)}px sans-serif`;
-            ctx.fillText('👉 TOCA EL LINK PARA JUGAR', canvas.width / 2, bannerY + (bannerHeight * 0.65));
-            
-            // URL (Smaller)
-            ctx.fillStyle = '#ffffff';
-            ctx.font = `${Math.floor(bannerHeight * 0.12)}px sans-serif`;
-            ctx.fillText(raffleUrl, canvas.width / 2, bannerY + (bannerHeight * 0.85));
+            ctx.fillText('👉 TOCA EL LINK PARA JUGAR', canvas.width / 2, bannerY + (bannerHeight * 0.7));
 
             const stampedBlob = await new Promise<Blob | null>(r => canvas.toBlob(r, 'image/jpeg', 0.9));
             if (!stampedBlob) throw new Error("Could not create stamped blob");
@@ -3534,7 +3525,7 @@ const App = () => {
                                                                 const collected = ((raffle.participants || []).filter(p => p.paymentStatus === 'confirmed').length * parseFloat(String(raffle.value).replace(/\D/g, ''))) || 0;
                                                                 const gameDateObj = raffle.gameDate ? new Date(raffle.gameDate + 'T00:00:00') : null;
                                                                 const isPastDue = gameDateObj ? gameDateObj < today && !raffle.winner : false;
-                                                                const canDelete = (raffle.participants || []).length === 0 || !!raffle.winner || isPastDue;
+                                                                const canDelete = (raffle.participants || []).length === 0 || !!r.winner || isPastDue;
                                                                 return (
                                                                     <tr key={`${raffle.raffleRef}-${raffle.adminId}`}>
                                                                         <td className="p-4">
