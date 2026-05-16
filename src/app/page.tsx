@@ -1271,7 +1271,7 @@ const App = () => {
                         }
 
                         if (currentUrl.href !== newUrl.href) {
-                            window.history.pushState({}, '', newUrl.href);
+                            window.history.replaceState({}, '', newUrl.href);
                         }
                     }
                 } else if (!isInitialLoad) {
@@ -1296,8 +1296,7 @@ const App = () => {
     const handleDrawWinner = async () => {
         if (!raffleState.raffleRef) return;
     
-        const infiniteDigits = raffleState.infiniteModeDigits || 4;
-        const winningNumberLength = raffleMode === 'infinite' ? infiniteDigits : numberLength;
+        const winningNumberLength = raffleMode === 'infinite' ? (raffleState.infiniteModeDigits || 4) : numberLength;
     
         let winningNumberStr = raffleState.manualWinnerNumber;
     
@@ -1760,6 +1759,7 @@ const App = () => {
                         title: 'RifaExpress',
                         text: message,
                         files: [file],
+                        url: raffleUrl, // Explicitly include URL to encourage rich link behavior
                     });
                 } catch (shareErr) {
                      // Fallback to text share if file share fails
@@ -1806,6 +1806,7 @@ const App = () => {
                     title: 'RifaExpress',
                     text: message,
                     files: [file],
+                    url: raffleUrl, // Explicitly include URL to encourage rich link behavior
                 });
             } else {
                 // Fallback to WhatsApp text share
@@ -3434,7 +3435,7 @@ const App = () => {
                                                                 const collected = ((raffle.participants || []).filter(p => p.paymentStatus === 'confirmed').length * parseFloat(String(raffle.value).replace(/\D/g, ''))) || 0;
                                                                 const gameDateObj = raffle.gameDate ? new Date(raffle.gameDate + 'T00:00:00') : null;
                                                                 const isPastDue = gameDateObj ? gameDateObj < today && !raffle.winner : false;
-                                                                const canDelete = (raffle.participants || []).length === 0 || !!raffle.winner || isPastDue;
+                                                                const canDelete = (raffle.participants || []).length === 0 || !!r.winner || isPastDue;
                                                                 return (
                                                                     <tr key={`${raffle.raffleRef}-${raffle.adminId}`}>
                                                                         <td className="p-4">
