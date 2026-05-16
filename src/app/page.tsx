@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect, useRef, useTransition } from 'react';
 import jsPDF from 'jspdf';
@@ -1764,7 +1763,7 @@ const App = () => {
             ctx.drawImage(img, 0, 0);
 
             // Draw Branded Banner in the MIDDLE
-            const bannerHeight = canvas.height * 0.25;
+            const bannerHeight = canvas.height * 0.3;
             const bannerY = (canvas.height - bannerHeight) / 2;
             
             // Background
@@ -1780,8 +1779,8 @@ const App = () => {
             
             // CTA
             ctx.fillStyle = '#facc15';
-            ctx.font = `bold ${Math.floor(bannerHeight * 0.2)}px sans-serif`;
-            ctx.fillText('👉 TOCA PARA JUGAR', canvas.width / 2, bannerY + (bannerHeight * 0.6));
+            ctx.font = `bold ${Math.floor(bannerHeight * 0.22)}px sans-serif`;
+            ctx.fillText('👉 TOCA EL LINK PARA JUGAR', canvas.width / 2, bannerY + (bannerHeight * 0.65));
             
             // URL (Smaller)
             ctx.fillStyle = '#ffffff';
@@ -1799,7 +1798,7 @@ const App = () => {
             
             // Share the updated raffle
             const prizeName = raffleState.prize || '';
-            const message = `${raffleUrl}\n\n${t('shareRaffleMessage', { prize: prizeName })}\n\n👉 ¡Toca arriba para jugar ahora!`;
+            const message = `${raffleUrl}\n\n${t('shareRaffleMessage', { prize: prizeName })}\n\n¡Toca arriba para jugar ahora! ⚡`;
 
             if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
                 try {
@@ -1842,7 +1841,7 @@ const App = () => {
         try {
             const raffleUrl = `${window.location.origin}/?ref=${raffleState.raffleRef}`;
             const prizeName = raffleState.prize || '';
-            const message = `${raffleUrl}\n\n${t('shareRaffleMessage', { prize: prizeName })}\n\n👉 ¡Toca arriba para jugar ahora!`;
+            const message = `${raffleUrl}\n\n${t('shareRaffleMessage', { prize: prizeName })}\n\n¡Toca arriba para jugar ahora! ⚡`;
 
             // Fetch the existing prize image
             const response = await fetch(raffleState.prizeImageUrl);
@@ -1868,7 +1867,7 @@ const App = () => {
             ctx.drawImage(img, 0, 0);
 
             // Draw Branded Banner in the MIDDLE
-            const bannerHeight = canvas.height * 0.25;
+            const bannerHeight = canvas.height * 0.3;
             const bannerY = (canvas.height - bannerHeight) / 2;
             
             // Background
@@ -1884,8 +1883,8 @@ const App = () => {
             
             // CTA
             ctx.fillStyle = '#facc15';
-            ctx.font = `bold ${Math.floor(bannerHeight * 0.2)}px sans-serif`;
-            ctx.fillText('👉 TOCA PARA JUGAR', canvas.width / 2, bannerY + (bannerHeight * 0.6));
+            ctx.font = `bold ${Math.floor(bannerHeight * 0.22)}px sans-serif`;
+            ctx.fillText('👉 TOCA EL LINK PARA JUGAR', canvas.width / 2, bannerY + (bannerHeight * 0.65));
             
             // URL (Smaller)
             ctx.fillStyle = '#ffffff';
