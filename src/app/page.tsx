@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect, useRef, useTransition } from 'react';
 import jsPDF from 'jspdf';
@@ -1742,7 +1743,7 @@ const App = () => {
         
         setIsUploading(true);
         try {
-            const raffleUrl = `${window.location.origin}?ref=${raffleState.raffleRef}`;
+            const raffleUrl = `${window.location.origin}/?ref=${raffleState.raffleRef}`;
             
             // Stamping URL into image
             const img = new (window as any).Image();
@@ -1784,7 +1785,7 @@ const App = () => {
             
             // Share the updated raffle - structured for optimal link recognition
             const prizeName = raffleState.prize || '';
-            const message = `${raffleUrl}\n\n${t('shareRaffleMessage', { prize: prizeName })}\n\n👉 ¡Toca la imagen o el enlace arriba para jugar ahora!`;
+            const message = `${raffleUrl}\n\n${t('shareRaffleMessage', { prize: prizeName })}\n\n👉 ¡Toca arriba para jugar ahora!`;
 
             if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
                 try {
@@ -1825,10 +1826,10 @@ const App = () => {
 
         setIsUploading(true);
         try {
-            const raffleUrl = `${window.location.origin}?ref=${raffleState.raffleRef}`;
+            const raffleUrl = `${window.location.origin}/?ref=${raffleState.raffleRef}`;
             const prizeName = raffleState.prize || '';
             // Structured message: URL FIRST for link preview generation
-            const message = `${raffleUrl}\n\n${t('shareRaffleMessage', { prize: prizeName })}\n\n👉 ¡Toca la imagen o el enlace arriba para jugar ahora!`;
+            const message = `${raffleUrl}\n\n${t('shareRaffleMessage', { prize: prizeName })}\n\n👉 ¡Toca arriba para jugar ahora!`;
 
             // Fetch the existing prize image
             const response = await fetch(raffleState.prizeImageUrl);
@@ -1885,7 +1886,7 @@ const App = () => {
         } catch (error) {
             console.error("Error sharing existing prize photo:", error);
             // Simple text fallback
-            const raffleUrl = `${window.location.origin}?ref=${raffleState.raffleRef}`;
+            const raffleUrl = `${window.location.origin}/?ref=${raffleState.raffleRef}`;
             const message = encodeURIComponent(`${raffleUrl}\n\n${t('shareRaffleMessage', { prize: raffleState.prize || '' })}\n\n👉 ¡Toca arriba para jugar ahora!`);
             window.open(`https://wa.me/?text=${message}`, '_blank');
         } finally {
@@ -4503,7 +4504,7 @@ const App = () => {
                 </DialogContent>
             </Dialog>
             <Dialog open={isAssignPackageDialogOpen} onOpenChange={setIsAssignPackageDialogOpen}>
-                <DialogContent className="max-w-2xl">
+                <DialogContent className="max-2xl">
                     <DialogHeader>
                         <DialogTitle>{t('assignPackage')}</DialogTitle>
                         <DialogDescription>{t('assignPackageDescription')}</DialogDescription>
