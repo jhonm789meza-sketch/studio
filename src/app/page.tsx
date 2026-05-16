@@ -1763,16 +1763,30 @@ const App = () => {
 
             ctx.drawImage(img, 0, 0);
 
-            // Draw URL banner in the MIDDLE for high visibility
-            const bannerHeight = canvas.height * 0.15;
+            // Draw Branded Banner in the MIDDLE
+            const bannerHeight = canvas.height * 0.25;
             const bannerY = (canvas.height - bannerHeight) / 2;
+            
+            // Background
             ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
             ctx.fillRect(0, bannerY, canvas.width, bannerHeight);
-            ctx.fillStyle = '#facc15'; // Yellow-400 for maximum contrast
-            ctx.font = `bold ${Math.floor(bannerHeight * 0.35)}px sans-serif`;
+            
+            // App Name
+            ctx.fillStyle = '#ffffff';
+            ctx.font = `bold ${Math.floor(bannerHeight * 0.3)}px sans-serif`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(`👉 TOCA PARA JUGAR: ${raffleUrl}`, canvas.width / 2, bannerY + (bannerHeight / 2));
+            ctx.fillText('RIFA⚡EXPRESS', canvas.width / 2, bannerY + (bannerHeight * 0.3));
+            
+            // CTA
+            ctx.fillStyle = '#facc15';
+            ctx.font = `bold ${Math.floor(bannerHeight * 0.2)}px sans-serif`;
+            ctx.fillText('👉 TOCA PARA JUGAR', canvas.width / 2, bannerY + (bannerHeight * 0.6));
+            
+            // URL (Smaller)
+            ctx.fillStyle = '#ffffff';
+            ctx.font = `${Math.floor(bannerHeight * 0.12)}px sans-serif`;
+            ctx.fillText(raffleUrl, canvas.width / 2, bannerY + (bannerHeight * 0.85));
 
             const stampedBlob = await new Promise<Blob | null>(r => canvas.toBlob(r, 'image/jpeg', 0.9));
             if (!stampedBlob) throw new Error("Could not create stamped blob");
@@ -1783,7 +1797,7 @@ const App = () => {
             // Update the raffle prize image
             await handleFieldChange('prizeImageUrl', uploadedImageUrl, true);
             
-            // Share the updated raffle - structured for optimal link recognition
+            // Share the updated raffle
             const prizeName = raffleState.prize || '';
             const message = `${raffleUrl}\n\n${t('shareRaffleMessage', { prize: prizeName })}\n\n👉 ¡Toca arriba para jugar ahora!`;
 
@@ -1828,7 +1842,6 @@ const App = () => {
         try {
             const raffleUrl = `${window.location.origin}/?ref=${raffleState.raffleRef}`;
             const prizeName = raffleState.prize || '';
-            // Structured message: URL FIRST for link preview generation
             const message = `${raffleUrl}\n\n${t('shareRaffleMessage', { prize: prizeName })}\n\n👉 ¡Toca arriba para jugar ahora!`;
 
             // Fetch the existing prize image
@@ -1854,16 +1867,30 @@ const App = () => {
 
             ctx.drawImage(img, 0, 0);
 
-            // Draw URL banner in the MIDDLE
-            const bannerHeight = canvas.height * 0.15;
+            // Draw Branded Banner in the MIDDLE
+            const bannerHeight = canvas.height * 0.25;
             const bannerY = (canvas.height - bannerHeight) / 2;
+            
+            // Background
             ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
             ctx.fillRect(0, bannerY, canvas.width, bannerHeight);
-            ctx.fillStyle = '#facc15';
-            ctx.font = `bold ${Math.floor(bannerHeight * 0.35)}px sans-serif`;
+            
+            // App Name
+            ctx.fillStyle = '#ffffff';
+            ctx.font = `bold ${Math.floor(bannerHeight * 0.3)}px sans-serif`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(`👉 TOCA PARA JUGAR: ${raffleUrl}`, canvas.width / 2, bannerY + (bannerHeight / 2));
+            ctx.fillText('RIFA⚡EXPRESS', canvas.width / 2, bannerY + (bannerHeight * 0.3));
+            
+            // CTA
+            ctx.fillStyle = '#facc15';
+            ctx.font = `bold ${Math.floor(bannerHeight * 0.2)}px sans-serif`;
+            ctx.fillText('👉 TOCA PARA JUGAR', canvas.width / 2, bannerY + (bannerHeight * 0.6));
+            
+            // URL (Smaller)
+            ctx.fillStyle = '#ffffff';
+            ctx.font = `${Math.floor(bannerHeight * 0.12)}px sans-serif`;
+            ctx.fillText(raffleUrl, canvas.width / 2, bannerY + (bannerHeight * 0.85));
 
             const stampedBlob = await new Promise<Blob | null>(r => canvas.toBlob(r, 'image/jpeg', 0.9));
             if (!stampedBlob) throw new Error("Could not create stamped blob");
@@ -1878,14 +1905,12 @@ const App = () => {
                     url: raffleUrl, 
                 });
             } else {
-                // Fallback to WhatsApp text share
                 const encodedMessage = encodeURIComponent(message);
                 window.open(`https://wa.me/?text=${encodedMessage}`, '_blank');
             }
             URL.revokeObjectURL(imageUrl);
         } catch (error) {
             console.error("Error sharing existing prize photo:", error);
-            // Simple text fallback
             const raffleUrl = `${window.location.origin}/?ref=${raffleState.raffleRef}`;
             const message = encodeURIComponent(`${raffleUrl}\n\n${t('shareRaffleMessage', { prize: raffleState.prize || '' })}\n\n👉 ¡Toca arriba para jugar ahora!`);
             window.open(`https://wa.me/?text=${message}`, '_blank');
