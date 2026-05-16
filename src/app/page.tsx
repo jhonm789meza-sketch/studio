@@ -1743,15 +1743,48 @@ const App = () => {
         
         setIsUploading(true);
         try {
-            const file = new File([blob], `prize_photo_${Date.now()}.jpg`, { type: 'image/jpeg' });
-            const imageUrl = await uploadImage(file, 'prize-images');
+            const raffleUrl = `${window.location.origin}?ref=${raffleState.raffleRef}`;
+            
+            // Stamping URL into image
+            const img = new (window as any).Image();
+            const imageUrl = URL.createObjectURL(blob);
+            
+            await new Promise((resolve, reject) => {
+                img.onload = resolve;
+                img.onerror = reject;
+                img.src = imageUrl;
+            });
+
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) throw new Error("Canvas context failed");
+
+            ctx.drawImage(img, 0, 0);
+
+            // Draw URL banner
+            const bannerHeight = canvas.height * 0.08;
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.fillRect(0, canvas.height - bannerHeight, canvas.width, bannerHeight);
+            ctx.fillStyle = 'white';
+            ctx.font = `bold ${Math.floor(bannerHeight * 0.4)}px sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(raffleUrl, canvas.width / 2, canvas.height - (bannerHeight / 2));
+
+            const stampedBlob = await new Promise<Blob | null>(r => canvas.toBlob(r, 'image/jpeg', 0.85));
+            if (!stampedBlob) throw new Error("Could not create stamped blob");
+
+            const file = new File([stampedBlob], `prize_photo_${Date.now()}.jpg`, { type: 'image/jpeg' });
+            const uploadedImageUrl = await uploadImage(file, 'prize-images');
             
             // Update the raffle prize image
-            await handleFieldChange('prizeImageUrl', imageUrl, true);
+            await handleFieldChange('prizeImageUrl', uploadedImageUrl, true);
             
             // Share the updated raffle
-            const raffleUrl = `${window.location.origin}?ref=${raffleState.raffleRef}`;
-            const message = `${t('shareRaffleMessage', { prize: raffleState.prize || '' })}\n\n👉 ¡Toca aquí para ver el juego!\n${raffleUrl}`;
+            const prizeName = raffleState.prize || '';
+            const message = `${t('shareRaffleMessage', { prize: prizeName })}\n\n👉 ¡Toca aquí para ver el juego!\n${raffleUrl}`;
 
             if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
                 try {
@@ -1759,10 +1792,9 @@ const App = () => {
                         title: 'RifaExpress',
                         text: message,
                         files: [file],
-                        url: raffleUrl, // Explicitly include URL to encourage rich link behavior
+                        url: raffleUrl, 
                     });
                 } catch (shareErr) {
-                     // Fallback to text share if file share fails
                      await navigator.share({
                         title: 'RifaExpress',
                         text: message,
@@ -1776,6 +1808,7 @@ const App = () => {
             
             stopCamera();
             setIsShareDialogOpen(false);
+            URL.revokeObjectURL(imageUrl);
         } catch (error) {
             console.error("Error sharing prize photo:", error);
             showNotification(t('errorUploadingImage'), 'error');
@@ -1796,23 +1829,57 @@ const App = () => {
             const prizeName = raffleState.prize || '';
             const message = `${t('shareRaffleMessage', { prize: prizeName })}\n\n👉 ¡Toca aquí para ver el juego!\n${raffleUrl}`;
 
-            // Fetch the existing prize image to share it as a file
+            // Fetch the existing prize image
             const response = await fetch(raffleState.prizeImageUrl);
             const blob = await response.blob();
-            const file = new File([blob], 'premio.jpg', { type: blob.type || 'image/jpeg' });
+            
+            // Create Image and Canvas for stamping
+            const img = new (window as any).Image();
+            img.crossOrigin = "anonymous";
+            const imageUrl = URL.createObjectURL(blob);
+            
+            await new Promise((resolve, reject) => {
+                img.onload = resolve;
+                img.onerror = reject;
+                img.src = imageUrl;
+            });
+
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) throw new Error("Canvas context failed");
+
+            ctx.drawImage(img, 0, 0);
+
+            // Draw URL banner
+            const bannerHeight = canvas.height * 0.08;
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.fillRect(0, canvas.height - bannerHeight, canvas.width, bannerHeight);
+            ctx.fillStyle = 'white';
+            ctx.font = `bold ${Math.floor(bannerHeight * 0.4)}px sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(raffleUrl, canvas.width / 2, canvas.height - (bannerHeight / 2));
+
+            const stampedBlob = await new Promise<Blob | null>(r => canvas.toBlob(r, 'image/jpeg', 0.85));
+            if (!stampedBlob) throw new Error("Could not create stamped blob");
+
+            const file = new File([stampedBlob], 'premio.jpg', { type: 'image/jpeg' });
 
             if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
                 await navigator.share({
                     title: 'RifaExpress',
                     text: message,
                     files: [file],
-                    url: raffleUrl, // Explicitly include URL to encourage rich link behavior
+                    url: raffleUrl, 
                 });
             } else {
                 // Fallback to WhatsApp text share
                 const encodedMessage = encodeURIComponent(message);
                 window.open(`https://wa.me/?text=${encodedMessage}`, '_blank');
             }
+            URL.revokeObjectURL(imageUrl);
         } catch (error) {
             console.error("Error sharing existing prize photo:", error);
             // Simple text fallback
@@ -3435,7 +3502,7 @@ const App = () => {
                                                                 const collected = ((raffle.participants || []).filter(p => p.paymentStatus === 'confirmed').length * parseFloat(String(raffle.value).replace(/\D/g, ''))) || 0;
                                                                 const gameDateObj = raffle.gameDate ? new Date(raffle.gameDate + 'T00:00:00') : null;
                                                                 const isPastDue = gameDateObj ? gameDateObj < today && !raffle.winner : false;
-                                                                const canDelete = (raffle.participants || []).length === 0 || !!r.winner || isPastDue;
+                                                                const canDelete = (raffle.participants || []).length === 0 || !!raffle.winner || isPastDue;
                                                                 return (
                                                                     <tr key={`${raffle.raffleRef}-${raffle.adminId}`}>
                                                                         <td className="p-4">
