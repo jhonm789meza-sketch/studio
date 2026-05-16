@@ -1764,14 +1764,14 @@ const App = () => {
             ctx.drawImage(img, 0, 0);
 
             // Draw URL banner
-            const bannerHeight = canvas.height * 0.08;
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            const bannerHeight = canvas.height * 0.12;
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
             ctx.fillRect(0, canvas.height - bannerHeight, canvas.width, bannerHeight);
             ctx.fillStyle = '#facc15'; // Yellow-400 for better visibility
-            ctx.font = `bold ${Math.floor(bannerHeight * 0.45)}px sans-serif`;
+            ctx.font = `bold ${Math.floor(bannerHeight * 0.4)}px sans-serif`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(raffleUrl, canvas.width / 2, canvas.height - (bannerHeight / 2));
+            ctx.fillText(`👉 ${raffleUrl}`, canvas.width / 2, canvas.height - (bannerHeight / 2));
 
             const stampedBlob = await new Promise<Blob | null>(r => canvas.toBlob(r, 'image/jpeg', 0.9));
             if (!stampedBlob) throw new Error("Could not create stamped blob");
@@ -1853,14 +1853,14 @@ const App = () => {
             ctx.drawImage(img, 0, 0);
 
             // Draw URL banner
-            const bannerHeight = canvas.height * 0.08;
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            const bannerHeight = canvas.height * 0.12;
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
             ctx.fillRect(0, canvas.height - bannerHeight, canvas.width, bannerHeight);
             ctx.fillStyle = '#facc15';
-            ctx.font = `bold ${Math.floor(bannerHeight * 0.45)}px sans-serif`;
+            ctx.font = `bold ${Math.floor(bannerHeight * 0.4)}px sans-serif`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(raffleUrl, canvas.width / 2, canvas.height - (bannerHeight / 2));
+            ctx.fillText(`👉 ${raffleUrl}`, canvas.width / 2, canvas.height - (bannerHeight / 2));
 
             const stampedBlob = await new Promise<Blob | null>(r => canvas.toBlob(r, 'image/jpeg', 0.9));
             if (!stampedBlob) throw new Error("Could not create stamped blob");
@@ -3502,7 +3502,7 @@ const App = () => {
                                                                 const collected = ((raffle.participants || []).filter(p => p.paymentStatus === 'confirmed').length * parseFloat(String(raffle.value).replace(/\D/g, ''))) || 0;
                                                                 const gameDateObj = raffle.gameDate ? new Date(raffle.gameDate + 'T00:00:00') : null;
                                                                 const isPastDue = gameDateObj ? gameDateObj < today && !raffle.winner : false;
-                                                                const canDelete = (raffle.participants || []).length === 0 || !!raffle.winner || isPastDue;
+                                                                const canDelete = (raffle.participants || []).length === 0 || !!r.winner || isPastDue;
                                                                 return (
                                                                     <tr key={`${raffle.raffleRef}-${raffle.adminId}`}>
                                                                         <td className="p-4">
