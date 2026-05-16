@@ -1782,7 +1782,7 @@ const App = () => {
             // Update the raffle prize image
             await handleFieldChange('prizeImageUrl', uploadedImageUrl, true);
             
-            // Share the updated raffle
+            // Share the updated raffle - structured for optimal link recognition
             const prizeName = raffleState.prize || '';
             const message = `${raffleUrl}\n\n${t('shareRaffleMessage', { prize: prizeName })}\n\n👉 ¡Toca arriba para jugar ahora!`;
 
@@ -1827,6 +1827,7 @@ const App = () => {
         try {
             const raffleUrl = `${window.location.origin}?ref=${raffleState.raffleRef}`;
             const prizeName = raffleState.prize || '';
+            // Structured message: URL FIRST for link preview generation
             const message = `${raffleUrl}\n\n${t('shareRaffleMessage', { prize: prizeName })}\n\n👉 ¡Toca arriba para jugar ahora!`;
 
             // Fetch the existing prize image
@@ -3502,7 +3503,7 @@ const App = () => {
                                                                 const collected = ((raffle.participants || []).filter(p => p.paymentStatus === 'confirmed').length * parseFloat(String(raffle.value).replace(/\D/g, ''))) || 0;
                                                                 const gameDateObj = raffle.gameDate ? new Date(raffle.gameDate + 'T00:00:00') : null;
                                                                 const isPastDue = gameDateObj ? gameDateObj < today && !raffle.winner : false;
-                                                                const canDelete = (raffle.participants || []).length === 0 || !!r.winner || isPastDue;
+                                                                const canDelete = (raffle.participants || []).length === 0 || !!raffle.winner || isPastDue;
                                                                 return (
                                                                     <tr key={`${raffle.raffleRef}-${raffle.adminId}`}>
                                                                         <td className="p-4">
@@ -3830,7 +3831,7 @@ const App = () => {
                                 </Button>
                             </DialogFooter>
                         </div>
-                    )}
+                     )}
                 </DialogContent>
             </Dialog>
 
