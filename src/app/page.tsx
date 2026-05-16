@@ -1785,8 +1785,43 @@ const App = () => {
     };
 
     const handleSharePrizePhoto = async () => {
-        // Trigger camera capture instead of direct share
-        startCamera();
+        if (!raffleState.prizeImageUrl) {
+            showNotification(t('noPrizeImage'), 'warning');
+            return;
+        }
+
+        setIsUploading(true);
+        try {
+            const raffleUrl = `${window.location.origin}?ref=${raffleState.raffleRef}`;
+            const prizeName = raffleState.prize || '';
+            const message = `${t('shareRaffleMessage', { prize: prizeName })}\n\n👉 ¡Toca aquí para ver el juego!\n${raffleUrl}`;
+
+            // Fetch the existing prize image to share it as a file
+            const response = await fetch(raffleState.prizeImageUrl);
+            const blob = await response.blob();
+            const file = new File([blob], 'premio.jpg', { type: blob.type || 'image/jpeg' });
+
+            if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                await navigator.share({
+                    title: 'RifaExpress',
+                    text: message,
+                    files: [file],
+                });
+            } else {
+                // Fallback to WhatsApp text share
+                const encodedMessage = encodeURIComponent(message);
+                window.open(`https://wa.me/?text=${encodedMessage}`, '_blank');
+            }
+        } catch (error) {
+            console.error("Error sharing existing prize photo:", error);
+            // Simple text fallback
+            const raffleUrl = `${window.location.origin}?ref=${raffleState.raffleRef}`;
+            const message = encodeURIComponent(`${t('shareRaffleMessage', { prize: raffleState.prize || '' })}\n\n👉 ¡Toca aquí para ver el juego!\n${raffleUrl}`);
+            window.open(`https://wa.me/?text=${message}`, '_blank');
+        } finally {
+            setIsUploading(false);
+            setIsShareDialogOpen(false);
+        }
     };
 
     const handleGoToHome = () => {
