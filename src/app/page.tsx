@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect, useRef, useTransition } from 'react';
 import jsPDF from 'jspdf';
@@ -86,13 +85,10 @@ const DateTimeDisplay = ({ t }: { t: (key: string) => void }) => {
     const [currentTime, setCurrentTime] = useState<Date | null>(null);
 
     useEffect(() => {
-        // This effect runs only on the client
         setCurrentTime(new Date());
-
         const timer = setInterval(() => {
             setCurrentTime(new Date());
         }, 1000);
-
         return () => clearInterval(timer);
     }, []);
 
@@ -234,19 +230,29 @@ const App = () => {
     const totalNumbers = raffleMode === 'two-digit' ? 100 : 1000;
     const numberLength = raffleMode === 'two-digit' ? 2 : 3;
 
-     useEffect(() => {
+    useEffect(() => {
         if (typeof document !== 'undefined') {
             document.documentElement.lang = language;
         }
     }, [language]);
 
+    // Redirección interna tras 3 segundos de ver la foto del premio
+    useEffect(() => {
+        if (isPrizeImageModalOpen && !isCurrentUserAdmin) {
+            const timer = setTimeout(() => {
+                setIsPrizeImageModalOpen(false);
+                handleTabClick('register');
+            }, 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [isPrizeImageModalOpen, isCurrentUserAdmin]);
+
     useEffect(() => {
         if (prizeTextareaRef.current) {
-            // We need to reset the height momentarily to get the correct scrollHeight for the current content
             prizeTextareaRef.current.style.height = 'auto';
             prizeTextareaRef.current.style.height = `${prizeTextareaRef.current.scrollHeight}px`;
         }
-    }, [raffleState.prize]); // Rerun on value change
+    }, [raffleState.prize]);
 
 
     useEffect(() => {
@@ -256,7 +262,6 @@ const App = () => {
     }, [isCurrentUserAdmin, raffleState.raffleRef]);
 
 
-    // Fetch global settings
     useEffect(() => {
         const settingsDocRef = doc(db, 'internal', 'settings');
         const unsubscribe = onSnapshot(settingsDocRef, (docSnap) => {
@@ -309,7 +314,6 @@ const App = () => {
 
     useEffect(() => {
         if (isSuperAdmin) {
-            // Fetch pending activations
             const q = query(collection(db, "pendingActivations"), where("status", "==", "pending"));
             const unsubscribeActivations = onSnapshot(q, (querySnapshot) => {
                 const activations: PendingActivation[] = [];
@@ -319,7 +323,6 @@ const App = () => {
                 setPendingActivations(activations);
             });
     
-            // Fetch all raffles
             const allRafflesQuery = query(collection(db, "raffles"));
             const unsubscribeRaffles = onSnapshot(allRafflesQuery, (querySnapshot) => {
                 const raffles: Raffle[] = [];
@@ -379,7 +382,7 @@ const App = () => {
                 
                 const existingParticipant = raffleData.participants.find((p: Participant) => p.raffleNumber === participantData.raffleNumber);
                 if (existingParticipant && existingParticipant.paymentStatus === 'confirmed') {
-                    return existingParticipant; // Already confirmed
+                    return existingParticipant;
                 }
 
                 const newParticipant: Participant = {
@@ -427,7 +430,6 @@ const App = () => {
         if (currentRef) {
             finalParams.set('ref', currentRef);
         }
-        // Persist adminId if it was in the original URL and is being used
         if (currentAdminId) {
              finalParams.set('adminId', currentAdminId);
         }
@@ -481,7 +483,6 @@ const App = () => {
         }
     };
 
-    // Main initialization and URL handling effect
     useEffect(() => {
         const initialize = async () => {
             setLoading(true);
@@ -509,7 +510,6 @@ const App = () => {
             const refFromUrl = urlParams.get('ref');
             const modeFromUrl = urlParams.get('raffleMode') as RaffleMode;
 
-            // --- Payment Confirmation Logic ---
             if ((status?.toLowerCase() === 'approved' || status === '4' || status === '1') && transactionId && modeFromUrl) {
                 const transactionDocRef = doc(db, 'usedTransactions', transactionId);
                 const transactionDoc = await getDoc(transactionDocRef);
@@ -530,7 +530,6 @@ const App = () => {
                 setLoading(false);
                 return;
             }
-            // --- Participant Payment Confirmation ---
             else if ((status?.toLowerCase() === 'approved' || status === '4' || status === '1') && transactionId && refFromUrl) {
                  const pName = urlParams.get('pName');
                  const pPhone = urlParams.get('pPhone');
@@ -541,14 +540,12 @@ const App = () => {
                  }
             }
             
-            // --- Raffle Loading Logic ---
             if (refFromUrl) {
                 await handleAdminSearch({ refToSearch: refFromUrl, isInitialLoad: true });
             } else {
                 setRaffleState(initialRaffleData);
                 setLoading(false);
             }
-            // Cleanup params after processing, except for ref and adminId
              const finalUrl = new URL(window.location.origin);
              if (refFromUrl) finalUrl.searchParams.set('ref', refFromUrl);
              if (adminIdFromUrl) finalUrl.searchParams.set('adminId', adminIdFromUrl);
@@ -579,7 +576,6 @@ const App = () => {
             window.removeEventListener('popstate', handlePopState);
             raffleSubscription.current?.();
         };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     
     const uploadImage = async (image: File, context: string): Promise<string> => {
@@ -591,7 +587,6 @@ const App = () => {
             const uploadResult = await uploadBytes(storageReference, image);
             const downloadUrl = await getDownloadURL(uploadResult.ref);
             
-            // Optimistic UI update
             if (context === 'prize-images') {
                 handleLocalFieldChange('prizeImageUrl', downloadUrl);
             } else if (context === 'payment-qr') {
@@ -603,7 +598,7 @@ const App = () => {
         } catch (error) {
             console.error(`Error uploading image to ${context}:`, error);
             showNotification(t('errorUploadingImage'), 'error');
-            throw error; // Re-throw to be caught by caller
+            throw error;
         } finally {
             setIsUploading(false);
         }
@@ -699,8 +694,6 @@ const App = () => {
                 return;
             }
             
-            // This is a generic save indicator.
-            // It's not just for image uploads anymore.
             if (!isUploadingField) setIsUploading(true);
 
             try {
@@ -782,7 +775,6 @@ const App = () => {
             const prizeValue = parseFloat(String(raffleState.prize).replace(/\D/g, ''));
 
             if (!isNaN(prizeValue) && prizeValue > 0) {
-                // Find 3-digit winners
                 const winningNumber3 = winningNumberStr.slice(-3);
                 if (winningNumber3.length === 3) {
                     const prizePercentage3 = raffleState.partialWinnerPercentage3 || 0;
@@ -797,7 +789,6 @@ const App = () => {
                     }
                 }
 
-                // Find 2-digit winners
                 const winningNumber2 = winningNumberStr.slice(-2);
                 if (winningNumber2.length === 2) {
                      const prizePercentage2 = raffleState.partialWinnerPercentage2 || 0;
@@ -912,7 +903,6 @@ const App = () => {
         const updatedParticipants = [...raffleState.participants, newParticipant];
 
         if (isNequiPayment && confirmPayment === false) {
-            // First, optimistically update state but as 'pending'
             await setDoc(doc(db, "raffles", raffleState.raffleRef), { participants: updatedParticipants }, { merge: true });
             setRaffleState(s => ({ ...s, name: '', phoneNumber: '', raffleNumber: '' }));
             
@@ -920,7 +910,6 @@ const App = () => {
             window.location.href = nequiUrl;
             showNotification(t('nequiPaymentPendingNotification', { number: formattedRaffleNumber, name: participantName }), 'success');
         } else {
-             // For admin confirmation, separate, or other non-redirecting payments
             await setDoc(doc(db, "raffles", raffleState.raffleRef), { participants: updatedParticipants }, { merge: true });
             setRaffleState(s => ({ ...s, name: '', phoneNumber: '', raffleNumber: '' }));
             
@@ -971,7 +960,7 @@ const App = () => {
     
         let randomNumber: number;
         let attempts = 0;
-        const maxAttempts = totalNumbers * 2; // Allow for some collisions, should be very rare
+        const maxAttempts = totalNumbers * 2;
     
         do {
             randomNumber = Math.floor(Math.random() * max);
@@ -1114,8 +1103,8 @@ const App = () => {
         try {
             const canvas = await html2canvas(ticketElement, { 
                 useCORS: true, 
-                backgroundColor: null, // transparent background
-                scale: 3, // higher scale for better resolution
+                backgroundColor: null,
+                scale: 3,
             });
 
             const imgData = canvas.toDataURL('image/png');
@@ -1171,7 +1160,6 @@ const App = () => {
                 return;
             }
     
-            // Admin Recovery Flow
             if (!isInitialLoad && !isPublicSearch) {
                  try {
                      const docSnap = await getDoc(doc(db, 'raffles', aRef));
@@ -1202,7 +1190,6 @@ const App = () => {
                  }
             }
     
-            // General Subscription Logic (for all searches)
             raffleSubscription.current?.();
             const raffleDocRef = doc(db, 'raffles', aRef);
 
@@ -1237,7 +1224,7 @@ const App = () => {
 
                     if (isSuperAdmin) {
                         setCurrentAdminId(data.adminId);
-                    } else if (!isPublicSearch) { // Only set admin from storage if not a public search
+                    } else if (!isPublicSearch) {
                         const adminIdFromStorage = localStorage.getItem('rifaAdminId');
                         if (adminIdFromStorage && data.adminId === adminIdFromStorage) {
                             setCurrentAdminId(adminIdFromStorage);
@@ -1245,7 +1232,7 @@ const App = () => {
                             setCurrentAdminId(null);
                         }
                     } else {
-                        setCurrentAdminId(null); // Ensure no admin access on public search
+                        setCurrentAdminId(null);
                     }
     
                     if (isInitialLoad) {
@@ -1300,12 +1287,10 @@ const App = () => {
     
         let winningNumberStr = raffleState.manualWinnerNumber;
     
-        // Automatic draw logic
         if (raffleMode === 'infinite' && raffleState.automaticDraw) {
             const max = Math.pow(10, winningNumberLength);
             const randomNumber = Math.floor(Math.random() * max);
             winningNumberStr = String(randomNumber).padStart(winningNumberLength, '0');
-            // Update state to show the automatically drawn number
             handleLocalFieldChange('manualWinnerNumber', winningNumberStr);
         }
     
@@ -1317,7 +1302,6 @@ const App = () => {
         const mainWinner = confirmedParticipants.find((p: Participant) => p.raffleNumber === winningNumberStr);
         const winnerToSet = mainWinner || { name: t('housePrize'), raffleNumber: winningNumberStr, isHouse: true };
     
-        // We set the winner in Firestore. The local state will be updated by the listener.
         await setDoc(doc(db, "raffles", raffleState.raffleRef), { winner: winnerToSet }, { merge: true });
     
         if (mainWinner) {
@@ -1328,7 +1312,6 @@ const App = () => {
             showNotification(t('housePrizeNotification', { number: winningNumberStr }), 'info');
         }
     
-        // Automatically find partial winners if enabled
         if (raffleMode === 'infinite' && raffleState.allowPartialWinners) {
             const allFoundPartialWinners: { winners: Participant[]; digits: number; prize: string; }[] = [];
             const excludedIds = new Set<number>();
@@ -1340,7 +1323,6 @@ const App = () => {
             const prizeValue = parseFloat(String(raffleState.prize).replace(/\D/g, ''));
     
             if (!isNaN(prizeValue) && prizeValue > 0) {
-                // Find 3-digit winners
                 const winningNumber3 = winningNumberStr.slice(-3);
                 if (winningNumber3.length === 3) {
                     const prizePercentage3 = raffleState.partialWinnerPercentage3 || 0;
@@ -1361,7 +1343,6 @@ const App = () => {
                     }
                 }
     
-                // Find 2-digit winners
                 const winningNumber2 = winningNumberStr.slice(-2);
                 if (winningNumber2.length === 2) {
                      const prizePercentage2 = raffleState.partialWinnerPercentage2 || 0;
@@ -1430,12 +1411,10 @@ const App = () => {
         const lastDigits = winningNumberStr;
         
         let searchableParticipants = confirmedParticipants;
-        // Exclude the main winner
         if (raffleState.winner && !raffleState.winner.isHouse) {
             searchableParticipants = searchableParticipants.filter(p => p.raffleNumber !== raffleState.winner?.raffleNumber);
         }
 
-        // If searching for 2-digit winners, exclude 3-digit winners
         if (numLastDigits === 2) {
             const threeDigitWinnerGroup = partialWinners.find(group => group.digits === 3);
             if (threeDigitWinnerGroup) {
@@ -1471,7 +1450,6 @@ const App = () => {
     };
 
     const handlePriceButtonClick = (mode: RaffleMode) => {
-        // Check if free
         const isFree = mode === 'two-digit' ? appSettings.isFreeTwoDigit :
                       mode === 'three-digit' ? appSettings.isFreeThreeDigit :
                       mode === 'infinite' ? appSettings.isFreeInfinite : false;
@@ -1509,11 +1487,7 @@ const App = () => {
             showNotification(t('enterReferenceWarning'), 'warning');
             return;
         }
-
-        // Always do a public search. If it exists, it loads. If not, it shows not found.
-        // Activation of *new* boards should only happen via payment or Super Admin click.
         await handleAdminSearch({ refToSearch: raffleRefToSearch, isPublicSearch: true });
-    
         setActivationRefs(prev => ({...prev, [mode]: ''}));
     };
 
@@ -1586,7 +1560,7 @@ const App = () => {
 
             const existingRaffleDoc = await getDoc(doc(db, "raffles", finalRaffleRef));
             if (existingRaffleDoc.exists()) {
-                showNotification(t('raffleNotFound'), 'error'); // A bit of a misnomer, but it implies the ref is taken.
+                showNotification(t('raffleNotFound'), 'error');
                 if (loadBoard) setLoading(false);
                 return { adminId: null, finalRaffleRef: null };
             }
@@ -1637,16 +1611,13 @@ const App = () => {
     };
 
     const handleContactSupport = () => {
-        // If there are support contacts and we are on the home screen, show the dialog.
         if (appSettings.supportContacts && appSettings.supportContacts.length > 0 && !raffleState.raffleRef) {
             setIsContactDialogOpen(true);
         } else if (appSettings.supportContacts && appSettings.supportContacts.length > 0) {
-            // If already in a raffle, or if there's only one contact, go direct.
             const primaryContact = appSettings.supportContacts[0];
             const whatsappUrl = `https://wa.me/57${primaryContact}`;
             window.open(whatsappUrl, '_blank');
         } else {
-             // Fallback if no contacts are configured
             const whatsappUrl = `https://wa.me/573145696687`;
             window.open(whatsappUrl, '_blank');
         }
@@ -1679,7 +1650,6 @@ const App = () => {
         setIsShareDialogOpen(false);
     };
 
-    // Camera and Photo Sharing logic
     const startCamera = async () => {
         setIsCaptureDialogOpen(true);
         setCaptureCountdown(3);
@@ -1696,7 +1666,6 @@ const App = () => {
         }
     };
 
-    // Auto-capture countdown logic
     useEffect(() => {
         if (isCaptureDialogOpen && cameraStream && captureCountdown !== null && captureCountdown > 0) {
             const timer = setTimeout(() => setCaptureCountdown(captureCountdown - 1), 1000);
@@ -1729,7 +1698,6 @@ const App = () => {
                 canvas.toBlob((blob) => {
                     if (blob) {
                         setCapturedImageBlob(blob);
-                        // Automatically confirm and share after a brief delay
                         setTimeout(() => handleConfirmCapture(blob), 500);
                     }
                 }, 'image/jpeg', 0.8);
@@ -1743,9 +1711,9 @@ const App = () => {
         
         setIsUploading(true);
         try {
-            const raffleUrl = `${window.location.origin}/?ref=${raffleState.raffleRef}`;
+            // URL a la página de previsualización que redirige
+            const raffleUrl = `${window.location.origin}/prize/${raffleState.raffleRef}`;
             
-            // Stamping URL into image
             const img = new (window as any).Image();
             const imageUrl = URL.createObjectURL(blob);
             
@@ -1763,22 +1731,18 @@ const App = () => {
 
             ctx.drawImage(img, 0, 0);
 
-            // Draw Branded Banner in the MIDDLE
             const bannerHeight = canvas.height * 0.4;
             const bannerY = (canvas.height - bannerHeight) / 2;
             
-            // Background
             ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
             ctx.fillRect(0, bannerY, canvas.width, bannerHeight);
             
-            // App Name
             ctx.fillStyle = '#ffffff';
             ctx.font = `bold ${Math.floor(bannerHeight * 0.25)}px sans-serif`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText('RIFA⚡EXPRESS', canvas.width / 2, bannerY + (bannerHeight * 0.3));
             
-            // CTA
             ctx.fillStyle = '#facc15';
             ctx.font = `bold ${Math.floor(bannerHeight * 0.2)}px sans-serif`;
             ctx.fillText('👇 TOCA EL LINK AZUL', canvas.width / 2, bannerY + (bannerHeight * 0.6));
@@ -1790,10 +1754,8 @@ const App = () => {
             const file = new File([stampedBlob], `prize_photo_${Date.now()}.jpg`, { type: 'image/jpeg' });
             const uploadedImageUrl = await uploadImage(file, 'prize-images');
             
-            // Update the raffle prize image
             await handleFieldChange('prizeImageUrl', uploadedImageUrl, true);
             
-            // Share the updated raffle
             const prizeName = raffleState.prize || '';
             const message = `${raffleUrl}\n\n${t('shareRaffleMessage', { prize: prizeName })}\n\n¡Toca arriba para jugar ahora! ⚡`;
 
@@ -1836,15 +1798,14 @@ const App = () => {
 
         setIsUploading(true);
         try {
-            const raffleUrl = `${window.location.origin}/?ref=${raffleState.raffleRef}`;
+            // URL a la página de previsualización que redirige
+            const raffleUrl = `${window.location.origin}/prize/${raffleState.raffleRef}`;
             const prizeName = raffleState.prize || '';
             const message = `${raffleUrl}\n\n${t('shareRaffleMessage', { prize: prizeName })}\n\n¡Toca arriba para jugar ahora! ⚡`;
 
-            // Fetch the existing prize image
             const response = await fetch(raffleState.prizeImageUrl);
             const blob = await response.blob();
             
-            // Create Image and Canvas for stamping
             const img = new (window as any).Image();
             img.crossOrigin = "anonymous";
             const imageUrl = URL.createObjectURL(blob);
@@ -1863,22 +1824,18 @@ const App = () => {
 
             ctx.drawImage(img, 0, 0);
 
-            // Draw Branded Banner in the MIDDLE
             const bannerHeight = canvas.height * 0.4;
             const bannerY = (canvas.height - bannerHeight) / 2;
             
-            // Background
             ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
             ctx.fillRect(0, bannerY, canvas.width, bannerHeight);
             
-            // App Name
             ctx.fillStyle = '#ffffff';
             ctx.font = `bold ${Math.floor(bannerHeight * 0.25)}px sans-serif`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText('RIFA⚡EXPRESS', canvas.width / 2, bannerY + (bannerHeight * 0.3));
             
-            // CTA
             ctx.fillStyle = '#facc15';
             ctx.font = `bold ${Math.floor(bannerHeight * 0.2)}px sans-serif`;
             ctx.fillText('👇 TOCA EL LINK AZUL', canvas.width / 2, bannerY + (bannerHeight * 0.6));
@@ -1903,7 +1860,7 @@ const App = () => {
             URL.revokeObjectURL(imageUrl);
         } catch (error) {
             console.error("Error sharing existing prize photo:", error);
-            const raffleUrl = `${window.location.origin}/?ref=${raffleState.raffleRef}`;
+            const raffleUrl = `${window.location.origin}/prize/${raffleState.raffleRef}`;
             const message = encodeURIComponent(`${raffleUrl}\n\n${t('shareRaffleMessage', { prize: raffleState.prize || '' })}\n\n👉 ¡Toca arriba para jugar ahora!`);
             window.open(`https://wa.me/?text=${message}`, '_blank');
         } finally {
@@ -1925,8 +1882,6 @@ const App = () => {
     };
 
     const handleSuperAdminLogin = () => {
-        // This is a simple, insecure client-side check.
-        // In a real application, this should be a proper authentication flow.
         const executivePassword = appSettings.superAdminPassword || '32184257361045715054';
 
         if (superAdminPassword === executivePassword) {
@@ -1976,7 +1931,6 @@ const App = () => {
             } catch (error) {
                 console.error("Error saving support contact:", error);
                 showNotification(t('errorSavingSecondaryContact'), 'error');
-                // Revert state if save fails
                 setSupportContacts(supportContacts);
             }
         }
@@ -2961,9 +2915,7 @@ const App = () => {
                         <div className="text-center">
                             <h1 className="text-4xl font-bold">RIFA⚡EXPRESS</h1>
                         </div>
-                        <div className="w-10">
-                            {/* Placeholder for symmetry */}
-                        </div>
+                        <div className="w-10"></div>
                     </div>
 
                     {!raffleState.raffleRef ? (
@@ -2972,18 +2924,12 @@ const App = () => {
                                 <DateTimeDisplay t={t} />
                                 <Lock className="mx-auto h-12 w-12 text-gray-400 mb-4" />
                                 <h2 className="text-2xl font-bold text-gray-800 mb-2">{t('boardLocked')}</h2>
-                                <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                                    
-                                </p>
-
                                 <div className="max-w-2xl mx-auto bg-blue-50 border-l-4 border-blue-500 text-blue-800 p-4 rounded-md mb-8">
                                     <h3 className="font-bold">{t('activationInstructionTitle')}</h3>
                                     <p className="text-sm">{t('activationInstructionBody')}</p>
                                 </div>
-                                
                                 <div className="grid md:grid-cols-1 gap-8 items-start max-w-md mx-auto">
                                     <div className="flex flex-col justify-center items-center gap-8">
-                                        {/* Ticket for 2 digits */}
                                         <div className="bg-white rounded-2xl shadow-lg flex flex-col max-w-md w-full">
                                             <div className='flex'>
                                                 <div className="bg-purple-100 p-4 flex flex-col items-center justify-center rounded-l-2xl border-r-2 border-dashed border-purple-300">
@@ -3012,12 +2958,7 @@ const App = () => {
                                                         {t('nextRefs2Digit')}{' '}
                                                         {nextRaffleRefs.twoDigit.refs.map((ref, index) => (
                                                             <span key={`ref-2-digit-${index}`}>
-                                                                <button
-                                                                    className="cursor-pointer hover:underline"
-                                                                    onClick={() => handleRefClick(ref, 'two-digit')}
-                                                                >
-                                                                    {ref}
-                                                                </button>
+                                                                <button className="cursor-pointer hover:underline" onClick={() => handleRefClick(ref, 'two-digit')}>{ref}</button>
                                                                 {index < nextRaffleRefs.twoDigit.refs.length - 1 ? ', ' : ''}
                                                             </span>
                                                         ))}
@@ -3026,7 +2967,6 @@ const App = () => {
                                             </div>
                                         </div>
 
-                                        {/* Ticket for 3 digits */}
                                         <div className="bg-white rounded-2xl shadow-lg flex flex-col max-w-md w-full">
                                             <div className='flex'>
                                                 <div className="bg-blue-100 p-4 flex flex-col items-center justify-center rounded-l-2xl border-r-2 border-dashed border-blue-300">
@@ -3055,12 +2995,7 @@ const App = () => {
                                                         {t('nextRefs3Digit')}{' '}
                                                         {nextRaffleRefs.threeDigit.refs.map((ref, index) => (
                                                              <span key={`ref-3-digit-${index}`}>
-                                                                <button
-                                                                    className="cursor-pointer hover:underline"
-                                                                    onClick={() => handleRefClick(ref, 'three-digit')}
-                                                                >
-                                                                    {ref}
-                                                                </button>
+                                                                <button className="cursor-pointer hover:underline" onClick={() => handleRefClick(ref, 'three-digit')}>{ref}</button>
                                                                 {index < nextRaffleRefs.threeDigit.refs.length - 1 ? ', ' : ''}
                                                             </span>
                                                         ))}
@@ -3069,7 +3004,6 @@ const App = () => {
                                             </div>
                                         </div>
 
-                                         {/* Ticket for infinite numbers */}
                                          <div className="bg-white rounded-2xl shadow-lg flex flex-col max-w-md w-full">
                                             <div className='flex'>
                                                 <div className="bg-red-100 p-4 flex flex-col items-center justify-center rounded-l-2xl border-r-2 border-dashed border-red-300">
@@ -3098,12 +3032,7 @@ const App = () => {
                                                         {t('nextRefsInfinite')}{' '}
                                                         {nextRaffleRefs.infinite.refs.map((ref, index) => (
                                                             <span key={`ref-infinite-${index}`}>
-                                                                <button
-                                                                    className="cursor-pointer hover:underline"
-                                                                    onClick={() => handleRefClick(ref, 'infinite')}
-                                                                >
-                                                                    {ref}
-                                                                </button>
+                                                                <button className="cursor-pointer hover:underline" onClick={() => handleRefClick(ref, 'infinite')}>{ref}</button>
                                                                 {index < nextRaffleRefs.infinite.refs.length - 1 ? ', ' : ''}
                                                             </span>
                                                         ))}
@@ -3331,18 +3260,12 @@ const App = () => {
                                                                 }
                                                                 const url = new URL(raffleState.paymentLink!);
                                                                 const redirectUrlWithParams = new URL(window.location.href);
-                                                                // Start with a clean URL (origin + pathname)
                                                                 const cleanRedirectUrl = new URL(redirectUrlWithParams.origin + redirectUrlWithParams.pathname);
-                                                                
-                                                                // Add participant data as query parameters to the clean URL
                                                                 cleanRedirectUrl.searchParams.set('ref', raffleState.raffleRef);
                                                                 cleanRedirectUrl.searchParams.set('pName', raffleState.name || '');
                                                                 cleanRedirectUrl.searchParams.set('pPhone', raffleState.phoneNumber || '');
                                                                 cleanRedirectUrl.searchParams.set('pNum', raffleState.raffleNumber || '');
-                                                                
-                                                                // Set the fully-formed URL as the redirect-url for the payment gateway
                                                                 url.searchParams.set('redirect-url', cleanRedirectUrl.href);
-                                                                
                                                                 window.location.href = url.toString();
                                                             }}
                                                         >
@@ -3397,11 +3320,9 @@ const App = () => {
                                             </div>
                                         </fieldset>
                                     </div>
-
                                     {generatedTicketData && (
                                         <InlineTicket ticketModalRef={ticketModalRef} ticketData={generatedTicketData} setGeneratedTicketData={setGeneratedTicketData} handleDownloadTicket={handleDownloadTicket} handleShareTicket={handleShareTicket} formatValue={formatValue} t={t} language={language}/>
                                     )}
-
                                     {(!raffleState.raffleRef || !raffleState.isDetailsConfirmed) && (
                                         <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-6" role="alert">
                                             <p className="font-bold">{t('notice')}</p>
@@ -3464,9 +3385,7 @@ const App = () => {
                                                         gamesFilter === 'past_date' ? t('pastDateGames') :
                                                         t('assignedGames')
                                                     }</h2>
-                                                    <span className="bg-gray-200 text-gray-800 text-sm font-semibold px-3 py-1 rounded-full">
-                                                        {filteredGames.length}
-                                                    </span>
+                                                    <span className="bg-gray-200 text-gray-800 text-sm font-semibold px-3 py-1 rounded-full">{filteredGames.length}</span>
                                                 </div>
                                                 {gamesFilter === 'past_date' && pastDateRaffles.length > 0 && (
                                                     <Button variant="destructive" onClick={handleDeleteAllPastDueRaffles}>
@@ -3492,7 +3411,6 @@ const App = () => {
                                                     )}
                                                 </div>
                                             </div>
-                                            
                                             {filteredGames.length > 0 ? (
                                                 <div className="overflow-x-auto">
                                                     <table className="min-w-full divide-y divide-gray-200">
@@ -3521,9 +3439,7 @@ const App = () => {
                                                             </tr>
                                                         </thead>
                                                         <tbody className="bg-white divide-y divide-gray-200">
-                                                            {filteredGames
-                                                                .sort((a, b) => (b.raffleRef || '').localeCompare(a.raffleRef || ''))
-                                                                .map((raffle) => {
+                                                            {filteredGames.sort((a, b) => (b.raffleRef || '').localeCompare(a.raffleRef || '')).map((raffle) => {
                                                                 const collected = ((raffle.participants || []).filter(p => p.paymentStatus === 'confirmed').length * parseFloat(String(raffle.value).replace(/\D/g, ''))) || 0;
                                                                 const gameDateObj = raffle.gameDate ? new Date(raffle.gameDate + 'T00:00:00') : null;
                                                                 const isPastDue = gameDateObj ? gameDateObj < today && !raffle.winner : false;
@@ -3534,11 +3450,7 @@ const App = () => {
                                                                             <Checkbox
                                                                                 checked={selectedRafflesForDeletion.includes(raffle.raffleRef)}
                                                                                 onCheckedChange={(checked) => {
-                                                                                    setSelectedRafflesForDeletion(prev =>
-                                                                                        checked
-                                                                                            ? [...prev, raffle.raffleRef]
-                                                                                            : prev.filter(ref => ref !== raffle.raffleRef)
-                                                                                    );
+                                                                                    setSelectedRafflesForDeletion(prev => checked ? [...prev, raffle.raffleRef] : prev.filter(ref => ref !== raffle.raffleRef));
                                                                                 }}
                                                                                 disabled={!canDelete}
                                                                             />
@@ -3554,12 +3466,8 @@ const App = () => {
                                                                         </td>
                                                                         <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-600">{formatValue(collected)}</td>
                                                                         <td className="px-6 py-4 whitespace-nowrap text-sm space-x-2">
-                                                                            <Button onClick={() => handleAdminSearch({ refToSearch: raffle.raffleRef, isPublicSearch: true })} size="sm" variant="outline">
-                                                                                {t('manage')}
-                                                                            </Button>
-                                                                            <Button onClick={() => handleDeleteRaffle(raffle.raffleRef)} size="sm" variant="destructive" disabled={!canDelete}>
-                                                                                <Trash2 className="h-4 w-4"/>
-                                                                            </Button>
+                                                                            <Button onClick={() => handleAdminSearch({ refToSearch: raffle.raffleRef, isPublicSearch: true })} size="sm" variant="outline">{t('manage')}</Button>
+                                                                            <Button onClick={() => handleDeleteRaffle(raffle.raffleRef)} size="sm" variant="destructive" disabled={!canDelete}><Trash2 className="h-4 w-4"/></Button>
                                                                         </td>
                                                                     </tr>
                                                                 )
@@ -3576,7 +3484,6 @@ const App = () => {
                                 {isCurrentUserAdmin && (
                                 <div className={activeTab === 'pending' ? 'tab-content active' : 'tab-content'}>
                                     <h2 className="text-2xl font-bold text-gray-800 mb-4">{t('pendingPayments')}</h2>
-                                    
                                     <div className="mb-4 max-w-sm">
                                         <Input
                                             type="text"
@@ -3585,7 +3492,6 @@ const App = () => {
                                             onChange={(e) => setPendingSearchQuery(e.target.value)}
                                         />
                                     </div>
-
                                     {filteredPendingParticipants.length > 0 ? (
                                         <div className="overflow-x-auto">
                                             <table className="min-w-full divide-y divide-gray-200">
@@ -3599,31 +3505,20 @@ const App = () => {
                                                     </tr>
                                                 </thead>
                                                 <tbody className="bg-white divide-y divide-gray-200">
-                                                    {filteredPendingParticipants.sort((a: Participant, b: Participant) => a.raffleNumber.localeCompare(b.raffleNumber)).map((p: Participant) => (
+                                                    {filteredPendingParticipants.sort((a, b) => a.raffleNumber.localeCompare(b.raffleNumber)).map((p: Participant) => (
                                                         <tr key={p.id}>
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-purple-600">{p.raffleNumber}</td>
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{p.name}</td>
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                                <a
-                                                                    href={`https://wa.me/57${p.phoneNumber}`}
-                                                                    target="_blank"
-                                                                    rel="noopener noreferrer"
-                                                                    className="flex items-center gap-2 text-blue-600 hover:underline"
-                                                                    >
+                                                                <a href={`https://wa.me/57${p.phoneNumber}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-blue-600 hover:underline">
                                                                     <WhatsappIcon className="h-4 w-4 text-green-500" />
                                                                     {p.phoneNumber}
                                                                 </a>
                                                             </td>
-                                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                                {p.timestamp && p.timestamp.toDate ? format(p.timestamp.toDate(), 'PPpp', { locale: language === 'es' ? es : enUS }) : 'N/A'}
-                                                            </td>
+                                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{p.timestamp?.toDate ? format(p.timestamp.toDate(), 'PPpp', { locale: language === 'es' ? es : enUS }) : 'N/A'}</td>
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm space-x-2">
-                                                                <Button onClick={() => handleConfirmPayment(p.id)} size="sm" className="bg-green-500 hover:bg-green-600 text-white">
-                                                                    {t('confirmPayment')}
-                                                                </Button>
-                                                                <Button onClick={() => handleDeletePending(p.id)} size="sm" variant="destructive">
-                                                                    <Trash2 className="h-4 w-4"/>
-                                                                </Button>
+                                                                <Button onClick={() => handleConfirmPayment(p.id)} size="sm" className="bg-green-500 hover:bg-green-600 text-white">{t('confirmPayment')}</Button>
+                                                                <Button onClick={() => handleDeletePending(p.id)} size="sm" variant="destructive"><Trash2 className="h-4 w-4"/></Button>
                                                             </td>
                                                         </tr>
                                                     ))}
@@ -3638,9 +3533,7 @@ const App = () => {
                                 <div className={activeTab === 'participants' ? 'tab-content active' : 'tab-content'}>
                                     <div className="flex justify-between items-center mb-4">
                                             <h2 className="text-2xl font-bold text-gray-800">{t('confirmedParticipants')}</h2>
-                                            
                                     </div>
-
                                     {!raffleState.raffleRef ? (
                                         <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-6" role="alert">
                                             <p className="font-bold">{t('notice')}</p>
@@ -3659,32 +3552,21 @@ const App = () => {
                                                     </tr>
                                                 </thead>
                                                 <tbody className="bg-white divide-y divide-gray-200">
-                                                    {confirmedParticipants
-                                                        .sort((a: Participant, b: Participant) => a.raffleNumber.localeCompare(b.raffleNumber))
-                                                        .map((p: any, index: number) => (
+                                                    {confirmedParticipants.sort((a, b) => a.raffleNumber.localeCompare(b.raffleNumber)).map((p: any, index: number) => (
                                                         <tr key={p.id}>
                                                             {isCurrentUserAdmin && <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{index + 1}</td>}
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{p.name}</td>
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                                                 {isCurrentUserAdmin ? (
-                                                                    <a
-                                                                        href={`https://wa.me/57${p.phoneNumber}`}
-                                                                        target="_blank"
-                                                                        rel="noopener noreferrer"
-                                                                        className="flex items-center gap-2 text-blue-600 hover:underline"
-                                                                    >
+                                                                    <a href={`https://wa.me/57${p.phoneNumber}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-blue-600 hover:underline">
                                                                         <WhatsappIcon className="h-4 w-4 text-green-500" />
                                                                         {p.phoneNumber}
                                                                     </a>
-                                                                ) : (
-                                                                    <span>******</span>
-                                                                )}
+                                                                ) : (<span>******</span>)}
                                                             </td>
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-purple-600">{p.raffleNumber}</td>
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                                                <Button onClick={() => handleGenerateTicket(p)} size="sm" variant="outline" disabled={!raffleState.prize}>
-                                                                    {t('generateTicket')}
-                                                                </Button>
+                                                                <Button onClick={() => handleGenerateTicket(p)} size="sm" variant="outline" disabled={!raffleState.prize}>{t('generateTicket')}</Button>
                                                             </td>
                                                         </tr>
                                                     ))}
@@ -3699,24 +3581,16 @@ const App = () => {
                                     <h2 className="text-2xl font-bold text-gray-800 mb-6">{t('winnersTab')}</h2>
                                     {raffleState.winner && (
                                         <div className="mb-6 p-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 rounded-lg">
-                                            {raffleState.winner.isHouse ? (
-                                                <p className="font-bold text-lg flex items-center"><House className="mr-2"/>{t('housePrizeTitle')}</p>
-                                            ) : (
-                                                <p className="font-bold text-lg flex items-center"><Award className="mr-2"/>{t('winnerFoundTitle')}</p>
-                                            )}
+                                            {raffleState.winner.isHouse ? (<p className="font-bold text-lg flex items-center"><House className="mr-2"/>{t('housePrizeTitle')}</p>) : (<p className="font-bold text-lg flex items-center"><Award className="mr-2"/>{t('winnerFoundTitle')}</p>)}
                                             <p><strong>{t('number')}:</strong> {raffleState.winner.raffleNumber}</p>
                                             {!raffleState.winner.isHouse && (
                                             <>
                                                 <p><strong>{t('name')}:</strong> {raffleState.winner.name}</p>
-                                                <p><strong>{t('phone')}:</strong> {isCurrentUserAdmin ? 
-                                                    <a href={`https://wa.me/57${raffleState.winner.phoneNumber}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{`+57 ${raffleState.winner.phoneNumber}`}</a>
-                                                    : <span>******</span>
-                                                }</p>
+                                                <p><strong>{t('phone')}:</strong> {isCurrentUserAdmin ? <a href={`https://wa.me/57${raffleState.winner.phoneNumber}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{`+57 ${raffleState.winner.phoneNumber}`}</a> : <span>******</span>}</p>
                                             </>
                                             )}
                                         </div>
                                     )}
-
                                     {currentPartialWinners.length > 0 && (
                                         <div className="p-4 bg-blue-100 border-l-4 border-blue-500 text-blue-800 rounded-lg space-y-4">
                                             <h3 className="font-bold text-lg">{t('partialWinnersTitle')}</h3>
@@ -3727,9 +3601,7 @@ const App = () => {
                                                         {group.winners.map(winner => (
                                                             <li key={winner.id}>
                                                                 {winner.name} ({winner.raffleNumber})
-                                                                {isCurrentUserAdmin && (
-                                                                     <a href={`https://wa.me/57${winner.phoneNumber}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline ml-2">{`+57 ${winner.phoneNumber}`}</a>
-                                                                )}
+                                                                {isCurrentUserAdmin && (<a href={`https://wa.me/57${winner.phoneNumber}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline ml-2">{`+57 ${winner.phoneNumber}`}</a>)}
                                                             </li>
                                                         ))}
                                                     </ul>
@@ -3737,7 +3609,6 @@ const App = () => {
                                             ))}
                                         </div>
                                     )}
-
                                     {!raffleState.winner && currentPartialWinners.length === 0 && (
                                         <p className="text-gray-500">{t('noWinnersYet')}</p>
                                     )}
@@ -3766,21 +3637,8 @@ const App = () => {
                         <h3 className="text-lg font-medium text-gray-900 mb-4">{t('confirmAction')}</h3>
                         <p className="text-gray-500 mb-6">{confirmationMessage}</p>
                         <div className="flex justify-end space-x-3">
-                            <button
-                                onClick={() => setShowConfirmation(false)}
-                                className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
-                            >
-                                {t('cancel')}
-                            </button>
-                            <button
-                                onClick={() => {
-                                    if(confirmationAction) confirmationAction();
-                                    setShowConfirmation(false);
-                                }}
-                                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
-                            >
-                                {t('confirm')}
-                            </button>
+                            <button onClick={() => setShowConfirmation(false)} className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">{t('cancel')}</button>
+                            <button onClick={() => { if(confirmationAction) confirmationAction(); setShowConfirmation(false); }} className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">{t('confirm')}</button>
                         </div>
                     </div>
                 </div>
@@ -3788,20 +3646,12 @@ const App = () => {
             
             <Dialog open={isTicketModalOpen} onOpenChange={closeTicketModal}>
                 <DialogContent className="w-auto max-w-xs p-0 border-0 bg-transparent shadow-none font-sans">
-                     <DialogHeader>
-                        <DialogTitle className="sr-only">{t('raffleTicket')}</DialogTitle>
-                     </DialogHeader>
+                     <DialogHeader><DialogTitle className="sr-only">{t('raffleTicket')}</DialogTitle></DialogHeader>
                      {ticketInfo && (
                         <div>
-                            <div
-                                ref={ticketModalRef}
-                                className="bg-white p-2 rounded-lg shadow-lg font-mono text-gray-800 text-[11px] relative overflow-hidden"
-                                style={{width: '280px'}}
-                            >
+                            <div ref={ticketModalRef} className="bg-white p-2 rounded-lg shadow-lg font-mono text-gray-800 text-[11px] relative overflow-hidden" style={{width: '280px'}}>
                                 <div className="absolute inset-0 flex items-center justify-center z-0 opacity-50">
-                                    <p className="text-gray-200/50 text-7xl font-bold -rotate-45 select-none flex items-center gap-1">
-                                        <span>RIFA⚡EXPRESS</span>
-                                    </p>
+                                    <p className="text-gray-200/50 text-7xl font-bold -rotate-45 select-none flex items-center gap-1"><span>RIFA⚡EXPRESS</span></p>
                                 </div>
                                 <div className="relative z-10">
                                     <div className="text-center mb-4">
@@ -3811,9 +3661,7 @@ const App = () => {
                                     </div>
                                     <p className="text-center text-xs mb-4">{ticketInfo.timestamp?.toDate ? format(ticketInfo.timestamp.toDate(), "d 'de' MMMM 'de' yyyy - h:mm a", { locale: language === 'es' ? es : enUS }) : t('dateNotAvailable')}</p>
                                     <div className="border-t border-dashed border-gray-400 my-4"></div>
-                                    <div className="space-y-1">
-                                        <div className="flex justify-between"><span>{t('client')}:</span><span className="font-semibold text-right">{ticketInfo.name}</span></div>
-                                    </div>
+                                    <div className="space-y-1"><div className="flex justify-between"><span>{t('client')}:</span><span className="font-semibold text-right">{ticketInfo.name}</span></div></div>
                                     <div className="border-t border-dashed border-gray-400 my-4"></div>
                                     <h4 className="font-bold text-center mb-2">{t('raffleDetails')}</h4>
                                     <div className="space-y-1">
@@ -3833,26 +3681,9 @@ const App = () => {
                                 </div>
                             </div>
                             <DialogFooter className="flex-col sm:flex-col sm:space-x-0 gap-2 w-full pt-4">
-                                <Button
-                                    onClick={handleDownloadTicket}
-                                    className="w-full bg-purple-500 text-white"
-                                >
-                                    {t('downloadTicket')}
-                                </Button>
-                                <Button
-                                    onClick={handleShareTicket}
-                                    className="w-full bg-green-500 text-white flex items-center justify-center gap-2"
-                                >
-                                    <WhatsappIcon/>
-                                    {t('share')}
-                                </Button>
-                                <Button
-                                    onClick={closeTicketModal}
-                                    variant="outline"
-                                    className="w-full bg-white/80"
-                                >
-                                    {t('close')}
-                                </Button>
+                                <Button onClick={handleDownloadTicket} className="w-full bg-purple-500 text-white">{t('downloadTicket')}</Button>
+                                <Button onClick={handleShareTicket} className="w-full bg-green-500 text-white flex items-center justify-center gap-2"><WhatsappIcon/>{t('share')}</Button>
+                                <Button onClick={closeTicketModal} variant="outline" className="w-full bg-white/80">{t('close')}</Button>
                             </DialogFooter>
                         </div>
                      )}
@@ -3861,34 +3692,15 @@ const App = () => {
 
             <Dialog open={isSuperAdminLoginOpen} onOpenChange={setIsSuperAdminLoginOpen}>
                 <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>{t('superAdminLogin')}</DialogTitle>
-                    </DialogHeader>
+                    <DialogHeader><DialogTitle>{t('superAdminLogin')}</DialogTitle></DialogHeader>
                     <div className="grid gap-4 py-4">
                         <Label htmlFor="super-admin-password">{t('password')}</Label>
                         <div className="relative">
-                            <Input
-                                id="super-admin-password"
-                                type={showSuperAdminPassword ? 'text' : 'password'}
-                                value={superAdminPassword}
-                                onChange={(e) => setSuperAdminPassword(e.target.value)}
-                                onKeyDown={(e) => e.key === 'Enter' && handleSuperAdminLogin()}
-                            />
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                className="absolute inset-y-0 right-0 h-full px-3"
-                                onClick={() => setShowSuperAdminPassword(!showSuperAdminPassword)}
-                            >
-                                {showSuperAdminPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                                <span className="sr-only">{showSuperAdminPassword ? 'Hide password' : 'Show password'}</span>
-                            </Button>
+                            <Input id="super-admin-password" type={showSuperAdminPassword ? 'text' : 'password'} value={superAdminPassword} onChange={(e) => setSuperAdminPassword(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSuperAdminLogin()}/>
+                            <Button type="button" variant="ghost" size="icon" className="absolute inset-y-0 right-0 h-full px-3" onClick={() => setShowSuperAdminPassword(!showSuperAdminPassword)}>{showSuperAdminPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button>
                         </div>
                     </div>
-                    <DialogFooter>
-                        <Button type="button" onClick={handleSuperAdminLogin}>{t('login')}</Button>
-                    </DialogFooter>
+                    <DialogFooter><Button type="button" onClick={handleSuperAdminLogin}>{t('login')}</Button></DialogFooter>
                 </DialogContent>
             </Dialog>
 
@@ -3896,55 +3708,25 @@ const App = () => {
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>{t('recoverAdminAccess')}</DialogTitle>
-                        <DialogDescription>
-                            {t('recoverAdminAccessDescription')}
-                        </DialogDescription>
+                        <DialogDescription>{t('recoverAdminAccessDescription')}</DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                         <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="admin-ref-search" className="text-right">
-                                {t('reference')}
-                            </Label>
-                            <Input
-                                id="admin-ref-search"
-                                value={adminRefSearch}
-                                onChange={(e) => setAdminRefSearch(e.target.value)}
-                                className="col-span-3"
-                                placeholder="Ej: JM1"
-                            />
+                            <Label htmlFor="admin-ref-search" className="text-right">{t('reference')}</Label>
+                            <Input id="admin-ref-search" value={adminRefSearch} onChange={(e) => setAdminRefSearch(e.target.value)} className="col-span-3" placeholder="Ej: JM1"/>
                         </div>
                         {!isSuperAdmin && (
                             <>
                                 <div className="grid grid-cols-4 items-center gap-4">
-                                    <Label htmlFor="admin-phone-search" className="text-right">
-                                        {t('phone')}
-                                    </Label>
+                                    <Label htmlFor="admin-phone-search" className="text-right">{t('phone')}</Label>
                                     <div className="relative col-span-3">
-                                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                            <span className="text-gray-500 sm:text-sm">+57</span>
-                                        </div>
-                                        <Input
-                                            id="admin-phone-search"
-                                            type="tel"
-                                            value={adminPhoneSearch}
-                                            onChange={(e) => setAdminPhoneSearch(e.target.value.replace(/\D/g, ''))}
-                                            className="pl-12"
-                                            placeholder="3001234567"
-                                        />
+                                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3"><span className="text-gray-500 sm:text-sm">+57</span></div>
+                                        <Input id="admin-phone-search" type="tel" value={adminPhoneSearch} onChange={(e) => setAdminPhoneSearch(e.target.value.replace(/\D/g, ''))} className="pl-12" placeholder="3001234567"/>
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-4 items-center gap-4">
-                                    <Label htmlFor="admin-password-search" className="text-right">
-                                        {t('password')}
-                                    </Label>
-                                    <Input
-                                        id="admin-password-search"
-                                        type="password"
-                                        value={adminPasswordSearch}
-                                        onChange={(e) => setAdminPasswordSearch(e.target.value)}
-                                        className="col-span-3"
-                                        placeholder={t('yourPassword')}
-                                    />
+                                    <Label htmlFor="admin-password-search" className="text-right">{t('password')}</Label>
+                                    <Input id="admin-password-search" type="password" value={adminPasswordSearch} onChange={(e) => setAdminPasswordSearch(e.target.value)} className="col-span-3" placeholder={t('yourPassword')}/>
                                 </div>
                             </>
                         )}
@@ -3960,22 +3742,12 @@ const App = () => {
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>{t('searchRaffleByRef')}</DialogTitle>
-                        <DialogDescription>
-                            {t('searchRaffleByRefDescription')}
-                        </DialogDescription>
+                        <DialogDescription>{t('searchRaffleByRefDescription')}</DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                         <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="public-ref-search" className="text-right">
-                                {t('reference')}
-                            </Label>
-                            <Input
-                                id="public-ref-search"
-                                value={publicRefSearch}
-                                onChange={(e) => setPublicRefSearch(e.target.value)}
-                                className="col-span-3"
-                                placeholder="Ej: JM1"
-                            />
+                            <Label htmlFor="public-ref-search" className="text-right">{t('reference')}</Label>
+                            <Input id="public-ref-search" value={publicRefSearch} onChange={(e) => setPublicRefSearch(e.target.value)} className="col-span-3" placeholder="Ej: JM1"/>
                         </div>
                     </div>
                     <DialogFooter>
@@ -3989,9 +3761,7 @@ const App = () => {
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>{t('salesCollection')}</DialogTitle>
-                        <DialogDescription>
-                            {t('salesCollectionDescription')}
-                        </DialogDescription>
+                        <DialogDescription>{t('salesCollectionDescription')}</DialogDescription>
                     </DialogHeader>
                     <div className="py-4">
                         <div className="flex justify-between items-center bg-gray-100 p-4 rounded-lg">
@@ -4003,8 +3773,7 @@ const App = () => {
                             <p className="font-bold text-2xl text-green-800">{formatValue(totalCollected)}</p>
                         </div>
                     </div>
-                    <DialogFooter>
-                        <Button type="button" variant="outline" onClick={() => setIsSalesModalOpen(false)}>{t('close')}</Button>                    </DialogFooter>
+                    <DialogFooter><Button type="button" variant="outline" onClick={() => setIsSalesModalOpen(false)}>{t('close')}</Button></DialogFooter>
                 </DialogContent>
             </Dialog>
 
@@ -4012,36 +3781,14 @@ const App = () => {
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>{t('shareRaffle')}</DialogTitle>
-                        <DialogDescription>
-                            {t('shareRaffleAppDescription')}
-                        </DialogDescription>
+                        <DialogDescription>{t('shareRaffleAppDescription')}</DialogDescription>
                     </DialogHeader>
                     <div className="flex flex-col space-y-4 py-4">
-                        <Button
-                            onClick={() => handleShareToWhatsApp()}
-                            className="w-full bg-green-500 text-white hover:bg-green-600 flex items-center justify-center gap-2"
-                        >
-                            <WhatsappIcon />
-                            <span>{t('shareOnWhatsApp')}</span>
-                        </Button>
-                        <Button
-                            onClick={() => handleShareToFacebook()}
-                            className="w-full bg-blue-600 text-white hover:bg-blue-700 flex items-center justify-center gap-2"
-                        >
-                            <FacebookIcon />
-                            <span>{t('shareOnFacebook')}</span>
-                        </Button>
-                        <Button
-                            onClick={() => handleSharePrizePhoto()}
-                            className="w-full bg-yellow-500 text-white hover:bg-yellow-600 flex items-center justify-center gap-2"
-                        >
-                            <Camera className="h-5 w-5" />
-                            <span>{t('sendPrizePhoto')}</span>
-                        </Button>
+                        <Button onClick={() => handleShareToWhatsApp()} className="w-full bg-green-500 text-white hover:bg-green-600 flex items-center justify-center gap-2"><WhatsappIcon /><span>{t('shareOnWhatsApp')}</span></Button>
+                        <Button onClick={() => handleShareToFacebook()} className="w-full bg-blue-600 text-white hover:bg-blue-700 flex items-center justify-center gap-2"><FacebookIcon /><span>{t('shareOnFacebook')}</span></Button>
+                        <Button onClick={() => handleSharePrizePhoto()} className="w-full bg-yellow-500 text-white hover:bg-yellow-600 flex items-center justify-center gap-2"><Camera className="h-5 w-5" /><span>{t('sendPrizePhoto')}</span></Button>
                     </div>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsShareDialogOpen(false)}>{t('close')}</Button>
-                    </DialogFooter>
+                    <DialogFooter><Button variant="outline" onClick={() => setIsShareDialogOpen(false)}>{t('close')}</Button></DialogFooter>
                 </DialogContent>
             </Dialog>
 
@@ -4049,23 +3796,14 @@ const App = () => {
                 <DialogContent className="max-w-xs">
                     <DialogHeader>
                         <DialogTitle className="text-center">{t('shareWithQR')}</DialogTitle>
-                        <DialogDescription className="text-center">
-                            {t('shareWithQRDescription')}
-                        </DialogDescription>
+                        <DialogDescription className="text-center">{t('shareWithQRDescription')}</DialogDescription>
                     </DialogHeader>
                     {appUrl && (
                         <div className="flex justify-center items-center p-4">
                             <div className="relative inline-block p-4 bg-white rounded-lg shadow-md">
-                                <Image
-                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(window.location.origin)}&qzone=1&ecc=H`}
-                                    alt={t('appQRCodeAlt')}
-                                    width={200}
-                                    height={200}
-                                />
+                                <Image src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(window.location.origin)}&qzone=1&ecc=H`} alt={t('appQRCodeAlt')} width={200} height={200}/>
                                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                     <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/90 shadow-md backdrop-blur-sm">
-                                        <span className="font-bold text-5xl text-yellow-500">⚡</span>
-                                     </div>
+                                     <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/90 shadow-md backdrop-blur-sm"><span className="font-bold text-5xl text-yellow-500">⚡</span></div>
                                  </div>
                             </div>
                         </div>
@@ -4077,9 +3815,7 @@ const App = () => {
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>{t('confirmActivationTitle')}</DialogTitle>
-                        <DialogDescription>
-                            {t('confirmActivationDescription')}
-                        </DialogDescription>
+                        <DialogDescription>{t('confirmActivationDescription')}</DialogDescription>
                     </DialogHeader>
                     <div className="py-4 space-y-2">
                         <p>{t('transactionId')}: <span className="font-mono bg-gray-100 p-1 rounded">{activationToConfirm?.activation.transactionId}</span></p>
@@ -4094,24 +3830,13 @@ const App = () => {
 
             <Dialog open={isSupportContactDialogOpen} onOpenChange={setIsSupportContactDialogOpen}>
                 <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>{t('secondaryContact')}</DialogTitle>
-                    </DialogHeader>
+                    <DialogHeader><DialogTitle>{t('secondaryContact')}</DialogTitle></DialogHeader>
                     <div className="grid gap-4 py-4">
                         <Label htmlFor="new-support-contact-input">{t('addNewContact')}</Label>
                         <div className="flex gap-2">
                             <div className="relative flex-grow">
-                                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                    <span className="text-gray-500 sm:text-sm">+57</span>
-                                </div>
-                                <Input
-                                    id="new-support-contact-input"
-                                    type="tel"
-                                    value={newSupportContact}
-                                    onChange={(e) => setNewSupportContact(e.target.value.replace(/\D/g, ''))}
-                                    placeholder="3001234567"
-                                    className="pl-12"
-                                />
+                                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3"><span className="text-gray-500 sm:text-sm">+57</span></div>
+                                <Input id="new-support-contact-input" type="tel" value={newSupportContact} onChange={(e) => setNewSupportContact(e.target.value.replace(/\D/g, ''))} placeholder="3001234567" className="pl-12"/>
                             </div>
                             <Button onClick={handleAddSupportContact} disabled={!newSupportContact}>{t('add')}</Button>
                         </div>
@@ -4121,14 +3846,10 @@ const App = () => {
                                 supportContacts.map((contact, index) => (
                                     <div key={index} className="flex items-center justify-between bg-gray-100 p-2 rounded-md">
                                         <span>+57 {contact}</span>
-                                        <Button variant="ghost" size="icon" onClick={() => handleRemoveSupportContact(contact)}>
-                                            <Trash2 className="h-4 w-4 text-red-500" />
-                                        </Button>
+                                        <Button variant="ghost" size="icon" onClick={() => handleRemoveSupportContact(contact)}><Trash2 className="h-4 w-4 text-red-500" /></Button>
                                     </div>
                                 ))
-                             ) : (
-                                <p className="text-sm text-gray-500">{t('noSavedContacts')}</p>
-                             )}
+                             ) : (<p className="text-sm text-gray-500">{t('noSavedContacts')}</p>)}
                         </div>
                     </div>
                     <DialogFooter>
@@ -4142,18 +3863,13 @@ const App = () => {
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>{t('contact')}</DialogTitle>
-                        <DialogDescription>
-                            {t('contactDialogDescription')}
-                        </DialogDescription>
+                        <DialogDescription>{t('contactDialogDescription')}</DialogDescription>
                     </DialogHeader>
                     <div className="flex flex-col space-y-4 py-4">
                         {Array.isArray(appSettings.supportContacts) && appSettings.supportContacts?.map((contact, index) => (
                             <Button
                                 key={index}
-                                onClick={() => {
-                                    window.open(`https://wa.me/57${contact}`, '_blank');
-                                    setIsContactDialogOpen(false);
-                                }}
+                                onClick={() => { window.open(`https://wa.me/57${contact}`, '_blank'); setIsContactDialogOpen(false); }}
                                 className="w-full bg-green-500 text-white hover:bg-green-600 flex items-center justify-center gap-2"
                             >
                                 <WhatsappIcon />
@@ -4164,149 +3880,62 @@ const App = () => {
                 </DialogContent>
             </Dialog>
 
-            <Dialog open={isChangePasswordDialogOpen} onOpenChange={(isOpen) => {
-                if (!isOpen) {
-                    setNewPassword('');
-                    setConfirmNewPassword('');
-                    setShowNewPassword(false);
-                }
-                setIsChangePasswordDialogOpen(isOpen);
-            }}>
+            <Dialog open={isChangePasswordDialogOpen} onOpenChange={(isOpen) => { if (!isOpen) { setNewPassword(''); setConfirmNewPassword(''); setShowNewPassword(false); } setIsChangePasswordDialogOpen(isOpen); }}>
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>{t('changePasswordTitle')}</DialogTitle>
-                        <DialogDescription>
-                            {t('changePasswordDescription', { ref: raffleToChangePassword?.raffleRef })}
-                        </DialogDescription>
+                        <DialogDescription>{t('changePasswordDescription', { ref: raffleToChangePassword?.raffleRef })}</DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                          <div className="grid gap-2">
                              <Label htmlFor="current-password">{t('currentPassword')}</Label>
                              <div className="relative">
                                  <Input id="current-password" type="text" readOnly value={raffleToChangePassword?.password || ''} />
-                                 <Button
-                                     variant="ghost"
-                                     size="icon"
-                                     className="absolute top-1/2 right-2 -translate-y-1/2 h-7 w-7"
-                                     onClick={() => navigator.clipboard.writeText(raffleToChangePassword?.password || '')}
-                                 >
-                                     <Copy className="h-4 w-4" />
-                                 </Button>
+                                 <Button variant="ghost" size="icon" className="absolute top-1/2 right-2 -translate-y-1/2 h-7 w-7" onClick={() => navigator.clipboard.writeText(raffleToChangePassword?.password || '')}><Copy className="h-4 w-4" /></Button>
                              </div>
                          </div>
                         <div className="grid gap-2">
                             <Label htmlFor="new-password">{t('newPassword')}</Label>
                             <div className="relative">
-                                <Input
-                                    id="new-password"
-                                    type={showNewPassword ? 'text' : 'password'}
-                                    value={newPassword}
-                                    onChange={(e) => setNewPassword(e.target.value)}
-                                />
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    className="absolute inset-y-0 right-0 h-full px-3"
-                                    onClick={() => setShowNewPassword(!showNewPassword)}
-                                >
-                                    {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                                    <span className="sr-only">{showNewPassword ? 'Ocultar' : 'Mostrar'}</span>
-                                </Button>
+                                <Input id="new-password" type={showNewPassword ? 'text' : 'password'} value={newPassword} onChange={(e) => setNewPassword(e.target.value)}/>
+                                <Button type="button" variant="ghost" size="icon" className="absolute inset-y-0 right-0 h-full px-3" onClick={() => setShowNewPassword(!showNewPassword)}>{showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button>
                             </div>
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="confirm-new-password">{t('confirmNewPassword')}</Label>
                              <div className="relative">
-                                <Input
-                                    id="confirm-new-password"
-                                    type={showNewPassword ? 'text' : 'password'}
-                                    value={confirmNewPassword}
-                                    onChange={(e) => setConfirmNewPassword(e.target.value)}
-                                />
-                                 <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    className="absolute inset-y-0 right-0 h-full px-3"
-                                    onClick={() => setShowNewPassword(!showNewPassword)}
-                                >
-                                    {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                                    <span className="sr-only">{showNewPassword ? 'Ocultar' : 'Mostrar'}</span>
-                                </Button>
+                                <Input id="confirm-new-password" type={showNewPassword ? 'text' : 'password'} value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)}/>
+                                 <Button type="button" variant="ghost" size="icon" className="absolute inset-y-0 right-0 h-full px-3" onClick={() => setShowNewPassword(!showNewPassword)}>{showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button>
                             </div>
                         </div>
                     </div>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsChangePasswordDialogOpen(false)}>{t('cancel')}</Button>
-                        <Button onClick={handleChangePassword}>{t('changePasswordButton')}</Button>
-                    </DialogFooter>
+                    <DialogFooter><Button variant="outline" onClick={() => setIsChangePasswordDialogOpen(false)}>{t('cancel')}</Button><Button onClick={handleChangePassword}>{t('changePasswordButton')}</Button></DialogFooter>
                 </DialogContent>
             </Dialog>
 
-            <Dialog open={isSuperAdminChangePasswordOpen} onOpenChange={(isOpen) => {
-                 if (!isOpen) {
-                    setNewPassword('');
-                    setConfirmNewPassword('');
-                    setShowNewPassword(false);
-                }
-                setIsSuperAdminChangePasswordOpen(isOpen);
-            }}>
+            <Dialog open={isSuperAdminChangePasswordOpen} onOpenChange={(isOpen) => { if (!isOpen) { setNewPassword(''); setConfirmNewPassword(''); setShowNewPassword(false); } setIsSuperAdminChangePasswordOpen(isOpen); }}>
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>{t('changeExecutivePasswordTitle')}</DialogTitle>
-                        <DialogDescription>
-                            {t('changeExecutivePasswordDescription')}
-                        </DialogDescription>
+                        <DialogDescription>{t('changeExecutivePasswordDescription')}</DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                         <div className="grid gap-2">
                             <Label htmlFor="new-super-admin-password">{t('newPassword')}</Label>
                             <div className="relative">
-                                <Input
-                                    id="new-super-admin-password"
-                                    type={showNewPassword ? 'text' : 'password'}
-                                    value={newPassword}
-                                    onChange={(e) => setNewPassword(e.target.value)}
-                                />
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    className="absolute inset-y-0 right-0 h-full px-3"
-                                    onClick={() => setShowNewPassword(!showNewPassword)}
-                                >
-                                    {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                                    <span className="sr-only">{showNewPassword ? 'Ocultar' : 'Mostrar'}</span>
-                                </Button>
+                                <Input id="new-super-admin-password" type={showNewPassword ? 'text' : 'password'} value={newPassword} onChange={(e) => setNewPassword(e.target.value)}/>
+                                <Button type="button" variant="ghost" size="icon" className="absolute inset-y-0 right-0 h-full px-3" onClick={() => setShowNewPassword(!showNewPassword)}>{showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button>
                             </div>
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="confirm-new-super-admin-password">{t('confirmNewPassword')}</Label>
                             <div className="relative">
-                                <Input
-                                    id="confirm-new-super-admin-password"
-                                    type={showNewPassword ? 'text' : 'password'}
-                                    value={confirmNewPassword}
-                                    onChange={(e) => setConfirmNewPassword(e.target.value)}
-                                />
-                                 <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    className="absolute inset-y-0 right-0 h-full px-3"
-                                    onClick={() => setShowNewPassword(!showNewPassword)}
-                                >
-                                    {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                                    <span className="sr-only">{showNewPassword ? 'Ocultar' : 'Mostrar'}</span>
-                                </Button>
+                                <Input id="confirm-new-super-admin-password" type={showNewPassword ? 'text' : 'password'} value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)}/>
+                                 <Button type="button" variant="ghost" size="icon" className="absolute inset-y-0 right-0 h-full px-3" onClick={() => setShowNewPassword(!showNewPassword)}>{showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button>
                             </div>
                         </div>
                     </div>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsSuperAdminChangePasswordOpen(false)}>{t('cancel')}</Button>
-                        <Button onClick={handleChangeSuperAdminPassword}>{t('changePasswordButton')}</Button>
-                    </DialogFooter>
+                    <DialogFooter><Button variant="outline" onClick={() => setIsSuperAdminChangePasswordOpen(false)}>{t('cancel')}</Button><Button onClick={handleChangeSuperAdminPassword}>{t('changePasswordButton')}</Button></DialogFooter>
                 </DialogContent>
             </Dialog>
 
@@ -4320,47 +3949,26 @@ const App = () => {
                         <div className="grid gap-2">
                             <Label htmlFor="payment-link-two-digit">{t('paymentLinkTwoDigit')}</Label>
                             <div className="flex gap-2">
-                                <Input
-                                    id="payment-link-two-digit"
-                                    value={paymentLinks.twoDigit}
-                                    onChange={(e) => setPaymentLinks(p => ({ ...p, twoDigit: e.target.value }))}
-                                />
-                                <Button variant="ghost" size="icon" onClick={() => setPaymentLinks(p => ({ ...p, twoDigit: '' }))}>
-                                    <Trash2 className="h-4 w-4 text-red-500" />
-                                </Button>
+                                <Input id="payment-link-two-digit" value={paymentLinks.twoDigit} onChange={(e) => setPaymentLinks(p => ({ ...p, twoDigit: e.target.value }))}/>
+                                <Button variant="ghost" size="icon" onClick={() => setPaymentLinks(p => ({ ...p, twoDigit: '' }))}><Trash2 className="h-4 w-4 text-red-500" /></Button>
                             </div>
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="payment-link-three-digit">{t('paymentLinkThreeDigit')}</Label>
                             <div className="flex gap-2">
-                                <Input
-                                    id="payment-link-three-digit"
-                                    value={paymentLinks.threeDigit}
-                                    onChange={(e) => setPaymentLinks(p => ({ ...p, threeDigit: e.target.value }))}
-                                />
-                                <Button variant="ghost" size="icon" onClick={() => setPaymentLinks(p => ({ ...p, threeDigit: '' }))}>
-                                    <Trash2 className="h-4 w-4 text-red-500" />
-                                </Button>
+                                <Input id="payment-link-three-digit" value={paymentLinks.threeDigit} onChange={(e) => setPaymentLinks(p => ({ ...p, threeDigit: e.target.value }))}/>
+                                <Button variant="ghost" size="icon" onClick={() => setPaymentLinks(p => ({ ...p, threeDigit: '' }))}><Trash2 className="h-4 w-4 text-red-500" /></Button>
                             </div>
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="payment-link-infinite">{t('paymentLinkInfinite')}</Label>
                              <div className="flex gap-2">
-                                <Input
-                                    id="payment-link-infinite"
-                                    value={paymentLinks.infinite}
-                                    onChange={(e) => setPaymentLinks(p => ({ ...p, infinite: e.target.value }))}
-                                />
-                                <Button variant="ghost" size="icon" onClick={() => setPaymentLinks(p => ({ ...p, infinite: '' }))}>
-                                    <Trash2 className="h-4 w-4 text-red-500" />
-                                </Button>
+                                <Input id="payment-link-infinite" value={paymentLinks.infinite} onChange={(e) => setPaymentLinks(p => ({ ...p, infinite: e.target.value }))}/>
+                                <Button variant="ghost" size="icon" onClick={() => setPaymentLinks(p => ({ ...p, infinite: '' }))}><Trash2 className="h-4 w-4 text-red-500" /></Button>
                             </div>
                         </div>
                     </div>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsPaymentLinksDialogOpen(false)}>{t('cancel')}</Button>
-                        <Button onClick={handleSavePaymentLinks}>{t('save')}</Button>
-                    </DialogFooter>
+                    <DialogFooter><Button variant="outline" onClick={() => setIsPaymentLinksDialogOpen(false)}>{t('cancel')}</Button><Button onClick={handleSavePaymentLinks}>{t('save')}</Button></DialogFooter>
                 </DialogContent>
             </Dialog>
 
@@ -4371,40 +3979,9 @@ const App = () => {
                         <DialogDescription>{t('activationOptionsDescription')}</DialogDescription>
                     </DialogHeader>
                     <div className="flex flex-col space-y-3 py-4">
-                        <Button
-                            onClick={() => {
-                                setIsCopyOptionsDialogOpen(false);
-                                setIsPaymentQrDialogOpen(true);
-                            }}
-                            className="w-full bg-black hover:bg-gray-900 text-white font-bold flex items-center gap-2 justify-center"
-                        >
-                            <QrCode className="h-5 w-5" />
-                            {t('payWithQr')}
-                        </Button>
-                        <Button
-                            onClick={() => {
-                                const line1 = (appSettings.bankInfoLine1 || 'Banco Caja Social: 24096711314').split(':').pop()?.trim() || '';
-                                navigator.clipboard.writeText(line1);
-                                showNotification(t('accountNumberCopied'), 'success');
-                                setIsCopyOptionsDialogOpen(false);
-                            }}
-                        >
-                            {t('copyAccountNumber')}
-                        </Button>
-                        <Button
-                             onClick={() => {
-                                const line2 = (appSettings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054');
-                                const match = line2.match(/(@\S+)/);
-                                const keyToCopy = match ? match[0] : line2;
-                                if (keyToCopy) {
-                                  navigator.clipboard.writeText(keyToCopy);
-                                  showNotification(t('brebKeyCopied'), 'success');
-                                }
-                                setIsCopyOptionsDialogOpen(false);
-                            }}
-                        >
-                            {t('copyBrebKey')}
-                        </Button>
+                        <Button onClick={() => { setIsCopyOptionsDialogOpen(false); setIsPaymentQrDialogOpen(true); }} className="w-full bg-black hover:bg-gray-900 text-white font-bold flex items-center gap-2 justify-center"><QrCode className="h-5 w-5" />{t('payWithQr')}</Button>
+                        <Button onClick={() => { const line1 = (appSettings.bankInfoLine1 || 'Banco Caja Social: 24096711314').split(':').pop()?.trim() || ''; navigator.clipboard.writeText(line1); showNotification(t('accountNumberCopied'), 'success'); setIsCopyOptionsDialogOpen(false); }}>{t('copyAccountNumber')}</Button>
+                        <Button onClick={() => { const line2 = (appSettings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054'); const match = line2.match(/(@\S+)/); const keyToCopy = match ? match[0] : line2; if (keyToCopy) { navigator.clipboard.writeText(keyToCopy); showNotification(t('brebKeyCopied'), 'success'); } setIsCopyOptionsDialogOpen(false); }}>{t('copyBrebKey')}</Button>
                     </div>
                 </DialogContent>
             </Dialog>
@@ -4418,36 +3995,18 @@ const App = () => {
                     <div className="grid gap-4 py-4">
                         <div className="grid gap-2">
                             <Label htmlFor="price-two-digit">{t('activationPriceTwoDigit')}</Label>
-                            <Input
-                                id="price-two-digit"
-                                value={activationPrices.twoDigit}
-                                onChange={(e) => setActivationPrices(p => ({ ...p, twoDigit: e.target.value }))}
-                                placeholder="Ej: 12.000"
-                            />
+                            <Input id="price-two-digit" value={activationPrices.twoDigit} onChange={(e) => setActivationPrices(p => ({ ...p, twoDigit: e.target.value }))} placeholder="Ej: 12.000"/>
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="price-three-digit">{t('activationPriceThreeDigit')}</Label>
-                            <Input
-                                id="price-three-digit"
-                                value={activationPrices.threeDigit}
-                                onChange={(e) => setActivationPrices(p => ({ ...p, threeDigit: e.target.value }))}
-                                placeholder="Ej: 15.000"
-                            />
+                            <Input id="price-three-digit" value={activationPrices.threeDigit} onChange={(e) => setActivationPrices(p => ({ ...p, threeDigit: e.target.value }))} placeholder="Ej: 15.000"/>
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="price-infinite">{t('activationPriceInfinite')}</Label>
-                            <Input
-                                id="price-infinite"
-                                value={activationPrices.infinite}
-                                onChange={(e) => setActivationPrices(p => ({ ...p, infinite: e.target.value }))}
-                                placeholder="Ej: 30.000"
-                            />
+                            <Input id="price-infinite" value={activationPrices.infinite} onChange={(e) => setActivationPrices(p => ({ ...p, infinite: e.target.value }))} placeholder="Ej: 30.000"/>
                         </div>
                     </div>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsActivationPricesDialogOpen(false)}>{t('cancel')}</Button>
-                        <Button onClick={handleSaveActivationPrices}>{t('save')}</Button>
-                    </DialogFooter>
+                    <DialogFooter><Button variant="outline" onClick={() => setIsActivationPricesDialogOpen(false)}>{t('cancel')}</Button><Button onClick={handleSaveActivationPrices}>{t('save')}</Button></DialogFooter>
                 </DialogContent>
             </Dialog>
 
@@ -4460,33 +4019,18 @@ const App = () => {
                     <div className="grid gap-4 py-4">
                         <div className="flex items-center justify-between">
                             <Label htmlFor="free-two-digit">{t('freeTwoDigit')}</Label>
-                            <Switch
-                                id="free-two-digit"
-                                checked={freeGamesConfig.twoDigit}
-                                onCheckedChange={(checked) => setFreeGamesConfig(p => ({ ...p, twoDigit: checked }))}
-                            />
+                            <Switch id="free-two-digit" checked={freeGamesConfig.twoDigit} onCheckedChange={(checked) => setFreeGamesConfig(p => ({ ...p, twoDigit: checked }))}/>
                         </div>
                         <div className="flex items-center justify-between">
                             <Label htmlFor="free-three-digit">{t('freeThreeDigit')}</Label>
-                            <Switch
-                                id="free-three-digit"
-                                checked={freeGamesConfig.threeDigit}
-                                onCheckedChange={(checked) => setFreeGamesConfig(p => ({ ...p, threeDigit: checked }))}
-                            />
+                            <Switch id="free-three-digit" checked={freeGamesConfig.threeDigit} onCheckedChange={(checked) => setFreeGamesConfig(p => ({ ...p, threeDigit: checked }))}/>
                         </div>
                         <div className="flex items-center justify-between">
                             <Label htmlFor="free-infinite">{t('freeInfinite')}</Label>
-                            <Switch
-                                id="free-infinite"
-                                checked={freeGamesConfig.infinite}
-                                onCheckedChange={(checked) => setFreeGamesConfig(p => ({ ...p, infinite: checked }))}
-                            />
+                            <Switch id="free-infinite" checked={freeGamesConfig.infinite} onCheckedChange={(checked) => setFreeGamesConfig(p => ({ ...p, infinite: checked }))}/>
                         </div>
                     </div>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsFreeGamesDialogOpen(false)}>{t('cancel')}</Button>
-                        <Button onClick={handleSaveFreeGamesSettings}>{t('save')}</Button>
-                    </DialogFooter>
+                    <DialogFooter><Button variant="outline" onClick={() => setIsFreeGamesDialogOpen(false)}>{t('cancel')}</Button><Button onClick={handleSaveFreeGamesSettings}>{t('save')}</Button></DialogFooter>
                 </DialogContent>
             </Dialog>
 
@@ -4499,25 +4043,14 @@ const App = () => {
                     <div className="grid gap-4 py-4">
                         <div className="grid gap-2">
                             <Label htmlFor="payment-info-line1">{t('bankInfoLine1Label')}</Label>
-                            <Input
-                                id="payment-info-line1"
-                                value={paymentInfo.line1}
-                                onChange={(e) => setPaymentInfo(p => ({ ...p, line1: e.target.value }))}
-                            />
+                            <Input id="payment-info-line1" value={paymentInfo.line1} onChange={(e) => setPaymentInfo(p => ({ ...p, line1: e.target.value }))}/>
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="payment-info-line2">{t('bankInfoLine2Label')}</Label>
-                            <Input
-                                id="payment-info-line2"
-                                value={paymentInfo.line2}
-                                onChange={(e) => setPaymentInfo(p => ({ ...p, line2: e.target.value }))}
-                            />
+                            <Input id="payment-info-line2" value={paymentInfo.line2} onChange={(e) => setPaymentInfo(p => ({ ...p, line2: e.target.value }))}/>
                         </div>
                     </div>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsPaymentInfoDialogOpen(false)}>{t('cancel')}</Button>
-                        <Button onClick={handleSavePaymentInfo}>{t('save')}</Button>
-                    </DialogFooter>
+                    <DialogFooter><Button variant="outline" onClick={() => setIsPaymentInfoDialogOpen(false)}>{t('cancel')}</Button><Button onClick={handleSavePaymentInfo}>{t('save')}</Button></DialogFooter>
                 </DialogContent>
             </Dialog>
             <Dialog open={isAssignPackageDialogOpen} onOpenChange={setIsAssignPackageDialogOpen}>
@@ -4530,20 +4063,12 @@ const App = () => {
                         <div className="flex flex-col sm:flex-row gap-4 items-end">
                             <div className="grid gap-2 flex-1 w-full">
                                 <Label htmlFor="package-quantity">{t('quantity')}</Label>
-                                <Input
-                                    id="package-quantity"
-                                    type="number"
-                                    value={packageQuantity}
-                                    onChange={(e) => setPackageQuantity(Number(e.target.value))}
-                                    placeholder="e.g., 100"
-                                />
+                                <Input id="package-quantity" type="number" value={packageQuantity} onChange={(e) => setPackageQuantity(Number(e.target.value))} placeholder="e.g., 100"/>
                             </div>
                             <div className="grid gap-2 flex-1 w-full">
                                 <Label htmlFor="package-raffle-mode">{t('raffleType')}</Label>
                                 <Select onValueChange={(value: RaffleMode) => setPackageRaffleMode(value)} defaultValue={packageRaffleMode}>
-                                    <SelectTrigger id="package-raffle-mode">
-                                        <SelectValue placeholder={t('raffleType')} />
-                                    </SelectTrigger>
+                                    <SelectTrigger id="package-raffle-mode"><SelectValue placeholder={t('raffleType')} /></SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="two-digit">{t('2digitMode')}</SelectItem>
                                         <SelectItem value="three-digit">{t('3digitMode')}</SelectItem>
@@ -4551,83 +4076,33 @@ const App = () => {
                                     </SelectContent>
                                 </Select>
                             </div>
-                            <Button onClick={handleGeneratePackage} disabled={isGenerating}>
-                                {isGenerating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                {t('generate')}
-                            </Button>
+                            <Button onClick={handleGeneratePackage} disabled={isGenerating}>{isGenerating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{t('generate')}</Button>
                         </div>
-
                         <div className="mt-4">
                             <div className="flex justify-between items-center mb-2">
                                 <h4 className="font-semibold">{t('generatedReferences')}</h4>
                                 {generatedPackage.length > 0 && (
                                     <div className="flex items-center gap-2">
-                                        <Button
-                                            variant="destructive"
-                                            size="sm"
-                                            onClick={handleDeleteAllGeneratedRefs}
-                                        >
-                                            <Trash2 className="mr-2 h-3 w-3" />
-                                            {t('deleteAll')}
-                                        </Button>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => {
-                                                const textToCopy = generatedPackage.map(p => `Referencia: ${p.ref}, Enlace de Administrador: ${p.url}`).join('\n');
-                                                navigator.clipboard.writeText(textToCopy);
-                                                showNotification(t('listCopied'), 'success');
-                                            }}
-                                        >
-                                            <Copy className="mr-2 h-3 w-3" />
-                                            {t('copyList')}
-                                        </Button>
+                                        <Button variant="destructive" size="sm" onClick={handleDeleteAllGeneratedRefs}><Trash2 className="mr-2 h-3 w-3" />{t('deleteAll')}</Button>
+                                        <Button variant="outline" size="sm" onClick={() => { const textToCopy = generatedPackage.map(p => `Referencia: ${p.ref}, Enlace de Administrador: ${p.url}`).join('\n'); navigator.clipboard.writeText(textToCopy); showNotification(t('listCopied'), 'success'); }}><Copy className="mr-2 h-3 w-3" />{t('copyList')}</Button>
                                     </div>
                                 )}
                             </div>
                             <ScrollArea className="h-64 mt-2 border rounded-md p-4 bg-gray-50/50">
-                                {isGenerating ? (
-                                     <div className="flex items-center justify-center h-full">
-                                         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                                     </div>
-                                ) : generatedPackage.length > 0 ? (
+                                {isGenerating ? (<div className="flex items-center justify-center h-full"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>) : generatedPackage.length > 0 ? (
                                     <div className="space-y-3 text-sm">
                                         {generatedPackage.map((p) => (
                                             <div key={p.ref} className="p-2 bg-white rounded-md border space-y-1">
-                                                <div className="flex justify-between items-center">
-                                                    <div>
-                                                        <span className="font-semibold">Referencia:</span>{' '}
-                                                        <span className="font-mono bg-yellow-100 text-yellow-800 px-2 py-1 rounded">{p.ref}</span>
-                                                    </div>
-                                                </div>
+                                                <div className="flex justify-between items-center"><div><span className="font-semibold">Referencia:</span> <span className="font-mono bg-yellow-100 text-yellow-800 px-2 py-1 rounded">{p.ref}</span></div></div>
                                                 <div className="flex items-center gap-2">
                                                     <Input readOnly value={p.url} className="text-xs h-8" />
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-8 w-8"
-                                                        onClick={() => {
-                                                            navigator.clipboard.writeText(p.url);
-                                                            showNotification(t('linkCopied'), 'success');
-                                                        }}
-                                                    >
-                                                        <Copy className="h-4 w-4" />
-                                                    </Button>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-8 w-8 text-red-500 hover:bg-red-100"
-                                                        onClick={() => handleDeleteGeneratedRef(p.ref)}
-                                                    >
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </Button>
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { navigator.clipboard.writeText(p.url); showNotification(t('linkCopied'), 'success'); }}><Copy className="h-4 w-4" /></Button>
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:bg-red-100" onClick={() => handleDeleteGeneratedRef(p.ref)}><Trash2 className="h-4 w-4" /></Button>
                                                 </div>
                                             </div>
                                         ))}
                                     </div>
-                                ) : (
-                                    <p className="text-muted-foreground text-center pt-8">{t('generateToSeeRefs')}</p>
-                                )}
+                                ) : (<p className="text-muted-foreground text-center pt-8">{t('generateToSeeRefs')}</p>)}
                             </ScrollArea>
                         </div>
                     </div>
@@ -4638,27 +4113,14 @@ const App = () => {
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>{t('goalTitle')}</DialogTitle>
-                        <DialogDescription>
-                            {t('goalDescription')}
-                        </DialogDescription>
+                        <DialogDescription>{t('goalDescription')}</DialogDescription>
                     </DialogHeader>
                     <div className="py-4 space-y-4">
-                        <div className="flex justify-between items-center bg-gray-100 p-4 rounded-lg">
-                            <p className="font-semibold text-gray-600">{t('prizeValue')}:</p>
-                            <p className="font-bold text-xl text-gray-800">{formatValue(raffleState.prize)}</p>
-                        </div>
-                        <div className="flex justify-between items-center bg-gray-100 p-4 rounded-lg">
-                            <p className="font-semibold text-gray-600">{t('ticketValue')}:</p>
-                            <p className="font-bold text-xl text-gray-800">{formatValue(raffleState.value)}</p>
-                        </div>
-                        <div className="flex justify-between items-center bg-green-100 p-4 rounded-lg">
-                            <p className="font-semibold text-green-800">{t('ticketsToCoverPrize')}:</p>
-                            <p className="font-bold text-2xl text-green-800">{ticketsToCoverPrize.toLocaleString(language === 'es' ? 'es-CO' : 'en-US')}</p>
-                        </div>
+                        <div className="flex justify-between items-center bg-gray-100 p-4 rounded-lg"><p className="font-semibold text-gray-600">{t('prizeValue')}:</p><p className="font-bold text-xl text-gray-800">{formatValue(raffleState.prize)}</p></div>
+                        <div className="flex justify-between items-center bg-gray-100 p-4 rounded-lg"><p className="font-semibold text-gray-600">{t('ticketValue')}:</p><p className="font-bold text-xl text-gray-800">{formatValue(raffleState.value)}</p></div>
+                        <div className="flex justify-between items-center bg-green-100 p-4 rounded-lg"><p className="font-semibold text-green-800">{t('ticketsToCoverPrize')}:</p><p className="font-bold text-2xl text-green-800">{ticketsToCoverPrize.toLocaleString(language === 'es' ? 'es-CO' : 'en-US')}</p></div>
                     </div>
-                    <DialogFooter>
-                        <Button type="button" variant="outline" onClick={() => setIsGoalModalOpen(false)}>{t('close')}</Button>                    
-                    </DialogFooter>
+                    <DialogFooter><Button type="button" variant="outline" onClick={() => setIsGoalModalOpen(false)}>{t('close')}</Button></DialogFooter>
                 </DialogContent>
             </Dialog>
 
@@ -4666,32 +4128,14 @@ const App = () => {
                 <DialogContent className="max-md">
                     <DialogHeader>
                         <DialogTitle className="text-center">{t('payWithQr')}</DialogTitle>
-                        <DialogDescription className="text-center">
-                            {t('scanQrToPay')}
-                        </DialogDescription>
+                        <DialogDescription className="text-center">{t('scanQrToPay')}</DialogDescription>
                     </DialogHeader>
                     <div className="flex justify-center items-center p-4">
                         {appSettings.paymentQrImageUrl ? (
-                            <div className="relative inline-block bg-white rounded-lg shadow-md">
-                                <Image
-                                    src={appSettings.paymentQrImageUrl}
-                                    alt={t('paymentQrCodeAlt')}
-                                    width={400}
-                                    height={400}
-                                    className="object-contain"
-                                    data-ai-hint="payment qr code"
-                                    unoptimized
-                                />
-                            </div>
-                        ) : (
-                             <div className="text-muted-foreground bg-gray-100 p-8 rounded-lg flex items-center justify-center h-[300px] w-[300px]">
-                                <p>{t('noPrizeImage')}</p>
-                            </div>
-                        )}
+                            <div className="relative inline-block bg-white rounded-lg shadow-md"><Image src={appSettings.paymentQrImageUrl} alt={t('paymentQrCodeAlt')} width={400} height={400} className="object-contain" unoptimized /></div>
+                        ) : (<div className="text-muted-foreground bg-gray-100 p-8 rounded-lg flex items-center justify-center h-[300px] w-[300px]"><p>{t('noPrizeImage')}</p></div>)}
                     </div>
-                    <DialogFooter>
-                        <Button type="button" variant="outline" onClick={() => setIsPaymentQrDialogOpen(false)}>{t('close')}</Button>
-                    </DialogFooter>
+                    <DialogFooter><Button type="button" variant="outline" onClick={() => setIsPaymentQrDialogOpen(false)}>{t('close')}</Button></DialogFooter>
                 </DialogContent>
             </Dialog>
 
@@ -4702,116 +4146,47 @@ const App = () => {
                         <DialogDescription>{t('managePaymentQrImageDescription')}</DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
-                        {isUploading && (
-                            <div className="flex justify-center items-center p-2">
-                                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                                <span className="ml-2 text-muted-foreground">{t('uploadingImage')}...</span>
-                            </div>
-                        )}
+                        {isUploading && (<div className="flex justify-center items-center p-2"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /><span className="ml-2 text-muted-foreground">{t('uploadingImage')}...</span></div>)}
                         <div className="grid gap-2">
                             <Label htmlFor="payment-qr-image-url">{t('paymentQrImageUrlLabel')}</Label>
-                            <Input
-                                id="payment-qr-image-url"
-                                value={paymentQrImageUrl}
-                                onChange={(e) => setPaymentQrImageUrl(e.target.value)}
-                                placeholder="https://example.com/qr.png"
-                                disabled={isUploading}
-                            />
+                            <Input id="payment-qr-image-url" value={paymentQrImageUrl} onChange={(e) => setPaymentQrImageUrl(e.target.value)} placeholder="https://example.com/qr.png" disabled={isUploading}/>
                         </div>
                         {paymentQrImageUrl && (
                             <div className="mt-4 p-4 border rounded-lg bg-gray-50 flex flex-col items-center gap-2">
                                 <Label>{t('preview')}</Label>
-                                <div className="relative inline-block bg-white rounded-lg shadow-md">
-                                    <Image
-                                        key={paymentQrImageUrl}
-                                        src={paymentQrImageUrl}
-                                        alt={t('paymentQrCodeAlt')}
-                                        width={200}
-                                        height={200}
-                                        className="object-contain"
-                                        unoptimized
-                                    />
-                                </div>
+                                <div className="relative inline-block bg-white rounded-lg shadow-md"><Image key={paymentQrImageUrl} src={paymentQrImageUrl} alt={t('paymentQrCodeAlt')} width={200} height={200} className="object-contain" unoptimized /></div>
                             </div>
                         )}
                     </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setIsPaymentQrImageDialogOpen(false)} disabled={isUploading}>{t('cancel')}</Button>
-                        <Button onClick={handleSavePaymentQrImage} disabled={isUploading || !paymentQrImageUrl}>
-                            {isUploading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            {t('save')}
-                        </Button>
+                        <Button onClick={handleSavePaymentQrImage} disabled={isUploading || !paymentQrImageUrl}>{isUploading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{t('save')}</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
 
             <Dialog open={isPrizeImageModalOpen} onOpenChange={setIsPrizeImageModalOpen}>
                 <DialogContent className="max-w-4xl w-auto bg-transparent border-none shadow-none p-2">
-                    <DialogHeader>
-                        <DialogTitle className="sr-only">{raffleState.prize || t('rafflePrizeAlt')}</DialogTitle>
-                    </DialogHeader>
-                    {raffleState.prizeImageUrl && (
-                        <Image
-                            src={raffleState.prizeImageUrl}
-                            alt={raffleState.prize || t('rafflePrizeAlt')}
-                            width={1920}
-                            height={1080}
-                            className="rounded-lg object-contain max-h-[90vh] w-auto h-auto"
-                            unoptimized
-                        />
-                    )}
+                    <DialogHeader><DialogTitle className="sr-only">{raffleState.prize || t('rafflePrizeAlt')}</DialogTitle></DialogHeader>
+                    {raffleState.prizeImageUrl && (<Image src={raffleState.prizeImageUrl} alt={raffleState.prize || t('rafflePrizeAlt')} width={1920} height={1080} className="rounded-lg object-contain max-h-[90vh] w-auto h-auto" unoptimized />)}
                 </DialogContent>
-
             </Dialog>
 
             <Dialog open={isCaptureDialogOpen} onOpenChange={(open) => !open && stopCamera()}>
                 <DialogContent className="max-w-lg">
-                    <DialogHeader>
-                        <DialogTitle>{t('takePrizePhoto')}</DialogTitle>
-                    </DialogHeader>
+                    <DialogHeader><DialogTitle>{t('takePrizePhoto')}</DialogTitle></DialogHeader>
                     <div className="relative aspect-video bg-black rounded-lg overflow-hidden flex items-center justify-center">
-                        {capturedImageBlob ? (
-                            <Image 
-                                src={URL.createObjectURL(capturedImageBlob)} 
-                                alt={t('capturedPrizePhotoAlt')} 
-                                fill 
-                                className="object-cover" 
-                                unoptimized
-                            />
-                        ) : (
+                        {capturedImageBlob ? (<Image src={URL.createObjectURL(capturedImageBlob)} alt={t('capturedPrizePhotoAlt')} fill className="object-cover" unoptimized />) : (
                             <>
-                                <video
-                                    ref={videoRef}
-                                    autoPlay
-                                    playsInline
-                                    className="w-full h-full object-cover"
-                                />
-                                {captureCountdown !== null && (
-                                    <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                                        <span className="text-8xl font-bold text-white drop-shadow-lg animate-ping">
-                                            {captureCountdown > 0 ? captureCountdown : '📸'}
-                                        </span>
-                                    </div>
-                                )}
+                                <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" />
+                                {captureCountdown !== null && (<div className="absolute inset-0 flex items-center justify-center bg-black/30"><span className="text-8xl font-bold text-white drop-shadow-lg animate-ping">{captureCountdown > 0 ? captureCountdown : '📸'}</span></div>)}
                             </>
                         )}
-                        {isUploading && (
-                             <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center">
-                                <Loader2 className="h-8 w-8 animate-spin text-white mb-2" />
-                                <p className="text-white text-sm">{t('uploadingImage')}...</p>
-                            </div>
-                        )}
+                        {isUploading && (<div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-white mb-2" /><p className="text-white text-sm">{t('uploadingImage')}...</p></div>)}
                     </div>
                     <DialogFooter className="flex-row justify-center gap-4 sm:justify-center">
-                         {!capturedImageBlob && (
-                            <Button variant="outline" onClick={stopCamera}>{t('cancel')}</Button>
-                        )}
-                        {capturedImageBlob && (
-                             <div className="flex flex-col items-center gap-2">
-                                <p className="text-sm font-semibold text-green-600 animate-pulse">{t('imageUploadedSuccess')}</p>
-                                <p className="text-xs text-gray-500">{t('uploadingImage')}...</p>
-                             </div>
-                        )}
+                         {!capturedImageBlob && (<Button variant="outline" onClick={stopCamera}>{t('cancel')}</Button>)}
+                        {capturedImageBlob && (<div className="flex flex-col items-center gap-2"><p className="text-sm font-semibold text-green-600 animate-pulse">{t('imageUploadedSuccess')}</p><p className="text-xs text-gray-500">{t('uploadingImage')}...</p></div>)}
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
