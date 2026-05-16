@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect, useRef, useTransition } from 'react';
 import jsPDF from 'jspdf';
@@ -1763,15 +1762,16 @@ const App = () => {
 
             ctx.drawImage(img, 0, 0);
 
-            // Draw URL banner
-            const bannerHeight = canvas.height * 0.12;
+            // Draw URL banner in the MIDDLE for high visibility
+            const bannerHeight = canvas.height * 0.15;
+            const bannerY = (canvas.height - bannerHeight) / 2;
             ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
-            ctx.fillRect(0, canvas.height - bannerHeight, canvas.width, bannerHeight);
-            ctx.fillStyle = '#facc15'; // Yellow-400 for better visibility
-            ctx.font = `bold ${Math.floor(bannerHeight * 0.4)}px sans-serif`;
+            ctx.fillRect(0, bannerY, canvas.width, bannerHeight);
+            ctx.fillStyle = '#facc15'; // Yellow-400 for maximum contrast
+            ctx.font = `bold ${Math.floor(bannerHeight * 0.35)}px sans-serif`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(`👉 ${raffleUrl}`, canvas.width / 2, canvas.height - (bannerHeight / 2));
+            ctx.fillText(`👉 TOCA PARA JUGAR: ${raffleUrl}`, canvas.width / 2, bannerY + (bannerHeight / 2));
 
             const stampedBlob = await new Promise<Blob | null>(r => canvas.toBlob(r, 'image/jpeg', 0.9));
             if (!stampedBlob) throw new Error("Could not create stamped blob");
@@ -1784,7 +1784,7 @@ const App = () => {
             
             // Share the updated raffle - structured for optimal link recognition
             const prizeName = raffleState.prize || '';
-            const message = `${raffleUrl}\n\n${t('shareRaffleMessage', { prize: prizeName })}\n\n👉 ¡Toca arriba para jugar ahora!`;
+            const message = `${raffleUrl}\n\n${t('shareRaffleMessage', { prize: prizeName })}\n\n👉 ¡Toca la imagen o el enlace arriba para jugar ahora!`;
 
             if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
                 try {
@@ -1828,7 +1828,7 @@ const App = () => {
             const raffleUrl = `${window.location.origin}?ref=${raffleState.raffleRef}`;
             const prizeName = raffleState.prize || '';
             // Structured message: URL FIRST for link preview generation
-            const message = `${raffleUrl}\n\n${t('shareRaffleMessage', { prize: prizeName })}\n\n👉 ¡Toca arriba para jugar ahora!`;
+            const message = `${raffleUrl}\n\n${t('shareRaffleMessage', { prize: prizeName })}\n\n👉 ¡Toca la imagen o el enlace arriba para jugar ahora!`;
 
             // Fetch the existing prize image
             const response = await fetch(raffleState.prizeImageUrl);
@@ -1853,15 +1853,16 @@ const App = () => {
 
             ctx.drawImage(img, 0, 0);
 
-            // Draw URL banner
-            const bannerHeight = canvas.height * 0.12;
+            // Draw URL banner in the MIDDLE
+            const bannerHeight = canvas.height * 0.15;
+            const bannerY = (canvas.height - bannerHeight) / 2;
             ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
-            ctx.fillRect(0, canvas.height - bannerHeight, canvas.width, bannerHeight);
+            ctx.fillRect(0, bannerY, canvas.width, bannerHeight);
             ctx.fillStyle = '#facc15';
-            ctx.font = `bold ${Math.floor(bannerHeight * 0.4)}px sans-serif`;
+            ctx.font = `bold ${Math.floor(bannerHeight * 0.35)}px sans-serif`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(`👉 ${raffleUrl}`, canvas.width / 2, canvas.height - (bannerHeight / 2));
+            ctx.fillText(`👉 TOCA PARA JUGAR: ${raffleUrl}`, canvas.width / 2, bannerY + (bannerHeight / 2));
 
             const stampedBlob = await new Promise<Blob | null>(r => canvas.toBlob(r, 'image/jpeg', 0.9));
             if (!stampedBlob) throw new Error("Could not create stamped blob");
@@ -1914,6 +1915,11 @@ const App = () => {
             setIsSuperAdmin(true);
             sessionStorage.setItem('isSuperAdmin', 'true');
             setIsSuperAdminLoginOpen(false);
+            setFreeGamesConfig({
+                twoDigit: !!appSettings.isFreeTwoDigit,
+                threeDigit: !!appSettings.isFreeThreeDigit,
+                infinite: !!appSettings.isFreeInfinite,
+            });
             setSuperAdminPassword('');
             showNotification('Acceso de Director Ejecutivo concedido.', 'success');
         } else {
