@@ -1765,15 +1765,15 @@ const App = () => {
 
             // Draw URL banner
             const bannerHeight = canvas.height * 0.08;
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
             ctx.fillRect(0, canvas.height - bannerHeight, canvas.width, bannerHeight);
-            ctx.fillStyle = 'white';
-            ctx.font = `bold ${Math.floor(bannerHeight * 0.4)}px sans-serif`;
+            ctx.fillStyle = '#facc15'; // Yellow-400 for better visibility
+            ctx.font = `bold ${Math.floor(bannerHeight * 0.45)}px sans-serif`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(raffleUrl, canvas.width / 2, canvas.height - (bannerHeight / 2));
 
-            const stampedBlob = await new Promise<Blob | null>(r => canvas.toBlob(r, 'image/jpeg', 0.85));
+            const stampedBlob = await new Promise<Blob | null>(r => canvas.toBlob(r, 'image/jpeg', 0.9));
             if (!stampedBlob) throw new Error("Could not create stamped blob");
 
             const file = new File([stampedBlob], `prize_photo_${Date.now()}.jpg`, { type: 'image/jpeg' });
@@ -1784,7 +1784,7 @@ const App = () => {
             
             // Share the updated raffle
             const prizeName = raffleState.prize || '';
-            const message = `${t('shareRaffleMessage', { prize: prizeName })}\n\n👉 ¡Toca aquí para ver el juego!\n${raffleUrl}`;
+            const message = `${raffleUrl}\n\n${t('shareRaffleMessage', { prize: prizeName })}\n\n👉 ¡Toca arriba para jugar ahora!`;
 
             if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
                 try {
@@ -1827,7 +1827,7 @@ const App = () => {
         try {
             const raffleUrl = `${window.location.origin}?ref=${raffleState.raffleRef}`;
             const prizeName = raffleState.prize || '';
-            const message = `${t('shareRaffleMessage', { prize: prizeName })}\n\n👉 ¡Toca aquí para ver el juego!\n${raffleUrl}`;
+            const message = `${raffleUrl}\n\n${t('shareRaffleMessage', { prize: prizeName })}\n\n👉 ¡Toca arriba para jugar ahora!`;
 
             // Fetch the existing prize image
             const response = await fetch(raffleState.prizeImageUrl);
@@ -1854,15 +1854,15 @@ const App = () => {
 
             // Draw URL banner
             const bannerHeight = canvas.height * 0.08;
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
             ctx.fillRect(0, canvas.height - bannerHeight, canvas.width, bannerHeight);
-            ctx.fillStyle = 'white';
-            ctx.font = `bold ${Math.floor(bannerHeight * 0.4)}px sans-serif`;
+            ctx.fillStyle = '#facc15';
+            ctx.font = `bold ${Math.floor(bannerHeight * 0.45)}px sans-serif`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(raffleUrl, canvas.width / 2, canvas.height - (bannerHeight / 2));
 
-            const stampedBlob = await new Promise<Blob | null>(r => canvas.toBlob(r, 'image/jpeg', 0.85));
+            const stampedBlob = await new Promise<Blob | null>(r => canvas.toBlob(r, 'image/jpeg', 0.9));
             if (!stampedBlob) throw new Error("Could not create stamped blob");
 
             const file = new File([stampedBlob], 'premio.jpg', { type: 'image/jpeg' });
@@ -1884,7 +1884,7 @@ const App = () => {
             console.error("Error sharing existing prize photo:", error);
             // Simple text fallback
             const raffleUrl = `${window.location.origin}?ref=${raffleState.raffleRef}`;
-            const message = encodeURIComponent(`${t('shareRaffleMessage', { prize: raffleState.prize || '' })}\n\n👉 ¡Toca aquí para ver el juego!\n${raffleUrl}`);
+            const message = encodeURIComponent(`${raffleUrl}\n\n${t('shareRaffleMessage', { prize: raffleState.prize || '' })}\n\n👉 ¡Toca arriba para jugar ahora!`);
             window.open(`https://wa.me/?text=${message}`, '_blank');
         } finally {
             setIsUploading(false);
@@ -2242,7 +2242,7 @@ const App = () => {
                         
                         <div className="mb-6 rounded-lg overflow-hidden relative flex items-center justify-center shadow-lg bg-gray-200 aspect-auto">
                              {raffleState.prizeImageUrl ? (
-                                <button onClick={() => setIsPrizeImageModalOpen(true)} className="w-full flex items-center justify-center cursor-pointer" aria-label={t('rafflePrizeAlt')}>
+                                <button onClick={() => isCurrentUserAdmin ? handleShare() : setIsPrizeImageModalOpen(true)} className="w-full flex items-center justify-center cursor-pointer" aria-label={t('rafflePrizeAlt')}>
                                     <Image 
                                         src={raffleState.prizeImageUrl} 
                                         alt={t('rafflePrizeAlt')} 
@@ -4638,7 +4638,7 @@ const App = () => {
             </Dialog>
 
             <Dialog open={isPaymentQrDialogOpen} onOpenChange={setIsPaymentQrDialogOpen}>
-                <DialogContent className="max-w-md">
+                <DialogContent className="max-md">
                     <DialogHeader>
                         <DialogTitle className="text-center">{t('payWithQr')}</DialogTitle>
                         <DialogDescription className="text-center">
