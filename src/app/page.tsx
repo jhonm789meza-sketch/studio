@@ -12,7 +12,7 @@ import { requestNotificationPermission } from '@/lib/notification';
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House, Clock as ClockIcon, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages, Trophy, Trash2, Copy, Shield, LogOut, Eye, EyeOff, Gamepad2, Phone, TrendingUp, Globe, Landmark, RefreshCcw, LockKeyhole, Package, Camera, Check, Upload, FlipHorizontal } from 'lucide-react';
+import { Menu, Award, Lock, House, Clock as ClockIcon, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages, Trophy, Trash2, Copy, Shield, LogOut, Eye, EyeOff, Gamepad2, Phone, TrendingUp, Globe, Landmark, RefreshCcw, LockKeyhole, Package, Camera, Check, Upload, FlipHorizontal, MousePointer2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -2219,18 +2219,26 @@ const App = () => {
                             </div>
                         )}
                         
-                        <div className="mb-6 rounded-lg overflow-hidden relative flex items-center justify-center shadow-lg bg-gray-200 aspect-auto">
+                        <div className="mb-6 rounded-lg overflow-hidden relative flex items-center justify-center shadow-lg bg-gray-200 aspect-auto group">
                              {raffleState.prizeImageUrl ? (
-                                <button onClick={() => isCurrentUserAdmin ? handleShare() : setIsPrizeImageModalOpen(true)} className="w-full flex items-center justify-center cursor-pointer" aria-label={t('rafflePrizeAlt')}>
+                                <button onClick={() => isCurrentUserAdmin ? handleShare() : handleTabClick('register')} className="w-full flex items-center justify-center cursor-pointer relative" aria-label={t('rafflePrizeAlt')}>
                                     <Image 
                                         src={raffleState.prizeImageUrl} 
                                         alt={t('rafflePrizeAlt')} 
                                         width={1200}
                                         height={1200}
-                                        className="w-full h-auto object-contain max-h-[60vh]"
+                                        className="w-full h-auto object-contain max-h-[60vh] transition-transform duration-500 group-hover:scale-105"
                                         unoptimized 
                                         key={raffleState.prizeImageUrl}
                                     />
+                                    {!isCurrentUserAdmin && (
+                                        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                            <div className="bg-yellow-400 text-black px-4 py-2 rounded-full font-bold text-sm shadow-xl flex items-center gap-2">
+                                                <MousePointer2 className="h-4 w-4" />
+                                                TOCA PARA JUGAR
+                                            </div>
+                                        </div>
+                                    )}
                                 </button>
                             ) : (
                                 <div className="flex flex-col items-center gap-2 p-16">
