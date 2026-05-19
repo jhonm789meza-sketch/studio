@@ -1,9 +1,8 @@
-'use server';
+'use client';
 /**
  * @fileOverview Página de previsualización del premio que redirige al juego tras 3 segundos.
  */
 
-'use client';
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { doc, getDoc } from 'firebase/firestore';
