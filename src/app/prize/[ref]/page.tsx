@@ -1,6 +1,8 @@
+
 'use client';
 /**
- * @fileOverview Página de previsualización del premio que redirige al juego tras 3 segundos o al hacer clic.
+ * @fileOverview Página de previsualización del premio que actúa como un enlace funcional camuflado.
+ * Muestra la imagen a pantalla completa y redirige automáticamente al juego.
  */
 
 import { useEffect, useState } from 'react';
@@ -27,24 +29,22 @@ export default function PrizePreviewPage() {
                 const docSnap = await getDoc(doc(db, 'raffles', ref.toUpperCase()));
                 if (docSnap.exists()) {
                     setImageUrl(docSnap.data().prizeImageUrl);
+                    // Redirección ultra-rápida una vez que tenemos los datos
+                    setTimeout(() => {
+                        router.push(gameUrl);
+                    }, 2500); // 2.5 segundos para que vean el premio y luego entren
+                } else {
+                    router.push('/');
                 }
             } catch (error) {
                 console.error("Error fetching prize image:", error);
+                router.push('/');
             } finally {
                 setLoading(false);
             }
         };
         fetchPrize();
-    }, [ref]);
-
-    useEffect(() => {
-        if (!loading && ref) {
-            const timer = setTimeout(() => {
-                router.push(gameUrl);
-            }, 3000);
-            return () => clearTimeout(timer);
-        }
-    }, [loading, ref, router, gameUrl]);
+    }, [ref, router, gameUrl]);
 
     if (loading) {
         return (
@@ -55,37 +55,35 @@ export default function PrizePreviewPage() {
     }
 
     return (
-        <div className="min-h-screen bg-black flex flex-col items-center justify-center overflow-hidden p-4">
+        <div className="min-h-screen bg-black flex flex-col items-center justify-center overflow-hidden">
             {imageUrl ? (
-                <Link href={gameUrl} className="relative w-full h-full max-w-4xl max-h-[85vh] shadow-2xl rounded-xl overflow-hidden group cursor-pointer">
+                <Link href={gameUrl} className="relative w-full h-screen cursor-pointer group">
                     <Image
                         src={imageUrl}
-                        alt="Premio de la Rifa - Toca para jugar"
+                        alt="Toca para jugar ahora"
                         fill
-                        className="object-contain transition-transform duration-500 group-hover:scale-105"
+                        className="object-contain"
                         unoptimized
+                        priority
                     />
-                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <div className="bg-yellow-400 text-black px-6 py-3 rounded-full font-bold text-xl shadow-2xl flex items-center gap-2 animate-bounce">
-                            <MousePointer2 className="h-6 w-6" />
+                    <div className="absolute inset-0 bg-black/10 flex items-center justify-center">
+                        <div className="bg-yellow-400 text-black px-8 py-4 rounded-full font-black text-2xl shadow-2xl flex items-center gap-3 animate-bounce border-4 border-black">
+                            <MousePointer2 className="h-8 w-8" />
                             ¡TOCA PARA JUGAR YA!
                         </div>
                     </div>
+                    {/* El link real funcional está "escondido" en toda la superficie de la imagen */}
+                    <div className="absolute bottom-10 left-0 right-0 text-center">
+                        <p className="text-white/50 text-xs font-mono">Redirigiendo automáticamente en 3 segundos...</p>
+                    </div>
                 </Link>
             ) : (
-                <div className="text-white text-center">
-                    <p className="text-xl font-bold">Imagen no encontrada</p>
-                    <p className="text-sm text-gray-400 mt-2">Redirigiendo al juego...</p>
+                <div className="text-white text-center p-4">
+                    <h1 className="text-2xl font-bold mb-4">RIFA⚡EXPRESS</h1>
+                    <Loader2 className="h-8 w-8 animate-spin mx-auto text-yellow-400" />
+                    <p className="mt-4">Entrando al juego...</p>
                 </div>
             )}
-            
-            <div className="mt-8 text-center">
-                <Link href={gameUrl} className="inline-flex items-center gap-3 px-6 py-3 bg-white/10 backdrop-blur-md rounded-full border border-white/20 hover:bg-white/20 transition-colors">
-                    <Loader2 className="h-4 w-4 animate-spin text-yellow-400" />
-                    <p className="text-white font-medium text-sm">Entrando al juego... Toca la foto para ir rápido</p>
-                </Link>
-                <h1 className="text-white/30 text-4xl font-black tracking-tighter mt-6">RIFA⚡EXPRESS</h1>
-            </div>
         </div>
     );
 }
