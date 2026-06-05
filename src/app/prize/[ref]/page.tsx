@@ -10,7 +10,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import Image from 'next/image';
-import { Loader2, MousePointer2 } from 'lucide-react';
+import { Loader2, MousePointer2, Gamepad2 } from 'lucide-react';
 import Link from 'next/link';
 
 export default function PrizePreviewPage() {
@@ -32,7 +32,7 @@ export default function PrizePreviewPage() {
                     // Redirección ultra-rápida una vez que tenemos los datos
                     setTimeout(() => {
                         router.push(gameUrl);
-                    }, 2500); // 2.5 segundos para que vean el premio y luego entren
+                    }, 3000); // 3 segundos para que vean el premio y luego entren
                 } else {
                     router.push('/');
                 }
@@ -57,7 +57,7 @@ export default function PrizePreviewPage() {
     return (
         <div className="min-h-screen bg-black flex flex-col items-center justify-center overflow-hidden">
             {imageUrl ? (
-                <Link href={gameUrl} className="relative w-full h-screen cursor-pointer group">
+                <Link href={gameUrl} className="relative w-full h-screen cursor-pointer group flex flex-col items-center justify-center">
                     <Image
                         src={imageUrl}
                         alt="Toca para jugar ahora"
@@ -67,13 +67,14 @@ export default function PrizePreviewPage() {
                         priority
                     />
                     <div className="absolute inset-0 bg-black/10 flex items-center justify-center">
-                        <div className="bg-yellow-400 text-black px-8 py-4 rounded-full font-black text-2xl shadow-2xl flex items-center gap-3 animate-bounce border-4 border-black">
-                            <MousePointer2 className="h-8 w-8" />
-                            ¡TOCA PARA JUGAR YA!
+                        <div className="bg-yellow-400 text-black px-10 py-6 rounded-full font-black text-3xl shadow-2xl flex items-center gap-4 animate-bounce border-4 border-black hover:scale-110 transition-transform">
+                            <Gamepad2 className="h-10 w-10" />
+                            ¡JUGAR AHORA!
                         </div>
                     </div>
                     {/* El link real funcional está "escondido" en toda la superficie de la imagen */}
-                    <div className="absolute bottom-10 left-0 right-0 text-center">
+                    <div className="absolute bottom-10 left-0 right-0 text-center bg-black/40 py-2 backdrop-blur-sm">
+                        <p className="text-white font-bold text-sm">👇 TOCA LA FOTO PARA ENTRAR AL JUEGO</p>
                         <p className="text-white/50 text-xs font-mono">Redirigiendo automáticamente en 3 segundos...</p>
                     </div>
                 </Link>

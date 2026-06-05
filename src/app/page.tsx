@@ -1732,10 +1732,11 @@ const App = () => {
 
             ctx.drawImage(img, 0, 0);
 
-            const bannerHeight = canvas.height * 0.4;
+            const bannerHeight = canvas.height * 0.3;
             const bannerY = (canvas.height - bannerHeight) / 2;
             
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
+            // Dibujar el botón visual "TOCA PARA JUGAR YA"
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
             ctx.fillRect(0, bannerY, canvas.width, bannerHeight);
             
             ctx.fillStyle = '#ffffff';
@@ -1744,10 +1745,9 @@ const App = () => {
             ctx.textBaseline = 'middle';
             ctx.fillText('RIFA⚡EXPRESS', canvas.width / 2, bannerY + (bannerHeight * 0.3));
             
-            ctx.fillStyle = '#facc15';
-            ctx.font = `bold ${Math.floor(bannerHeight * 0.2)}px sans-serif`;
-            ctx.fillText('👇 TOCA EL LINK AZUL', canvas.width / 2, bannerY + (bannerHeight * 0.6));
-            ctx.fillText('PARA JUGAR AHORA', canvas.width / 2, bannerY + (bannerHeight * 0.8));
+            ctx.fillStyle = '#facc15'; // Amarillo brillante
+            ctx.font = `black ${Math.floor(bannerHeight * 0.3)}px sans-serif`;
+            ctx.fillText('¡TOCA PARA JUGAR YA!', canvas.width / 2, bannerY + (bannerHeight * 0.7));
 
             const stampedBlob = await new Promise<Blob | null>(r => canvas.toBlob(r, 'image/jpeg', 0.9));
             if (!stampedBlob) throw new Error("Could not create stamped blob");
@@ -1758,7 +1758,7 @@ const App = () => {
             await handleFieldChange('prizeImageUrl', uploadedImageUrl, true);
             
             const prizeName = raffleState.prize || '';
-            const message = `${raffleUrl}\n\n${t('shareRaffleMessage', { prize: prizeName })}\n\n¡Toca arriba para jugar ahora! ⚡`;
+            const message = `${raffleUrl}\n\n${t('shareRaffleMessage', { prize: prizeName })}\n\n👉 ¡Toca arriba para jugar ya! ⚡`;
 
             if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
                 try {
@@ -1802,7 +1802,7 @@ const App = () => {
             // URL a la página de previsualización que redirige
             const raffleUrl = `${window.location.origin}/prize/${raffleState.raffleRef}`;
             const prizeName = raffleState.prize || '';
-            const message = `${raffleUrl}\n\n${t('shareRaffleMessage', { prize: prizeName })}\n\n¡Toca arriba para jugar ahora! ⚡`;
+            const message = `${raffleUrl}\n\n${t('shareRaffleMessage', { prize: prizeName })}\n\n👉 ¡Toca arriba para jugar ya! ⚡`;
 
             const response = await fetch(raffleState.prizeImageUrl);
             const blob = await response.blob();
@@ -1825,10 +1825,11 @@ const App = () => {
 
             ctx.drawImage(img, 0, 0);
 
-            const bannerHeight = canvas.height * 0.4;
+            const bannerHeight = canvas.height * 0.3;
             const bannerY = (canvas.height - bannerHeight) / 2;
             
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
+            // Dibujar el botón visual "TOCA PARA JUGAR YA"
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
             ctx.fillRect(0, bannerY, canvas.width, bannerHeight);
             
             ctx.fillStyle = '#ffffff';
@@ -1838,9 +1839,8 @@ const App = () => {
             ctx.fillText('RIFA⚡EXPRESS', canvas.width / 2, bannerY + (bannerHeight * 0.3));
             
             ctx.fillStyle = '#facc15';
-            ctx.font = `bold ${Math.floor(bannerHeight * 0.2)}px sans-serif`;
-            ctx.fillText('👇 TOCA EL LINK AZUL', canvas.width / 2, bannerY + (bannerHeight * 0.6));
-            ctx.fillText('PARA JUGAR AHORA', canvas.width / 2, bannerY + (bannerHeight * 0.8));
+            ctx.font = `black ${Math.floor(bannerHeight * 0.3)}px sans-serif`;
+            ctx.fillText('¡TOCA PARA JUGAR YA!', canvas.width / 2, bannerY + (bannerHeight * 0.7));
 
             const stampedBlob = await new Promise<Blob | null>(r => canvas.toBlob(r, 'image/jpeg', 0.9));
             if (!stampedBlob) throw new Error("Could not create stamped blob");
@@ -1862,7 +1862,7 @@ const App = () => {
         } catch (error) {
             console.error("Error sharing existing prize photo:", error);
             const raffleUrl = `${window.location.origin}/prize/${raffleState.raffleRef}`;
-            const message = encodeURIComponent(`${raffleUrl}\n\n${t('shareRaffleMessage', { prize: raffleState.prize || '' })}\n\n👉 ¡Toca arriba para jugar ahora!`);
+            const message = encodeURIComponent(`${raffleUrl}\n\n${t('shareRaffleMessage', { prize: raffleState.prize || '' })}\n\n👉 ¡Toca arriba para jugar ya!`);
             window.open(`https://wa.me/?text=${message}`, '_blank');
         } finally {
             setIsUploading(false);
