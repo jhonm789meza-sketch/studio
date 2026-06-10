@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect, useRef, useTransition } from 'react';
 import jsPDF from 'jspdf';
@@ -2955,7 +2954,7 @@ const App = () => {
                                                 <Button onClick={() => handlePriceButtonClick('two-digit')} size="lg" className={`w-full ${appSettings.isFreeTwoDigit ? 'bg-orange-500 hover:bg-orange-600' : 'bg-green-500 hover:bg-green-600'} text-white font-bold`}>
                                                     {appSettings.isFreeTwoDigit ? t('freeLabel') : (t('price') + (appSettings.activationPriceTwoDigit ? ` (${appSettings.activationPriceTwoDigit})` : ''))}
                                                 </Button>
-                                                {!appSettings.isFreeTwoDigit && (
+                                                {(!appSettings.isFreeTwoDigit || isSuperAdmin) && (
                                                     <div className="text-center">
                                                         <Button onClick={handleActivationClick} size="lg" className="w-full bg-gray-700 hover:bg-gray-800 text-white font-bold flex items-center gap-2 justify-center">
                                                             <BankIcon />
@@ -2994,7 +2993,7 @@ const App = () => {
                                                 <Button onClick={() => handlePriceButtonClick('three-digit')} size="lg" className={`w-full ${appSettings.isFreeThreeDigit ? 'bg-orange-500 hover:bg-orange-600' : 'bg-blue-500 hover:bg-blue-600'} text-white font-bold`}>
                                                     {appSettings.isFreeThreeDigit ? t('freeLabel') : (t('price') + (appSettings.activationPriceThreeDigit ? ` (${appSettings.activationPriceThreeDigit})` : ''))}
                                                 </Button>
-                                                {!appSettings.isFreeThreeDigit && (
+                                                {(!appSettings.isFreeThreeDigit || isSuperAdmin) && (
                                                     <div className="text-center">
                                                         <Button onClick={handleActivationClick} size="lg" className="w-full bg-gray-700 hover:bg-gray-800 text-white font-bold flex items-center gap-2 justify-center">
                                                             <BankIcon />
@@ -3033,7 +3032,7 @@ const App = () => {
                                                 <Button onClick={() => handlePriceButtonClick('infinite')} size="lg" className={`w-full ${appSettings.isFreeInfinite ? 'bg-orange-500 hover:bg-orange-600' : 'bg-red-500 hover:bg-red-600'} text-white font-bold`}>
                                                     {appSettings.isFreeInfinite ? t('freeLabel') : (t('price') + (appSettings.activationPriceInfinite ? ` (${appSettings.activationPriceInfinite})` : ''))}
                                                 </Button>
-                                                {!appSettings.isFreeInfinite && (
+                                                {(!appSettings.isFreeInfinite || isSuperAdmin) && (
                                                     <div className="text-center">
                                                         <Button onClick={handleActivationClick} size="lg" className="w-full bg-gray-700 hover:bg-gray-800 text-white font-bold flex items-center gap-2 justify-center">
                                                             <BankIcon />
@@ -3458,7 +3457,7 @@ const App = () => {
                                                                 const collected = ((raffle.participants || []).filter(p => p.paymentStatus === 'confirmed').length * parseFloat(String(raffle.value).replace(/\D/g, ''))) || 0;
                                                                 const gameDateObj = raffle.gameDate ? new Date(raffle.gameDate + 'T00:00:00') : null;
                                                                 const isPastDue = gameDateObj ? gameDateObj < today && !raffle.winner : false;
-                                                                const canDelete = (raffle.participants || []).length === 0 || !!raffle.winner || isPastDue;
+                                                                const canDelete = (raffle.participants || []).length === 0 || !!r.winner || isPastDue;
                                                                 return (
                                                                     <tr key={`${raffle.raffleRef}-${raffle.adminId}`}>
                                                                         <td className="p-4">
