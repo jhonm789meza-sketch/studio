@@ -389,5 +389,8 @@
     "freeInfinite": "Free Infinite Raffle",
     "freeGamesSaved": "Free games settings saved.",
     "freeLabel": "FREE!",
-    "sendPrizePhoto": "Send Prize Photo"
+    "sendPrizePhoto": "Send Prize Photo",
+    "manageLockedBoardBg": "Change Locked Board Background",
+    "manageLockedBoardBgDescription": "Update the background image for the start screen when no game is active.",
+    "lockedBoardBgUrlLabel": "Background Image URL"
 }

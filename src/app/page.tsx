@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect, useRef, useTransition } from 'react';
 import jsPDF from 'jspdf';
@@ -12,7 +13,7 @@ import { requestNotificationPermission } from '@/lib/notification';
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House, Clock as ClockIcon, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages, Trophy, Trash2, Copy, Shield, LogOut, Eye, EyeOff, Gamepad2, Phone, TrendingUp, Globe, Landmark, RefreshCcw, LockKeyhole, Package, Camera, Check, Upload, FlipHorizontal, MousePointer2 } from 'lucide-react';
+import { Menu, Award, Lock, House, Clock as ClockIcon, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages, Trophy, Trash2, Copy, Shield, LogOut, Eye, EyeOff, Gamepad2, Phone, TrendingUp, Globe, Landmark, RefreshCcw, LockKeyhole, Package, Camera, Check, Upload, FlipHorizontal, MousePointer2, ImageIcon } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -224,6 +225,9 @@ const App = () => {
     const [captureCountdown, setCaptureCountdown] = useState<number | null>(null);
     const videoRef = useRef<HTMLVideoElement>(null);
 
+    const [isLockedBoardBgDialogOpen, setIsLockedBoardBgDialogOpen] = useState(false);
+    const [lockedBoardBgUrl, setLockedBoardBgUrl] = useState('');
+
     const prizeTextareaRef = useRef<HTMLTextAreaElement>(null);
     const isCurrentUserAdmin = !!raffleState.adminId && !!currentAdminId && raffleState.adminId === currentAdminId;
     const raffleMode = raffleState.raffleMode;
@@ -290,6 +294,7 @@ const App = () => {
                         line2: settings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054',
                     });
                     setPaymentQrImageUrl(settings.paymentQrImageUrl || '');
+                    setLockedBoardBgUrl(settings.lockedBoardBackgroundImageUrl || '');
                 }
             }
         });
@@ -2112,6 +2117,21 @@ const App = () => {
         }
     };
 
+    const handleSaveLockedBoardBg = async () => {
+        if (!isSuperAdmin) return;
+        try {
+            const settingsDocRef = doc(db, 'internal', 'settings');
+            await setDoc(settingsDocRef, {
+                lockedBoardBackgroundImageUrl: lockedBoardBgUrl,
+            }, { merge: true });
+            showNotification(t('imageUploadedSuccess'), 'success');
+            setIsLockedBoardBgDialogOpen(false);
+        } catch (error) {
+            console.error("Error saving locked board background:", error);
+            showNotification(t('errorSavingPaymentInfo'), 'error');
+        }
+    };
+
     const handleDeleteGeneratedRef = (raffleRef: string) => {
         showConfirmationDialog(
             t('deleteGeneratedRefConfirmation', { ref: raffleRef }),
@@ -2155,7 +2175,7 @@ const App = () => {
 
     const allNumbers = Array.from({ length: totalNumbers }, (_, i) => i);
     
-    const backgroundImage = raffleState.prizeImageUrl;
+    const backgroundImage = raffleState.raffleRef ? raffleState.prizeImageUrl : (appSettings.lockedBoardBackgroundImageUrl || '');
 
     const closeTicketModal = () => {
         setIsTicketModalOpen(false);
@@ -2836,6 +2856,10 @@ const App = () => {
                                                 <RefreshCcw className="mr-2 h-4 w-4" />
                                                 <span>{t('freeGames')}</span>
                                             </DropdownMenuItem>
+                                            <DropdownMenuItem onSelect={() => setIsLockedBoardBgDialogOpen(true)}>
+                                                <ImageIcon className="mr-2 h-4 w-4" />
+                                                <span>{t('manageLockedBoardBg')}</span>
+                                            </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setIsPaymentInfoDialogOpen(true)}>
                                                 <Landmark className="mr-2 h-4 w-4" />
                                                 <span>{t('paymentInfo')}</span>
@@ -3457,7 +3481,7 @@ const App = () => {
                                                                 const collected = ((raffle.participants || []).filter(p => p.paymentStatus === 'confirmed').length * parseFloat(String(raffle.value).replace(/\D/g, ''))) || 0;
                                                                 const gameDateObj = raffle.gameDate ? new Date(raffle.gameDate + 'T00:00:00') : null;
                                                                 const isPastDue = gameDateObj ? gameDateObj < today && !raffle.winner : false;
-                                                                const canDelete = (raffle.participants || []).length === 0 || !!r.winner || isPastDue;
+                                                                const canDelete = (raffle.participants || []).length === 0 || !!raffle.winner || isPastDue;
                                                                 return (
                                                                     <tr key={`${raffle.raffleRef}-${raffle.adminId}`}>
                                                                         <td className="p-4">
@@ -4045,6 +4069,38 @@ const App = () => {
                         </div>
                     </div>
                     <DialogFooter><Button variant="outline" onClick={() => setIsFreeGamesDialogOpen(false)}>{t('cancel')}</Button><Button onClick={handleSaveFreeGamesSettings}>{t('save')}</Button></DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={isLockedBoardBgDialogOpen} onOpenChange={setIsLockedBoardBgDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{t('manageLockedBoardBg')}</DialogTitle>
+                        <DialogDescription>{t('manageLockedBoardBgDescription')}</DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="locked-board-bg-url">{t('lockedBoardBgUrlLabel')}</Label>
+                            <Input 
+                                id="locked-board-bg-url" 
+                                value={lockedBoardBgUrl} 
+                                onChange={(e) => setLockedBoardBgUrl(e.target.value)} 
+                                placeholder="https://example.com/background.jpg"
+                            />
+                        </div>
+                        {lockedBoardBgUrl && (
+                            <div className="mt-4 p-4 border rounded-lg bg-gray-50 flex flex-col items-center gap-2">
+                                <Label>{t('preview')}</Label>
+                                <div className="relative w-full aspect-video rounded-lg overflow-hidden border">
+                                    <Image src={lockedBoardBgUrl} alt="Preview" fill className="object-cover" unoptimized />
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsLockedBoardBgDialogOpen(false)}>{t('cancel')}</Button>
+                        <Button onClick={handleSaveLockedBoardBg}>{t('save')}</Button>
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
 

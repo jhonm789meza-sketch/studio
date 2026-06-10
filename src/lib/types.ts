@@ -39,6 +39,7 @@ export interface AppSettings {
     isFreeTwoDigit?: boolean;
     isFreeThreeDigit?: boolean;
     isFreeInfinite?: boolean;
+    lockedBoardBackgroundImageUrl?: string;
 }
 
 export interface Raffle {

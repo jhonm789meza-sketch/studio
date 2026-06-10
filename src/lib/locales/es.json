@@ -389,5 +389,8 @@
     "freeInfinite": "Rifa Infinita Gratis",
     "freeGamesSaved": "Configuración de juegos gratuitos guardada.",
     "freeLabel": "¡GRATIS!",
-    "sendPrizePhoto": "Enviar foto del premio"
+    "sendPrizePhoto": "Enviar foto del premio",
+    "manageLockedBoardBg": "Cambiar Fondo Tablero Bloqueado",
+    "manageLockedBoardBgDescription": "Actualiza la imagen de fondo para la pantalla de inicio cuando no hay un juego activo.",
+    "lockedBoardBgUrlLabel": "URL de la Imagen de Fondo"
 }
