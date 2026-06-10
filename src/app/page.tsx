@@ -563,11 +563,11 @@ const App = () => {
         initialize();
 
         const handlePopState = (event: PopStateEvent) => {
-            const newUrlParams = new URLSearchParams(window.location.search);
-            const newRefFromUrl = newUrlParams.get('ref');
-            if (newRefFromUrl && newRefFromUrl !== raffleState.raffleRef) {
-                handleAdminSearch({ refToSearch: newRefFromUrl, isInitialLoad: true });
-            } else if (!newRefFromUrl) {
+            const iUrlParams = new URLSearchParams(window.location.search);
+            const iRefFromUrl = iUrlParams.get('ref');
+            if (iRefFromUrl && iRefFromUrl !== raffleState.raffleRef) {
+                handleAdminSearch({ refToSearch: iRefFromUrl, isInitialLoad: true });
+            } else if (!iRefFromUrl) {
                 raffleSubscription.current?.();
                 setRaffleState(initialRaffleData);
                 setCurrentAdminId(null);
@@ -1252,18 +1252,18 @@ const App = () => {
                         handleTabClick('board');
         
                         const currentUrl = new URL(window.location.href);
-                        const newUrl = new URL(window.location.origin);
-                        newUrl.searchParams.set('ref', aRef);
+                        const iNewUrl = new URL(window.location.origin);
+                        iNewUrl.searchParams.set('ref', aRef);
                         
                         const adminIdForUrl = localStorage.getItem('rifaAdminId');
                         if (data.adminId && data.adminId === adminIdForUrl && !isPublicSearch) {
-                            newUrl.searchParams.set('adminId', data.adminId);
+                            iNewUrl.searchParams.set('adminId', data.adminId);
                         } else {
-                            newUrl.searchParams.delete('adminId');
+                            iNewUrl.searchParams.delete('adminId');
                         }
 
-                        if (currentUrl.href !== newUrl.href) {
-                            window.history.replaceState({}, '', newUrl.href);
+                        if (currentUrl.href !== iNewUrl.href) {
+                            window.history.replaceState({}, '', iNewUrl.href);
                         }
                     }
                 } else if (!isInitialLoad) {
@@ -1474,9 +1474,9 @@ const App = () => {
             : undefined;
     
         if (link) {
-          const url = new URL(link);
-          url.searchParams.set('raffleMode', mode);
-          window.location.href = url.toString();
+          const iUrl = new URL(link);
+          iUrl.searchParams.set('raffleMode', mode);
+          window.location.href = iUrl.toString();
         } else {
           setIsCopyOptionsDialogOpen(true);
         }
@@ -1599,9 +1599,9 @@ const App = () => {
             }
     
             if (loadBoard) {
-                const newUrl = new URL(window.location.origin);
-                newUrl.searchParams.set('ref', finalRaffleRef);
-                window.history.pushState({}, '', newUrl.href);
+                const iNewUrl = new URL(window.location.origin);
+                iNewUrl.searchParams.set('ref', finalRaffleRef);
+                window.history.pushState({}, '', iNewUrl.href);
                 await handleAdminSearch({refToSearch: finalRaffleRef, isInitialLoad: true});
             }
             return { adminId, finalRaffleRef };
@@ -2171,7 +2171,7 @@ const App = () => {
 
     const allNumbers = Array.from({ length: totalNumbers }, (_, i) => i);
     
-    const backgroundImage = raffleState.raffleRef ? raffleState.prizeImageUrl : (appSettings.lockedBoardBackgroundImageUrl || '');
+    const globalBackgroundImage = raffleState.raffleRef ? raffleState.prizeImageUrl : '';
 
     const closeTicketModal = () => {
         setIsTicketModalOpen(false);
@@ -2792,19 +2792,25 @@ const App = () => {
     
     return (
         <div className="min-h-screen bg-background font-sans relative">
-            {backgroundImage && (
+            {globalBackgroundImage && (
                 <div className="fixed inset-0 z-0 pointer-events-none">
-                    <Image src={backgroundImage} alt={t('raffleBackgroundAlt')} fill style={{objectFit: "cover"}} unoptimized />
+                    <Image src={globalBackgroundImage} alt={t('raffleBackgroundAlt')} fill style={{objectFit: "cover"}} unoptimized />
                     <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/40" />
                 </div>
             )}
             <div className="relative z-10 p-4">
                 {showConfetti && <Confetti />}
                 <div className={cn(
-                    "max-w-6xl mx-auto rounded-2xl shadow-2xl overflow-hidden border transition-all duration-700",
-                    !raffleState.raffleRef ? "bg-background/20 backdrop-blur-2xl border-white/20" : "bg-card/95 backdrop-blur-sm"
+                    "max-w-6xl mx-auto rounded-2xl shadow-2xl overflow-hidden border transition-all duration-700 relative",
+                    !raffleState.raffleRef ? "border-white/20 min-h-[80vh]" : "bg-card/95 backdrop-blur-sm"
                 )}>
-                    <div className="bg-gradient-to-r from-purple-600/80 to-blue-600/80 text-white p-6 flex justify-between items-center relative overflow-hidden">
+                    {!raffleState.raffleRef && appSettings.lockedBoardBackgroundImageUrl && (
+                        <div className="absolute inset-0 z-0 pointer-events-none">
+                            <Image src={appSettings.lockedBoardBackgroundImageUrl} alt="Locked Background" fill className="object-cover" unoptimized />
+                            <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px]" />
+                        </div>
+                    )}
+                    <div className="bg-gradient-to-r from-purple-600/80 to-blue-600/80 text-white p-6 flex justify-between items-center relative overflow-hidden z-10">
                         <div className="absolute inset-0 bg-white/5 backdrop-blur-sm pointer-events-none" />
                         <div className="relative z-10">
                             <DropdownMenu>
@@ -2951,7 +2957,7 @@ const App = () => {
                     </div>
 
                     {!raffleState.raffleRef ? (
-                        <div className="p-8 relative">
+                        <div className="p-8 relative z-10">
                             <div className="text-center">
                                 <DateTimeDisplay t={t} />
                                 <div className="bg-white/10 backdrop-blur-md inline-block p-4 rounded-full mb-4 shadow-xl border border-white/20">
@@ -3106,7 +3112,7 @@ const App = () => {
                         </div>
                     ) : (
                         <>
-                            <div className="border-b border-gray-200">
+                            <div className="border-b border-gray-200 z-10 relative">
                                 <div className="relative flex overflow-x-auto">
                                     <button 
                                         className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'board' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
@@ -3181,7 +3187,7 @@ const App = () => {
                                     )}
                                 </div>
                             </div>
-                            <div className="p-6">
+                            <div className="p-6 relative z-10">
                                 <div className={activeTab === 'board' ? 'tab-content active' : 'tab-content'}>
                                     {renderBoardContent()}
                                 </div>
@@ -3280,7 +3286,7 @@ const App = () => {
                                                         {raffleState.raffleNumber && allAssignedNumbers.has(parseInt(raffleState.raffleNumber)) && (
                                                             <p className="text-red-500 text-sm mt-1">{t('numberAlreadyAssignedWarning')}</p>
                                                         )}
-                                                        {raffleState.raffleMode === 'infinite' && (
+                                                        {raffleState.raffleNumber && raffleState.raffleMode === 'infinite' && (
                                                             <Button
                                                                 type="button"
                                                                 variant="ghost"
@@ -3304,15 +3310,15 @@ const App = () => {
                                                                     showNotification(t('completeAllFieldsWarning'), 'warning');
                                                                     return;
                                                                 }
-                                                                const url = new URL(raffleState.paymentLink!);
+                                                                const iUrl = new URL(raffleState.paymentLink!);
                                                                 const redirectUrlWithParams = new URL(window.location.href);
                                                                 const cleanRedirectUrl = new URL(redirectUrlWithParams.origin + redirectUrlWithParams.pathname);
                                                                 cleanRedirectUrl.searchParams.set('ref', raffleState.raffleRef);
                                                                 cleanRedirectUrl.searchParams.set('pName', raffleState.name || '');
                                                                 cleanRedirectUrl.searchParams.set('pPhone', raffleState.phoneNumber || '');
                                                                 cleanRedirectUrl.searchParams.set('pNum', raffleState.raffleNumber || '');
-                                                                url.searchParams.set('redirect-url', cleanRedirectUrl.href);
-                                                                window.location.href = url.toString();
+                                                                iUrl.searchParams.set('redirect-url', cleanRedirectUrl.href);
+                                                                window.location.href = iUrl.toString();
                                                             }}
                                                         >
                                                             <LinkIcon className="mr-2 h-4 w-4" />
@@ -3489,7 +3495,7 @@ const App = () => {
                                                                 const collected = ((raffle.participants || []).filter(p => p.paymentStatus === 'confirmed').length * parseFloat(String(raffle.value).replace(/\D/g, ''))) || 0;
                                                                 const gameDateObj = raffle.gameDate ? new Date(raffle.gameDate + 'T00:00:00') : null;
                                                                 const isPastDue = gameDateObj ? gameDateObj < today && !raffle.winner : false;
-                                                                const canDelete = (raffle.participants || []).length === 0 || !!r.winner || isPastDue;
+                                                                const canDelete = (raffle.participants || []).length === 0 || !!raffle.winner || isPastDue;
                                                                 return (
                                                                     <tr key={`${raffle.raffleRef}-${raffle.adminId}`}>
                                                                         <td className="p-4">
