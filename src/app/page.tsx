@@ -2955,13 +2955,15 @@ const App = () => {
                                                 <Button onClick={() => handlePriceButtonClick('two-digit')} size="lg" className={`w-full ${appSettings.isFreeTwoDigit ? 'bg-orange-500 hover:bg-orange-600' : 'bg-green-500 hover:bg-green-600'} text-white font-bold`}>
                                                     {appSettings.isFreeTwoDigit ? t('freeLabel') : (t('price') + (appSettings.activationPriceTwoDigit ? ` (${appSettings.activationPriceTwoDigit})` : ''))}
                                                 </Button>
-                                                <div className="text-center">
-                                                    <Button onClick={handleActivationClick} size="lg" className="w-full bg-gray-700 hover:bg-gray-800 text-white font-bold flex items-center gap-2 justify-center">
-                                                        <BankIcon />
-                                                        {t('activate')}
-                                                    </Button>
-                                                    <p className="text-xs text-gray-500 mt-2 whitespace-pre-wrap">{appSettings.bankInfoLine1 || 'Banco Caja Social: 24096711314'}{'\n'}{appSettings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054'}</p>
-                                                </div>
+                                                {!appSettings.isFreeTwoDigit && (
+                                                    <div className="text-center">
+                                                        <Button onClick={handleActivationClick} size="lg" className="w-full bg-gray-700 hover:bg-gray-800 text-white font-bold flex items-center gap-2 justify-center">
+                                                            <BankIcon />
+                                                            {t('activate')}
+                                                        </Button>
+                                                        <p className="text-xs text-gray-500 mt-2 whitespace-pre-wrap">{appSettings.bankInfoLine1 || 'Banco Caja Social: 24096711314'}{'\n'}{appSettings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054'}</p>
+                                                    </div>
+                                                )}
                                                 {isSuperAdmin && nextRaffleRefs.twoDigit.refs.length > 0 && (
                                                     <div className="text-xs text-center text-gray-500 font-semibold">
                                                         {t('nextRefs2Digit')}{' '}
@@ -2992,13 +2994,15 @@ const App = () => {
                                                 <Button onClick={() => handlePriceButtonClick('three-digit')} size="lg" className={`w-full ${appSettings.isFreeThreeDigit ? 'bg-orange-500 hover:bg-orange-600' : 'bg-blue-500 hover:bg-blue-600'} text-white font-bold`}>
                                                     {appSettings.isFreeThreeDigit ? t('freeLabel') : (t('price') + (appSettings.activationPriceThreeDigit ? ` (${appSettings.activationPriceThreeDigit})` : ''))}
                                                 </Button>
-                                                 <div className="text-center">
-                                                    <Button onClick={handleActivationClick} size="lg" className="w-full bg-gray-700 hover:bg-gray-800 text-white font-bold flex items-center gap-2 justify-center">
-                                                        <BankIcon />
-                                                        {t('activate')}
-                                                    </Button>
-                                                     <p className="text-xs text-gray-500 mt-2 whitespace-pre-wrap">{appSettings.bankInfoLine1 || 'Banco Caja Social: 24096711314'}{'\n'}{appSettings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054'}</p>
-                                                </div>
+                                                {!appSettings.isFreeThreeDigit && (
+                                                    <div className="text-center">
+                                                        <Button onClick={handleActivationClick} size="lg" className="w-full bg-gray-700 hover:bg-gray-800 text-white font-bold flex items-center gap-2 justify-center">
+                                                            <BankIcon />
+                                                            {t('activate')}
+                                                        </Button>
+                                                        <p className="text-xs text-gray-500 mt-2 whitespace-pre-wrap">{appSettings.bankInfoLine1 || 'Banco Caja Social: 24096711314'}{'\n'}{appSettings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054'}</p>
+                                                    </div>
+                                                )}
                                                 {isSuperAdmin && nextRaffleRefs.threeDigit.refs.length > 0 && (
                                                     <div className="text-xs text-center text-gray-500 font-semibold">
                                                         {t('nextRefs3Digit')}{' '}
@@ -3029,13 +3033,15 @@ const App = () => {
                                                 <Button onClick={() => handlePriceButtonClick('infinite')} size="lg" className={`w-full ${appSettings.isFreeInfinite ? 'bg-orange-500 hover:bg-orange-600' : 'bg-red-500 hover:bg-red-600'} text-white font-bold`}>
                                                     {appSettings.isFreeInfinite ? t('freeLabel') : (t('price') + (appSettings.activationPriceInfinite ? ` (${appSettings.activationPriceInfinite})` : ''))}
                                                 </Button>
-                                                 <div className="text-center">
-                                                    <Button onClick={handleActivationClick} size="lg" className="w-full bg-gray-700 hover:bg-gray-800 text-white font-bold flex items-center gap-2 justify-center">
-                                                       <BankIcon />
-                                                       {t('activate')}
-                                                    </Button>
-                                                     <p className="text-xs text-gray-500 mt-2 whitespace-pre-wrap">{appSettings.bankInfoLine1 || 'Banco Caja Social: 24096711314'}{'\n'}{appSettings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054'}</p>
-                                                </div>
+                                                {!appSettings.isFreeInfinite && (
+                                                    <div className="text-center">
+                                                        <Button onClick={handleActivationClick} size="lg" className="w-full bg-gray-700 hover:bg-gray-800 text-white font-bold flex items-center gap-2 justify-center">
+                                                            <BankIcon />
+                                                            {t('activate')}
+                                                        </Button>
+                                                        <p className="text-xs text-gray-500 mt-2 whitespace-pre-wrap">{appSettings.bankInfoLine1 || 'Banco Caja Social: 24096711314'}{'\n'}{appSettings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054'}</p>
+                                                    </div>
+                                                )}
                                                 {isSuperAdmin && nextRaffleRefs.infinite.refs.length > 0 && (
                                                     <div className="text-xs text-center text-gray-500 font-semibold">
                                                         {t('nextRefsInfinite')}{' '}
