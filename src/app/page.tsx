@@ -468,7 +468,7 @@ const App = () => {
         window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
         return () => {
-            window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+            window.removeEventListener('beforeinstallprompt', handleBeforePrompt);
         };
       }, []);
 
@@ -2804,7 +2804,10 @@ const App = () => {
             )}
             <div className="relative z-10 p-4">
                 {showConfetti && <Confetti />}
-                <div className="max-w-6xl mx-auto bg-card/90 rounded-2xl shadow-2xl overflow-hidden border">
+                <div className={cn(
+                    "max-w-6xl mx-auto rounded-2xl shadow-2xl overflow-hidden border transition-all duration-700",
+                    !raffleState.raffleRef ? "bg-background/20 backdrop-blur-2xl border-white/20" : "bg-card/95 backdrop-blur-sm"
+                )}>
                     <div className="bg-gradient-to-r from-purple-600/80 to-blue-600/80 text-white p-6 flex justify-between items-center">
                         <div>
                             <DropdownMenu>
@@ -2956,39 +2959,39 @@ const App = () => {
                                 <DateTimeDisplay t={t} />
                                 <Lock className="mx-auto h-12 w-12 text-gray-400 mb-4" />
                                 <h2 className="text-2xl font-bold text-gray-800 mb-2">{t('boardLocked')}</h2>
-                                <div className="max-w-2xl mx-auto bg-blue-50 border-l-4 border-blue-500 text-blue-800 p-4 rounded-md mb-8">
+                                <div className="max-w-2xl mx-auto bg-blue-50/50 backdrop-blur-md border-l-4 border-blue-500 text-blue-900 p-4 rounded-md mb-8">
                                     <h3 className="font-bold">{t('activationInstructionTitle')}</h3>
                                     <p className="text-sm">{t('activationInstructionBody')}</p>
                                 </div>
                                 <div className="grid md:grid-cols-1 gap-8 items-start max-w-md mx-auto">
                                     <div className="flex flex-col justify-center items-center gap-8">
-                                        <div className="bg-white rounded-2xl shadow-lg flex flex-col max-w-md w-full">
+                                        <div className="bg-white/40 backdrop-blur-md rounded-2xl shadow-lg flex flex-col max-w-md w-full border border-white/30 overflow-hidden">
                                             <div className='flex'>
-                                                <div className="bg-purple-100 p-4 flex flex-col items-center justify-center rounded-l-2xl border-r-2 border-dashed border-purple-300">
+                                                <div className="bg-purple-100/50 p-4 flex flex-col items-center justify-center border-r-2 border-dashed border-purple-300">
                                                     <TicketIcon className="h-10 w-10 text-purple-600 mb-2" />
                                                     <span className="text-purple-800 font-bold text-lg">2</span>
                                                     <span className="text-purple-600 text-xs">{t('digits')}</span>
                                                 </div>
                                                 <div className="p-6 flex-grow">
                                                     <h5 className="mb-1 text-xl font-bold tracking-tight text-gray-900">{t('2digitRaffle')}</h5>
-                                                    <p className="font-normal text-gray-600 mb-4 text-sm">{t('2digitRaffleDescription')}</p>
+                                                    <p className="font-normal text-gray-700 mb-4 text-sm">{t('2digitRaffleDescription')}</p>
                                                 </div>
                                             </div>
                                             <div className="p-6 pt-0 space-y-4">
                                                 <Button onClick={() => handlePriceButtonClick('two-digit')} size="lg" className={`w-full ${appSettings.isFreeTwoDigit ? 'bg-orange-500 hover:bg-orange-600' : 'bg-green-500 hover:bg-green-600'} text-white font-bold`}>
                                                     {appSettings.isFreeTwoDigit ? t('freeLabel') : (t('price') + (appSettings.activationPriceTwoDigit ? ` (${appSettings.activationPriceTwoDigit})` : ''))}
                                                 </Button>
-                                                {(!appSettings.isFreeTwoDigit || isSuperAdmin) && (
+                                                {((!appSettings.isFreeTwoDigit) || isSuperAdmin) && (
                                                     <div className="text-center">
                                                         <Button onClick={handleActivationClick} size="lg" className="w-full bg-gray-700 hover:bg-gray-800 text-white font-bold flex items-center gap-2 justify-center">
                                                             <BankIcon />
                                                             {t('activate')}
                                                         </Button>
-                                                        <p className="text-xs text-gray-500 mt-2 whitespace-pre-wrap">{appSettings.bankInfoLine1 || 'Banco Caja Social: 24096711314'}{'\n'}{appSettings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054'}</p>
+                                                        <p className="text-xs text-gray-800 mt-2 whitespace-pre-wrap font-medium">{appSettings.bankInfoLine1 || 'Banco Caja Social: 24096711314'}{'\n'}{appSettings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054'}</p>
                                                     </div>
                                                 )}
                                                 {isSuperAdmin && nextRaffleRefs.twoDigit.refs.length > 0 && (
-                                                    <div className="text-xs text-center text-gray-500 font-semibold">
+                                                    <div className="text-xs text-center text-gray-700 font-bold">
                                                         {t('nextRefs2Digit')}{' '}
                                                         {nextRaffleRefs.twoDigit.refs.map((ref, index) => (
                                                             <span key={`ref-2-digit-${index}`}>
@@ -3001,33 +3004,33 @@ const App = () => {
                                             </div>
                                         </div>
 
-                                        <div className="bg-white rounded-2xl shadow-lg flex flex-col max-w-md w-full">
+                                        <div className="bg-white/40 backdrop-blur-md rounded-2xl shadow-lg flex flex-col max-w-md w-full border border-white/30 overflow-hidden">
                                             <div className='flex'>
-                                                <div className="bg-blue-100 p-4 flex flex-col items-center justify-center rounded-l-2xl border-r-2 border-dashed border-blue-300">
+                                                <div className="bg-blue-100/50 p-4 flex flex-col items-center justify-center border-r-2 border-dashed border-blue-300">
                                                     <TicketIcon className="h-10 w-10 text-blue-600 mb-2" />
                                                     <span className="text-blue-800 font-bold text-lg">3</span>
                                                     <span className="text-blue-600 text-xs">{t('digits')}</span>
                                                 </div>
                                                 <div className="p-6 flex-grow">
                                                     <h5 className="mb-1 text-xl font-bold tracking-tight text-gray-900">{t('3digitRaffle')}</h5>
-                                                    <p className="font-normal text-gray-600 mb-4 text-sm">{t('3digitRaffleDescription')}</p>
+                                                    <p className="font-normal text-gray-700 mb-4 text-sm">{t('3digitRaffleDescription')}</p>
                                                 </div>
                                             </div>
                                             <div className="p-6 pt-0 space-y-4">
                                                 <Button onClick={() => handlePriceButtonClick('three-digit')} size="lg" className={`w-full ${appSettings.isFreeThreeDigit ? 'bg-orange-500 hover:bg-orange-600' : 'bg-blue-500 hover:bg-blue-600'} text-white font-bold`}>
                                                     {appSettings.isFreeThreeDigit ? t('freeLabel') : (t('price') + (appSettings.activationPriceThreeDigit ? ` (${appSettings.activationPriceThreeDigit})` : ''))}
                                                 </Button>
-                                                {(!appSettings.isFreeThreeDigit || isSuperAdmin) && (
+                                                {((!appSettings.isFreeThreeDigit) || isSuperAdmin) && (
                                                     <div className="text-center">
                                                         <Button onClick={handleActivationClick} size="lg" className="w-full bg-gray-700 hover:bg-gray-800 text-white font-bold flex items-center gap-2 justify-center">
                                                             <BankIcon />
                                                             {t('activate')}
                                                         </Button>
-                                                        <p className="text-xs text-gray-500 mt-2 whitespace-pre-wrap">{appSettings.bankInfoLine1 || 'Banco Caja Social: 24096711314'}{'\n'}{appSettings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054'}</p>
+                                                        <p className="text-xs text-gray-800 mt-2 whitespace-pre-wrap font-medium">{appSettings.bankInfoLine1 || 'Banco Caja Social: 24096711314'}{'\n'}{appSettings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054'}</p>
                                                     </div>
                                                 )}
                                                 {isSuperAdmin && nextRaffleRefs.threeDigit.refs.length > 0 && (
-                                                    <div className="text-xs text-center text-gray-500 font-semibold">
+                                                    <div className="text-xs text-center text-gray-700 font-bold">
                                                         {t('nextRefs3Digit')}{' '}
                                                         {nextRaffleRefs.threeDigit.refs.map((ref, index) => (
                                                              <span key={`ref-3-digit-${index}`}>
@@ -3040,33 +3043,33 @@ const App = () => {
                                             </div>
                                         </div>
 
-                                         <div className="bg-white rounded-2xl shadow-lg flex flex-col max-w-md w-full">
+                                         <div className="bg-white/40 backdrop-blur-md rounded-2xl shadow-lg flex flex-col max-w-md w-full border border-white/30 overflow-hidden">
                                             <div className='flex'>
-                                                <div className="bg-red-100 p-4 flex flex-col items-center justify-center rounded-l-2xl border-r-2 border-dashed border-red-300">
+                                                <div className="bg-red-100/50 p-4 flex flex-col items-center justify-center border-r-2 border-dashed border-red-300">
                                                     <InfinityIcon className="h-10 w-10 text-red-600 mb-2" />
                                                     <span className="text-red-800 font-bold text-lg">∞</span>
                                                     <span className="text-red-600 text-xs">{t('infinite_caps')}</span>
                                                 </div>
                                                 <div className="p-6 flex-grow">
                                                     <h5 className="mb-1 text-xl font-bold tracking-tight text-gray-900">{t('infiniteRaffle')}</h5>
-                                                    <p className="font-normal text-gray-600 mb-4 text-sm">{t('infiniteRaffleHomeDescription')}</p>
+                                                    <p className="font-normal text-gray-700 mb-4 text-sm">{t('infiniteRaffleHomeDescription')}</p>
                                                 </div>
                                             </div>
                                             <div className="p-6 pt-0 space-y-4">
                                                 <Button onClick={() => handlePriceButtonClick('infinite')} size="lg" className={`w-full ${appSettings.isFreeInfinite ? 'bg-orange-500 hover:bg-orange-600' : 'bg-red-500 hover:bg-red-600'} text-white font-bold`}>
                                                     {appSettings.isFreeInfinite ? t('freeLabel') : (t('price') + (appSettings.activationPriceInfinite ? ` (${appSettings.activationPriceInfinite})` : ''))}
                                                 </Button>
-                                                {(!appSettings.isFreeInfinite || isSuperAdmin) && (
+                                                {((!appSettings.isFreeInfinite) || isSuperAdmin) && (
                                                     <div className="text-center">
                                                         <Button onClick={handleActivationClick} size="lg" className="w-full bg-gray-700 hover:bg-gray-800 text-white font-bold flex items-center gap-2 justify-center">
                                                             <BankIcon />
                                                             {t('activate')}
                                                         </Button>
-                                                        <p className="text-xs text-gray-500 mt-2 whitespace-pre-wrap">{appSettings.bankInfoLine1 || 'Banco Caja Social: 24096711314'}{'\n'}{appSettings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054'}</p>
+                                                        <p className="text-xs text-gray-800 mt-2 whitespace-pre-wrap font-medium">{appSettings.bankInfoLine1 || 'Banco Caja Social: 24096711314'}{'\n'}{appSettings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054'}</p>
                                                     </div>
                                                 )}
                                                 {isSuperAdmin && nextRaffleRefs.infinite.refs.length > 0 && (
-                                                    <div className="text-xs text-center text-gray-500 font-semibold">
+                                                    <div className="text-xs text-center text-gray-700 font-bold">
                                                         {t('nextRefsInfinite')}{' '}
                                                         {nextRaffleRefs.infinite.refs.map((ref, index) => (
                                                             <span key={`ref-infinite-${index}`}>
@@ -3086,10 +3089,10 @@ const App = () => {
                                             id="public-ref-search-home"
                                             value={publicRefSearch}
                                             onChange={(e) => setPublicRefSearch(e.target.value)}
-                                            className="max-w-xs"
+                                            className="max-w-xs bg-white/50 border-white/30 text-gray-900 placeholder:text-gray-500"
                                             placeholder={t('searchRaffleByRefDescription')}
                                         />
-                                        <Button onClick={() => handleAdminSearch({ refToSearch: publicRefSearch, isPublicSearch: true })}>
+                                        <Button onClick={() => handleAdminSearch({ refToSearch: publicRefSearch, isPublicSearch: true })} className="bg-blue-600 hover:bg-blue-700">
                                             <Search className="h-4 w-4" />
                                         </Button>
                                     </div>
