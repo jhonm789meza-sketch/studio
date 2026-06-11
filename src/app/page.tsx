@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect, useRef, useTransition } from 'react';
 import jsPDF from 'jspdf';
@@ -2412,7 +2411,7 @@ const App = () => {
                                    className="w-full mt-1"
                                />
                            </div>
-                           {raffleMode === 'infinite' && isCurrentUserAdmin && !raffleState.isDetailsConfirmed && (
+                           {raffleState.raffleMode === 'infinite' && isCurrentUserAdmin && !raffleState.isDetailsConfirmed && (
                                <div className="flex items-center space-x-2">
                                    <Switch
                                        id="automatic-draw"
@@ -2777,7 +2776,7 @@ const App = () => {
                                 src={appSettings.lockedBoardBackgroundImageUrl} 
                                 alt="Locked Background" 
                                 fill 
-                                className="object-contain" 
+                                className="object-cover md:object-contain" 
                                 unoptimized 
                                 priority 
                             />
