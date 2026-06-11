@@ -2781,7 +2781,7 @@ const App = () => {
                                 unoptimized 
                                 priority 
                             />
-                            <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px]" />
+                            <div className="absolute inset-0 bg-black/20" />
                         </div>
                     )}
                     <div className="bg-gradient-to-r from-purple-600/80 to-blue-600/80 text-white p-6 flex justify-between items-center relative overflow-hidden z-10">
