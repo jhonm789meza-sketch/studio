@@ -2777,7 +2777,7 @@ const App = () => {
                                 src={appSettings.lockedBoardBackgroundImageUrl} 
                                 alt="Locked Background" 
                                 fill 
-                                className="object-cover" 
+                                className="object-contain" 
                                 unoptimized 
                                 priority 
                             />
@@ -3426,7 +3426,7 @@ const App = () => {
                                                     placeholder={t('searchGamePlaceholder')}
                                                     value={gameSearchQuery}
                                                     onChange={(e) => setGameSearchQuery(e.target.value)}
-                                                    className="max-w-sm w-full"
+                                                    className="max-sm w-full"
                                                 />
                                                 <div className="flex items-center gap-2">
                                                     {selectedRafflesForDeletion.length > 0 && (
@@ -3677,7 +3677,7 @@ const App = () => {
                         <div>
                             <div ref={ticketModalRef} className="bg-white p-2 rounded-lg shadow-lg font-mono text-gray-800 text-[11px] relative overflow-hidden" style={{width: '280px'}}>
                                 <div className="absolute inset-0 flex items-center justify-center z-0 opacity-50">
-                                    <p className="text-gray-200/50 text-7xl font-bold -rotate-45 select-none flex items-center gap-1"><span>RIFA⚡EXPRESS</span></p>
+                                    <p className="text-gray-200/50 text-7xl font-bold -rotate-45 select-none flex items-center justify-center gap-1"><span>RIFA⚡EXPRESS</span></p>
                                 </div>
                                 <div className="relative z-10">
                                     <div className="text-center mb-4">
