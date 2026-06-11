@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect, useRef, useTransition } from 'react';
 import jsPDF from 'jspdf';
@@ -1793,81 +1792,48 @@ const App = () => {
         }
     };
 
-    const handleSharePrizePhoto = async () => {
-        if (!raffleState.prizeImageUrl) {
-            showNotification(t('noPrizeImage'), 'warning');
-            return;
-        }
-
+    const handleSharePlayNow = async () => {
+        if (!raffleState.raffleRef) return;
+        
         setIsUploading(true);
         try {
-            const raffleUrl = `${window.location.origin}/prize/${raffleState.raffleRef}`;
-            const prizeName = raffleState.prize || '';
-            const message = `${raffleUrl}\n\n${t('shareRaffleMessage', { prize: prizeName })}\n\n👉 ¡Toca arriba para jugar ya! ⚡`;
+            const prizeImageUrl = raffleState.prizeImageUrl;
+            if (!prizeImageUrl) {
+                 showNotification(t('noPrizeImage'), 'warning');
+                 return;
+            }
 
-            const response = await fetch(raffleState.prizeImageUrl);
+            const response = await fetch(prizeImageUrl);
             const blob = await response.blob();
-            
-            const img = new (window as any).Image();
-            img.crossOrigin = "anonymous";
-            const imageUrl = URL.createObjectURL(blob);
-            
-            await new Promise((resolve, reject) => {
-                img.onload = resolve;
-                img.onerror = reject;
-                img.src = imageUrl;
-            });
+            const file = new File([blob], 'premio_jugar.jpg', { type: blob.type });
 
-            const canvas = document.createElement('canvas');
-            canvas.width = img.width;
-            canvas.height = img.height;
-            const ctx = canvas.getContext('2d');
-            if (!ctx) throw new Error("Canvas context failed");
-
-            ctx.drawImage(img, 0, 0);
-
-            const bannerHeight = canvas.height * 0.3;
-            const bannerY = (canvas.height - bannerHeight) / 2;
-            
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
-            ctx.fillRect(0, bannerY, canvas.width, bannerHeight);
-            
-            ctx.fillStyle = '#ffffff';
-            ctx.font = `bold ${Math.floor(bannerHeight * 0.25)}px sans-serif`;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText('RIFA⚡EXPRESS', canvas.width / 2, bannerY + (bannerHeight * 0.3));
-            
-            ctx.fillStyle = '#facc15';
-            ctx.font = `black ${Math.floor(bannerHeight * 0.3)}px sans-serif`;
-            ctx.fillText('¡TOCA PARA JUGAR YA!', canvas.width / 2, bannerY + (bannerHeight * 0.7));
-
-            const stampedBlob = await new Promise<Blob | null>(r => canvas.toBlob(r, 'image/jpeg', 0.9));
-            if (!stampedBlob) throw new Error("Could not create stamped blob");
-
-            const file = new File([stampedBlob], 'premio.jpg', { type: 'image/jpeg' });
+            const raffleUrl = `${window.location.origin}/prize/${raffleState.raffleRef}`;
+            const message = `${raffleUrl}\n\n¡TOCA AQUÍ PARA JUGAR YA! ⚡\n\n🎯 Rifa: ${raffleState.prize || 'Especial'}\n👉 ¡Participa con tu número favorito!`;
 
             if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
                 await navigator.share({
-                    title: 'RifaExpress',
+                    title: '¡Juega Ya!',
                     text: message,
                     files: [file],
-                    url: raffleUrl, 
+                    url: raffleUrl,
                 });
             } else {
                 const encodedMessage = encodeURIComponent(message);
                 window.open(`https://wa.me/?text=${encodedMessage}`, '_blank');
             }
-            URL.revokeObjectURL(imageUrl);
         } catch (error) {
-            console.error("Error sharing existing prize photo:", error);
+            console.error("Error sharing Play Now button:", error);
             const raffleUrl = `${window.location.origin}/prize/${raffleState.raffleRef}`;
-            const message = encodeURIComponent(`${raffleUrl}\n\n${t('shareRaffleMessage', { prize: raffleState.prize || '' })}\n\n👉 ¡Toca arriba para jugar ya!`);
+            const message = encodeURIComponent(`${raffleUrl}\n\n¡TOCA ARRIBA PARA JUGAR YA! ⚡`);
             window.open(`https://wa.me/?text=${message}`, '_blank');
         } finally {
             setIsUploading(false);
             setIsShareDialogOpen(false);
         }
+    };
+
+    const handleSharePrizePhoto = async () => {
+        await handleSharePlayNow(); // Se reemplaza la funcionalidad por "JUGAR YA"
     };
 
     const handleGoToHome = () => {
@@ -2805,8 +2771,15 @@ const App = () => {
                     !raffleState.raffleRef ? "border-white/20 min-h-[80vh]" : "bg-card/95 backdrop-blur-sm"
                 )}>
                     {!raffleState.raffleRef && appSettings.lockedBoardBackgroundImageUrl && (
-                        <div className="absolute inset-0 z-0 pointer-events-none">
-                            <Image src={appSettings.lockedBoardBackgroundImageUrl} alt="Locked Background" fill className="object-cover" unoptimized />
+                        <div className="absolute inset-0 z-0 pointer-events-none w-full h-full">
+                            <Image 
+                                src={appSettings.lockedBoardBackgroundImageUrl} 
+                                alt="Locked Background" 
+                                fill 
+                                className="object-cover" 
+                                unoptimized 
+                                priority 
+                            />
                             <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px]" />
                         </div>
                     )}
@@ -3838,7 +3811,7 @@ const App = () => {
                     <div className="flex flex-col space-y-4 py-4">
                         <Button onClick={() => handleShareToWhatsApp()} className="w-full bg-green-500 text-white hover:bg-green-600 flex items-center justify-center gap-2"><WhatsappIcon /><span>{t('shareOnWhatsApp')}</span></Button>
                         <Button onClick={() => handleShareToFacebook()} className="w-full bg-blue-600 text-white hover:bg-blue-700 flex items-center justify-center gap-2"><FacebookIcon /><span>{t('shareOnFacebook')}</span></Button>
-                        <Button onClick={() => handleSharePrizePhoto()} className="w-full bg-yellow-500 text-white hover:bg-yellow-600 flex items-center justify-center gap-2"><Camera className="h-5 w-5" /><span>{t('sendPrizePhoto')}</span></Button>
+                        <Button onClick={() => handleSharePlayNow()} className="w-full bg-yellow-500 text-white hover:bg-yellow-600 flex items-center justify-center gap-2"><Gamepad2 className="h-5 w-5" /><span>{t('sendPrizePhoto')}</span></Button>
                     </div>
                     <DialogFooter><Button variant="outline" onClick={() => setIsShareDialogOpen(false)}>{t('close')}</Button></DialogFooter>
                 </DialogContent>
