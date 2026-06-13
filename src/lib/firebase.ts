@@ -1,6 +1,6 @@
 
 import { initializeApp, getApp, getApps, FirebaseApp } from 'firebase/app';
-import { getFirestore, Firestore } from 'firebase/firestore';
+import { getFirestore, Firestore, initializeFirestore } from 'firebase/firestore';
 import { getStorage, FirebaseStorage } from 'firebase/storage';
 import { getMessaging, Messaging } from 'firebase/messaging';
 
@@ -21,13 +21,17 @@ let messaging: Messaging | null = null;
 
 if (getApps().length === 0) {
   app = initializeApp(firebaseConfig);
+  // Se fuerza el uso de long-polling para evitar problemas de conexión 
+  // que causan el error de "Could not reach Cloud Firestore backend".
+  db = initializeFirestore(app, {
+    experimentalForceLongPolling: true,
+  });
 } else {
   app = getApp();
+  db = getFirestore(app);
 }
 
-db = getFirestore(app);
 storage = getStorage(app);
-
 
 if (typeof window !== 'undefined') {
     try {
