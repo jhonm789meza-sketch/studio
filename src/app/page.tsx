@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect, useRef, useTransition } from 'react';
 import jsPDF from 'jspdf';
@@ -2786,11 +2785,11 @@ const App = () => {
                     <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/40" />
                 </div>
             )}
-            <div className="relative z-10 p-4">
+            <div className="relative z-10 p-0 sm:p-4 min-h-screen sm:min-h-auto flex flex-col">
                 {showConfetti && <Confetti />}
                 <div className={cn(
-                    "max-w-6xl mx-auto rounded-2xl shadow-2xl overflow-hidden border transition-all duration-700 relative",
-                    !raffleState.raffleRef ? "border-white/20 min-h-[80vh]" : "bg-card/95 backdrop-blur-sm"
+                    "max-w-6xl mx-auto rounded-none sm:rounded-2xl shadow-2xl overflow-hidden border transition-all duration-700 relative flex-grow w-full",
+                    !raffleState.raffleRef ? "border-white/20 min-h-screen sm:min-h-[80vh]" : "bg-card/95 backdrop-blur-sm"
                 )}>
                     {!raffleState.raffleRef && appSettings.lockedBoardBackgroundImageUrl && (
                         <div className="absolute inset-0 z-0 pointer-events-none w-full h-full">
@@ -2958,7 +2957,7 @@ const App = () => {
                     </div>
 
                     {!raffleState.raffleRef ? (
-                        <div className="p-8 relative z-10">
+                        <div className="p-8 relative z-10 flex-grow">
                             <div className="text-center">
                                 <DateTimeDisplay t={t} />
                                 <div className="bg-white/10 backdrop-blur-md inline-block p-4 rounded-full mb-4 shadow-xl border border-white/20">
@@ -3511,7 +3510,7 @@ const App = () => {
                                                                 const collected = ((raffle.participants || []).filter(p => p.paymentStatus === 'confirmed').length * parseFloat(String(raffle.value).replace(/\D/g, ''))) || 0;
                                                                 const gameDateObj = raffle.gameDate ? new Date(raffle.gameDate + 'T00:00:00') : null;
                                                                 const isPastDue = gameDateObj ? gameDateObj < today && !raffle.winner : false;
-                                                                const canDelete = (raffle.participants || []).length === 0 || !!r.winner || isPastDue;
+                                                                const canDelete = (raffle.participants || []).length === 0 || !!raffle.winner || isPastDue;
                                                                 return (
                                                                     <tr key={`${raffle.raffleRef}-${raffle.adminId}`}>
                                                                         <td className="p-4">
