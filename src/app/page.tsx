@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect, useRef, useTransition } from 'react';
 import jsPDF from 'jspdf';
@@ -1478,9 +1477,10 @@ const App = () => {
         }
 
         if (isFree) {
-            const { finalRaffleRef } = await handleActivateBoard(mode, 'CO', `FREE_${Date.now()}`);
-            if (finalRaffleRef) {
-                const message = encodeURIComponent(`Hola, acabo de activar mi rifa gratuita. La referencia asignada es: *${finalRaffleRef}*`);
+            const { adminId, finalRaffleRef } = await handleActivateBoard(mode, 'CO', `FREE_${Date.now()}`);
+            if (finalRaffleRef && adminId) {
+                const adminUrl = `${window.location.origin}?ref=${finalRaffleRef}&adminId=${adminId}`;
+                const message = encodeURIComponent(`Hola, acabo de activar mi rifa gratuita. La referencia asignada es: *${finalRaffleRef}*.\n\nMi enlace de administrador es: ${adminUrl}`);
                 const phone = (appSettings.supportContacts && appSettings.supportContacts.length > 0) ? appSettings.supportContacts[0] : '3145696687';
                 window.open(`https://wa.me/57${phone}?text=${message}`, '_blank');
             }
@@ -3523,7 +3523,7 @@ const App = () => {
                                                                 const collected = ((raffle.participants || []).filter(p => p.paymentStatus === 'confirmed').length * parseFloat(String(raffle.value).replace(/\D/g, ''))) || 0;
                                                                 const gameDateObj = raffle.gameDate ? new Date(raffle.gameDate + 'T00:00:00') : null;
                                                                 const isPastDue = gameDateObj ? gameDateObj < today && !raffle.winner : false;
-                                                                const canDelete = (raffle.participants || []).length === 0 || !!raffle.winner || isPastDue;
+                                                                const canDelete = (raffle.participants || []).length === 0 || !!r.winner || isPastDue;
                                                                 return (
                                                                     <tr key={`${raffle.raffleRef}-${raffle.adminId}`}>
                                                                         <td className="p-4">
