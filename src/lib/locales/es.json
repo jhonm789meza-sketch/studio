@@ -392,5 +392,6 @@
     "sendPrizePhoto": "Enviar foto del premio",
     "manageLockedBoardBg": "Cambiar Fondo Tablero Bloqueado",
     "manageLockedBoardBgDescription": "Actualiza la imagen de fondo para la pantalla de inicio cuando no hay un juego activo.",
-    "lockedBoardBgUrlLabel": "URL de la Imagen de Fondo"
+    "lockedBoardBgUrlLabel": "URL de la Imagen de Fondo",
+    "totalGamesInLine": "Juegos en línea totales: {count}"
 }

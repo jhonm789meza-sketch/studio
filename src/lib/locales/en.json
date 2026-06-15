@@ -392,5 +392,6 @@
     "sendPrizePhoto": "Send Prize Photo",
     "manageLockedBoardBg": "Change Locked Board Background",
     "manageLockedBoardBgDescription": "Update the background image for the start screen when no game is active.",
-    "lockedBoardBgUrlLabel": "Background Image URL"
+    "lockedBoardBgUrlLabel": "Background Image URL",
+    "totalGamesInLine": "Total online games: {count}"
 }

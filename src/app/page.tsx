@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect, useRef, useTransition } from 'react';
 import jsPDF from 'jspdf';
@@ -2815,6 +2816,12 @@ const App = () => {
                                     </DropdownMenuItem>
                                      {isSuperAdmin && (
                                         <>
+                                            <DropdownMenuSeparator />
+                                            <DropdownMenuItem className="bg-blue-50 focus:bg-blue-50 cursor-default">
+                                                <Globe className="mr-2 h-4 w-4 text-blue-600" />
+                                                <span className="font-bold">{t('totalGamesInLine', { count: allRaffles.length })}</span>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuSeparator />
                                             <DropdownMenuItem onSelect={() => setIsAssignPackageDialogOpen(true)}>
                                                 <Package className="mr-2 h-4 w-4" />
                                                 <span>{t('assignPackage')}</span>
