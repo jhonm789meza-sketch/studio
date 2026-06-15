@@ -276,7 +276,7 @@
     "paymentLinkThreeDigit": "Link de Pago (3 Cifras)",
     "paymentLinkInfinite": "Link de Pago (Infinita)",
     "paymentLinksSaved": "Links de pago guardados con éxito.",
-    "errorSalvandoPaymentLinks": "Error al guardar los links de pago.",
+    "errorSavingPaymentLinks": "Error al guardar los links de pago.",
     "copyPaymentTitle": "Copiar Información de Pago",
     "copyPaymentDescription": "Elige qué información copiar para realizar el pago.",
     "copyAccountNumber": "Copiar Número de Cuenta",
@@ -397,5 +397,10 @@
     "manageLockedBoardBg": "Cambiar Fondo Tablero Bloqueado",
     "manageLockedBoardBgDescription": "Actualiza la imagen de fondo para la pantalla de inicio cuando no hay un juego activo.",
     "lockedBoardBgUrlLabel": "URL de la Imagen de Fondo",
-    "totalGamesInLine": "Juegos en línea totales: {count}"
+    "totalGamesInLine": "Juegos en línea totales: {count}",
+    "gamesSummaryTitle": "Resumen de Juegos en Línea",
+    "gamesSummaryDescription": "Desglose por tipo de tablero utilizado.",
+    "twoDigitGames": "Rifas de 2 Cifras",
+    "threeDigitGames": "Rifas de 3 Cifras",
+    "infiniteGames": "Rifas Infinitas"
 }

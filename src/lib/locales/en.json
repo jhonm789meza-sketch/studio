@@ -397,5 +397,10 @@
     "manageLockedBoardBg": "Change Locked Board Background",
     "manageLockedBoardBgDescription": "Update the background image for the start screen when no game is active.",
     "lockedBoardBgUrlLabel": "Background Image URL",
-    "totalGamesInLine": "Total online games: {count}"
+    "totalGamesInLine": "Total online games: {count}",
+    "gamesSummaryTitle": "Online Games Summary",
+    "gamesSummaryDescription": "Breakdown by board type used.",
+    "twoDigitGames": "2-Digit Raffles",
+    "threeDigitGames": "3-Digit Raffles",
+    "infiniteGames": "Infinite Raffles"
 }

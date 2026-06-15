@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect, useRef, useTransition } from 'react';
 import jsPDF from 'jspdf';
@@ -229,6 +230,8 @@ const App = () => {
 
     const [isLockedBoardBgDialogOpen, setIsLockedBoardBgDialogOpen] = useState(false);
     const [lockedBoardBgUrl, setLockedBoardBgUrl] = useState('');
+
+    const [isGamesSummaryDialogOpen, setIsGamesSummaryDialogOpen] = useState(false);
 
     const prizeTextareaRef = useRef<HTMLTextAreaElement>(null);
     const isCurrentUserAdmin = !!raffleState.adminId && !!currentAdminId && raffleState.adminId === currentAdminId;
@@ -2187,6 +2190,10 @@ const App = () => {
     const ticketValueForGoal = raffleState.raffleMode === 'infinite' && raffleState.value ? parseFloat(String(raffleState.prize).replace(/\D/g, '')) : 0;
     const ticketsToCoverPrize = ticketValueForGoal > 0 ? Math.ceil(prizeValueForGoal / ticketValueForGoal) : 0;
 
+    const twoDigitCount = allRaffles.filter(r => r.raffleMode === 'two-digit').length;
+    const threeDigitCount = allRaffles.filter(r => r.raffleMode === 'three-digit').length;
+    const infiniteCount = allRaffles.filter(r => r.raffleMode === 'infinite').length;
+
 
     if (loading && !raffleState.raffleRef) {
         return <div className="flex justify-center items-center h-screen text-xl font-semibold">{t('loading')}...</div>;
@@ -2837,7 +2844,7 @@ const App = () => {
                                      {isSuperAdmin && (
                                         <>
                                             <DropdownMenuSeparator />
-                                            <DropdownMenuItem className="bg-blue-50 focus:bg-blue-50 cursor-default">
+                                            <DropdownMenuItem onSelect={() => setIsGamesSummaryDialogOpen(true)} className="bg-blue-50 focus:bg-blue-100 cursor-pointer">
                                                 <Globe className="mr-2 h-4 w-4 text-blue-600" />
                                                 <span className="font-bold">{t('totalGamesInLine', { count: allRaffles.length })}</span>
                                             </DropdownMenuItem>
@@ -3510,7 +3517,7 @@ const App = () => {
                                                                 const collected = ((raffle.participants || []).filter(p => p.paymentStatus === 'confirmed').length * parseFloat(String(raffle.value).replace(/\D/g, ''))) || 0;
                                                                 const gameDateObj = raffle.gameDate ? new Date(raffle.gameDate + 'T00:00:00') : null;
                                                                 const isPastDue = gameDateObj ? gameDateObj < today && !raffle.winner : false;
-                                                                const canDelete = (raffle.participants || []).length === 0 || !!raffle.winner || isPastDue;
+                                                                const canDelete = (raffle.participants || []).length === 0 || !!r.winner || isPastDue;
                                                                 return (
                                                                     <tr key={`${raffle.raffleRef}-${raffle.adminId}`}>
                                                                         <td className="p-4">
@@ -4305,6 +4312,50 @@ const App = () => {
                     <DialogFooter className="flex-row justify-center gap-4 sm:justify-center">
                          {!capturedImageBlob && (<Button variant="outline" onClick={stopCamera}>{t('cancel')}</Button>)}
                         {capturedImageBlob && (<div className="flex flex-col items-center gap-2"><p className="text-sm font-semibold text-green-600 animate-pulse">{t('imageUploadedSuccess')}</p><p className="text-xs text-gray-500">{t('uploadingImage')}...</p></div>)}
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={isGamesSummaryDialogOpen} onOpenChange={setIsGamesSummaryDialogOpen}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>{t('gamesSummaryTitle')}</DialogTitle>
+                        <DialogDescription>{t('gamesSummaryDescription')}</DialogDescription>
+                    </DialogHeader>
+                    <div className="py-6 space-y-6">
+                        <div className="space-y-2">
+                            <div className="flex justify-between text-sm font-medium">
+                                <span>{t('twoDigitGames')}</span>
+                                <span className="text-purple-600 font-bold">{twoDigitCount}</span>
+                            </div>
+                            <Progress value={allRaffles.length > 0 ? (twoDigitCount / allRaffles.length) * 100 : 0} className="h-2 bg-purple-100" />
+                        </div>
+                        <div className="space-y-2">
+                            <div className="flex justify-between text-sm font-medium">
+                                <span>{t('threeDigitGames')}</span>
+                                <span className="text-blue-600 font-bold">{threeDigitCount}</span>
+                            </div>
+                            <Progress value={allRaffles.length > 0 ? (threeDigitCount / allRaffles.length) * 100 : 0} className="h-2 bg-blue-100" />
+                        </div>
+                        <div className="space-y-2">
+                            <div className="flex justify-between text-sm font-medium">
+                                <span>{t('infiniteGames')}</span>
+                                <span className="text-red-600 font-bold">{infiniteCount}</span>
+                            </div>
+                            <Progress value={allRaffles.length > 0 ? (infiniteCount / allRaffles.length) * 100 : 0} className="h-2 bg-red-100" />
+                        </div>
+                        
+                        <div className="pt-4 border-t border-dashed">
+                            <div className="flex justify-between items-center font-bold text-lg">
+                                <span>{t('totalCollected')}</span>
+                                <span className="text-green-600">{allRaffles.length}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button type="button" variant="outline" onClick={() => setIsGamesSummaryDialogOpen(false)} className="w-full">
+                            {t('close')}
+                        </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
