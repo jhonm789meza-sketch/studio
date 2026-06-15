@@ -39,6 +39,9 @@ export interface AppSettings {
     isFreeTwoDigit?: boolean;
     isFreeThreeDigit?: boolean;
     isFreeInfinite?: boolean;
+    isBlockedTwoDigit?: boolean;
+    isBlockedThreeDigit?: boolean;
+    isBlockedInfinite?: boolean;
     lockedBoardBackgroundImageUrl?: string;
 }
 

@@ -13,7 +13,7 @@ import { requestNotificationPermission } from '@/lib/notification';
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House, Clock as ClockIcon, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages, Trophy, Trash2, Copy, Shield, LogOut, Eye, EyeOff, Gamepad2, Phone, TrendingUp, Globe, Landmark, RefreshCcw, LockKeyhole, Package, Camera, Check, Upload, FlipHorizontal, MousePointer2, ImageIcon } from 'lucide-react';
+import { Menu, Award, Lock, House, Clock as ClockIcon, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages, Trophy, Trash2, Copy, Shield, LogOut, Eye, EyeOff, Gamepad2, Phone, TrendingUp, Globe, Landmark, RefreshCcw, LockKeyhole, Package, Camera, Check, Upload, FlipHorizontal, MousePointer2, ImageIcon, Ban } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -216,6 +216,9 @@ const App = () => {
         twoDigit: false,
         threeDigit: false,
         infinite: false,
+        blockedTwoDigit: false,
+        blockedThreeDigit: false,
+        blockedInfinite: false,
     });
     
     // Photo sharing functionality
@@ -276,6 +279,9 @@ const App = () => {
                     twoDigit: !!settings.isFreeTwoDigit,
                     threeDigit: !!settings.isFreeThreeDigit,
                     infinite: !!settings.isFreeInfinite,
+                    blockedTwoDigit: !!settings.isBlockedTwoDigit,
+                    blockedThreeDigit: !!settings.isBlockedThreeDigit,
+                    blockedInfinite: !!settings.isBlockedInfinite,
                 });
                 if (isSuperAdmin) {
                     setSupportContacts(Array.isArray(settings.supportContacts) ? settings.supportContacts : []);
@@ -1459,6 +1465,15 @@ const App = () => {
                       mode === 'three-digit' ? appSettings.isFreeThreeDigit :
                       mode === 'infinite' ? appSettings.isFreeInfinite : false;
 
+        const isBlocked = mode === 'two-digit' ? appSettings.isBlockedTwoDigit :
+                          mode === 'three-digit' ? appSettings.isBlockedThreeDigit :
+                          mode === 'infinite' ? appSettings.isBlockedInfinite : false;
+
+        if (isBlocked) {
+            showNotification(t('modeIsBlocked'), 'warning');
+            return;
+        }
+
         if (isFree) {
             handleActivateBoard(mode, 'CO', `FREE_${Date.now()}`);
             return;
@@ -1860,6 +1875,9 @@ const App = () => {
                 twoDigit: !!appSettings.isFreeTwoDigit,
                 threeDigit: !!appSettings.isFreeThreeDigit,
                 infinite: !!appSettings.isFreeInfinite,
+                blockedTwoDigit: !!appSettings.isBlockedTwoDigit,
+                blockedThreeDigit: !!appSettings.isBlockedThreeDigit,
+                blockedInfinite: !!appSettings.isBlockedInfinite,
             });
             setSuperAdminPassword('');
             showNotification('Acceso de Director Ejecutivo concedido.', 'success');
@@ -1947,6 +1965,9 @@ const App = () => {
                 isFreeTwoDigit: freeGamesConfig.twoDigit,
                 isFreeThreeDigit: freeGamesConfig.threeDigit,
                 isFreeInfinite: freeGamesConfig.infinite,
+                isBlockedTwoDigit: freeGamesConfig.blockedTwoDigit,
+                isBlockedThreeDigit: freeGamesConfig.blockedThreeDigit,
+                isBlockedInfinite: freeGamesConfig.blockedInfinite,
             }, { merge: true });
             showNotification(t('freeGamesSaved'), 'success');
             setIsFreeGamesDialogOpen(false);
@@ -2963,10 +2984,15 @@ const App = () => {
                                                 </div>
                                             </div>
                                             <div className="p-8 pt-0 space-y-5">
-                                                <Button onClick={() => handlePriceButtonClick('two-digit')} size="lg" className={`w-full h-14 text-xl ${appSettings.isFreeTwoDigit ? 'bg-orange-600 hover:bg-orange-700' : 'bg-green-600 hover:bg-green-700'} text-white font-black shadow-lg`}>
-                                                    {appSettings.isFreeTwoDigit ? t('freeLabel') : (t('price') + (appSettings.activationPriceTwoDigit ? ` (${appSettings.activationPriceTwoDigit})` : ''))}
+                                                <Button 
+                                                    onClick={() => !appSettings.isBlockedTwoDigit && handlePriceButtonClick('two-digit')} 
+                                                    size="lg" 
+                                                    className={`w-full h-14 text-xl ${appSettings.isBlockedTwoDigit ? 'bg-gray-400 cursor-not-allowed' : appSettings.isFreeTwoDigit ? 'bg-orange-600 hover:bg-orange-700' : 'bg-green-600 hover:bg-green-700'} text-white font-black shadow-lg`}
+                                                    disabled={appSettings.isBlockedTwoDigit}
+                                                >
+                                                    {appSettings.isBlockedTwoDigit ? t('blockedLabel') : (appSettings.isFreeTwoDigit ? t('freeLabel') : (t('price') + (appSettings.activationPriceTwoDigit ? ` (${appSettings.activationPriceTwoDigit})` : '')))}
                                                 </Button>
-                                                {((!appSettings.isFreeTwoDigit) || isSuperAdmin) && (
+                                                {((!appSettings.isFreeTwoDigit && !appSettings.isBlockedTwoDigit) || isSuperAdmin) && (
                                                     <div className="text-center space-y-4">
                                                         <Button onClick={handleActivationClick} size="lg" className="w-full bg-slate-900 hover:bg-black text-white font-bold flex items-center gap-3 justify-center h-12">
                                                             <BankIcon className="h-5 w-5" />
@@ -3004,10 +3030,15 @@ const App = () => {
                                                 </div>
                                             </div>
                                             <div className="p-8 pt-0 space-y-5">
-                                                <Button onClick={() => handlePriceButtonClick('three-digit')} size="lg" className={`w-full h-14 text-xl ${appSettings.isFreeThreeDigit ? 'bg-orange-600 hover:bg-orange-700' : 'bg-blue-600 hover:bg-blue-700'} text-white font-black shadow-lg`}>
-                                                    {appSettings.isFreeThreeDigit ? t('freeLabel') : (t('price') + (appSettings.activationPriceThreeDigit ? ` (${appSettings.activationPriceThreeDigit})` : ''))}
+                                                <Button 
+                                                    onClick={() => !appSettings.isBlockedThreeDigit && handlePriceButtonClick('three-digit')} 
+                                                    size="lg" 
+                                                    className={`w-full h-14 text-xl ${appSettings.isBlockedThreeDigit ? 'bg-gray-400 cursor-not-allowed' : appSettings.isFreeThreeDigit ? 'bg-orange-600 hover:bg-orange-700' : 'bg-blue-600 hover:bg-blue-700'} text-white font-black shadow-lg`}
+                                                    disabled={appSettings.isBlockedThreeDigit}
+                                                >
+                                                    {appSettings.isBlockedThreeDigit ? t('blockedLabel') : (appSettings.isFreeThreeDigit ? t('freeLabel') : (t('price') + (appSettings.activationPriceThreeDigit ? ` (${appSettings.activationPriceThreeDigit})` : '')))}
                                                 </Button>
-                                                {((!appSettings.isFreeThreeDigit) || isSuperAdmin) && (
+                                                {((!appSettings.isFreeThreeDigit && !appSettings.isBlockedThreeDigit) || isSuperAdmin) && (
                                                     <div className="text-center space-y-4">
                                                         <Button onClick={handleActivationClick} size="lg" className="w-full bg-slate-900 hover:bg-black text-white font-bold flex items-center gap-3 justify-center h-12">
                                                             <BankIcon className="h-5 w-5" />
@@ -3045,10 +3076,15 @@ const App = () => {
                                                 </div>
                                             </div>
                                             <div className="p-8 pt-0 space-y-5">
-                                                <Button onClick={() => handlePriceButtonClick('infinite')} size="lg" className={`w-full h-14 text-xl ${appSettings.isFreeInfinite ? 'bg-orange-600 hover:bg-orange-700' : 'bg-red-600 hover:bg-red-700'} text-white font-black shadow-lg`}>
-                                                    {appSettings.isFreeInfinite ? t('freeLabel') : (t('price') + (appSettings.activationPriceInfinite ? ` (${appSettings.activationPriceInfinite})` : ''))}
+                                                <Button 
+                                                    onClick={() => !appSettings.isBlockedInfinite && handlePriceButtonClick('infinite')} 
+                                                    size="lg" 
+                                                    className={`w-full h-14 text-xl ${appSettings.isBlockedInfinite ? 'bg-gray-400 cursor-not-allowed' : appSettings.isFreeInfinite ? 'bg-orange-600 hover:bg-orange-700' : 'bg-red-600 hover:bg-red-700'} text-white font-black shadow-lg`}
+                                                    disabled={appSettings.isBlockedInfinite}
+                                                >
+                                                    {appSettings.isBlockedInfinite ? t('blockedLabel') : (appSettings.isFreeInfinite ? t('freeLabel') : (t('price') + (appSettings.activationPriceInfinite ? ` (${appSettings.activationPriceInfinite})` : '')))}
                                                 </Button>
-                                                {((!appSettings.isFreeInfinite) || isSuperAdmin) && (
+                                                {((!appSettings.isFreeInfinite && !appSettings.isBlockedInfinite) || isSuperAdmin) && (
                                                     <div className="text-center space-y-4">
                                                         <Button onClick={handleActivationClick} size="lg" className="w-full bg-slate-900 hover:bg-black text-white font-bold flex items-center gap-3 justify-center h-12">
                                                             <BankIcon className="h-5 w-5" />
@@ -3475,7 +3511,7 @@ const App = () => {
                                                                 const collected = ((raffle.participants || []).filter(p => p.paymentStatus === 'confirmed').length * parseFloat(String(raffle.value).replace(/\D/g, ''))) || 0;
                                                                 const gameDateObj = raffle.gameDate ? new Date(raffle.gameDate + 'T00:00:00') : null;
                                                                 const isPastDue = gameDateObj ? gameDateObj < today && !raffle.winner : false;
-                                                                const canDelete = (raffle.participants || []).length === 0 || !!raffle.winner || isPastDue;
+                                                                const canDelete = (raffle.participants || []).length === 0 || !!r.winner || isPastDue;
                                                                 return (
                                                                     <tr key={`${raffle.raffleRef}-${raffle.adminId}`}>
                                                                         <td className="p-4">
@@ -4043,23 +4079,42 @@ const App = () => {
             </Dialog>
 
             <Dialog open={isFreeGamesDialogOpen} onOpenChange={setIsFreeGamesDialogOpen}>
-                <DialogContent>
+                <DialogContent className="max-w-md">
                     <DialogHeader>
                         <DialogTitle>{t('manageFreeGames')}</DialogTitle>
                         <DialogDescription>{t('manageFreeGamesDescription')}</DialogDescription>
                     </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                        <div className="flex items-center justify-between">
-                            <Label htmlFor="free-two-digit">{t('freeTwoDigit')}</Label>
-                            <Switch id="free-two-digit" checked={freeGamesConfig.twoDigit} onCheckedChange={(checked) => setFreeGamesConfig(p => ({ ...p, twoDigit: checked }))}/>
+                    <div className="grid gap-6 py-4">
+                        <div className="space-y-4">
+                            <h4 className="font-bold text-blue-600 border-b pb-1">Gratuidad</h4>
+                            <div className="flex items-center justify-between">
+                                <Label htmlFor="free-two-digit">{t('freeTwoDigit')}</Label>
+                                <Switch id="free-two-digit" checked={freeGamesConfig.twoDigit} onCheckedChange={(checked) => setFreeGamesConfig(p => ({ ...p, twoDigit: checked }))}/>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <Label htmlFor="free-three-digit">{t('freeThreeDigit')}</Label>
+                                <Switch id="free-three-digit" checked={freeGamesConfig.threeDigit} onCheckedChange={(checked) => setFreeGamesConfig(p => ({ ...p, threeDigit: checked }))}/>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <Label htmlFor="free-infinite">{t('freeInfinite')}</Label>
+                                <Switch id="free-infinite" checked={freeGamesConfig.infinite} onCheckedChange={(checked) => setFreeGamesConfig(p => ({ ...p, infinite: checked }))}/>
+                            </div>
                         </div>
-                        <div className="flex items-center justify-between">
-                            <Label htmlFor="free-three-digit">{t('freeThreeDigit')}</Label>
-                            <Switch id="free-three-digit" checked={freeGamesConfig.threeDigit} onCheckedChange={(checked) => setFreeGamesConfig(p => ({ ...p, threeDigit: checked }))}/>
-                        </div>
-                        <div className="flex items-center justify-between">
-                            <Label htmlFor="free-infinite">{t('freeInfinite')}</Label>
-                            <Switch id="free-infinite" checked={freeGamesConfig.infinite} onCheckedChange={(checked) => setFreeGamesConfig(p => ({ ...p, infinite: checked }))}/>
+
+                        <div className="space-y-4">
+                            <h4 className="font-bold text-red-600 border-b pb-1">Bloqueo</h4>
+                            <div className="flex items-center justify-between">
+                                <Label htmlFor="block-two-digit" className="flex items-center gap-2"><Ban className="h-4 w-4 text-red-500" /> {t('blockTwoDigit')}</Label>
+                                <Switch id="block-two-digit" checked={freeGamesConfig.blockedTwoDigit} onCheckedChange={(checked) => setFreeGamesConfig(p => ({ ...p, blockedTwoDigit: checked }))}/>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <Label htmlFor="block-three-digit" className="flex items-center gap-2"><Ban className="h-4 w-4 text-red-500" /> {t('blockThreeDigit')}</Label>
+                                <Switch id="block-three-digit" checked={freeGamesConfig.blockedThreeDigit} onCheckedChange={(checked) => setFreeGamesConfig(p => ({ ...p, blockedThreeDigit: checked }))}/>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <Label htmlFor="block-infinite" className="flex items-center gap-2"><Ban className="h-4 w-4 text-red-500" /> {t('blockInfinite')}</Label>
+                                <Switch id="block-infinite" checked={freeGamesConfig.blockedInfinite} onCheckedChange={(checked) => setFreeGamesConfig(p => ({ ...p, blockedInfinite: checked }))}/>
+                            </div>
                         </div>
                     </div>
                     <DialogFooter><Button variant="outline" onClick={() => setIsFreeGamesDialogOpen(false)}>{t('cancel')}</Button><Button onClick={handleSaveFreeGamesSettings}>{t('save')}</Button></DialogFooter>
