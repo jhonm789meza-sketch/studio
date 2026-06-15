@@ -671,6 +671,7 @@ const App = () => {
                 numericValue = 0;
             }
             if (numericValue < 0) numericValue = 0;
+            if (numericValue < 0) numericValue = 0;
             if (numericValue > 100) numericValue = 100;
             newState[field as keyof Raffle] = numericValue;
         } else if (field === 'infiniteModeDigits') {
@@ -1462,7 +1463,7 @@ const App = () => {
         await setDoc(doc(db, "raffles", raffleState.raffleRef), { [field]: value }, { merge: true });
     };
 
-    const handlePriceButtonClick = (mode: RaffleMode) => {
+    const handlePriceButtonClick = async (mode: RaffleMode) => {
         const isFree = mode === 'two-digit' ? appSettings.isFreeTwoDigit :
                       mode === 'three-digit' ? appSettings.isFreeThreeDigit :
                       mode === 'infinite' ? appSettings.isFreeInfinite : false;
@@ -1477,7 +1478,12 @@ const App = () => {
         }
 
         if (isFree) {
-            handleActivateBoard(mode, 'CO', `FREE_${Date.now()}`);
+            const { finalRaffleRef } = await handleActivateBoard(mode, 'CO', `FREE_${Date.now()}`);
+            if (finalRaffleRef) {
+                const message = encodeURIComponent(`Hola, acabo de activar mi rifa gratuita. La referencia asignada es: *${finalRaffleRef}*`);
+                const phone = (appSettings.supportContacts && appSettings.supportContacts.length > 0) ? appSettings.supportContacts[0] : '3145696687';
+                window.open(`https://wa.me/57${phone}?text=${message}`, '_blank');
+            }
             return;
         }
 
@@ -3517,7 +3523,7 @@ const App = () => {
                                                                 const collected = ((raffle.participants || []).filter(p => p.paymentStatus === 'confirmed').length * parseFloat(String(raffle.value).replace(/\D/g, ''))) || 0;
                                                                 const gameDateObj = raffle.gameDate ? new Date(raffle.gameDate + 'T00:00:00') : null;
                                                                 const isPastDue = gameDateObj ? gameDateObj < today && !raffle.winner : false;
-                                                                const canDelete = (raffle.participants || []).length === 0 || !!r.winner || isPastDue;
+                                                                const canDelete = (raffle.participants || []).length === 0 || !!raffle.winner || isPastDue;
                                                                 return (
                                                                     <tr key={`${raffle.raffleRef}-${raffle.adminId}`}>
                                                                         <td className="p-4">
