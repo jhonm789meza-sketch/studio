@@ -2979,7 +2979,7 @@ const App = () => {
                                 <h2 className="text-3xl font-bold text-white drop-shadow-xl mb-4">{t('boardLocked')}</h2>
                                 <div className="max-w-2xl mx-auto bg-blue-900/40 backdrop-blur-xl border-l-4 border-blue-400 text-white p-6 rounded-lg mb-10 shadow-2xl text-left">
                                     <h3 className="font-bold text-lg mb-1">{t('activationInstructionTitle')}</h3>
-                                    <p className="text-sm opacity-90 leading-relaxed">{t('activationInstructionBody')}</p>
+                                    <p className="text-sm opacity-90 leisure-relaxed">{t('activationInstructionBody')}</p>
                                 </div>
                                 <div className="grid md:grid-cols-1 gap-10 items-start max-w-lg mx-auto">
                                     <div className="flex flex-col justify-center items-center gap-10">
@@ -3523,7 +3523,7 @@ const App = () => {
                                                                 const collected = ((raffle.participants || []).filter(p => p.paymentStatus === 'confirmed').length * parseFloat(String(raffle.value).replace(/\D/g, ''))) || 0;
                                                                 const gameDateObj = raffle.gameDate ? new Date(raffle.gameDate + 'T00:00:00') : null;
                                                                 const isPastDue = gameDateObj ? gameDateObj < today && !raffle.winner : false;
-                                                                const canDelete = (raffle.participants || []).length === 0 || !!r.winner || isPastDue;
+                                                                const canDelete = (raffle.participants || []).length === 0 || !!raffle.winner || isPastDue;
                                                                 return (
                                                                     <tr key={`${raffle.raffleRef}-${raffle.adminId}`}>
                                                                         <td className="p-4">
