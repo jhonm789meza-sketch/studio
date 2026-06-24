@@ -1,26 +1,36 @@
-# RIFA⚡ EXPRESS - Despliegue
+# RIFA⚡ EXPRESS - Opciones de Despliegue
 
-Esta aplicación está lista para ser publicada. Aquí tienes las mejores opciones para desplegarla de forma gratuita:
+Esta aplicación está lista para ser publicada. Aquí tienes las mejores opciones para desplegarla de forma gratuita, clasificadas por su facilidad de uso con Next.js:
 
-## 1. Vercel (Recomendado)
-Es la opción más sencilla y potente para aplicaciones Next.js.
-1. Sube tu código a un repositorio de **GitHub**.
-2. Entra en [vercel.com](https://vercel.com) y crea una cuenta gratuita.
-3. Haz clic en "Add New" > "Project" e importa tu repositorio.
-4. Vercel detectará automáticamente que es Next.js y desplegará la app.
+## 1. Vercel (Altamente Recomendado)
+Es la plataforma oficial de los creadores de Next.js.
+- **Ventaja**: Configuración automática, soporte total para todas las funciones de Next.js.
+- **Cómo**: Conecta tu cuenta de GitHub en [vercel.com](https://vercel.com) e importa el proyecto.
 
-## 2. Firebase App Hosting
-Ya que la app utiliza Firebase, puedes usar su propio servicio de hosting optimizado.
-1. Ve a la [Consola de Firebase](https://console.firebase.google.com/).
-2. En el menú lateral, busca **App Hosting**.
-3. Conecta tu repositorio de GitHub y sigue los pasos.
-4. Firebase configurará automáticamente el despliegue continuo.
+## 2. Cloudflare Pages (Excelente Rendimiento)
+Una de las redes más rápidas del mundo con un plan gratuito muy generoso.
+- **Ventaja**: Ancho de banda ilimitado y gran velocidad global.
+- **Cómo**: En el panel de Cloudflare, ve a "Workers & Pages" y conecta tu repositorio. Selecciona el framework "Next.js".
 
-## 3. Netlify
-Una alternativa excelente a Vercel.
-1. Crea una cuenta en [netlify.com](https://netlify.com).
-2. Conecta tu repositorio de GitHub.
-3. Selecciona la carpeta del proyecto y haz clic en "Deploy".
+## 3. Firebase App Hosting
+La opción nativa para aplicaciones que ya usan servicios de Firebase.
+- **Ventaja**: Integración perfecta con tu base de datos y autenticación actual.
+- **Cómo**: En la consola de Firebase, busca la sección "App Hosting" y sigue los pasos para conectar GitHub.
+
+## 4. Netlify
+Muy similar a Vercel, con herramientas potentes de gestión.
+- **Ventaja**: Muy fácil de usar y excelente manejo de formularios y funciones serverless.
+- **Cómo**: Conecta tu repositorio en [netlify.com](https://netlify.com).
+
+## 5. GitHub Pages (Solo para exportación estática)
+Ideal si tu app no requiere funciones de servidor de Next.js (SSR dinámico en tiempo de ejecución).
+- **Nota**: Debes configurar `output: 'export'` en tu `next.config.ts`.
+- **Cómo**: Activa GitHub Pages en la configuración de tu repositorio de GitHub.
+
+## 6. Render
+Una alternativa versátil que permite desplegar tanto sitios estáticos como servicios web.
+- **Nota**: Los servicios gratuitos pueden "dormirse" tras un periodo de inactividad.
+- **Cómo**: Crea un nuevo "Static Site" en [render.com](https://render.com).
 
 ---
-*Nota: Recuerda que para que la base de datos funcione en producción, debes asegurarte de que las Reglas de Seguridad de Firestore estén configuradas correctamente en tu consola de Firebase.*
+**Recordatorio importante**: Independientemente de dónde despliegues, asegúrate de que las **Reglas de Seguridad de Firestore** en tu consola de Firebase permitan el acceso desde el nuevo dominio de producción.
