@@ -57,7 +57,7 @@
     "numberBoard": "Number Board",
     "mode": "Mode",
     "2digitMode": "2 Digits",
-    "3digitMode": "3 Digits",
+    "3digitMode": "3 Dgitits",
     "available": "Available",
     "pending": "Pending",
     "sold": "Sold",
@@ -402,5 +402,8 @@
     "gamesSummaryDescription": "Breakdown by board type used.",
     "twoDigitGames": "2-Digit Raffles",
     "threeDigitGames": "3-Digit Raffles",
-    "infiniteGames": "Infinite Raffles"
+    "infiniteGames": "Infinite Raffles",
+    "freeActivationTitle": "Activate Free Raffle",
+    "freeActivationDescription": "Enter your WhatsApp number to receive the reference and admin link.",
+    "whatsappNumber": "WhatsApp Number"
 }

@@ -232,6 +232,11 @@ const App = () => {
     const [lockedBoardBgUrl, setLockedBoardBgUrl] = useState('');
 
     const [isGamesSummaryDialogOpen, setIsGamesSummaryDialogOpen] = useState(false);
+    
+    // Free activation phone requested
+    const [isFreeActivationDialogOpen, setIsFreeActivationDialogOpen] = useState(false);
+    const [freeActivationPhone, setFreeActivationPhone] = useState('');
+    const [freeActivationMode, setFreeActivationMode] = useState<RaffleMode | null>(null);
 
     const prizeTextareaRef = useRef<HTMLTextAreaElement>(null);
     const isCurrentUserAdmin = !!raffleState.adminId && !!currentAdminId && raffleState.adminId === currentAdminId;
@@ -1478,12 +1483,8 @@ const App = () => {
         }
 
         if (isFree) {
-            const { adminId, finalRaffleRef } = await handleActivateBoard(mode, 'CO', `FREE_${Date.now()}`);
-            if (finalRaffleRef && adminId) {
-                const adminUrl = `${window.location.origin}?ref=${finalRaffleRef}&adminId=${adminId}`;
-                const message = encodeURIComponent(`Hola, acabo de activar mi rifa gratuita. La referencia asignada es: *${finalRaffleRef}*.\n\nMi enlace de administrador es: ${adminUrl}`);
-                window.location.href = `https://wa.me/?text=${message}`;
-            }
+            setFreeActivationMode(mode);
+            setIsFreeActivationDialogOpen(true);
             return;
         }
 
@@ -1503,6 +1504,28 @@ const App = () => {
         } else {
           setIsCopyOptionsDialogOpen(true);
         }
+    };
+    
+    const handleConfirmFreeActivation = async () => {
+        if (!freeActivationPhone.trim() || !freeActivationMode) {
+            showNotification(t('enterPhoneWarning'), 'warning');
+            return;
+        }
+
+        const mode = freeActivationMode;
+        const phone = freeActivationPhone.replace(/\D/g, '');
+        
+        setIsFreeActivationDialogOpen(false);
+        const { adminId, finalRaffleRef } = await handleActivateBoard(mode, 'CO', `FREE_${Date.now()}`);
+        
+        if (finalRaffleRef && adminId) {
+            const adminUrl = `${window.location.origin}?ref=${finalRaffleRef}&adminId=${adminId}`;
+            const message = encodeURIComponent(`Hola, acabo de activar mi rifa gratuita. La referencia asignada es: *${finalRaffleRef}*.\n\nMi enlace de administrador es: ${adminUrl}`);
+            window.location.href = `https://wa.me/57${phone}?text=${message}`;
+        }
+        
+        setFreeActivationPhone('');
+        setFreeActivationMode(null);
     };
 
     const handleActivationClick = () => {
@@ -4009,7 +4032,7 @@ const App = () => {
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="confirm-new-super-admin-password">{t('confirmNewPassword')}</Label>
-                            <div className="relative">
+                             <div className="relative">
                                 <Input id="confirm-new-super-admin-password" type={showNewPassword ? 'text' : 'password'} value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)}/>
                                  <Button type="button" variant="ghost" size="icon" className="absolute inset-y-0 right-0 h-full px-3" onClick={() => setShowNewPassword(!showNewPassword)}>{showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button>
                             </div>
@@ -4363,6 +4386,37 @@ const App = () => {
                         <Button type="button" variant="outline" onClick={() => setIsGamesSummaryDialogOpen(false)} className="w-full">
                             {t('close')}
                         </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+            
+            <Dialog open={isFreeActivationDialogOpen} onOpenChange={setIsFreeActivationDialogOpen}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>{t('freeActivationTitle')}</DialogTitle>
+                        <DialogDescription>{t('freeActivationDescription')}</DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4 space-y-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="free-activation-phone">{t('whatsappNumber')}</Label>
+                            <div className="relative">
+                                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                                    <span className="text-gray-500 sm:text-sm">+57</span>
+                                </div>
+                                <Input
+                                    id="free-activation-phone"
+                                    type="tel"
+                                    value={freeActivationPhone}
+                                    onChange={(e) => setFreeActivationPhone(e.target.value.replace(/\D/g, ''))}
+                                    placeholder="3001234567"
+                                    className="pl-12"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => { setIsFreeActivationDialogOpen(false); setFreeActivationPhone(''); }}>{t('cancel')}</Button>
+                        <Button onClick={handleConfirmFreeActivation} disabled={!freeActivationPhone.trim()}>{t('activateBoard')}</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

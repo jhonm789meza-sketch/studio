@@ -402,5 +402,8 @@
     "gamesSummaryDescription": "Desglose por tipo de tablero utilizado.",
     "twoDigitGames": "Rifas de 2 Cifras",
     "threeDigitGames": "Rifas de 3 Cifras",
-    "infiniteGames": "Rifas Infinitas"
+    "infiniteGames": "Rifas Infinitas",
+    "freeActivationTitle": "Activar Rifa Gratis",
+    "freeActivationDescription": "Ingresa tu número de WhatsApp para recibir la referencia y el enlace de administrador.",
+    "whatsappNumber": "Número de WhatsApp"
 }
