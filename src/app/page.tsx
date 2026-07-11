@@ -4091,7 +4091,7 @@ const App = () => {
             </Dialog>
 
             <Dialog open={isFreeGamesDialogOpen} onOpenChange={setIsFreeGamesDialogOpen}>
-                <DialogContent className="max-w-md">
+                <DialogContent className="max-md">
                     <DialogHeader>
                         <DialogTitle>{t('manageFreeGames')}</DialogTitle>
                         <DialogDescription>{t('manageFreeGamesDescription')}</DialogDescription>
