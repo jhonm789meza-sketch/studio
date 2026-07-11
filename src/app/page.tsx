@@ -1482,7 +1482,7 @@ const App = () => {
             if (finalRaffleRef && adminId) {
                 const adminUrl = `${window.location.origin}?ref=${finalRaffleRef}&adminId=${adminId}`;
                 const message = encodeURIComponent(`Hola, acabo de activar mi rifa gratuita. La referencia asignada es: *${finalRaffleRef}*.\n\nMi enlace de administrador es: ${adminUrl}`);
-                window.open(`https://wa.me/?text=${message}`, '_blank');
+                window.location.href = `https://wa.me/?text=${message}`;
             }
             return;
         }
@@ -2188,8 +2188,8 @@ const App = () => {
         return true;
     });
 
-    const deletableRaffles = filteredGames.filter(r => (r.participants || []).length === 0 || !!r.winner || (new Date(r.gameDate + 'T00:00:00') < today && !r.winner));
-    const allDeletableSelected = deletableRaffles.length > 0 && deletableRaffles.every(r => selectedRafflesForDeletion.includes(r.raffleRef));
+    const deletableRaffles = filteredGames.filter(raffle => (raffle.participants || []).length === 0 || !!raffle.winner || (raffle.gameDate && new Date(raffle.gameDate + 'T00:00:00') < today && !raffle.winner));
+    const allDeletableSelected = deletableRaffles.length > 0 && deletableRaffles.every(raffle => selectedRafflesForDeletion.includes(raffle.raffleRef));
     const isIndeterminate = selectedRafflesForDeletion.length > 0 && !allDeletableSelected;
 
     const prizeValueForGoal = raffleState.raffleMode === 'infinite' && raffleState.prize ? parseFloat(String(raffleState.prize).replace(/\D/g, '')) : 0;
@@ -4301,6 +4301,7 @@ const App = () => {
                     <DialogHeader><DialogTitle className="sr-only">{raffleState.prize || t('rafflePrizeAlt')}</DialogTitle></DialogHeader>
                     {raffleState.prizeImageUrl && (<Image src={raffleState.prizeImageUrl} alt={raffleState.prize || t('rafflePrizeAlt')} width={1920} height={1080} className="rounded-lg object-contain max-h-[90vh] w-auto h-auto" unoptimized />)}
                 </DialogContent>
+
             </Dialog>
 
             <Dialog open={isCaptureDialogOpen} onOpenChange={(open) => !open && stopCamera()}>
