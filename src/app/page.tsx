@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect, useRef, useTransition } from 'react';
 import jsPDF from 'jspdf';
@@ -1481,8 +1482,7 @@ const App = () => {
             if (finalRaffleRef && adminId) {
                 const adminUrl = `${window.location.origin}?ref=${finalRaffleRef}&adminId=${adminId}`;
                 const message = encodeURIComponent(`Hola, acabo de activar mi rifa gratuita. La referencia asignada es: *${finalRaffleRef}*.\n\nMi enlace de administrador es: ${adminUrl}`);
-                const phone = (appSettings.supportContacts && appSettings.supportContacts.length > 0) ? appSettings.supportContacts[0] : '3145696687';
-                window.open(`https://wa.me/57${phone}?text=${message}`, '_blank');
+                window.open(`https://wa.me/?text=${message}`, '_blank');
             }
             return;
         }
@@ -2440,7 +2440,7 @@ const App = () => {
                                    min={new Date().toISOString().split('T')[0]}
                                    value={raffleState.gameDate}
                                    onChange={(e) => handleLocalFieldChange('gameDate', e.target.value)}
-                                   onBlur={(e) => handleFieldChange('gameDate', e.target.value)}
+                                   onBlur={(handleFieldChange) => handleFieldChange('gameDate', raffleState.gameDate)}
                                    disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
                                    className="w-full mt-1"
                                />
@@ -3179,7 +3179,7 @@ const App = () => {
                                         className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'pending' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
                                         onClick={() => handleTabClick('pending')}
                                     >
-                                        <ClockIcon className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">{t('pendingTab', { count: pendingParticipants.length })}</span>
+                                        <ClockIcon className="h-5 w-5 hidden sm:inline"/><span className="md:hidden">⏳</span> <span className="hidden md:inline">{t('pendingTab', { count: pendingParticipants.length })}</span>
                                     </button>
                                     )}
                                     <button 
