@@ -316,17 +316,21 @@ const App = () => {
 
 
     const fetchNextRefs = async () => {
-        const twoDigitInfo = await raffleManager.peekNextRaffleRef('two-digit', 5);
-        const threeDigitInfo = await raffleManager.peekNextRaffleRef('three-digit', 5);
-        const infiniteInfo = await raffleManager.peekNextRaffleRef('infinite', 5);
-        setNextRaffleRefs({ twoDigit: twoDigitInfo, threeDigit: threeDigitInfo, infinite: infiniteInfo });
+        const twoDigitInfo = await raffleManager.getNextRefInfo('two-digit', true, 5);
+        const threeDigitInfo = await raffleManager.getNextRefInfo('three-digit', true, 5);
+        const infiniteInfo = await raffleManager.getNextRefInfo('infinite', true, 5);
+        
+        const prefix = 'JM';
+        setNextRaffleRefs({ 
+            twoDigit: { refs: twoDigitInfo.numbers.map(n => `${prefix}${n}`), count: twoDigitInfo.playedCount }, 
+            threeDigit: { refs: threeDigitInfo.numbers.map(n => `${prefix}${n}`), count: threeDigitInfo.playedCount }, 
+            infinite: { refs: infiniteInfo.numbers.map(n => `${prefix}${n}`), count: infiniteInfo.playedCount } 
+        });
     };
 
     useEffect(() => {
         if (isSuperAdmin && !raffleState.raffleRef) {
             fetchNextRefs();
-        } else {
-            setNextRaffleRefs({ twoDigit: { refs: [], count: 0 }, threeDigit: { refs: [], count: 0 }, infinite: { refs: [], count: 0 } });
         }
     }, [isSuperAdmin, raffleState.raffleRef]);
 
@@ -675,7 +679,6 @@ const App = () => {
             if (isNaN(numericValue) || value === '') {
                 numericValue = 0;
             }
-            if (numericValue < 0) numericValue = 0;
             if (numericValue < 0) numericValue = 0;
             if (numericValue > 100) numericValue = 100;
             newState[field as keyof Raffle] = numericValue;
@@ -1516,7 +1519,7 @@ const App = () => {
         const phone = freeActivationPhone.replace(/\D/g, '');
         
         setIsFreeActivationDialogOpen(false);
-        const { adminId, finalRaffleRef } = await handleActivateBoard(mode, 'CO', `FREE_${Date.now()}`);
+        const { adminId, finalRaffleRef } = await handleActivateBoard(mode, 'CO', `FREE_${Date.now()}`, undefined, false);
         
         if (finalRaffleRef && adminId) {
             const adminUrl = `${window.location.origin}?ref=${finalRaffleRef}&adminId=${adminId}`;
@@ -1563,8 +1566,8 @@ const App = () => {
 
 
     const handleApproveActivation = async (activation: PendingActivation) => {
-        const { refs: [newRaffleRef] } = await raffleManager.peekNextRaffleRef(activation.raffleMode, 1);
-        setActivationToConfirm({ activation, newRaffleRef });
+        const { refs: [newRaffleRef] } = await raffleManager.getNextRefInfo(activation.raffleMode, true, 1);
+        setActivationToConfirm({ activation, newRaffleRef: `JM${newRaffleRef}` });
         setActivationConfirmationOpen(true);
     };
 
@@ -1880,7 +1883,7 @@ const App = () => {
     };
 
     const handleSharePrizePhoto = async () => {
-        await handleSharePlayNow(); // Se reemplaza la funcionalidad por "JUGAR YA"
+        await handleSharePlayNow(); 
     };
 
     const handleGoToHome = () => {
@@ -2414,7 +2417,7 @@ const App = () => {
                                             min="4"
                                             value={raffleState.infiniteModeDigits || ''}
                                             onChange={(e) => handleLocalFieldChange('infiniteModeDigits', e.target.value)}
-                                            onBlur={(e) => handleFieldChange('infiniteModeDigits', raffleState.infiniteModeDigits)}
+                                            onBlur={() => handleFieldChange('infiniteModeDigits', raffleState.infiniteModeDigits)}
                                             placeholder={t('min4Digits')}
                                             disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
                                             className="w-full mt-1"
@@ -2463,7 +2466,7 @@ const App = () => {
                                    min={new Date().toISOString().split('T')[0]}
                                    value={raffleState.gameDate}
                                    onChange={(e) => handleLocalFieldChange('gameDate', e.target.value)}
-                                   onBlur={(handleFieldChange) => handleFieldChange('gameDate', raffleState.gameDate)}
+                                   onBlur={() => handleFieldChange('gameDate', raffleState.gameDate)}
                                    disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
                                    className="w-full mt-1"
                                />
@@ -4416,7 +4419,7 @@ const App = () => {
                     </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => { setIsFreeActivationDialogOpen(false); setFreeActivationPhone(''); }}>{t('cancel')}</Button>
-                        <Button onClick={handleConfirmFreeActivation} disabled={!freeActivationPhone.trim()}>{t('activateBoard')}</Button>
+                        <Button onClick={handleConfirmFreeActivation} disabled={!freeActivationPhone.trim()}>{t('sendToWhatsapp')}</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

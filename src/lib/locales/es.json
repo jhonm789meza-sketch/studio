@@ -405,5 +405,6 @@
     "infiniteGames": "Rifas Infinitas",
     "freeActivationTitle": "Activar Rifa Gratis",
     "freeActivationDescription": "Ingresa tu número de WhatsApp para recibir la referencia y el enlace de administrador.",
-    "whatsappNumber": "Número de WhatsApp"
+    "whatsappNumber": "Número de WhatsApp",
+    "sendToWhatsapp": "Enviar al WhatsApp"
 }

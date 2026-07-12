@@ -287,7 +287,7 @@
     "add": "Add",
     "addNewContact": "Add New Contact",
     "savedContacts": "Saved Contacts",
-    "noSavedContacts": "No skills listed.",
+    "noSavedContacts": "No contacts saved.",
     "activationPrices": "Activation Prices",
     "manageActivationPrices": "Manage Activation Prices",
     "manageActivationPricesDescription": "Update the activation prices for each raffle type.",
@@ -405,5 +405,6 @@
     "infiniteGames": "Infinite Raffles",
     "freeActivationTitle": "Activate Free Raffle",
     "freeActivationDescription": "Enter your WhatsApp number to receive the reference and admin link.",
-    "whatsappNumber": "WhatsApp Number"
+    "whatsappNumber": "WhatsApp Number",
+    "sendToWhatsapp": "Send to WhatsApp"
 }
