@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect, useRef, useTransition } from 'react';
 import jsPDF from 'jspdf';
@@ -1566,7 +1565,8 @@ const App = () => {
         const phone = freeActivationPhone.replace(/\D/g, '');
         
         setIsFreeActivationDialogOpen(false);
-        const { adminId, finalRaffleRef } = await handleActivateBoard(mode, 'CO', `FREE_${Date.now()}`, undefined, false);
+        // Las rifas gratuitas no se activan automáticamente, requieren el paso de confirmación por el administrador.
+        const { adminId, finalRaffleRef } = await handleActivateBoard(mode, 'CO', `FREE_${Date.now()}`, undefined, false, false);
         
         if (finalRaffleRef && adminId) {
             const adminUrl = `${window.location.origin}?ref=${finalRaffleRef}&adminId=${adminId}`;
@@ -1642,7 +1642,7 @@ const App = () => {
         }
     };
 
-    const handleActivateBoard = async (mode: RaffleMode, countryCode: string = 'CO', transactionId?: string, newRef?: string, loadBoard = true): Promise<{ adminId: string | null, finalRaffleRef: string | null }> => {
+    const handleActivateBoard = async (mode: RaffleMode, countryCode: string = 'CO', transactionId?: string, newRef?: string, loadBoard = true, initiallyActive = true): Promise<{ adminId: string | null, finalRaffleRef: string | null }> => {
         if (loadBoard) setLoading(true);
 
         const finalTransactionId = transactionId || `SUPERADMIN_${Date.now()}`;
@@ -1679,7 +1679,7 @@ const App = () => {
                 raffleRef: finalRaffleRef,
                 adminId: adminId,
                 isPaid: true,
-                isActive: false,
+                isActive: initiallyActive,
                 prizeImageUrl: '',
                 value: '0', 
                 currencySymbol: getCurrencySymbol(countryCode),
@@ -3743,7 +3743,7 @@ const App = () => {
                                         </div>
                                     )}
                                     {currentPartialWinners.length > 0 && (
-                                        <div className="p-4 bg-blue-100 border-l-4 border-blue-500 text-blue-800 rounded-lg space-y-4">
+                                        <div className="p-4 bg-blue-100 border-l-4 border-yellow-500 text-blue-800 rounded-lg space-y-4">
                                             <h3 className="font-bold text-lg">{t('partialWinnersTitle')}</h3>
                                             {currentPartialWinners.map((group, index) => (
                                                 <div key={index}>
