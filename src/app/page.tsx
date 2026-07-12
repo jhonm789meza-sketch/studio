@@ -63,6 +63,7 @@ const initialRaffleData: Raffle = {
     manualWinnerNumber3: '',
     manualWinnerNumber2: '',
     isPaid: false,
+    isActive: true,
     adminId: null,
     raffleMode: 'two-digit' as RaffleMode,
     prizeImageUrl: '',
@@ -237,6 +238,8 @@ const App = () => {
     const [isFreeActivationDialogOpen, setIsFreeActivationDialogOpen] = useState(false);
     const [freeActivationPhone, setFreeActivationPhone] = useState('');
     const [freeActivationMode, setFreeActivationMode] = useState<RaffleMode | null>(null);
+
+    const [showAdminActivationNotice, setShowAdminActivationNotice] = useState(false);
 
     const prizeTextareaRef = useRef<HTMLTextAreaElement>(null);
     const isCurrentUserAdmin = !!raffleState.adminId && !!currentAdminId && raffleState.adminId === currentAdminId;
@@ -845,6 +848,21 @@ const App = () => {
         showNotification(t('prizeDetailsConfirmed'), 'success');
     };
 
+    const handleConfirmOnline = async () => {
+        if (!raffleState.raffleRef || !isCurrentUserAdmin) return;
+        setLoading(true);
+        try {
+            await updateDoc(doc(db, 'raffles', raffleState.raffleRef), { isActive: true });
+            setShowAdminActivationNotice(false);
+            showNotification(t('boardActivatedSuccessfullyWithRef', { ref: raffleState.raffleRef }), 'success');
+        } catch (error) {
+            console.error("Error setting raffle to active:", error);
+            showNotification(t('errorActivatingBoard'), 'error');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const resetBoard = () => {
         if (!raffleState.raffleRef) return;
         showConfirmationDialog(
@@ -1217,6 +1235,16 @@ const App = () => {
             raffleSubscription.current = onSnapshot(raffleDocRef, (docSnapshot) => {
                 if (docSnapshot.exists()) {
                     const data = docSnapshot.data() as Raffle;
+
+                    if (isPublicSearch && !isSuperAdmin) {
+                        const adminIdStored = localStorage.getItem('rifaAdminId');
+                        if (data.adminId !== adminIdStored && data.isActive === false) {
+                            showNotification(t('raffleNotActiveYet'), 'warning');
+                            setLoading(false);
+                            resolve();
+                            return;
+                        }
+                    }
     
                     setRaffleState(prevState => {
                         if (loadedRaffleIdRef.current !== aRef) {
@@ -1274,6 +1302,9 @@ const App = () => {
                         const adminIdForUrl = localStorage.getItem('rifaAdminId');
                         if (data.adminId && data.adminId === adminIdForUrl && !isPublicSearch) {
                             iNewUrl.searchParams.set('adminId', data.adminId);
+                            if (data.isActive === false) {
+                                setShowAdminActivationNotice(true);
+                            }
                         } else {
                             iNewUrl.searchParams.delete('adminId');
                         }
@@ -1518,13 +1549,11 @@ const App = () => {
         const phone = freeActivationPhone.replace(/\D/g, '');
         
         setIsFreeActivationDialogOpen(false);
-        // Creamos la rifa pero NO la activamos en esta sesión (loadBoard = false)
         const { adminId, finalRaffleRef } = await handleActivateBoard(mode, 'CO', `FREE_${Date.now()}`, undefined, false);
         
         if (finalRaffleRef && adminId) {
             const adminUrl = `${window.location.origin}?ref=${finalRaffleRef}&adminId=${adminId}`;
             const messageText = encodeURIComponent(`Hola, acabo de activar mi rifa gratuita. La referencia asignada es: *${finalRaffleRef}*.\n\nMi enlace de administrador es: ${adminUrl}`);
-            // Redirigir al WhatsApp del usuario para que reciba su link de administración
             window.location.href = `https://wa.me/57${phone}?text=${messageText}`;
         }
         
@@ -1633,6 +1662,7 @@ const App = () => {
                 raffleRef: finalRaffleRef,
                 adminId: adminId,
                 isPaid: true,
+                isActive: false,
                 prizeImageUrl: '',
                 value: '0', 
                 currencySymbol: getCurrencySymbol(countryCode),
@@ -1883,10 +1913,6 @@ const App = () => {
         }
     };
 
-    const handleSharePrizePhoto = async () => {
-        await handleSharePlayNow(); 
-    };
-
     const handleGoToHome = () => {
         raffleSubscription.current?.();
         loadedRaffleIdRef.current = null;
@@ -2093,6 +2119,7 @@ const App = () => {
                     adminId: adminId,
                     raffleMode: packageRaffleMode,
                     isPaid: true,
+                    isActive: false,
                     currencySymbol: getCurrencySymbol('CO'),
                     organizerName: '',
                     prize: '',
@@ -4421,6 +4448,21 @@ const App = () => {
                     <DialogFooter>
                         <Button variant="outline" onClick={() => { setIsFreeActivationDialogOpen(false); setFreeActivationPhone(''); }}>{t('cancel')}</Button>
                         <Button onClick={handleConfirmFreeActivation} disabled={!freeActivationPhone.trim()}>{t('sendToWhatsapp')}</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={showAdminActivationNotice} onOpenChange={setShowAdminActivationNotice}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{t('adminActivationTitle')}</DialogTitle>
+                        <DialogDescription>{t('adminActivationDescription')}</DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button onClick={handleConfirmOnline} className="w-full bg-green-600 hover:bg-green-700 text-white font-bold h-12">
+                            <Check className="mr-2 h-5 w-5" />
+                            {t('activateRaffleButton')}
+                        </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
