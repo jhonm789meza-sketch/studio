@@ -63,7 +63,7 @@ const initialRaffleData: Raffle = {
     manualWinnerNumber3: '',
     manualWinnerNumber2: '',
     isPaid: false,
-    isActive: true,
+    isActive: false,
     adminId: null,
     raffleMode: 'two-digit' as RaffleMode,
     prizeImageUrl: '',
@@ -1553,7 +1553,7 @@ const App = () => {
         
         if (finalRaffleRef && adminId) {
             const adminUrl = `${window.location.origin}?ref=${finalRaffleRef}&adminId=${adminId}`;
-            const messageText = encodeURIComponent(`Hola, acabo de activar mi rifa gratuita. La referencia asignada es: *${finalRaffleRef}*.\n\nMi enlace de administrador es: ${adminUrl}`);
+            const messageText = encodeURIComponent(`Hola, acabo de generar la referencia para mi rifa gratuita: *${finalRaffleRef}*.\n\nPara ponerla en línea y administrarla, usa este enlace: ${adminUrl}`);
             window.location.href = `https://wa.me/57${phone}?text=${messageText}`;
         }
         
