@@ -863,6 +863,23 @@ const App = () => {
         }
     };
 
+    const handleCancelActivation = async () => {
+        if (!raffleState.raffleRef || raffleState.isActive) return;
+        
+        setLoading(true);
+        try {
+            await deleteDoc(doc(db, 'raffles', raffleState.raffleRef));
+            setShowAdminActivationNotice(false);
+            handleGoToHome();
+            showNotification(t('referenceCancelled'), 'info');
+        } catch (error) {
+            console.error("Error cancelling reference:", error);
+            showNotification(t('errorCancellingReference'), 'error');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const resetBoard = () => {
         if (!raffleState.raffleRef) return;
         showConfirmationDialog(
@@ -4452,14 +4469,23 @@ const App = () => {
                 </DialogContent>
             </Dialog>
 
-            <Dialog open={showAdminActivationNotice} onOpenChange={setShowAdminActivationNotice}>
+            <Dialog open={showAdminActivationNotice} onOpenChange={(open) => {
+                if (!open && !raffleState.isActive) {
+                    handleCancelActivation();
+                } else {
+                    setShowAdminActivationNotice(open);
+                }
+            }}>
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>{t('adminActivationTitle')}</DialogTitle>
                         <DialogDescription>{t('adminActivationDescription')}</DialogDescription>
                     </DialogHeader>
-                    <DialogFooter>
-                        <Button onClick={handleConfirmOnline} className="w-full bg-green-600 hover:bg-green-700 text-white font-bold h-12">
+                    <DialogFooter className="flex-col sm:flex-row gap-2">
+                        <Button variant="outline" onClick={handleCancelActivation} className="w-full sm:w-auto">
+                            {t('cancelReference')}
+                        </Button>
+                        <Button onClick={handleConfirmOnline} className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold h-12">
                             <Check className="mr-2 h-5 w-5" />
                             {t('activateRaffleButton')}
                         </Button>

@@ -410,5 +410,8 @@
     "adminActivationTitle": "Confirmar Activación",
     "adminActivationDescription": "Tu rifa ya está creada. Haz clic en el botón de abajo para activarla oficialmente y que aparezca en línea para que tus clientes puedan jugar.",
     "activateRaffleButton": "Activar y Poner en Línea",
-    "raffleNotActiveYet": "Esta rifa aún no ha sido activada por el administrador."
+    "raffleNotActiveYet": "Esta rifa aún no ha sido activada por el administrador.",
+    "cancelReference": "Cancelar y borrar referencia",
+    "referenceCancelled": "Referencia cancelada correctamente.",
+    "errorCancellingReference": "Error al cancelar la referencia."
 }

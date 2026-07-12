@@ -406,5 +406,8 @@
     "freeActivationTitle": "Activate Free Raffle",
     "freeActivationDescription": "Enter your WhatsApp number to receive the reference and admin link.",
     "whatsappNumber": "WhatsApp Number",
-    "sendToWhatsapp": "Send to WhatsApp"
+    "sendToWhatsapp": "Send to WhatsApp",
+    "cancelReference": "Cancel and delete reference",
+    "referenceCancelled": "Reference cancelled successfully.",
+    "errorCancellingReference": "Error cancelling the reference."
 }
