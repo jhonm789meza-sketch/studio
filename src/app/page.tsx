@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect, useRef, useTransition } from 'react';
 import jsPDF from 'jspdf';
@@ -186,6 +187,7 @@ const App = () => {
         twoDigit: '',
         threeDigit: '',
         infinite: '',
+        usd: '',
     });
     const [isCopyOptionsDialogOpen, setIsCopyOptionsDialogOpen] = useState(false);
     const [isActivationPricesDialogOpen, setIsActivationPricesDialogOpen] = useState(false);
@@ -239,6 +241,8 @@ const App = () => {
     const [freeActivationMode, setFreeActivationMode] = useState<RaffleMode | null>(null);
 
     const [showAdminActivationNotice, setShowAdminActivationNotice] = useState(false);
+
+    const [isUsdPaymentDialogOpen, setIsUsdPaymentDialogOpen] = useState(false);
 
     const prizeTextareaRef = useRef<HTMLTextAreaElement>(null);
     const isCurrentUserAdmin = !!raffleState.adminId && !!currentAdminId && raffleState.adminId === currentAdminId;
@@ -297,6 +301,7 @@ const App = () => {
                         twoDigit: settings.paymentLinkTwoDigit || '',
                         threeDigit: settings.paymentLinkThreeDigit || '',
                         infinite: settings.paymentLinkInfinite || '',
+                        usd: settings.paymentLinkUsd || '',
                     });
                     setActivationPrices({
                         twoDigit: settings.activationPriceTwoDigit || '',
@@ -503,6 +508,16 @@ const App = () => {
             });
         } else {
             showNotification(t('installAppInfo'), 'info');
+        }
+    };
+
+    const handleUsdPayment = () => {
+        if (appSettings.paymentLinkUsd) {
+            window.open(appSettings.paymentLinkUsd, '_blank');
+            setIsUsdPaymentDialogOpen(false);
+            setIsCopyOptionsDialogOpen(false);
+        } else {
+            showNotification(t('paymentLinkNotConfigured'), 'warning');
         }
     };
 
@@ -1565,7 +1580,6 @@ const App = () => {
         const phone = freeActivationPhone.replace(/\D/g, '');
         
         setIsFreeActivationDialogOpen(false);
-        // Las rifas gratuitas no se activan automáticamente, requieren el paso de confirmación por el administrador.
         const { adminId, finalRaffleRef } = await handleActivateBoard(mode, 'CO', `FREE_${Date.now()}`, undefined, false, false);
         
         if (finalRaffleRef && adminId) {
@@ -2011,6 +2025,7 @@ const App = () => {
                 paymentLinkTwoDigit: paymentLinks.twoDigit,
                 paymentLinkThreeDigit: paymentLinks.threeDigit,
                 paymentLinkInfinite: paymentLinks.infinite,
+                paymentLinkUsd: paymentLinks.usd,
              }, { merge: true });
             showNotification(t('paymentLinksSaved'), 'success');
             setIsPaymentLinksDialogOpen(false);
@@ -4118,6 +4133,13 @@ const App = () => {
                                 <Button variant="ghost" size="icon" onClick={() => setPaymentLinks(p => ({ ...p, infinite: '' }))}><Trash2 className="h-4 w-4 text-red-500" /></Button>
                             </div>
                         </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="payment-link-usd">{t('paymentLinkUsd')}</Label>
+                             <div className="flex gap-2">
+                                <Input id="payment-link-usd" value={paymentLinks.usd} onChange={(e) => setPaymentLinks(p => ({ ...p, usd: e.target.value }))} placeholder="PayPal, Stripe, etc."/>
+                                <Button variant="ghost" size="icon" onClick={() => setPaymentLinks(p => ({ ...p, usd: '' }))}><Trash2 className="h-4 w-4 text-red-500" /></Button>
+                            </div>
+                        </div>
                     </div>
                     <DialogFooter><Button variant="outline" onClick={() => setIsPaymentLinksDialogOpen(false)}>{t('cancel')}</Button><Button onClick={handleSavePaymentLinks}>{t('save')}</Button></DialogFooter>
                 </DialogContent>
@@ -4133,6 +4155,27 @@ const App = () => {
                         <Button onClick={() => { setIsCopyOptionsDialogOpen(false); setIsPaymentQrDialogOpen(true); }} className="w-full bg-black hover:bg-gray-900 text-white font-bold flex items-center gap-2 justify-center"><QrCode className="h-5 w-5" />{t('payWithQr')}</Button>
                         <Button onClick={() => { const acctLine1 = (appSettings.bankInfoLine1 || 'Banco Caja Social: 24096711314').split(':').pop()?.trim() || ''; navigator.clipboard.writeText(acctLine1); showNotification(t('accountNumberCopied'), 'success'); setIsCopyOptionsDialogOpen(false); }}>{t('copyAccountNumber')}</Button>
                         <Button onClick={() => { const acctLine2 = (appSettings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054'); const keyMatch = acctLine2.match(/(@\S+)/); const keyToCopyStr = keyMatch ? keyMatch[0] : acctLine2; if (keyToCopyStr) { navigator.clipboard.writeText(keyToCopyStr); showNotification(t('brebKeyCopied'), 'success'); } setIsCopyOptionsDialogOpen(false); }}>{t('copyBrebKey')}</Button>
+                        {appSettings.paymentLinkUsd && (
+                            <Button onClick={() => setIsUsdPaymentDialogOpen(true)} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold flex items-center gap-2 justify-center">
+                                <DollarSign className="h-5 w-5" />
+                                {t('payWithUsd')}
+                            </Button>
+                        )}
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={isUsdPaymentDialogOpen} onOpenChange={setIsUsdPaymentDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{t('payWithUsd')}</DialogTitle>
+                        <DialogDescription>{t('usdPaymentInstructions')}</DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4 text-center">
+                        <p className="mb-4 text-sm text-muted-foreground">{t('usdPaymentNote')}</p>
+                        <Button onClick={handleUsdPayment} className="w-full bg-blue-600 hover:bg-blue-700 h-12 text-lg">
+                            {t('goToUsdPayment')}
+                        </Button>
                     </div>
                 </DialogContent>
             </Dialog>
@@ -4348,21 +4391,46 @@ const App = () => {
                         <DialogDescription>{t('managePaymentQrImageDescription')}</DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
-                        {isUploading && (<div className="flex justify-center items-center p-2"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /><span className="ml-2 text-muted-foreground">{t('uploadingImage')}...</span></div>)}
-                        <div className="grid gap-2">
-                            <Label htmlFor="payment-qr-image-url">{t('paymentQrImageUrlLabel')}</Label>
-                            <Input id="payment-qr-image-url" value={paymentQrImageUrl} onChange={(e) => setPaymentQrImageUrl(e.target.value)} placeholder="https://example.com/qr.png" disabled={isUploading}/>
+                        <div className="flex flex-col items-center gap-4">
+                            <Label htmlFor="qr-file-upload" className="w-full">
+                                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 flex flex-col items-center justify-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-all">
+                                    <Upload className="h-10 w-10 text-gray-400 mb-2" />
+                                    <span className="text-sm font-medium text-gray-600">{t('uploadFromFile')}</span>
+                                    <input 
+                                        id="qr-file-upload" 
+                                        type="file" 
+                                        accept="image/*" 
+                                        className="hidden" 
+                                        onChange={(e) => {
+                                            const file = e.target.files?.[0];
+                                            if (file) uploadImage(file, 'payment-qr');
+                                        }}
+                                        disabled={isUploading}
+                                    />
+                                </div>
+                            </Label>
                         </div>
-                        {paymentQrImageUrl && (
-                            <div className="mt-4 p-4 border rounded-lg bg-gray-50 flex flex-col items-center gap-2">
+                        {isUploading && (
+                            <div className="flex justify-center items-center p-2 text-blue-600">
+                                <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                                <span className="text-sm font-medium">{t('uploadingImage')}...</span>
+                            </div>
+                        )}
+                        {paymentQrImageUrl && !isUploading && (
+                            <div className="mt-2 p-4 border rounded-lg bg-gray-50 flex flex-col items-center gap-2">
                                 <Label>{t('preview')}</Label>
-                                <div className="relative inline-block bg-white rounded-lg shadow-md"><Image key={paymentQrImageUrl} src={paymentQrImageUrl} alt={t('paymentQrCodeAlt')} width={200} height={200} className="object-contain" unoptimized /></div>
+                                <div className="relative inline-block bg-white rounded-lg shadow-md overflow-hidden">
+                                    <Image key={paymentQrImageUrl} src={paymentQrImageUrl} alt={t('paymentQrCodeAlt')} width={200} height={200} className="object-contain" unoptimized />
+                                </div>
+                                <Button variant="ghost" size="sm" className="text-red-500" onClick={() => setPaymentQrImageUrl('')}>
+                                    <Trash2 className="h-4 w-4 mr-2" /> {t('delete')}
+                                </Button>
                             </div>
                         )}
                     </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setIsPaymentQrImageDialogOpen(false)} disabled={isUploading}>{t('cancel')}</Button>
-                        <Button onClick={handleSavePaymentQrImage} disabled={isUploading || !paymentQrImageUrl}>{isUploading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{t('save')}</Button>
+                        <Button onClick={handleSavePaymentQrImage} disabled={isUploading}>{t('save')}</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

@@ -275,6 +275,7 @@
     "paymentLinkTwoDigit": "Link de Pago (2 Cifras)",
     "paymentLinkThreeDigit": "Link de Pago (3 Cifras)",
     "paymentLinkInfinite": "Link de Pago (Infinita)",
+    "paymentLinkUsd": "Link de Pago (USD)",
     "paymentLinksSaved": "Links de pago guardados con éxito.",
     "errorSavingPaymentLinks": "Error al guardar los links de pago.",
     "copyPaymentTitle": "Copiar Información de Pago",
@@ -413,5 +414,11 @@
     "raffleNotActiveYet": "Esta rifa aún no ha sido activada por el administrador.",
     "cancelReference": "Cancelar y borrar referencia",
     "referenceCancelled": "Referencia cancelada correctamente.",
-    "errorCancellingReference": "Error al cancelar la referencia."
+    "errorCancellingReference": "Error al cancelar la referencia.",
+    "payWithUsd": "Pagar en Dólares (USD)",
+    "usdPaymentInstructions": "Haz clic abajo para ir a la plataforma de pago internacional (PayPal/Stripe).",
+    "usdPaymentNote": "Una vez realizado el pago, envía el comprobante a soporte para activar tu tablero.",
+    "goToUsdPayment": "Ir al Pago (USD)",
+    "paymentLinkUsd": "Link de Pago (USD)",
+    "delete": "Eliminar"
 }

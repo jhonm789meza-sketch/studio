@@ -275,6 +275,7 @@
     "paymentLinkTwoDigit": "Payment Link (2-Digit)",
     "paymentLinkThreeDigit": "Payment Link (3-Digit)",
     "paymentLinkInfinite": "Payment Link (Infinite)",
+    "paymentLinkUsd": "Payment Link (USD)",
     "paymentLinksSaved": "Payment links saved successfully.",
     "errorSavingPaymentLinks": "Error saving payment links.",
     "copyPaymentTitle": "Copy Payment Information",
@@ -409,5 +410,11 @@
     "sendToWhatsapp": "Send to WhatsApp",
     "cancelReference": "Cancel and delete reference",
     "referenceCancelled": "Reference cancelled successfully.",
-    "errorCancellingReference": "Error cancelling the reference."
+    "errorCancellingReference": "Error cancelling the reference.",
+    "payWithUsd": "Pay in Dollars (USD)",
+    "usdPaymentInstructions": "Click below to go to the international payment platform (PayPal/Stripe).",
+    "usdPaymentNote": "Once the payment is made, send the receipt to support to activate your board.",
+    "goToUsdPayment": "Go to Payment (USD)",
+    "paymentLinkUsd": "Payment Link (USD)",
+    "delete": "Delete"
 }

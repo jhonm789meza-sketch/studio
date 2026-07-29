@@ -1,4 +1,5 @@
 
+
 export interface Participant {
     id: number;
     name: string;
@@ -30,6 +31,7 @@ export interface AppSettings {
     paymentLinkTwoDigit?: string;
     paymentLinkThreeDigit?: string;
     paymentLinkInfinite?: string;
+    paymentLinkUsd?: string;
     activationPriceTwoDigit?: string;
     activationPriceThreeDigit?: string;
     activationPriceInfinite?: string;
