@@ -4377,7 +4377,16 @@ const App = () => {
                     </DialogHeader>
                     <div className="flex justify-center items-center p-4">
                         {appSettings.paymentQrImageUrl ? (
-                            <div className="relative inline-block bg-white rounded-lg shadow-md"><Image src={appSettings.paymentQrImageUrl} alt={t('paymentQrCodeAlt')} width={400} height={400} className="object-contain" unoptimized /></div>
+                            <div className="relative inline-block bg-white rounded-lg shadow-md">
+                                <Image 
+                                    src={appSettings.paymentQrImageUrl.startsWith('http') ? appSettings.paymentQrImageUrl : `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(appSettings.paymentQrImageUrl)}&qzone=1&ecc=H`} 
+                                    alt={t('paymentQrCodeAlt')} 
+                                    width={400} 
+                                    height={400} 
+                                    className="object-contain" 
+                                    unoptimized 
+                                />
+                            </div>
                         ) : (<div className="text-muted-foreground bg-gray-100 p-8 rounded-lg flex items-center justify-center h-[300px] w-[300px]"><p>{t('noPrizeImage')}</p></div>)}
                     </div>
                     <DialogFooter><Button type="button" variant="outline" onClick={() => setIsPaymentQrDialogOpen(false)}>{t('close')}</Button></DialogFooter>
@@ -4391,36 +4400,29 @@ const App = () => {
                         <DialogDescription>{t('managePaymentQrImageDescription')}</DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
-                        <div className="flex flex-col items-center gap-4">
-                            <Label htmlFor="qr-file-upload" className="w-full">
-                                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 flex flex-col items-center justify-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-all">
-                                    <Upload className="h-10 w-10 text-gray-400 mb-2" />
-                                    <span className="text-sm font-medium text-gray-600">{t('uploadFromFile')}</span>
-                                    <input 
-                                        id="qr-file-upload" 
-                                        type="file" 
-                                        accept="image/*" 
-                                        className="hidden" 
-                                        onChange={(e) => {
-                                            const file = e.target.files?.[0];
-                                            if (file) uploadImage(file, 'payment-qr');
-                                        }}
-                                        disabled={isUploading}
-                                    />
-                                </div>
-                            </Label>
+                        <div className="grid gap-2">
+                            <Label htmlFor="payment-qr-text">Código QR (Pegar texto)</Label>
+                            <Textarea 
+                                id="payment-qr-text" 
+                                placeholder="Pegue aquí el código del QR (ej: 00020101...)"
+                                value={paymentQrImageUrl}
+                                onChange={(e) => setPaymentQrImageUrl(e.target.value)}
+                                rows={4}
+                            />
                         </div>
-                        {isUploading && (
-                            <div className="flex justify-center items-center p-2 text-blue-600">
-                                <Loader2 className="h-5 w-5 animate-spin mr-2" />
-                                <span className="text-sm font-medium">{t('uploadingImage')}...</span>
-                            </div>
-                        )}
-                        {paymentQrImageUrl && !isUploading && (
+                        {paymentQrImageUrl && (
                             <div className="mt-2 p-4 border rounded-lg bg-gray-50 flex flex-col items-center gap-2">
                                 <Label>{t('preview')}</Label>
                                 <div className="relative inline-block bg-white rounded-lg shadow-md overflow-hidden">
-                                    <Image key={paymentQrImageUrl} src={paymentQrImageUrl} alt={t('paymentQrCodeAlt')} width={200} height={200} className="object-contain" unoptimized />
+                                    <Image 
+                                        key={paymentQrImageUrl} 
+                                        src={paymentQrImageUrl.startsWith('http') ? paymentQrImageUrl : `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(paymentQrImageUrl)}&ecc=M&qzone=1`} 
+                                        alt={t('paymentQrCodeAlt')} 
+                                        width={200} 
+                                        height={200} 
+                                        className="object-contain" 
+                                        unoptimized 
+                                    />
                                 </div>
                                 <Button variant="ghost" size="sm" className="text-red-500" onClick={() => setPaymentQrImageUrl('')}>
                                     <Trash2 className="h-4 w-4 mr-2" /> {t('delete')}
