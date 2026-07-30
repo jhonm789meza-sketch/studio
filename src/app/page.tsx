@@ -4295,7 +4295,7 @@ const App = () => {
                                 id="locked-board-external-url" 
                                 value={lockedBoardExternalUrl} 
                                 onChange={(e) => setLockedBoardExternalUrl(e.target.value)} 
-                                placeholder="https://photos.app.goo.gl/..."
+                                placeholder="https://photos.google.com/share/..."
                             />
                         </div>
                         {(lockedBoardExternalUrl || lockedBoardBgUrl) && (
