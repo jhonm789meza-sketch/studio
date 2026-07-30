@@ -76,6 +76,7 @@ const initialRaffleData: Raffle = {
     allowPartialWinners: false,
     notificationTokens: [],
     partialWinners: [],
+    prizeExternalUrl: '',
 };
 
 interface NextRaffleInfo {
@@ -232,6 +233,7 @@ const App = () => {
 
     const [isLockedBoardBgDialogOpen, setIsLockedBoardBgDialogOpen] = useState(false);
     const [lockedBoardBgUrl, setLockedBoardBgUrl] = useState('');
+    const [lockedBoardExternalUrl, setLockedBoardExternalUrl] = useState('');
 
     const [isGamesSummaryDialogOpen, setIsGamesSummaryDialogOpen] = useState(false);
     
@@ -314,6 +316,7 @@ const App = () => {
                     });
                     setPaymentQrImageUrl(settings.paymentQrImageUrl || '');
                     setLockedBoardBgUrl(settings.lockedBoardBackgroundImageUrl || '');
+                    setLockedBoardExternalUrl(settings.lockedBoardExternalImageUrl || '');
                 }
             }
         });
@@ -387,7 +390,7 @@ const App = () => {
             organizerName: raffleState.organizerName,
             gameDate: raffleState.gameDate,
             lottery: raffleState.lottery === 'Otro' ? raffleState.customLottery : raffleState.lottery,
-            prizeImageUrl: raffleState.prizeImageUrl,
+            prizeImageUrl: raffleState.prizeExternalUrl || raffleState.prizeImageUrl,
             raffleRef: raffleState.raffleRef,
             value: raffleState.value,
             currencySymbol: raffleState.currencySymbol,
@@ -996,7 +999,7 @@ const App = () => {
                     organizerName: raffleState.organizerName,
                     gameDate: raffleState.gameDate,
                     lottery: raffleState.lottery === 'Otro' ? raffleState.customLottery : raffleState.lottery,
-                    prizeImageUrl: raffleState.prizeImageUrl,
+                    prizeImageUrl: raffleState.prizeExternalUrl || raffleState.prizeImageUrl,
                     raffleRef: raffleState.raffleRef,
                     value: raffleState.value,
                     currencySymbol: raffleState.currencySymbol,
@@ -1909,7 +1912,7 @@ const App = () => {
         
         setIsUploading(true);
         try {
-            const prizeImageUrl = raffleState.prizeImageUrl;
+            const prizeImageUrl = raffleState.prizeExternalUrl || raffleState.prizeImageUrl;
             if (!prizeImageUrl) {
                  showNotification(t('noPrizeImage'), 'warning');
                  return;
@@ -2201,6 +2204,7 @@ const App = () => {
             const settingsDocRef = doc(db, 'internal', 'settings');
             await setDoc(settingsDocRef, {
                 lockedBoardBackgroundImageUrl: lockedBoardBgUrl,
+                lockedBoardExternalImageUrl: lockedBoardExternalUrl,
             }, { merge: true });
             showNotification(t('imageUploadedSuccess'), 'success');
             setIsLockedBoardBgDialogOpen(false);
@@ -2253,7 +2257,7 @@ const App = () => {
 
     const allNumbers = Array.from({ length: totalNumbers }, (_, i) => i);
     
-    const globalBackgroundImage = raffleState.raffleRef ? raffleState.prizeImageUrl : '';
+    const globalBackgroundImage = raffleState.raffleRef ? (raffleState.prizeExternalUrl || raffleState.prizeImageUrl) : '';
 
     const closeTicketModal = () => {
         setIsTicketModalOpen(false);
@@ -2322,16 +2326,16 @@ const App = () => {
                         )}
                         
                         <div className="mb-6 rounded-lg overflow-hidden relative flex items-center justify-center shadow-lg bg-gray-200 aspect-auto group">
-                             {raffleState.prizeImageUrl ? (
+                             {(raffleState.prizeExternalUrl || raffleState.prizeImageUrl) ? (
                                 <button onClick={() => isCurrentUserAdmin ? handleShare() : handleTabClick('register')} className="w-full flex items-center justify-center cursor-pointer relative" aria-label={t('rafflePrizeAlt')}>
                                     <Image 
-                                        src={raffleState.prizeImageUrl} 
+                                        src={raffleState.prizeExternalUrl || raffleState.prizeImageUrl} 
                                         alt={t('rafflePrizeAlt')} 
                                         width={1200}
                                         height={1200}
                                         className="w-full h-auto object-contain max-h-[60vh] transition-transform duration-500 group-hover:scale-105"
                                         unoptimized 
-                                        key={raffleState.prizeImageUrl}
+                                        key={raffleState.prizeExternalUrl || raffleState.prizeImageUrl}
                                     />
                                     {!isCurrentUserAdmin && (
                                         <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -2433,23 +2437,41 @@ const App = () => {
                                 <div>
                                     <Label>{t('prizeImage')}</Label>
                                     <div className="space-y-2 mt-1">
-                                        <div className="flex flex-wrap gap-2">
-                                            <Input
-                                                id="prize-image-url-input"
-                                                type="text"
-                                                value={raffleState.prizeImageUrl}
-                                                onChange={(e) => handleLocalFieldChange('prizeImageUrl', e.target.value)}
-                                                onBlur={(e) => handleFieldChange('prizeImageUrl', e.target.value)}
-                                                placeholder={t('pasteImageLinkPlaceholder')}
-                                                disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
-                                                className="flex-grow"
-                                            />
-                                            <a href="https://www.google.com/imghp" target="_blank" rel="noopener noreferrer">
-                                                <Button type="button" variant="outline" className="w-full sm:w-auto">
-                                                    <Search className="h-4 w-4 mr-2" />
-                                                    {t('searchOnGoogle')}
-                                                </Button>
-                                            </a>
+                                        <div className="grid gap-4">
+                                            <div className="grid gap-2">
+                                                <Label htmlFor="prize-image-url-input" className="text-xs text-muted-foreground">Opción 1 - Link Directo</Label>
+                                                <div className="flex flex-wrap gap-2">
+                                                    <Input
+                                                        id="prize-image-url-input"
+                                                        type="text"
+                                                        value={raffleState.prizeImageUrl}
+                                                        onChange={(e) => handleLocalFieldChange('prizeImageUrl', e.target.value)}
+                                                        onBlur={(e) => handleFieldChange('prizeImageUrl', e.target.value)}
+                                                        placeholder={t('pasteImageLinkPlaceholder')}
+                                                        disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
+                                                        className="flex-grow"
+                                                    />
+                                                    <a href="https://www.google.com/imghp" target="_blank" rel="noopener noreferrer">
+                                                        <Button type="button" variant="outline" className="w-full sm:w-auto">
+                                                            <Search className="h-4 w-4 mr-2" />
+                                                            {t('searchOnGoogle')}
+                                                        </Button>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                            <div className="grid gap-2">
+                                                <Label htmlFor="prize-external-url-input" className="text-xs text-muted-foreground">Link Externo (Opción 2 - Google Photos / Otros)</Label>
+                                                <Input
+                                                    id="prize-external-url-input"
+                                                    type="text"
+                                                    value={raffleState.prizeExternalUrl || ''}
+                                                    onChange={(e) => handleLocalFieldChange('prizeExternalUrl', e.target.value)}
+                                                    onBlur={(e) => handleFieldChange('prizeExternalUrl', e.target.value)}
+                                                    placeholder="https://photos.app.goo.gl/..."
+                                                    disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
+                                                    className="w-full"
+                                                />
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -2890,10 +2912,10 @@ const App = () => {
                     "max-w-6xl mx-auto rounded-none sm:rounded-2xl shadow-2xl overflow-hidden border transition-all duration-700 relative flex-grow w-full",
                     !raffleState.raffleRef ? "border-white/20 min-h-screen sm:min-h-[80vh]" : "bg-card/95 backdrop-blur-sm"
                 )}>
-                    {!raffleState.raffleRef && appSettings.lockedBoardBackgroundImageUrl && (
+                    {!raffleState.raffleRef && (appSettings.lockedBoardExternalImageUrl || appSettings.lockedBoardBackgroundImageUrl) && (
                         <div className="absolute inset-0 z-0 pointer-events-none w-full h-full">
                             <Image 
-                                src={appSettings.lockedBoardBackgroundImageUrl} 
+                                src={appSettings.lockedBoardExternalImageUrl || appSettings.lockedBoardBackgroundImageUrl || ''} 
                                 alt="Locked Background" 
                                 fill 
                                 className="object-cover md:object-contain" 
@@ -2952,6 +2974,10 @@ const App = () => {
                                             <DropdownMenuItem onSelect={() => setIsPaymentLinksDialogOpen(true)}>
                                                 <LinkIcon className="mr-2 h-4 w-4" />
                                                 <span>{t('paymentLinks')}</span>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onSelect={() => setIsUsdPaymentDialogOpen(true)}>
+                                                <DollarSign className="mr-2 h-4 w-4" />
+                                                <span>Link de Pago USD</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setIsActivationPricesDialogOpen(true)}>
                                                 <DollarSign className="mr-2 h-4 w-4" />
@@ -4255,7 +4281,7 @@ const App = () => {
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                         <div className="grid gap-2">
-                            <Label htmlFor="locked-board-bg-url">{t('lockedBoardBgUrlLabel')}</Label>
+                            <Label htmlFor="locked-board-bg-url">{t('lockedBoardBgUrlLabel')} (Opción 1 - Link Directo)</Label>
                             <Input 
                                 id="locked-board-bg-url" 
                                 value={lockedBoardBgUrl} 
@@ -4263,11 +4289,20 @@ const App = () => {
                                 placeholder="https://example.com/background.jpg"
                             />
                         </div>
-                        {lockedBoardBgUrl && (
+                        <div className="grid gap-2">
+                            <Label htmlFor="locked-board-external-url">Link Externo (Opción 2 - Google Photos / Otros)</Label>
+                            <Input 
+                                id="locked-board-external-url" 
+                                value={lockedBoardExternalUrl} 
+                                onChange={(e) => setLockedBoardExternalUrl(e.target.value)} 
+                                placeholder="https://photos.app.goo.gl/..."
+                            />
+                        </div>
+                        {(lockedBoardExternalUrl || lockedBoardBgUrl) && (
                             <div className="mt-4 p-4 border rounded-lg bg-gray-50 flex flex-col items-center gap-2">
                                 <Label>{t('preview')}</Label>
                                 <div className="relative w-full aspect-video rounded-lg overflow-hidden border">
-                                    <Image src={lockedBoardBgUrl} alt="Preview" fill className="object-cover" unoptimized />
+                                    <Image src={lockedBoardExternalUrl || lockedBoardBgUrl} alt="Preview" fill className="object-cover" unoptimized />
                                 </div>
                             </div>
                         )}
@@ -4404,7 +4439,7 @@ const App = () => {
                             <Label htmlFor="payment-qr-text">Código QR (Pegar texto)</Label>
                             <Textarea 
                                 id="payment-qr-text" 
-                                placeholder="Pegue aquí el código del QR (ej: 00020101...)"
+                                placeholder="Pegue aquí el código del QR (ej: 0002010102112638...)"
                                 value={paymentQrImageUrl}
                                 onChange={(e) => setPaymentQrImageUrl(e.target.value)}
                                 rows={4}
@@ -4440,7 +4475,7 @@ const App = () => {
             <Dialog open={isPrizeImageModalOpen} onOpenChange={setIsPrizeImageModalOpen}>
                 <DialogContent className="max-w-4xl w-auto bg-transparent border-none shadow-none p-2">
                     <DialogHeader><DialogTitle className="sr-only">{raffleState.prize || t('rafflePrizeAlt')}</DialogTitle></DialogHeader>
-                    {raffleState.prizeImageUrl && (<Image src={raffleState.prizeImageUrl} alt={raffleState.prize || t('rafflePrizeAlt')} width={1920} height={1080} className="rounded-lg object-contain max-h-[90vh] w-auto h-auto" unoptimized />)}
+                    {(raffleState.prizeExternalUrl || raffleState.prizeImageUrl) && (<Image src={raffleState.prizeExternalUrl || raffleState.prizeImageUrl} alt={raffleState.prize || t('rafflePrizeAlt')} width={1920} height={1080} className="rounded-lg object-contain max-h-[90vh] w-auto h-auto" unoptimized />)}
                 </DialogContent>
 
             </Dialog>
@@ -4552,7 +4587,7 @@ const App = () => {
                         <DialogDescription>{t('adminActivationDescription')}</DialogDescription>
                     </DialogHeader>
                     <DialogFooter className="flex-col sm:flex-row gap-2">
-                        <Button variant="outline" onClick={handleCancelActivation} className="w-full sm:w-auto">
+                        <Button variant="outline" onClick={handleCancelActivation} className="w-full sm:auto">
                             {t('cancelReference')}
                         </Button>
                         <Button onClick={handleConfirmOnline} className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold h-12">

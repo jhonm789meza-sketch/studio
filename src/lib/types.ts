@@ -45,6 +45,7 @@ export interface AppSettings {
     isBlockedThreeDigit?: boolean;
     isBlockedInfinite?: boolean;
     lockedBoardBackgroundImageUrl?: string;
+    lockedBoardExternalImageUrl?: string;
 }
 
 export interface Raffle {
@@ -88,4 +89,5 @@ export interface Raffle {
     allowPartialWinners?: boolean;
     notificationTokens?: string[];
     partialWinners?: PartialWinnerInfo[];
+    prizeExternalUrl?: string;
 }
