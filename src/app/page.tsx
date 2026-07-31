@@ -3548,9 +3548,7 @@ const App = () => {
                                                                 <tr key={p.id}>
                                                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{p.transactionId}</td>
                                                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{p.raffleMode}</td>
-                                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                                        {p.createdAt && p.createdAt.toDate ? format(p.createdAt.toDate(), 'PPpp', { locale: language === 'es' ? es : enUS }) : 'N/A'}
-                                                                    </td>
+                                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{p.createdAt && p.createdAt.toDate ? format(p.createdAt.toDate(), 'PPpp', { locale: language === 'es' ? es : enUS }) : 'N/A'}</td>
                                                                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                                                                         <Button onClick={() => handleApproveActivation(p)} size="sm" className="bg-green-500 hover:bg-green-600 text-white">
                                                                             {t('activateBoard')}
@@ -3993,7 +3991,7 @@ const App = () => {
                     {appUrl && (
                         <div className="flex justify-center items-center p-4">
                             <div className="relative inline-block p-4 bg-white rounded-lg shadow-md">
-                                <Image src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(window.location.origin)}&qzone=1&ecc=H`} alt={t('appQRCodeAlt')} width={200} height={200}/>
+                                Image src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(window.location.origin)}&qzone=1&ecc=H`} alt={t('appQRCodeAlt')} width={200} height={200}/>
                                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/90 shadow-md backdrop-blur-sm"><span className="font-bold text-5xl text-yellow-500">⚡</span></div>
                                  </div>
@@ -4295,7 +4293,7 @@ const App = () => {
                                 id="locked-board-external-url" 
                                 value={lockedBoardExternalUrl} 
                                 onChange={(e) => setLockedBoardExternalUrl(e.target.value)} 
-                                placeholder="https://photos.google.com/share/..."
+                                placeholder="https://photos.app.goo.gl/JKNEVcx646xgzp5HA"
                             />
                         </div>
                         {(lockedBoardExternalUrl || lockedBoardBgUrl) && (
