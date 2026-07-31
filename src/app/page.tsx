@@ -2257,7 +2257,9 @@ const App = () => {
 
     const allNumbers = Array.from({ length: totalNumbers }, (_, i) => i);
     
-    const globalBackgroundImage = raffleState.raffleRef ? (raffleState.prizeExternalUrl || raffleState.prizeImageUrl) : '';
+    const globalBackgroundImage = raffleState.raffleRef 
+        ? (raffleState.prizeExternalUrl || raffleState.prizeImageUrl) 
+        : (appSettings.lockedBoardExternalImageUrl || appSettings.lockedBoardBackgroundImageUrl || '');
 
     const closeTicketModal = () => {
         setIsTicketModalOpen(false);
@@ -2912,19 +2914,6 @@ const App = () => {
                     "max-w-6xl mx-auto rounded-none sm:rounded-2xl shadow-2xl overflow-hidden border transition-all duration-700 relative flex-grow w-full",
                     !raffleState.raffleRef ? "border-white/20 min-h-screen sm:min-h-[80vh]" : "bg-card/95 backdrop-blur-sm"
                 )}>
-                    {!raffleState.raffleRef && (appSettings.lockedBoardExternalImageUrl || appSettings.lockedBoardBackgroundImageUrl) && (
-                        <div className="absolute inset-0 z-0 pointer-events-none w-full h-full">
-                            <Image 
-                                src={appSettings.lockedBoardExternalImageUrl || appSettings.lockedBoardBackgroundImageUrl || ''} 
-                                alt="Locked Background" 
-                                fill 
-                                className="object-cover md:object-contain" 
-                                unoptimized 
-                                priority 
-                            />
-                            <div className="absolute inset-0 bg-black/20" />
-                        </div>
-                    )}
                     <div className="bg-gradient-to-r from-purple-600/80 to-blue-600/80 text-white p-6 flex justify-between items-center relative overflow-hidden z-10">
                         <div className="absolute inset-0 bg-white/5 backdrop-blur-sm pointer-events-none" />
                         <div className="relative z-10">
@@ -3991,7 +3980,7 @@ const App = () => {
                     {appUrl && (
                         <div className="flex justify-center items-center p-4">
                             <div className="relative inline-block p-4 bg-white rounded-lg shadow-md">
-                                Image src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(window.location.origin)}&qzone=1&ecc=H`} alt={t('appQRCodeAlt')} width={200} height={200}/>
+                                <Image src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(window.location.origin)}&qzone=1&ecc=H`} alt={t('appQRCodeAlt')} width={200} height={200}/>
                                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/90 shadow-md backdrop-blur-sm"><span className="font-bold text-5xl text-yellow-500">⚡</span></div>
                                  </div>
@@ -4288,7 +4277,7 @@ const App = () => {
                             />
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="locked-board-external-url">Link Externo (Opción 2 - Google Photos / Otros)</Label>
+                            <Label htmlFor="locked-board-external-url">Opción 2 - Vínculo de la imagen (Google Photos / Otros)</Label>
                             <Input 
                                 id="locked-board-external-url" 
                                 value={lockedBoardExternalUrl} 
