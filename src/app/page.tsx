@@ -1939,7 +1939,7 @@ const App = () => {
         } catch (error) {
             console.error("Error sharing Play Now button:", error);
             const raffleUrl = `${window.location.origin}/prize/${raffleState.raffleRef}`;
-            const shareText = encodeURIComponent(`${raffleUrl}\n\n¡TOCA ARRIBA PARA JUGAR YA! ⚡`);
+            const shareText = `${raffleUrl}\n\n¡TOCA ARRIBA PARA JUGAR YA! ⚡`;
             window.open(`https://wa.me/?text=${shareText}`, '_blank');
         } finally {
             setIsUploading(false);
@@ -4282,7 +4282,7 @@ const App = () => {
                                 id="locked-board-external-url" 
                                 value={lockedBoardExternalUrl} 
                                 onChange={(e) => setLockedBoardExternalUrl(e.target.value)} 
-                                placeholder="https://photos.app.goo.gl/JKNEVcx646xgzp5HA"
+                                placeholder="https://photos.google.com/share/AF1QipMleoHFCuWaTydZg2jF8XbtmT5Bw-nC2wcrZ-LSPopQGbYJQo0kBAP4pdWcV4q_7g?key=X2JycjlfNUtqck9ZWEtzM2xFbV92bUowa0ZUUXBn"
                             />
                         </div>
                         {(lockedBoardExternalUrl || lockedBoardBgUrl) && (
