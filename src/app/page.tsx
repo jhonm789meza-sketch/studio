@@ -245,6 +245,7 @@ const App = () => {
     const [showAdminActivationNotice, setShowAdminActivationNotice] = useState(false);
 
     const [isUsdPaymentDialogOpen, setIsUsdPaymentDialogOpen] = useState(false);
+    const [isUsdPaymentConfigDialogOpen, setIsUsdPaymentConfigDialogOpen] = useState(false);
 
     const prizeTextareaRef = useRef<HTMLTextAreaElement>(null);
     const isCurrentUserAdmin = !!raffleState.adminId && !!currentAdminId && raffleState.adminId === currentAdminId;
@@ -2032,6 +2033,7 @@ const App = () => {
              }, { merge: true });
             showNotification(t('paymentLinksSaved'), 'success');
             setIsPaymentLinksDialogOpen(false);
+            setIsUsdPaymentConfigDialogOpen(false);
         } catch (error) {
             console.error("Error saving payment links:", error);
             showNotification(t('errorSavingPaymentLinks'), 'error');
@@ -2964,7 +2966,7 @@ const App = () => {
                                                 <LinkIcon className="mr-2 h-4 w-4" />
                                                 <span>{t('paymentLinks')}</span>
                                             </DropdownMenuItem>
-                                            <DropdownMenuItem onSelect={() => setIsUsdPaymentDialogOpen(true)}>
+                                            <DropdownMenuItem onSelect={() => setIsUsdPaymentConfigDialogOpen(true)}>
                                                 <DollarSign className="mr-2 h-4 w-4" />
                                                 <span>Link de Pago USD</span>
                                             </DropdownMenuItem>
@@ -3931,7 +3933,7 @@ const App = () => {
                     </div>
                     <DialogFooter>
                         <Button type="button" variant="outline" onClick={() => setIsPublicSearchOpen(false)}>{t('cancel')}</Button>
-                        <Button type="submit" onClick={() => handleAdminSearch({ isPublicSearch: true })}>{t('search')}</Button>
+                        <Button type="submit" onClickSplit={() => handleAdminSearch({ isPublicSearch: true })}>{t('search')}</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
@@ -4155,6 +4157,31 @@ const App = () => {
                         </div>
                     </div>
                     <DialogFooter><Button variant="outline" onClick={() => setIsPaymentLinksDialogOpen(false)}>{t('cancel')}</Button><Button onClick={handleSavePaymentLinks}>{t('save')}</Button></DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={isUsdPaymentConfigDialogOpen} onOpenChange={setIsUsdPaymentConfigDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Configurar Pago en Dólares (USD)</DialogTitle>
+                        <DialogDescription>Configura el link de PayPal, Stripe o las instrucciones para pagos internacionales.</DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="usd-payment-link-config">Link de Pago (PayPal/Stripe)</Label>
+                            <Input 
+                                id="usd-payment-link-config" 
+                                value={paymentLinks.usd} 
+                                onChange={(e) => setPaymentLinks(p => ({ ...p, usd: e.target.value }))}
+                                placeholder="https://paypal.me/tuusuario"
+                            />
+                        </div>
+                        <p className="text-xs text-muted-foreground">Este link aparecerá como opción de pago para los usuarios que deseen activar su tablero desde el extranjero.</p>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsUsdPaymentConfigDialogOpen(false)}>Cancelar</Button>
+                        <Button onClick={handleSavePaymentLinks}>Guardar</Button>
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
 
@@ -4590,4 +4617,3 @@ const App = () => {
 };
 
 export default App;
-
