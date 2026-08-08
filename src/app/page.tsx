@@ -1613,7 +1613,8 @@ const App = () => {
         setFreeActivationMode(null);
     };
 
-    const handleActivationClick = () => {
+    const handleActivationClick = (mode: RaffleMode) => {
+        setSelectedRaffleMode(mode);
         setIsCopyOptionsDialogOpen(true);
     };
     
@@ -3134,7 +3135,7 @@ const App = () => {
                                                 </Button>
                                                 {((!appSettings.isFreeTwoDigit && !appSettings.isBlockedTwoDigit) || isSuperAdmin) && (
                                                     <div className="text-center space-y-4">
-                                                        <Button onClick={handleActivationClick} size="lg" className="w-full bg-slate-900 hover:bg-black text-white font-bold flex items-center gap-3 justify-center h-12">
+                                                        <Button onClick={() => handleActivationClick('two-digit')} size="lg" className="w-full bg-slate-900 hover:bg-black text-white font-bold flex items-center gap-3 justify-center h-12">
                                                             <BankIcon className="h-5 w-5" />
                                                             {t('activate')}
                                                         </Button>
@@ -3185,7 +3186,7 @@ const App = () => {
                                                 </Button>
                                                 {((!appSettings.isFreeThreeDigit && !appSettings.isBlockedThreeDigit) || isSuperAdmin) && (
                                                     <div className="text-center space-y-4">
-                                                        <Button onClick={handleActivationClick} size="lg" className="w-full bg-slate-900 hover:bg-black text-white font-bold flex items-center gap-3 justify-center h-12">
+                                                        <Button onClick={() => handleActivationClick('three-digit')} size="lg" className="w-full bg-slate-900 hover:bg-black text-white font-bold flex items-center gap-3 justify-center h-12">
                                                             <BankIcon className="h-5 w-5" />
                                                             {t('activate')}
                                                         </Button>
@@ -3236,7 +3237,7 @@ const App = () => {
                                                 </Button>
                                                 {((!appSettings.isFreeInfinite && !appSettings.isBlockedInfinite) || isSuperAdmin) && (
                                                     <div className="text-center space-y-4">
-                                                        <Button onClick={handleActivationClick} size="lg" className="w-full bg-slate-900 hover:bg-black text-white font-bold flex items-center gap-3 justify-center h-12">
+                                                        <Button onClick={() => handleActivationClick('infinite')} size="lg" className="w-full bg-slate-900 hover:bg-black text-white font-bold flex items-center gap-3 justify-center h-12">
                                                             <BankIcon className="h-5 w-5" />
                                                             {t('activate')}
                                                         </Button>
@@ -3606,7 +3607,7 @@ const App = () => {
                                                 {gamesFilter === 'past_date' && pastDateRaffles.length > 0 && (
                                                     <Button variant="destructive" onClick={handleDeleteAllPastDueRaffles}>
                                                         <Trash2 className="mr-2 h-4 w-4" />
-                                                        {t('deleteAllPastDueGames', { count: pastDateRaffles.length })}
+                                                        {t('deleteAllPastDueGames', { count: today && pastDateRaffles.length })}
                                                     </Button>
                                                 )}
                                             </div>
