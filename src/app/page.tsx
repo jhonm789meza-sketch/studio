@@ -2368,7 +2368,13 @@ const App = () => {
                                 <p className="text-sm text-gray-500">{t('gameReference')}</p>
                                 <div className="flex items-center gap-2">
                                     <p className="text-2xl font-bold text-gray-800 tracking-wider">{raffleState.raffleRef}</p>
-                                    <button onClick={() => window.open(`https://wa.me/57${raffleState.organizerPhoneNumber}`, '_blank')} className="p-2 rounded-full hover:bg-gray-100">
+                                    <button 
+                                        onClick={() => {
+                                            const cleanCode = (raffleState.organizerCountryCode || '+57').replace('+', '');
+                                            window.open(`https://wa.me/${cleanCode}${raffleState.organizerPhoneNumber}`, '_blank');
+                                        }} 
+                                        className="p-2 rounded-full hover:bg-gray-100"
+                                    >
                                         <WhatsappIcon />
                                     </button>
                                 </div>
