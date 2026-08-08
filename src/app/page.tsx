@@ -3106,7 +3106,12 @@ const App = () => {
                                 </div>
                                 <div className="grid md:grid-cols-1 gap-10 items-start max-w-lg mx-auto">
                                     <div className="flex flex-col justify-center items-center gap-10">
-                                        <div className="bg-slate-50/90 backdrop-blur-2xl rounded-2xl shadow-2xl flex flex-col w-full border border-white/40 overflow-hidden transform hover:scale-[1.02] transition-transform duration-300">
+                                        <div className="bg-slate-50/90 backdrop-blur-2xl rounded-2xl shadow-2xl flex flex-col w-full border border-white/40 overflow-hidden transform hover:scale-[1.02] transition-transform duration-300 relative">
+                                            {(appSettings.paymentLinkUsd || appSettings.paymentLinkUsdTwoDigit) && (
+                                                <div className="absolute top-4 right-4 bg-blue-600 text-white text-xs font-black px-2 py-1 rounded-md shadow-lg flex items-center gap-1 z-20">
+                                                    <DollarSign className="h-3 w-3" /> USD
+                                                </div>
+                                            )}
                                             <div className='flex'>
                                                 <div className="bg-purple-600 p-5 flex flex-col items-center justify-center border-r-2 border-dashed border-white/30">
                                                     <TicketIcon className="h-12 w-12 text-white mb-2" />
@@ -3152,7 +3157,12 @@ const App = () => {
                                             </div>
                                         </div>
 
-                                        <div className="bg-slate-50/90 backdrop-blur-2xl rounded-2xl shadow-2xl flex flex-col w-full border border-white/40 overflow-hidden transform hover:scale-[1.02] transition-transform duration-300">
+                                        <div className="bg-slate-50/90 backdrop-blur-2xl rounded-2xl shadow-2xl flex flex-col w-full border border-white/40 overflow-hidden transform hover:scale-[1.02] transition-transform duration-300 relative">
+                                            {(appSettings.paymentLinkUsd || appSettings.paymentLinkUsdThreeDigit) && (
+                                                <div className="absolute top-4 right-4 bg-blue-600 text-white text-xs font-black px-2 py-1 rounded-md shadow-lg flex items-center gap-1 z-20">
+                                                    <DollarSign className="h-3 w-3" /> USD
+                                                </div>
+                                            )}
                                             <div className='flex'>
                                                 <div className="bg-blue-600 p-5 flex flex-col items-center justify-center border-r-2 border-dashed border-white/30">
                                                     <TicketIcon className="h-12 w-12 text-white mb-2" />
@@ -3198,7 +3208,12 @@ const App = () => {
                                             </div>
                                         </div>
 
-                                         <div className="bg-slate-50/90 backdrop-blur-2xl rounded-2xl shadow-2xl flex flex-col w-full border border-white/40 overflow-hidden transform hover:scale-[1.02] transition-transform duration-300">
+                                         <div className="bg-slate-50/90 backdrop-blur-2xl rounded-2xl shadow-2xl flex flex-col w-full border border-white/40 overflow-hidden transform hover:scale-[1.02] transition-transform duration-300 relative">
+                                            {(appSettings.paymentLinkUsd || appSettings.paymentLinkUsdInfinite) && (
+                                                <div className="absolute top-4 right-4 bg-blue-600 text-white text-xs font-black px-2 py-1 rounded-md shadow-lg flex items-center gap-1 z-20">
+                                                    <DollarSign className="h-3 w-3" /> USD
+                                                </div>
+                                            )}
                                             <div className='flex'>
                                                 <div className="bg-red-600 p-5 flex flex-col items-center justify-center border-r-2 border-dashed border-white/30">
                                                     <InfinityIcon className="h-12 w-12 text-white mb-2" />
@@ -3953,7 +3968,7 @@ const App = () => {
                     </div>
                     <DialogFooter>
                         <Button type="button" variant="outline" onClick={() => setIsPublicSearchOpen(false)}>{t('cancel')}</Button>
-                        <Button type="submit" onClickSplit={() => handleAdminSearch({ isPublicSearch: true })}>{t('search')}</Button>
+                        <Button type="submit" onClick={() => handleAdminSearch({ isPublicSearch: true })}>{t('search')}</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
