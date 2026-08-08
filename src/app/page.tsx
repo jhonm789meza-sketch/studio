@@ -189,6 +189,9 @@ const App = () => {
         threeDigit: '',
         infinite: '',
         usd: '',
+        usdTwoDigit: '',
+        usdThreeDigit: '',
+        usdInfinite: '',
     });
     const [isCopyOptionsDialogOpen, setIsCopyOptionsDialogOpen] = useState(false);
     const [isActivationPricesDialogOpen, setIsActivationPricesDialogOpen] = useState(false);
@@ -305,6 +308,9 @@ const App = () => {
                         threeDigit: settings.paymentLinkThreeDigit || '',
                         infinite: settings.paymentLinkInfinite || '',
                         usd: settings.paymentLinkUsd || '',
+                        usdTwoDigit: settings.paymentLinkUsdTwoDigit || '',
+                        usdThreeDigit: settings.paymentLinkUsdThreeDigit || '',
+                        usdInfinite: settings.paymentLinkUsdInfinite || '',
                     });
                     setActivationPrices({
                         twoDigit: settings.activationPriceTwoDigit || '',
@@ -516,8 +522,17 @@ const App = () => {
     };
 
     const handleUsdPayment = () => {
-        if (appSettings.paymentLinkUsd) {
-            window.open(appSettings.paymentLinkUsd, '_blank');
+        let targetLink = appSettings.paymentLinkUsd;
+        if (selectedRaffleMode === 'two-digit' && appSettings.paymentLinkUsdTwoDigit) {
+            targetLink = appSettings.paymentLinkUsdTwoDigit;
+        } else if (selectedRaffleMode === 'three-digit' && appSettings.paymentLinkUsdThreeDigit) {
+            targetLink = appSettings.paymentLinkUsdThreeDigit;
+        } else if (selectedRaffleMode === 'infinite' && appSettings.paymentLinkUsdInfinite) {
+            targetLink = appSettings.paymentLinkUsdInfinite;
+        }
+
+        if (targetLink) {
+            window.open(targetLink, '_blank');
             setIsUsdPaymentDialogOpen(false);
             setIsCopyOptionsDialogOpen(false);
         } else {
@@ -1550,6 +1565,8 @@ const App = () => {
             return;
         }
 
+        setSelectedRaffleMode(mode);
+
         if (isFree) {
             setFreeActivationMode(mode);
             setIsFreeActivationDialogOpen(true);
@@ -2030,6 +2047,9 @@ const App = () => {
                 paymentLinkThreeDigit: paymentLinks.threeDigit,
                 paymentLinkInfinite: paymentLinks.infinite,
                 paymentLinkUsd: paymentLinks.usd,
+                paymentLinkUsdTwoDigit: paymentLinks.usdTwoDigit,
+                paymentLinkUsdThreeDigit: paymentLinks.usdThreeDigit,
+                paymentLinkUsdInfinite: paymentLinks.usdInfinite,
              }, { merge: true });
             showNotification(t('paymentLinksSaved'), 'success');
             setIsPaymentLinksDialogOpen(false);
@@ -4148,39 +4168,38 @@ const App = () => {
                                 <Button variant="ghost" size="icon" onClick={() => setPaymentLinks(p => ({ ...p, infinite: '' }))}><Trash2 className="h-4 w-4 text-red-500" /></Button>
                             </div>
                         </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="payment-link-usd">{t('paymentLinkUsd')}</Label>
-                             <div className="flex gap-2">
-                                <Input id="payment-link-usd" value={paymentLinks.usd} onChange={(e) => setPaymentLinks(p => ({ ...p, usd: e.target.value }))} placeholder="PayPal, Stripe, etc."/>
-                                <Button variant="ghost" size="icon" onClick={() => setPaymentLinks(p => ({ ...p, usd: '' }))}><Trash2 className="h-4 w-4 text-red-500" /></Button>
-                            </div>
-                        </div>
                     </div>
                     <DialogFooter><Button variant="outline" onClick={() => setIsPaymentLinksDialogOpen(false)}>{t('cancel')}</Button><Button onClick={handleSavePaymentLinks}>{t('save')}</Button></DialogFooter>
                 </DialogContent>
             </Dialog>
 
             <Dialog open={isUsdPaymentConfigDialogOpen} onOpenChange={setIsUsdPaymentConfigDialogOpen}>
-                <DialogContent>
+                <DialogContent className="sm:max-w-md">
                     <DialogHeader>
-                        <DialogTitle>Configurar Pago en Dólares (USD)</DialogTitle>
-                        <DialogDescription>Configura el link de PayPal, Stripe o las instrucciones para pagos internacionales.</DialogDescription>
+                        <DialogTitle>Configurar Pagos USD por Rifa</DialogTitle>
+                        <DialogDescription>Configura links de PayPal o Stripe independientes para cada modalidad.</DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                         <div className="grid gap-2">
-                            <Label htmlFor="usd-payment-link-config">Link de Pago (PayPal/Stripe)</Label>
-                            <Input 
-                                id="usd-payment-link-config" 
-                                value={paymentLinks.usd} 
-                                onChange={(e) => setPaymentLinks(p => ({ ...p, usd: e.target.value }))}
-                                placeholder="https://paypal.me/tuusuario"
-                            />
+                            <Label htmlFor="usd-two-digit">Link USD (2 Cifras)</Label>
+                            <Input id="usd-two-digit" value={paymentLinks.usdTwoDigit} onChange={(e) => setPaymentLinks(p => ({ ...p, usdTwoDigit: e.target.value }))} placeholder="https://paypal.me/..."/>
                         </div>
-                        <p className="text-xs text-muted-foreground">Este link aparecerá como opción de pago para los usuarios que deseen activar su tablero desde el extranjero.</p>
+                        <div className="grid gap-2">
+                            <Label htmlFor="usd-three-digit">Link USD (3 Cifras)</Label>
+                            <Input id="usd-three-digit" value={paymentLinks.usdThreeDigit} onChange={(e) => setPaymentLinks(p => ({ ...p, usdThreeDigit: e.target.value }))} placeholder="https://paypal.me/..."/>
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="usd-infinite">Link USD (Infinita)</Label>
+                            <Input id="usd-infinite" value={paymentLinks.usdInfinite} onChange={(e) => setPaymentLinks(p => ({ ...p, usdInfinite: e.target.value }))} placeholder="https://paypal.me/..."/>
+                        </div>
+                        <div className="grid gap-2 pt-2 border-t">
+                            <Label htmlFor="usd-generic">Link USD Respaldo (Opcional)</Label>
+                            <Input id="usd-generic" value={paymentLinks.usd} onChange={(e) => setPaymentLinks(p => ({ ...p, usd: e.target.value }))} placeholder="https://paypal.me/..."/>
+                        </div>
                     </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setIsUsdPaymentConfigDialogOpen(false)}>Cancelar</Button>
-                        <Button onClick={handleSavePaymentLinks}>Guardar</Button>
+                        <Button onClick={handleSavePaymentLinks}>Guardar Todo</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
@@ -4195,7 +4214,10 @@ const App = () => {
                         <Button onClick={() => { setIsCopyOptionsDialogOpen(false); setIsPaymentQrDialogOpen(true); }} className="w-full bg-black hover:bg-gray-900 text-white font-bold flex items-center gap-2 justify-center"><QrCode className="h-5 w-5" />{t('payWithQr')}</Button>
                         <Button onClick={() => { const acctLine1 = (appSettings.bankInfoLine1 || 'Banco Caja Social: 24096711314').split(':').pop()?.trim() || ''; navigator.clipboard.writeText(acctLine1); showNotification(t('accountNumberCopied'), 'success'); setIsCopyOptionsDialogOpen(false); }}>{t('copyAccountNumber')}</Button>
                         <Button onClick={() => { const acctLine2 = (appSettings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054'); const keyMatch = acctLine2.match(/(@\S+)/); const keyToCopyStr = keyMatch ? keyMatch[0] : acctLine2; if (keyToCopyStr) { navigator.clipboard.writeText(keyToCopyStr); showNotification(t('brebKeyCopied'), 'success'); } setIsCopyOptionsDialogOpen(false); }}>{t('copyBrebKey')}</Button>
-                        {appSettings.paymentLinkUsd && (
+                        {(appSettings.paymentLinkUsd || 
+                          (selectedRaffleMode === 'two-digit' && appSettings.paymentLinkUsdTwoDigit) ||
+                          (selectedRaffleMode === 'three-digit' && appSettings.paymentLinkUsdThreeDigit) ||
+                          (selectedRaffleMode === 'infinite' && appSettings.paymentLinkUsdInfinite)) && (
                             <Button onClick={() => setIsUsdPaymentDialogOpen(true)} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold flex items-center gap-2 justify-center">
                                 <DollarSign className="h-5 w-5" />
                                 {t('payWithUsd')}

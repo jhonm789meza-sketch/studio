@@ -32,6 +32,9 @@ export interface AppSettings {
     paymentLinkThreeDigit?: string;
     paymentLinkInfinite?: string;
     paymentLinkUsd?: string;
+    paymentLinkUsdTwoDigit?: string;
+    paymentLinkUsdThreeDigit?: string;
+    paymentLinkUsdInfinite?: string;
     activationPriceTwoDigit?: string;
     activationPriceThreeDigit?: string;
     activationPriceInfinite?: string;
