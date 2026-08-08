@@ -55,6 +55,7 @@ const initialRaffleData: Raffle = {
     customLottery: '',
     organizerName: '',
     organizerPhoneNumber: '',
+    organizerCountryCode: '+57',
     password: '',
     participants: [] as Participant[],
     raffleRef: '',
@@ -78,6 +79,30 @@ const initialRaffleData: Raffle = {
     partialWinners: [],
     prizeExternalUrl: '',
 };
+
+const countryIndicators = [
+    { code: '+57', flag: '🇨🇴', name: 'Colombia' },
+    { code: '+54', flag: '🇦🇷', name: 'Argentina' },
+    { code: '+591', flag: '🇧🇴', name: 'Bolivia' },
+    { code: '+56', flag: '🇨🇱', name: 'Chile' },
+    { code: '+506', flag: '🇨🇷', name: 'Costa Rica' },
+    { code: '+53', flag: '🇨🇺', name: 'Cuba' },
+    { code: '+593', flag: '🇪🇨', name: 'Ecuador' },
+    { code: '+503', flag: '🇸🇻', name: 'El Salvador' },
+    { code: '+34', flag: '🇪🇸', name: 'España' },
+    { code: '+502', flag: '🇬🇹', name: 'Guatemala' },
+    { code: '+504', flag: '🇭🇳', name: 'Honduras' },
+    { code: '+52', flag: '🇲🇽', name: 'México' },
+    { code: '+505', flag: '🇳🇮', name: 'Nicaragua' },
+    { code: '+507', flag: '🇵🇦', name: 'Panamá' },
+    { code: '+595', flag: '🇵🇾', name: 'Paraguay' },
+    { code: '+51', flag: '🇵🇪', name: 'Perú' },
+    { code: '+1', flag: '🇩🇴', name: 'Rep. Dominicana' },
+    { code: '+598', flag: '🇺🇾', name: 'Uruguay' },
+    { code: '+58', flag: '🇻🇪', name: 'Venezuela' },
+    { code: '+1', flag: '🇵🇷', name: 'Puerto Rico' },
+    { code: '+1', flag: '🇺🇸', name: 'Estados Unidos' },
+];
 
 interface NextRaffleInfo {
     refs: string[];
@@ -2400,9 +2425,30 @@ const App = () => {
                            </div>
                            <div>
                                 <Label htmlFor="organizer-phone-input">{t('organizerPhone')}:</Label>
-                                <div className="relative mt-1">
-                                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                        <span className="text-gray-500 sm:text-sm">+57</span>
+                                <div className="flex gap-2 mt-1">
+                                    <div className="w-[120px]">
+                                        <Select
+                                            value={raffleState.organizerCountryCode || '+57'}
+                                            onValueChange={(val) => {
+                                                handleLocalFieldChange('organizerCountryCode', val);
+                                                handleFieldChange('organizerCountryCode', val);
+                                            }}
+                                            disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
+                                        >
+                                            <SelectTrigger id="organizer-country-code">
+                                                <SelectValue placeholder="+57" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {countryIndicators.map((country) => (
+                                                    <SelectItem key={`${country.name}-${country.code}`} value={country.code}>
+                                                        <span className="flex items-center gap-2">
+                                                            <span>{country.flag}</span>
+                                                            <span>{country.code}</span>
+                                                        </span>
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
                                     </div>
                                     <Input
                                         id="organizer-phone-input"
@@ -2412,7 +2458,7 @@ const App = () => {
                                         onBlur={(e) => handleFieldChange('organizerPhoneNumber', e.target.value.replace(/\D/g, ''))}
                                         placeholder="3001234567"
                                         disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
-                                        className="w-full pl-12 mt-1"
+                                        className="flex-grow"
                                     />
                                 </div>
                             </div>

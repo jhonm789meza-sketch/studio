@@ -71,6 +71,7 @@ export interface Raffle {
     customLottery: string;
     organizerName: string;
     organizerPhoneNumber: string;
+    organizerCountryCode?: string;
     password?: string;
     participants: Participant[];
     raffleRef: string;
