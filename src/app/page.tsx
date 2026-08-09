@@ -2656,12 +2656,16 @@ const App = () => {
                                    className="w-full mt-1 px-3 py-2 text-base border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                                >
                                    <option value="">{t('selectLottery')}</option>
-                                   <option value="Lotería de Bogotá">{t('lotteryBogota')}</option>
-                                   <option value="Lotería de Medellín">{t('lotteryMedellin')}</option>
-                                   <option value="Lotería de Cundinamarca">{t('lotteryCundinamarca')}</option>
-                                   <option value="Lotería del Valle">{t('lotteryValle')}</option>
-                                   <option value="Lotería del Tolima">{t('lotteryTolima')}</option>
-                                   <option value="Lotería de la Cruz Roja">{t('lotteryRedCross')}</option>
+                                   {raffleState.organizerCountryCode === '+57' && (
+                                       <>
+                                           <option value="Lotería de Bogotá">{t('lotteryBogota')}</option>
+                                           <option value="Lotería de Medellín">{t('lotteryMedellin')}</option>
+                                           <option value="Lotería de Cundinamarca">{t('lotteryCundinamarca')}</option>
+                                           <option value="Lotería del Valle">{t('lotteryValle')}</option>
+                                           <option value="Lotería del Tolima">{t('lotteryTolima')}</option>
+                                           <option value="Lotería de la Cruz Roja">{t('lotteryRedCross')}</option>
+                                       </>
+                                   )}
                                    <option value="Otro">{t('other')}</option>
                                </select>
                            </div>
