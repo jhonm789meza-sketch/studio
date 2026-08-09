@@ -2681,10 +2681,10 @@ const App = () => {
                                 </div>
                             )}
                             <div>
-                                <Label htmlFor="nequi-account-input">{t('nequiAccount')}:</Label>
+                                <Label htmlFor="nequi-account-input">{raffleState.organizerCountryCode === '+57' ? t('nequiAccount') : 'Cuenta'}:</Label>
                                 <div className="relative mt-1">
                                     <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                        <span className="text-gray-500 sm:text-sm">+57</span>
+                                        <span className="text-gray-500 sm:text-sm">{raffleState.organizerCountryCode || '+57'}</span>
                                     </div>
                                     <Input
                                         id="nequi-account-input"
