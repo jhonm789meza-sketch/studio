@@ -3422,9 +3422,9 @@ const App = () => {
                                                 <h3 className="font-semibold text-lg text-gray-800">{t('adminControls')}</h3>
                                                 <div className="flex items-center justify-between">
                                                     <Label htmlFor="enable-nequi" className="flex flex-col space-y-1">
-                                                        <span>{t('enableNequiPayment')}</span>
+                                                        <span>{raffleState.organizerCountryCode === '+57' ? t('enableNequiPayment') : (language === 'es' ? 'Habilitar Pago' : 'Enable Payment')}</span>
                                                         <span className="font-normal leading-snug text-muted-foreground text-sm">
-                                                            {t('enableNequiPaymentDescription')}
+                                                            {raffleState.organizerCountryCode === '+57' ? t('enableNequiPaymentDescription') : (language === 'es' ? 'Permite a los usuarios realizar el pago.' : 'Allows users to perform the payment.')}
                                                         </span>
                                                     </Label>
                                                     <Switch
@@ -3554,8 +3554,8 @@ const App = () => {
                                                             disabled={!isRegisterFormValidForSubmit}
                                                             onClick={() => handleRegisterParticipant(true, false)}
                                                         >
-                                                            <NequiIcon />
-                                                            <span>{t('payWithNequi')}</span>
+                                                            {raffleState.organizerCountryCode === '+57' && <NequiIcon />}
+                                                            <span>{raffleState.organizerCountryCode === '+57' ? t('payWithNequi') : (language === 'es' ? 'Pagar' : 'Pay')}</span>
                                                         </Button>
                                                     )}
                                                     <Button
