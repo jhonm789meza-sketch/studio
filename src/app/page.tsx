@@ -3423,20 +3423,22 @@ const App = () => {
                                         {isCurrentUserAdmin && (
                                             <div className="bg-gray-100 p-4 rounded-lg mb-6 space-y-4">
                                                 <h3 className="font-semibold text-lg text-gray-800">{t('adminControls')}</h3>
-                                                <div className="flex items-center justify-between">
-                                                    <Label htmlFor="enable-nequi" className="flex flex-col space-y-1">
-                                                        <span>{raffleState.organizerCountryCode === '+57' ? t('enableNequiPayment') : (language === 'es' ? 'Habilitar Pago' : 'Enable Payment')}</span>
-                                                        <span className="font-normal leading-snug text-muted-foreground text-sm">
-                                                            {raffleState.organizerCountryCode === '+57' ? t('enableNequiPaymentDescription') : (language === 'es' ? 'Permite a los usuarios realizar el pago.' : 'Allows users to perform the payment.')}
-                                                        </span>
-                                                    </Label>
-                                                    <Switch
-                                                        id="enable-nequi"
-                                                        checked={raffleState.isNequiEnabled}
-                                                        onCheckedChange={(checked) => handlePaymentMethodToggle('isNequiEnabled', checked)}
-                                                        disabled={true}
-                                                    />
-                                                </div>
+                                                {raffleState.organizerCountryCode === '+57' && (
+                                                    <div className="flex items-center justify-between">
+                                                        <Label htmlFor="enable-nequi" className="flex flex-col space-y-1">
+                                                            <span>{t('enableNequiPayment')}</span>
+                                                            <span className="font-normal leading-snug text-muted-foreground text-sm">
+                                                                {t('enableNequiPaymentDescription')}
+                                                            </span>
+                                                        </Label>
+                                                        <Switch
+                                                            id="enable-nequi"
+                                                            checked={raffleState.isNequiEnabled}
+                                                            onCheckedChange={(checked) => handlePaymentMethodToggle('isNequiEnabled', checked)}
+                                                            disabled={true}
+                                                        />
+                                                    </div>
+                                                )}
                                                 <div className="flex items-center justify-between">
                                                     <Label htmlFor="enable-payment-link" className="flex flex-col space-y-1">
                                                         <span>{t('enablePaymentLink')}</span>
@@ -4628,7 +4630,7 @@ const App = () => {
             </Dialog>
 
             <Dialog open={isGamesSummaryDialogOpen} onOpenChange={setIsGamesSummaryDialogOpen}>
-                <DialogContent className="max-w-md">
+                <DialogContent className="max-md">
                     <DialogHeader>
                         <DialogTitle>{t('gamesSummaryTitle')}</DialogTitle>
                         <DialogDescription>{t('gamesSummaryDescription')}</DialogDescription>
@@ -4672,7 +4674,7 @@ const App = () => {
             </Dialog>
             
             <Dialog open={isFreeActivationDialogOpen} onOpenChange={setIsFreeActivationDialogOpen}>
-                <DialogContent className="max-w-md">
+                <DialogContent className="max-md">
                     <DialogHeader>
                         <DialogTitle>{t('freeActivationTitle')}</DialogTitle>
                         <DialogDescription>{t('freeActivationDescription')}</DialogDescription>
