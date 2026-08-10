@@ -3434,7 +3434,7 @@ const App = () => {
                                                         id="enable-nequi"
                                                         checked={raffleState.isNequiEnabled}
                                                         onCheckedChange={(checked) => handlePaymentMethodToggle('isNequiEnabled', checked)}
-                                                        disabled={!raffleState.nequiAccountNumber}
+                                                        disabled={!raffleState.nequiAccountNumber || raffleState.organizerCountryCode !== '+57'}
                                                     />
                                                 </div>
                                                 <div className="flex items-center justify-between">
