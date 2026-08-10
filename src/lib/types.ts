@@ -9,6 +9,7 @@ export interface Participant {
     paymentStatus: 'pending' | 'confirmed';
     isHouse?: boolean;
     raffleRef?: string;
+    countryCode?: string;
 }
 
 export interface PartialWinnerInfo {
@@ -72,6 +73,7 @@ export interface Raffle {
     organizerName: string;
     organizerPhoneNumber: string;
     organizerCountryCode?: string;
+    participantCountryCode?: string;
     password?: string;
     participants: Participant[];
     raffleRef: string;

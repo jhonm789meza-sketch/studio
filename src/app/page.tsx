@@ -56,6 +56,7 @@ const initialRaffleData: Raffle = {
     organizerName: '',
     organizerPhoneNumber: '',
     organizerCountryCode: '+57',
+    participantCountryCode: '+57',
     password: '',
     participants: [] as Participant[],
     raffleRef: '',
@@ -1012,6 +1013,7 @@ const App = () => {
             timestamp: new Date(),
             paymentStatus: confirmPayment === true ? 'confirmed' : 'pending',
             raffleRef: raffleState.raffleRef,
+            countryCode: raffleState.participantCountryCode || raffleState.organizerCountryCode || '+57',
         };
         
         const updatedParticipants = [...raffleState.participants, newParticipant];
@@ -1247,8 +1249,9 @@ const App = () => {
         const targetInfo = generatedTicketData || ticketInfo;
         if (!targetInfo || !targetInfo.phoneNumber) return;
 
+        const cleanCode = (targetInfo.countryCode || '+57').replace('+', '');
         const messageText = encodeURIComponent(t('shareTicketMessage', { prize: raffleState.prize || '' }));
-        const whatsappUrl = `https://wa.me/57${targetInfo.phoneNumber}?text=${messageText}`;
+        const whatsappUrl = `https://wa.me/${cleanCode}${targetInfo.phoneNumber}?text=${messageText}`;
         window.open(whatsappUrl, '_blank');
         
         if (isTicketModalOpen) {
@@ -3479,9 +3482,26 @@ const App = () => {
                                                     </div>
                                                     <div>
                                                         <Label htmlFor="phone-input">{t('phone')}:</Label>
-                                                        <div className="relative mt-1">
-                                                            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                                                <span className="text-gray-500 sm:text-sm">{raffleState.organizerCountryCode || '+57'}</span>
+                                                        <div className="flex gap-2 mt-1">
+                                                            <div className="w-[120px]">
+                                                                <Select
+                                                                    value={raffleState.participantCountryCode || '+57'}
+                                                                    onValueChange={(val) => handleLocalFieldChange('participantCountryCode', val)}
+                                                                >
+                                                                    <SelectTrigger id="participant-country-code">
+                                                                        <SelectValue placeholder="+57" />
+                                                                    </SelectTrigger>
+                                                                    <SelectContent>
+                                                                        {countryIndicators.map((country) => (
+                                                                            <SelectItem key={`part-${country.name}-${country.code}`} value={country.code}>
+                                                                                <span className="flex items-center gap-2">
+                                                                                    <span>{country.flag}</span>
+                                                                                    <span>{country.code}</span>
+                                                                                </span>
+                                                                            </SelectItem>
+                                                                        ))}
+                                                                    </SelectContent>
+                                                                </Select>
                                                             </div>
                                                             <Input
                                                                 id="phone-input"
@@ -3489,7 +3509,7 @@ const App = () => {
                                                                 value={raffleState.phoneNumber}
                                                                 onChange={(e) => handleLocalFieldChange('phoneNumber', e.target.value.replace(/\D/g, ''))}
                                                                 placeholder="3001234567"
-                                                                className="w-full pl-12"
+                                                                className="flex-grow"
                                                             />
                                                         </div>
                                                     </div>
@@ -3783,7 +3803,7 @@ const App = () => {
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-purple-600">{p.raffleNumber}</td>
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{p.name}</td>
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                                <a href={`https://wa.me/57${p.phoneNumber}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-blue-600 hover:underline">
+                                                                <a href={`https://wa.me/${(p.countryCode || '+57').replace('+', '')}${p.phoneNumber}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-blue-600 hover:underline">
                                                                     <WhatsappIcon className="h-4 w-4 text-green-500" />
                                                                     {p.phoneNumber}
                                                                 </a>
@@ -3831,7 +3851,7 @@ const App = () => {
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{p.name}</td>
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                                                 {isCurrentUserAdmin ? (
-                                                                    <a href={`https://wa.me/57${p.phoneNumber}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-blue-600 hover:underline">
+                                                                    <a href={`https://wa.me/${(p.countryCode || '+57').replace('+', '')}${p.phoneNumber}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-blue-600 hover:underline">
                                                                         <WhatsappIcon className="h-4 w-4 text-green-500" />
                                                                         {p.phoneNumber}
                                                                     </a>
@@ -3859,7 +3879,7 @@ const App = () => {
                                             {!raffleState.winner.isHouse && (
                                             <>
                                                 <p><strong>{t('name')}:</strong> {raffleState.winner.name}</p>
-                                                <p><strong>{t('phone')}:</strong> {isCurrentUserAdmin ? <a href={`https://wa.me/57${raffleState.winner.phoneNumber}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{`+57 ${raffleState.winner.phoneNumber}`}</a> : <span>******</span>}</p>
+                                                <p><strong>{t('phone')}:</strong> {isCurrentUserAdmin ? <a href={`https://wa.me/${(raffleState.winner.countryCode || '+57').replace('+', '')}${raffleState.winner.phoneNumber}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{`${raffleState.winner.countryCode || '+57'} ${raffleState.winner.phoneNumber}`}</a> : <span>******</span>}</p>
                                             </>
                                             )}
                                         </div>
@@ -3874,7 +3894,7 @@ const App = () => {
                                                         {group.winners.map(winner => (
                                                             <li key={winner.id}>
                                                                 {winner.name} ({winner.raffleNumber})
-                                                                {isCurrentUserAdmin && (<a href={`https://wa.me/57${winner.phoneNumber}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline ml-2">{`+57 ${winner.phoneNumber}`}</a>)}
+                                                                {isCurrentUserAdmin && (<a href={`https://wa.me/${(winner.countryCode || '+57').replace('+', '')}${winner.phoneNumber}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline ml-2">{`${winner.countryCode || '+57'} ${winner.phoneNumber}`}</a>)}
                                                             </li>
                                                         ))}
                                                     </ul>
@@ -4711,3 +4731,4 @@ const App = () => {
 };
 
 export default App;
+
