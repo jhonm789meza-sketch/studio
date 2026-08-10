@@ -3570,14 +3570,14 @@ const App = () => {
                                                             <span>{t('payWithLink')}</span>
                                                         </Button>
                                                     )}
-                                                    {raffleState.isNequiEnabled && raffleState.nequiAccountNumber && (
+                                                    {raffleState.organizerCountryCode === '+57' && raffleState.isNequiEnabled && raffleState.nequiAccountNumber && (
                                                         <Button
                                                             className="flex-1 w-full sm:w-auto bg-purple-500 hover:bg-purple-600 text-white flex items-center justify-center gap-2"
                                                             disabled={!isRegisterFormValidForSubmit}
                                                             onClick={() => handleRegisterParticipant(true, false)}
                                                         >
-                                                            {raffleState.organizerCountryCode === '+57' && <NequiIcon />}
-                                                            <span>{raffleState.organizerCountryCode === '+57' ? t('payWithNequi') : (language === 'es' ? 'Pagar' : 'Pay')}</span>
+                                                            <NequiIcon />
+                                                            <span>{t('payWithNequi')}</span>
                                                         </Button>
                                                     )}
                                                     <Button
