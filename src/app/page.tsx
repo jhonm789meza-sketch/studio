@@ -1950,7 +1950,7 @@ const App = () => {
             console.error("Error sharing prize photo:", error);
             showNotification(t('errorUploadingImage'), 'error');
         } finally {
-            setIsUploading(false);
+            setIsAutoUploading(false);
         }
     };
 
@@ -3435,7 +3435,7 @@ const App = () => {
                                                             id="enable-nequi"
                                                             checked={raffleState.isNequiEnabled}
                                                             onCheckedChange={(checked) => handlePaymentMethodToggle('isNequiEnabled', checked)}
-                                                            disabled={true}
+                                                            disabled={false}
                                                         />
                                                     </div>
                                                 )}
