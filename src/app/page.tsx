@@ -3034,7 +3034,7 @@ const App = () => {
                                         <Menu className="h-6 w-6" />
                                     </Button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent>
+                                <DropdownMenuContent className="w-72 max-h-[85vh] overflow-y-auto">
                                      <DropdownMenuItem onSelect={() => handleGoToHome()}>
                                         <House className="mr-2 h-4 w-4" />
                                         <span>{t('goToHome')}</span>
