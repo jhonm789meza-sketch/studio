@@ -718,7 +718,7 @@ const App = () => {
 
     const formatValue = (value: string | number) => {
         const isColombia = (raffleState.organizerCountryCode || '+57') === '+57';
-        const currencySymbol = isColombia ? (raffleState.currencySymbol || 'COP') : '$';
+        const currencySymbol = isColombia ? 'COP' : '$';
         
         if (!value) return `${currencySymbol} 0`;
         const numericValue = String(value).replace(/[^\d.,]/g, '').replace(',', '.');
@@ -4361,12 +4361,37 @@ const App = () => {
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="app-logo-input">{t('appLogoUrlLabel')}</Label>
-                            <Input 
-                                id="app-logo-input" 
-                                value={tempAppLogoUrl} 
-                                onChange={(e) => setTempAppLogoUrl(e.target.value)} 
-                                placeholder="https://example.com/logo.png"
-                            />
+                            <div className="flex gap-2">
+                                <Input 
+                                    id="app-logo-input" 
+                                    value={tempAppLogoUrl} 
+                                    onChange={(e) => setTempAppLogoUrl(e.target.value)} 
+                                    placeholder="https://example.com/logo.png"
+                                    className="flex-grow"
+                                />
+                                <div className="relative">
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        className="hidden"
+                                        id="app-logo-upload"
+                                        onChange={async (e) => {
+                                            const file = e.target.files?.[0];
+                                            if (file) {
+                                                const url = await uploadImage(file, 'app-branding');
+                                                setTempAppLogoUrl(url);
+                                            }
+                                        }}
+                                    />
+                                    <Label htmlFor="app-logo-upload">
+                                        <Button type="button" variant="outline" className="cursor-pointer" asChild>
+                                            <span>
+                                                {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                                            </span>
+                                        </Button>
+                                    </Label>
+                                </div>
+                            </div>
                         </div>
                         {tempAppLogoUrl && (
                             <div className="mt-2 flex flex-col items-center gap-2">

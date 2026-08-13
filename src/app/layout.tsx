@@ -2,6 +2,8 @@
 import type {Metadata} from 'next';
 import './globals.css';
 import { Inter, Anton, Libre_Baskerville } from 'next/font/google';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const anton = Anton({
@@ -17,35 +19,56 @@ const libreBaskerville = Libre_Baskerville({
 
 
 const APP_URL = "https://rifaexpress.web.app";
-const APP_NAME = "RIFA⚡ EXPRESS";
+const DEFAULT_APP_NAME = "RIFA⚡ EXPRESS";
 const APP_DESCRIPTION = "La forma más fácil de gestionar tus rifas y sorteos online.";
 
-export const metadata: Metadata = {
-  title: APP_NAME,
-  description: APP_DESCRIPTION,
-  manifest: '/manifest.json',
-  metadataBase: new URL(APP_URL),
-  openGraph: {
-    type: "website",
-    url: APP_URL,
-    title: APP_NAME,
+export async function generateMetadata(): Promise<Metadata> {
+  let appName = DEFAULT_APP_NAME;
+  let appLogoUrl = `${APP_URL}/icon-512x512.png`;
+
+  try {
+    const settingsDoc = await getDoc(doc(db, 'internal', 'settings'));
+    if (settingsDoc.exists()) {
+      const data = settingsDoc.data();
+      appName = data.appName || DEFAULT_APP_NAME;
+      appLogoUrl = data.appLogoUrl || appLogoUrl;
+    }
+  } catch (error) {
+    console.error("Error generating dynamic metadata:", error);
+  }
+
+  return {
+    title: appName,
     description: APP_DESCRIPTION,
-    images: [
-      {
-        url: `${APP_URL}/icon-512x512.png`,
-        width: 512,
-        height: 512,
-        alt: APP_NAME,
-      },
-    ],
-  },
-  twitter: {
-    card: "summary",
-    title: APP_NAME,
-    description: APP_DESCRIPTION,
-    images: `${APP_URL}/icon-512x512.png`,
-  },
-};
+    metadataBase: new URL(APP_URL),
+    manifest: '/manifest.webmanifest',
+    icons: {
+      icon: appLogoUrl,
+      shortcut: appLogoUrl,
+      apple: appLogoUrl,
+    },
+    openGraph: {
+      type: "website",
+      url: APP_URL,
+      title: appName,
+      description: APP_DESCRIPTION,
+      images: [
+        {
+          url: appLogoUrl,
+          width: 512,
+          height: 512,
+          alt: appName,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary",
+      title: appName,
+      description: APP_DESCRIPTION,
+      images: appLogoUrl,
+    },
+  };
+}
 
 export default function RootLayout({
   children,
@@ -56,7 +79,6 @@ export default function RootLayout({
     <html lang="es">
       <head>
           <link rel="icon" href="/icon.svg" type="image/svg+xml" />
-          <link rel="manifest" href="/manifest.json" />
       </head>
       <body className={`${inter.variable} ${anton.variable} ${libreBaskerville.variable}`}>
         {children}
@@ -64,5 +86,3 @@ export default function RootLayout({
     </html>
   );
 }
-
-    
