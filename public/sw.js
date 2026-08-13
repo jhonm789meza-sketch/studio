@@ -1,27 +1,23 @@
+/**
+ * RIFA⚡ EXPRESS - Service Worker para habilitar la instalación (PWA)
+ */
+const CACHE_NAME = 'rifa-express-v1';
 
-// This is a basic service worker file.
-
-// It's recommended to use a tool like Workbox for more complex caching strategies.
-// For now, this service worker will just handle push notifications.
-
-self.addEventListener('push', (event) => {
-  const payload = event.data ? event.data.json() : {};
-  const title = payload.notification.title || 'RifaExpress';
-  const options = {
-    body: payload.notification.body,
-    icon: payload.notification.icon || '/icon-192x192.png',
-    badge: '/icon-192x192.png',
-    data: {
-      url: payload.fcmOptions.link
-    }
-  };
-  event.waitUntil(self.registration.showNotification(title, options));
+// Instalación inmediata del Service Worker
+self.addEventListener('install', (event) => {
+  self.skipWaiting();
 });
 
-self.addEventListener('notificationclick', (event) => {
-  event.notification.close();
-  const urlToOpen = event.notification.data.url;
-  if (urlToOpen) {
-    event.waitUntil(clients.openWindow(urlToOpen));
-  }
+// Toma el control de las pestañas abiertas inmediatamente
+self.addEventListener('activate', (event) => {
+  event.waitUntil(clients.claim());
+});
+
+// Manejo de peticiones (Network First con fallback a caché si fuera necesario)
+self.addEventListener('fetch', (event) => {
+  event.respondWith(
+    fetch(event.request).catch(() => {
+      return caches.match(event.request);
+    })
+  );
 });

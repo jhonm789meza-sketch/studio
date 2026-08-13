@@ -1,5 +1,5 @@
 
-import type {Metadata} from 'next';
+import type {Metadata, Viewport} from 'next';
 import './globals.css';
 import { Inter, Anton, Libre_Baskerville } from 'next/font/google';
 import { doc, getDoc } from 'firebase/firestore';
@@ -22,6 +22,13 @@ const APP_URL = "https://rifaexpress.web.app";
 const DEFAULT_APP_NAME = "RIFA⚡ EXPRESS";
 const APP_DESCRIPTION = "La forma más fácil de gestionar tus rifas y sorteos online.";
 
+export const viewport: Viewport = {
+  themeColor: '#4f46e5',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+};
+
 export async function generateMetadata(): Promise<Metadata> {
   let appName = DEFAULT_APP_NAME;
   let appLogoUrl = `${APP_URL}/icon-512x512.png`;
@@ -42,6 +49,11 @@ export async function generateMetadata(): Promise<Metadata> {
     description: APP_DESCRIPTION,
     metadataBase: new URL(APP_URL),
     manifest: '/manifest.webmanifest',
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: 'default',
+      title: appName,
+    },
     icons: {
       icon: appLogoUrl,
       shortcut: appLogoUrl,
@@ -79,6 +91,8 @@ export default function RootLayout({
     <html lang="es">
       <head>
           <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+          <meta name="mobile-web-app-capable" content="yes" />
+          <meta name="apple-mobile-web-app-capable" content="yes" />
       </head>
       <body className={`${inter.variable} ${anton.variable} ${libreBaskerville.variable}`}>
         {children}
