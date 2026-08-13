@@ -717,7 +717,9 @@ const App = () => {
     };
 
     const formatValue = (value: string | number) => {
-        const currencySymbol = raffleState.currencySymbol || '$';
+        const isColombia = (raffleState.organizerCountryCode || '+57') === '+57';
+        const currencySymbol = isColombia ? (raffleState.currencySymbol || 'COP') : '$';
+        
         if (!value) return `${currencySymbol} 0`;
         const numericValue = String(value).replace(/[^\d.,]/g, '').replace(',', '.');
         if (numericValue === '') return `${currencySymbol} 0`;
