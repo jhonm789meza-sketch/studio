@@ -3183,11 +3183,6 @@ const App = () => {
                             </DropdownMenu>
                         </div>
                         <div className="relative z-10 flex flex-col items-center">
-                            {appSettings.appLogoUrl && (
-                                <div className="mb-2 relative h-12 w-12 rounded-full overflow-hidden border-2 border-white/50 shadow-md">
-                                    <Image src={appSettings.appLogoUrl} alt="Logo" fill className="object-cover" unoptimized />
-                                </div>
-                            )}
                             <h1 className="text-4xl font-bold drop-shadow-lg">{currentAppName}</h1>
                         </div>
                         <div className="w-10"></div>
@@ -3991,11 +3986,6 @@ const App = () => {
                                 </div>
                                 <div className="relative z-10">
                                     <div className="text-center mb-4">
-                                        {appSettings.appLogoUrl && (
-                                            <div className="mx-auto mb-2 relative h-10 w-10 rounded-full overflow-hidden border border-gray-300 shadow-sm">
-                                                <Image src={appSettings.appLogoUrl} alt="Logo" fill className="object-cover" unoptimized />
-                                            </div>
-                                        )}
                                         <h3 className="text-xl font-bold">{currentAppName}</h3>
                                         <p>{t('reference')}: {ticketInfo.raffleRef}</p>
                                         <p className="font-semibold">{t('purchaseReceipt')}</p>
