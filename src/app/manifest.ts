@@ -5,7 +5,7 @@ import { db } from '@/lib/firebase';
 
 export default async function manifest(): Promise<MetadataRoute.Manifest> {
   let appName = 'RIFA⚡ EXPRESS';
-  let appLogoUrl = '/icon-512x512.png';
+  let appLogoUrl = '';
 
   try {
     const settingsDoc = await getDoc(doc(db, 'internal', 'settings'));
@@ -18,16 +18,9 @@ export default async function manifest(): Promise<MetadataRoute.Manifest> {
     console.error('Error fetching manifest settings:', e);
   }
 
-  return {
-    name: appName,
-    short_name: appName,
-    description: 'La forma más fácil de gestionar tus rifas y sorteos online.',
-    start_url: '/',
-    display: 'standalone',
-    background_color: '#ffffff',
-    theme_color: '#4f46e5',
-    icons: [
-      {
+  const icons: any[] = [];
+  if (appLogoUrl) {
+    icons.push({
         src: appLogoUrl,
         sizes: '192x192',
         type: 'image/png',
@@ -38,7 +31,17 @@ export default async function manifest(): Promise<MetadataRoute.Manifest> {
         sizes: '512x512',
         type: 'image/png',
         purpose: 'maskable',
-      },
-    ],
+      });
+  }
+
+  return {
+    name: appName,
+    short_name: appName,
+    description: 'La forma más fácil de gestionar tus rifas y sorteos online.',
+    start_url: '/',
+    display: 'standalone',
+    background_color: '#ffffff',
+    theme_color: '#4f46e5',
+    icons: icons,
   };
 }

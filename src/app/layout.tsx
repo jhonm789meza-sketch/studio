@@ -31,17 +31,24 @@ export const viewport: Viewport = {
 
 export async function generateMetadata(): Promise<Metadata> {
   let appName = DEFAULT_APP_NAME;
-  let appLogoUrl = `${APP_URL}/icon-512x512.png`;
+  let appLogoUrl = ""; // Iniciamos vacío para evitar logos genéricos
 
   try {
     const settingsDoc = await getDoc(doc(db, 'internal', 'settings'));
     if (settingsDoc.exists()) {
       const data = settingsDoc.data();
       appName = data.appName || DEFAULT_APP_NAME;
-      appLogoUrl = data.appLogoUrl || appLogoUrl;
+      appLogoUrl = data.appLogoUrl || "";
     }
   } catch (error) {
     console.error("Error generating dynamic metadata:", error);
+  }
+
+  const icons: any = {};
+  if (appLogoUrl) {
+    icons.icon = appLogoUrl;
+    icons.shortcut = appLogoUrl;
+    icons.apple = appLogoUrl;
   }
 
   return {
@@ -54,30 +61,26 @@ export async function generateMetadata(): Promise<Metadata> {
       statusBarStyle: 'default',
       title: appName,
     },
-    icons: {
-      icon: appLogoUrl,
-      shortcut: appLogoUrl,
-      apple: appLogoUrl,
-    },
+    icons: icons,
     openGraph: {
       type: "website",
       url: APP_URL,
       title: appName,
       description: APP_DESCRIPTION,
-      images: [
+      images: appLogoUrl ? [
         {
           url: appLogoUrl,
           width: 512,
           height: 512,
           alt: appName,
         },
-      ],
+      ] : [],
     },
     twitter: {
       card: "summary",
       title: appName,
       description: APP_DESCRIPTION,
-      images: appLogoUrl,
+      images: appLogoUrl ? [appLogoUrl] : [],
     },
   };
 }
@@ -90,7 +93,7 @@ export default function RootLayout({
   return (
     <html lang="es">
       <head>
-          <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+          {/* Se eliminan los links a icon.svg que causaban el logo de Firebase */}
           <meta name="mobile-web-app-capable" content="yes" />
           <meta name="apple-mobile-web-app-capable" content="yes" />
       </head>
