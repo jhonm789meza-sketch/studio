@@ -50,6 +50,8 @@ export interface AppSettings {
     isBlockedInfinite?: boolean;
     lockedBoardBackgroundImageUrl?: string;
     lockedBoardExternalImageUrl?: string;
+    appName?: string;
+    appLogoUrl?: string;
 }
 
 export interface Raffle {

@@ -1,4 +1,5 @@
 
+
 {
     "loading": "Cargando",
     "adminMessage": "Eres el administrador de este juego",
@@ -420,5 +421,13 @@
     "usdPaymentNote": "Una vez realizado el pago, envía el comprobante a soporte para activar tu tablero.",
     "goToUsdPayment": "Ir al Pago (USD)",
     "paymentLinkUsd": "Link de Pago (USD)",
-    "delete": "Eliminar"
+    "delete": "Eliminar",
+    "appNameAndLogo": "Nombre y Logo",
+    "appNameAndLogoDescription": "Personaliza el nombre de tu aplicación y sube tu propio logo.",
+    "appNameLabel": "Nombre de la Aplicación",
+    "appLogoUrlLabel": "URL del Logo (Link directo)",
+    "logoPreview": "Vista previa del Logo",
+    "brandingSaved": "Identidad de la aplicación guardada.",
+    "errorSavingBranding": "Error al guardar la identidad."
 }
+

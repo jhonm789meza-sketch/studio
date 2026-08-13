@@ -1,4 +1,5 @@
 
+
 {
     "loading": "Loading",
     "adminMessage": "You are the administrator of this game",
@@ -416,5 +417,13 @@
     "usdPaymentNote": "Once the payment is made, send the receipt to support to activate your board.",
     "goToUsdPayment": "Go to Payment (USD)",
     "paymentLinkUsd": "Payment Link (USD)",
-    "delete": "Delete"
+    "delete": "Delete",
+    "appNameAndLogo": "Name and Logo",
+    "appNameAndLogoDescription": "Customize your application's name and upload your own logo.",
+    "appNameLabel": "Application Name",
+    "appLogoUrlLabel": "Logo URL (Direct link)",
+    "logoPreview": "Logo Preview",
+    "brandingSaved": "Application identity saved.",
+    "errorSavingBranding": "Error saving identity."
 }
+

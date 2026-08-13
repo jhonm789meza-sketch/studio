@@ -13,7 +13,7 @@ import { requestNotificationPermission } from '@/lib/notification';
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House, Clock as ClockIcon, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages, Trophy, Trash2, Copy, Shield, LogOut, Eye, EyeOff, Gamepad2, Phone, TrendingUp, Globe, Landmark, RefreshCcw, LockKeyhole, Package, Camera, Check, Upload, FlipHorizontal, MousePointer2, ImageIcon, Ban } from 'lucide-react';
+import { Menu, Award, Lock, House, Clock as ClockIcon, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages, Trophy, Trash2, Copy, Shield, LogOut, Eye, EyeOff, Gamepad2, Phone, TrendingUp, Globe, Landmark, RefreshCcw, LockKeyhole, Package, Camera, Check, Upload, FlipHorizontal, MousePointer2, ImageIcon, Ban, Settings2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -253,6 +253,11 @@ const App = () => {
         blockedInfinite: false,
     });
     
+    // App Branding Settings
+    const [isAppNameLogoDialogOpen, setIsAppNameLogoDialogOpen] = useState(false);
+    const [tempAppName, setTempAppName] = useState('');
+    const [tempAppLogoUrl, setTempAppLogoUrl] = useState('');
+
     // Photo sharing functionality
     const [isCaptureDialogOpen, setIsCaptureDialogOpen] = useState(false);
     const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
@@ -350,6 +355,8 @@ const App = () => {
                     setPaymentQrImageUrl(settings.paymentQrImageUrl || '');
                     setLockedBoardBgUrl(settings.lockedBoardBackgroundImageUrl || '');
                     setLockedBoardExternalUrl(settings.lockedBoardExternalImageUrl || '');
+                    setTempAppName(settings.appName || '');
+                    setTempAppLogoUrl(settings.appLogoUrl || '');
                 }
             }
         });
@@ -427,6 +434,8 @@ const App = () => {
             raffleRef: raffleState.raffleRef,
             value: raffleState.value,
             currencySymbol: raffleState.currencySymbol,
+            appName: appSettings.appName,
+            appLogoUrl: appSettings.appLogoUrl,
         };
 
         setTicketInfo(ticketData);
@@ -1046,6 +1055,8 @@ const App = () => {
                     raffleRef: raffleState.raffleRef,
                     value: raffleState.value,
                     currencySymbol: raffleState.currencySymbol,
+                    appName: appSettings.appName,
+                    appLogoUrl: appSettings.appLogoUrl,
                 };
                 setGeneratedTicketData(ticketData);
             }
@@ -1794,7 +1805,8 @@ const App = () => {
         if (raffleState.raffleRef) {
             urlToShare.search = `?ref=${raffleState.raffleRef}`;
         }
-        const shareMessage = encodeURIComponent(t('shareRaffleAppDescription'));
+        const currentAppName = appSettings.appName || 'RIFA⚡ EXPRESS';
+        const shareMessage = encodeURIComponent(`${t('shareRaffleAppDescription')} - ${currentAppName}`);
         const whatsappUrl = `https://wa.me/?text=${shareMessage} ${encodeURIComponent(urlToShare.toString())}`;
         window.open(whatsappUrl, '_blank');
         setIsShareDialogOpen(false);
@@ -1878,6 +1890,7 @@ const App = () => {
         setIsUploading(true);
         try {
             const raffleUrl = `${window.location.origin}/prize/${raffleState.raffleRef}`;
+            const currentAppName = appSettings.appName || 'RIFA⚡ EXPRESS';
             
             const img = new (window as any).Image();
             const imageUrl = URL.createObjectURL(blob);
@@ -1906,7 +1919,7 @@ const App = () => {
             ctx.font = `bold ${Math.floor(bannerHeight * 0.25)}px sans-serif`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText('RIFA⚡EXPRESS', canvas.width / 2, bannerY + (bannerHeight * 0.3));
+            ctx.fillText(currentAppName, canvas.width / 2, bannerY + (bannerHeight * 0.3));
             
             ctx.fillStyle = '#facc15'; 
             ctx.font = `black ${Math.floor(bannerHeight * 0.3)}px sans-serif`;
@@ -1926,14 +1939,14 @@ const App = () => {
             if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
                 try {
                     await navigator.share({
-                        title: 'RifaExpress',
+                        title: currentAppName,
                         text: shareText,
                         files: [file],
                         url: raffleUrl, 
                     });
                 } catch (shareErr) {
                      await navigator.share({
-                        title: 'RifaExpress',
+                        title: currentAppName,
                         text: shareText,
                         url: raffleUrl,
                     });
@@ -1950,7 +1963,7 @@ const App = () => {
             console.error("Error sharing prize photo:", error);
             showNotification(t('errorUploadingImage'), 'error');
         } finally {
-            setIsAutoUploading(false);
+            setIsUploading(false);
         }
     };
 
@@ -2121,6 +2134,21 @@ const App = () => {
         } catch (error) {
             console.error("Error saving free games settings:", error);
             showNotification(t('errorSavingActivationPrices'), 'error');
+        }
+    };
+
+    const handleSaveAppNameLogo = async () => {
+        try {
+            const settingsDocRef = doc(db, 'internal', 'settings');
+            await setDoc(settingsDocRef, {
+                appName: tempAppName,
+                appLogoUrl: tempAppLogoUrl,
+            }, { merge: true });
+            showNotification(t('brandingSaved'), 'success');
+            setIsAppNameLogoDialogOpen(false);
+        } catch (error) {
+            console.error("Error saving branding settings:", error);
+            showNotification(t('errorSavingBranding'), 'error');
         }
     };
 
@@ -2343,6 +2371,7 @@ const App = () => {
     const threeDigitCount = allRaffles.filter(r => r.raffleMode === 'three-digit').length;
     const infiniteCount = allRaffles.filter(r => r.raffleMode === 'infinite').length;
 
+    const currentAppName = appSettings.appName || 'RIFA⚡ EXPRESS';
 
     if (loading && !raffleState.raffleRef) {
         return <div className="flex justify-center items-center h-screen text-xl font-semibold">{t('loading')}...</div>;
@@ -3029,6 +3058,10 @@ const App = () => {
                                      {isSuperAdmin && (
                                         <>
                                             <DropdownMenuSeparator />
+                                            <DropdownMenuItem onSelect={() => setIsAppNameLogoDialogOpen(true)}>
+                                                <Settings2 className="mr-2 h-4 w-4" />
+                                                <span>{t('appNameAndLogo')}</span>
+                                            </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setIsGamesSummaryDialogOpen(true)} className="bg-blue-50 focus:bg-blue-100 cursor-pointer">
                                                 <Globe className="mr-2 h-4 w-4 text-blue-600" />
                                                 <span className="font-bold">{t('totalGamesInLine', { count: allRaffles.length })}</span>
@@ -3146,8 +3179,13 @@ const App = () => {
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         </div>
-                        <div className="relative z-10 text-center">
-                            <h1 className="text-4xl font-bold drop-shadow-lg">RIFA⚡EXPRESS</h1>
+                        <div className="relative z-10 flex flex-col items-center">
+                            {appSettings.appLogoUrl && (
+                                <div className="mb-2 relative h-12 w-12 rounded-full overflow-hidden border-2 border-white/50 shadow-md">
+                                    <Image src={appSettings.appLogoUrl} alt="Logo" fill className="object-cover" unoptimized />
+                                </div>
+                            )}
+                            <h1 className="text-4xl font-bold drop-shadow-lg">{currentAppName}</h1>
                         </div>
                         <div className="w-10"></div>
                     </div>
@@ -3946,11 +3984,16 @@ const App = () => {
                         <div>
                             <div ref={ticketModalRef} className="bg-white p-2 rounded-lg shadow-lg font-mono text-gray-800 text-[11px] relative overflow-hidden" style={{width: '280px'}}>
                                 <div className="absolute inset-0 flex items-center justify-center z-0 opacity-50">
-                                    <p className="text-gray-200/50 text-7xl font-bold -rotate-45 select-none flex items-center justify-center gap-1"><span>RIFA⚡EXPRESS</span></p>
+                                    <p className="text-gray-200/50 text-7xl font-bold -rotate-45 select-none flex items-center justify-center gap-1"><span>{currentAppName}</span></p>
                                 </div>
                                 <div className="relative z-10">
                                     <div className="text-center mb-4">
-                                        <h3 className="text-xl font-bold">RIFA⚡EXPRESS</h3>
+                                        {appSettings.appLogoUrl && (
+                                            <div className="mx-auto mb-2 relative h-10 w-10 rounded-full overflow-hidden border border-gray-300 shadow-sm">
+                                                <Image src={appSettings.appLogoUrl} alt="Logo" fill className="object-cover" unoptimized />
+                                            </div>
+                                        )}
+                                        <h3 className="text-xl font-bold">{currentAppName}</h3>
                                         <p>{t('reference')}: {ticketInfo.raffleRef}</p>
                                         <p className="font-semibold">{t('purchaseReceipt')}</p>
                                     </div>
@@ -4294,6 +4337,47 @@ const App = () => {
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setIsUsdPaymentConfigDialogOpen(false)}>Cancelar</Button>
                         <Button onClick={handleSavePaymentLinks}>Guardar Todo</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={isAppNameLogoDialogOpen} onOpenChange={setIsAppNameLogoDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{t('appNameAndLogo')}</DialogTitle>
+                        <DialogDescription>{t('appNameAndLogoDescription')}</DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="app-name-input">{t('appNameLabel')}</Label>
+                            <Input 
+                                id="app-name-input" 
+                                value={tempAppName} 
+                                onChange={(e) => setTempAppName(e.target.value)} 
+                                placeholder="RIFA⚡ EXPRESS"
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="app-logo-input">{t('appLogoUrlLabel')}</Label>
+                            <Input 
+                                id="app-logo-input" 
+                                value={tempAppLogoUrl} 
+                                onChange={(e) => setTempAppLogoUrl(e.target.value)} 
+                                placeholder="https://example.com/logo.png"
+                            />
+                        </div>
+                        {tempAppLogoUrl && (
+                            <div className="mt-2 flex flex-col items-center gap-2">
+                                <Label>{t('logoPreview')}</Label>
+                                <div className="relative h-20 w-20 rounded-full overflow-hidden border shadow-sm">
+                                    <Image src={tempAppLogoUrl} alt="Logo Preview" fill className="object-cover" unoptimized />
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsAppNameLogoDialogOpen(false)}>{t('cancel')}</Button>
+                        <Button onClick={handleSaveAppNameLogo}>{t('save')}</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
@@ -4660,7 +4744,7 @@ const App = () => {
                         
                         <div className="pt-4 border-t border-dashed">
                             <div className="flex justify-between items-center font-bold text-lg">
-                                <span>{t('totalCollected')}</span>
+                                <span>Total de juegos:</span>
                                 <span className="text-green-600">{allRaffles.length}</span>
                             </div>
                         </div>
