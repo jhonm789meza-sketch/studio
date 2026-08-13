@@ -1,5 +1,3 @@
-
-
 {
     "loading": "Loading",
     "adminMessage": "You are the administrator of this game",
@@ -163,6 +161,8 @@
     "successfulPaymentNotification": "Successful payment and number registered!",
     "paymentActivationConfirmed": "Activation confirmed by payment.",
     "installAppInfo": "The app cannot be installed on this browser or is already installed.",
+    "installIOS": "To install: Tap the 'Share' button and select 'Add to Home Screen'.",
+    "installGeneric": "To install: Open your browser menu and select 'Install' or 'Add to Home Screen'.",
     "numberAlreadyAssignedWarning": "This number has already been assigned.",
     "fieldUpdateError": "Error updating field {field}.",
     "confirmDetailsFirstWarning": "You must first confirm the prize details to select a number.",
@@ -289,7 +289,7 @@
     "add": "Add",
     "addNewContact": "Add New Contact",
     "savedContacts": "Saved Contacts",
-    "noSavedContacts": "No contacts saved.",
+    "noSavedContacts": "No skills listed.",
     "activationPrices": "Activation Prices",
     "manageActivationPrices": "Manage Activation Prices",
     "manageActivationPricesDescription": "Update the activation prices for each raffle type.",
@@ -426,4 +426,3 @@
     "brandingSaved": "Application identity saved.",
     "errorSavingBranding": "Error saving identity."
 }
-

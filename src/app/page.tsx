@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect, useRef, useTransition } from 'react';
 import jsPDF from 'jspdf';
@@ -541,18 +540,20 @@ const App = () => {
       }, []);
 
     const handleInstallClick = () => {
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+        
         if (installPromptEvent) {
             installPromptEvent.prompt();
             installPromptEvent.userChoice.then((choiceResult: { outcome: string }) => {
                 if (choiceResult.outcome === 'accepted') {
                     console.log('User accepted the install prompt');
-                } else {
-                    console.log('User dismissed the install prompt');
                 }
                 setInstallPromptEvent(null);
             });
+        } else if (isIOS) {
+            showNotification(t('installIOS'), 'info');
         } else {
-            showNotification(t('installAppInfo'), 'info');
+            showNotification(t('installGeneric'), 'info');
         }
     };
 

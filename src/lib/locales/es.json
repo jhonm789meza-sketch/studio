@@ -1,5 +1,3 @@
-
-
 {
     "loading": "Cargando",
     "adminMessage": "Eres el administrador de este juego",
@@ -163,6 +161,8 @@
     "successfulPaymentNotification": "¡Pago exitoso y número registrado!",
     "paymentActivationConfirmed": "Activación confirmada por pago.",
     "installAppInfo": "La aplicación no se puede instalar en este navegador o ya está instalada.",
+    "installIOS": "Para instalar: Toca el botón 'Compartir' (el cuadro con flecha arriba) y selecciona 'Añadir a pantalla de inicio'.",
+    "installGeneric": "Para instalar: Abre el menú de tu navegador y selecciona 'Instalar' o 'Añadir a pantalla de inicio'.",
     "numberAlreadyAssignedWarning": "Este número ya ha sido asignado.",
     "fieldUpdateError": "Error al actualizar el campo {field}.",
     "confirmDetailsFirstWarning": "Primero debes confirmar los detalles del premio para seleccionar un número.",
@@ -430,4 +430,3 @@
     "brandingSaved": "Identidad de la aplicación guardada.",
     "errorSavingBranding": "Error al guardar la identidad."
 }
-
