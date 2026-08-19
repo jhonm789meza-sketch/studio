@@ -2592,6 +2592,37 @@ const App = () => {
                                                     className="w-full"
                                                 />
                                             </div>
+                                            <div className="grid gap-2">
+                                                <Label className="text-xs text-muted-foreground">Opción 3 - Subir o Escanear Imagen</Label>
+                                                <div className="flex gap-2">
+                                                    <Button 
+                                                        type="button" 
+                                                        variant="secondary" 
+                                                        className="flex-1"
+                                                        disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
+                                                        onClick={() => {
+                                                            const input = document.getElementById('prize-image-upload') as HTMLInputElement;
+                                                            input?.click();
+                                                        }}
+                                                    >
+                                                        <Camera className="h-4 w-4 mr-2" />
+                                                        {t('takePhoto')} / {t('uploadFromFile')}
+                                                    </Button>
+                                                    <input
+                                                        type="file"
+                                                        id="prize-image-upload"
+                                                        className="hidden"
+                                                        accept="image/*"
+                                                        onChange={async (e) => {
+                                                            const file = e.target.files?.[0];
+                                                            if (file) {
+                                                                const url = await uploadImage(file, 'prize-images');
+                                                                await handleFieldChange('prizeImageUrl', url, true);
+                                                            }
+                                                        }}
+                                                    />
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
