@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect, useRef, useTransition } from 'react';
 import jsPDF from 'jspdf';
@@ -273,6 +274,7 @@ const App = () => {
     // Free activation phone requested
     const [isFreeActivationDialogOpen, setIsFreeActivationDialogOpen] = useState(false);
     const [freeActivationPhone, setFreeActivationPhone] = useState('');
+    const [freeActivationCountryCode, setFreeActivationCountryCode] = useState('+57');
     const [freeActivationMode, setFreeActivationMode] = useState<RaffleMode | null>(null);
 
     const [showAdminActivationNotice, setShowAdminActivationNotice] = useState(false);
@@ -1611,6 +1613,7 @@ const App = () => {
 
         if (isFree) {
             setFreeActivationMode(mode);
+            setFreeActivationCountryCode('+57');
             setIsFreeActivationDialogOpen(true);
             return;
         }
@@ -1641,17 +1644,22 @@ const App = () => {
 
         const mode = freeActivationMode;
         const phone = freeActivationPhone.replace(/\D/g, '');
+        const countryCode = freeActivationCountryCode;
+        const cleanCode = countryCode.replace('+', '');
         
         setIsFreeActivationDialogOpen(false);
-        const { adminId, finalRaffleRef } = await handleActivateBoard(mode, 'CO', `FREE_${Date.now()}`, undefined, false, false);
+        const isoCode = countryCode === '+57' ? 'CO' : 'US';
+
+        const { adminId, finalRaffleRef } = await handleActivateBoard(mode, isoCode, `FREE_${Date.now()}`, undefined, false, false);
         
         if (finalRaffleRef && adminId) {
             const adminUrl = `${window.location.origin}?ref=${finalRaffleRef}&adminId=${adminId}`;
             const messageText = encodeURIComponent(`Hola, acabo de generar la referencia para mi rifa gratuita: *${finalRaffleRef}*.\n\nPara ponerla en línea y administrarla, usa este enlace: ${adminUrl}`);
-            window.location.href = `https://wa.me/57${phone}?text=${messageText}`;
+            window.location.href = `https://wa.me/${cleanCode}${phone}?text=${messageText}`;
         }
         
         setFreeActivationPhone('');
+        setFreeActivationCountryCode('+57');
         setFreeActivationMode(null);
     };
 
@@ -4784,9 +4792,26 @@ const App = () => {
                     <div className="py-4 space-y-4">
                         <div className="grid gap-2">
                             <Label htmlFor="free-activation-phone">{t('whatsappNumber')}</Label>
-                            <div className="relative">
-                                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                    <span className="text-gray-500 sm:text-sm">+57</span>
+                            <div className="flex gap-2">
+                                <div className="w-[120px]">
+                                    <Select
+                                        value={freeActivationCountryCode}
+                                        onValueChange={setFreeActivationCountryCode}
+                                    >
+                                        <SelectTrigger id="free-activation-country-code">
+                                            <SelectValue placeholder="+57" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {countryIndicators.map((country) => (
+                                                <SelectItem key={`free-${country.name}-${country.code}`} value={country.code}>
+                                                    <span className="flex items-center gap-2">
+                                                        <span>{country.flag}</span>
+                                                        <span>{country.code}</span>
+                                                    </span>
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
                                 </div>
                                 <Input
                                     id="free-activation-phone"
@@ -4794,7 +4819,7 @@ const App = () => {
                                     value={freeActivationPhone}
                                     onChange={(e) => setFreeActivationPhone(e.target.value.replace(/\D/g, ''))}
                                     placeholder="3001234567"
-                                    className="pl-12"
+                                    className="flex-grow"
                                 />
                             </div>
                         </div>
