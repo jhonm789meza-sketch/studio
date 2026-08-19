@@ -289,7 +289,7 @@
     "add": "Add",
     "addNewContact": "Add New Contact",
     "savedContacts": "Saved Contacts",
-    "noSavedContacts": "No skills listed.",
+    "noSavedContacts": "No saved contacts.",
     "activationPrices": "Activation Prices",
     "manageActivationPrices": "Manage Activation Prices",
     "manageActivationPricesDescription": "Update the activation prices for each raffle type.",
@@ -359,8 +359,8 @@
     "pastDateGames": "Past Due Games",
     "deleteAllPastDueGames": "Delete All Past Due ({count})",
     "deleteAllPastDueGamesConfirmation": "Are you sure you want to delete the {count} past due games? This action is irreversible.",
-    "takePhoto": "Take Photo",
-    "takePrizePhoto": "Take Prize Photo",
+    "takePhoto": "Scan Image QR",
+    "takePrizePhoto": "Scan Prize QR",
     "capture": "Capture",
     "cameraPermissionDenied": "Camera permission denied. Check your browser settings.",
     "errorCapturingPhoto": "Error capturing photo.",
@@ -426,3 +426,4 @@
     "brandingSaved": "Application identity saved.",
     "errorSavingBranding": "Error saving identity."
 }
+

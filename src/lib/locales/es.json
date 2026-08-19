@@ -359,8 +359,8 @@
     "pastDateGames": "Juegos Vencidos",
     "deleteAllPastDueGames": "Eliminar Vencidos ({count})",
     "deleteAllPastDueGamesConfirmation": "¿Estás seguro de que deseas eliminar los {count} juegos vencidos? Esta acción es irreversible.",
-    "takePhoto": "Tomar Foto",
-    "takePrizePhoto": "Tomar Foto del Premio",
+    "takePhoto": "Escanear QR Imagen",
+    "takePrizePhoto": "Escanear QR del Premio",
     "capture": "Capturar",
     "cameraPermissionDenied": "Permiso de cámara denegado. Revisa la configuración de tu navegador.",
     "errorCapturingPhoto": "Error al capturar la foto.",
@@ -430,3 +430,4 @@
     "brandingSaved": "Identidad de la aplicación guardada.",
     "errorSavingBranding": "Error al guardar la identidad."
 }
+

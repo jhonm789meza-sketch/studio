@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect, useRef, useTransition } from 'react';
 import jsPDF from 'jspdf';
@@ -10,6 +9,7 @@ import Image from 'next/image';
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useLanguage } from '@/hooks/use-language';
 import { requestNotificationPermission } from '@/lib/notification';
+import jsQR from 'jsqr';
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
@@ -258,12 +258,12 @@ const App = () => {
     const [tempAppName, setTempAppName] = useState('');
     const [tempAppLogoUrl, setTempAppLogoUrl] = useState('');
 
-    // Photo sharing functionality
+    // QR sharing / scanning functionality
     const [isCaptureDialogOpen, setIsCaptureDialogOpen] = useState(false);
     const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
     const [capturedImageBlob, setCapturedImageBlob] = useState<Blob | null>(null);
-    const [captureCountdown, setCaptureCountdown] = useState<number | null>(null);
     const videoRef = useRef<HTMLVideoElement>(null);
+    const scanRequestRef = useRef<number | null>(null);
 
     const [isLockedBoardBgDialogOpen, setIsLockedBoardBgDialogOpen] = useState(false);
     const [lockedBoardBgUrl, setLockedBoardBgUrl] = useState('');
@@ -1843,12 +1843,12 @@ const App = () => {
 
     const startCamera = async () => {
         setIsCaptureDialogOpen(true);
-        setCaptureCountdown(3);
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
             setCameraStream(stream);
             if (videoRef.current) {
                 videoRef.current.srcObject = stream;
+                scanRequestRef.current = requestAnimationFrame(scanQR);
             }
         } catch (err) {
             console.error("Error accessing camera:", err);
@@ -1857,25 +1857,47 @@ const App = () => {
         }
     };
 
-    useEffect(() => {
-        if (isCaptureDialogOpen && cameraStream && captureCountdown !== null && captureCountdown > 0) {
-            const timer = setTimeout(() => setCaptureCountdown(captureCountdown - 1), 1000);
-            return () => clearTimeout(timer);
-        } else if (captureCountdown === 0) {
-            takePhoto();
-            setCaptureCountdown(null);
-        }
-    }, [isCaptureDialogOpen, cameraStream, captureCountdown]);
+    const scanQR = () => {
+        if (!videoRef.current || !isCaptureDialogOpen) return;
 
+        const video = videoRef.current;
+        if (video.readyState === video.HAVE_ENOUGH_DATA) {
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                    inversionAttempts: "dontInvert",
+                });
+
+                if (code && code.data) {
+                    const qrData = code.data;
+                    if (qrData.startsWith('http')) {
+                        handleFieldChange('prizeImageUrl', qrData);
+                        showNotification(t('imageUploadedSuccess'), 'success');
+                        stopCamera();
+                        return;
+                    }
+                }
+            }
+        }
+        scanRequestRef.current = requestAnimationFrame(scanQR);
+    };
 
     const stopCamera = () => {
         if (cameraStream) {
             cameraStream.getTracks().forEach(track => track.stop());
             setCameraStream(null);
         }
+        if (scanRequestRef.current) {
+            cancelAnimationFrame(scanRequestRef.current);
+            scanRequestRef.current = null;
+        }
         setIsCaptureDialogOpen(false);
         setCapturedImageBlob(null);
-        setCaptureCountdown(null);
     };
 
     const takePhoto = () => {
@@ -2595,7 +2617,7 @@ const App = () => {
                                                 />
                                             </div>
                                             <div className="grid gap-2">
-                                                <Label className="text-xs text-muted-foreground">Opción 3 - Escaneo de Imagen</Label>
+                                                <Label className="text-xs text-muted-foreground">Opción 3 - Escaneo de QR</Label>
                                                 <div className="flex gap-2">
                                                     <Button 
                                                         type="button" 
@@ -2604,8 +2626,8 @@ const App = () => {
                                                         disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
                                                         onClick={startCamera}
                                                     >
-                                                        <Camera className="h-4 w-4 mr-2" />
-                                                        Escanear Imagen del Premio
+                                                        <QrCode className="h-4 w-4 mr-2" />
+                                                        {t('takePrizePhoto')}
                                                     </Button>
                                                 </div>
                                             </div>
@@ -3186,7 +3208,7 @@ const App = () => {
                                                 <span>{t('logout')}</span>
                                             </DropdownMenuItem>
                                         </>
-                                    )}
+                                     )}
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem onSelect={handleShare}>
                                         <Share2 className="mr-2 h-4 w-4" />
@@ -4741,17 +4763,16 @@ const App = () => {
                 <DialogContent className="max-w-lg">
                     <DialogHeader><DialogTitle>{t('takePrizePhoto')}</DialogTitle></DialogHeader>
                     <div className="relative aspect-video bg-black rounded-lg overflow-hidden flex items-center justify-center">
-                        {capturedImageBlob ? (<Image src={URL.createObjectURL(capturedImageBlob)} alt={t('capturedPrizePhotoAlt')} fill className="object-cover" unoptimized />) : (
-                            <>
-                                <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" />
-                                {captureCountdown !== null && (<div className="absolute inset-0 flex items-center justify-center bg-black/30"><span className="text-8xl font-bold text-white drop-shadow-lg animate-ping">{captureCountdown > 0 ? captureCountdown : '📸'}</span></div>)}
-                            </>
-                        )}
-                        {isUploading && (<div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-white mb-2" /><p className="text-white text-sm">{t('uploadingImage')}...</p></div>)}
+                        <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 pointer-events-none border-2 border-dashed border-white/50 m-12 rounded-lg flex items-center justify-center">
+                            <div className="bg-black/40 text-white px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2">
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                Buscando QR...
+                            </div>
+                        </div>
                     </div>
                     <DialogFooter className="flex-row justify-center gap-4 sm:justify-center">
-                         {!capturedImageBlob && (<Button variant="outline" onClick={stopCamera}>{t('cancel')}</Button>)}
-                        {capturedImageBlob && (<div className="flex flex-col items-center gap-2"><p className="text-sm font-semibold text-green-600 animate-pulse">{t('imageUploadedSuccess')}</p><p className="text-xs text-gray-500">{t('uploadingImage')}...</p></div>)}
+                         <Button variant="outline" onClick={stopCamera}>{t('cancel')}</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
