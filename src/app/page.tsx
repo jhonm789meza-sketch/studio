@@ -684,6 +684,8 @@ const App = () => {
             
             if (context === 'prize-images') {
                 handleLocalFieldChange('prizeImageUrl', downloadUrl);
+            } else if (context === 'app-branding') {
+                setTempAppLogoUrl(downloadUrl);
             } else if (context === 'payment-qr') {
                 setPaymentQrImageUrl(downloadUrl);
             }
@@ -2593,34 +2595,18 @@ const App = () => {
                                                 />
                                             </div>
                                             <div className="grid gap-2">
-                                                <Label className="text-xs text-muted-foreground">Opción 3 - Subir o Escanear Imagen</Label>
+                                                <Label className="text-xs text-muted-foreground">Opción 3 - Escaneo de Imagen</Label>
                                                 <div className="flex gap-2">
                                                     <Button 
                                                         type="button" 
                                                         variant="secondary" 
                                                         className="flex-1"
                                                         disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
-                                                        onClick={() => {
-                                                            const input = document.getElementById('prize-image-upload') as HTMLInputElement;
-                                                            input?.click();
-                                                        }}
+                                                        onClick={startCamera}
                                                     >
                                                         <Camera className="h-4 w-4 mr-2" />
-                                                        {t('takePhoto')} / {t('uploadFromFile')}
+                                                        Escanear Imagen del Premio
                                                     </Button>
-                                                    <input
-                                                        type="file"
-                                                        id="prize-image-upload"
-                                                        className="hidden"
-                                                        accept="image/*"
-                                                        onChange={async (e) => {
-                                                            const file = e.target.files?.[0];
-                                                            if (file) {
-                                                                const url = await uploadImage(file, 'prize-images');
-                                                                await handleFieldChange('prizeImageUrl', url, true);
-                                                            }
-                                                        }}
-                                                    />
                                                 </div>
                                             </div>
                                         </div>
