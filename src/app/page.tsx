@@ -2368,6 +2368,37 @@ const App = () => {
         );
     };
 
+    const handleScanQrFromFile = (file: File) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new (window as any).Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+                if (ctx) {
+                    ctx.drawImage(img, 0, 0);
+                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    const code = jsQR(imageData.data, imageData.width, imageData.height);
+                    if (code && code.data) {
+                        const qrData = code.data;
+                        if (qrData.startsWith('http')) {
+                            handleFieldChange('prizeImageUrl', qrData);
+                            showNotification(t('imageUploadedSuccess'), 'success');
+                        } else {
+                            showNotification(t('invalidQrContent'), 'error');
+                        }
+                    } else {
+                        showNotification(t('noQrFoundInImage'), 'error');
+                    }
+                }
+            };
+            img.src = e.target?.result as string;
+        };
+        reader.readAsDataURL(file);
+    };
+
 
     const allNumbers = Array.from({ length: totalNumbers }, (_, i) => i);
     
@@ -2618,7 +2649,7 @@ const App = () => {
                                             </div>
                                             <div className="grid gap-2">
                                                 <Label className="text-xs text-muted-foreground">Opción 3 - Escaneo de QR</Label>
-                                                <div className="flex gap-2">
+                                                <div className="flex flex-wrap gap-2">
                                                     <Button 
                                                         type="button" 
                                                         variant="secondary" 
@@ -2629,6 +2660,26 @@ const App = () => {
                                                         <QrCode className="h-4 w-4 mr-2" />
                                                         {t('takePrizePhoto')}
                                                     </Button>
+                                                    <div className="flex-1">
+                                                        <input
+                                                            type="file"
+                                                            accept="image/*"
+                                                            className="hidden"
+                                                            id="qr-file-upload"
+                                                            onChange={(e) => {
+                                                                const file = e.target.files?.[0];
+                                                                if (file) handleScanQrFromFile(file);
+                                                            }}
+                                                        />
+                                                        <Label htmlFor="qr-file-upload">
+                                                            <Button type="button" variant="outline" className="w-full cursor-pointer" asChild>
+                                                                <span>
+                                                                    <Upload className="h-4 w-4 mr-2" />
+                                                                    {t('uploadFromFile')}
+                                                                </span>
+                                                            </Button>
+                                                        </Label>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -4462,7 +4513,7 @@ const App = () => {
                           (selectedRaffleMode === 'three-digit' && appSettings.paymentLinkUsdThreeDigit) ||
                           (selectedRaffleMode === 'infinite' && appSettings.paymentLinkUsdInfinite)) && (
                             <Button onClick={() => setIsUsdPaymentDialogOpen(true)} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold flex items-center gap-2 justify-center">
-                                <DollarSign className="h-5 w-5" />
+                                <DollarSign className="h-3 w-3" />
                                 {t('payWithUsd')}
                             </Button>
                         )}

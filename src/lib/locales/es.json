@@ -428,6 +428,7 @@
     "appLogoUrlLabel": "URL del Logo (Link directo)",
     "logoPreview": "Vista previa del Logo",
     "brandingSaved": "Identidad de la aplicación guardada.",
-    "errorSavingBranding": "Error al guardar la identidad."
+    "errorSavingBranding": "Error al guardar la identidad.",
+    "noQrFoundInImage": "No se encontró ningún código QR en la imagen.",
+    "invalidQrContent": "El código QR no contiene un enlace válido."
 }
-

@@ -424,6 +424,7 @@
     "appLogoUrlLabel": "Logo URL (Direct link)",
     "logoPreview": "Logo Preview",
     "brandingSaved": "Application identity saved.",
-    "errorSavingBranding": "Error saving identity."
+    "errorSavingBranding": "Error saving identity.",
+    "noQrFoundInImage": "No QR code found in the image.",
+    "invalidQrContent": "The QR code does not contain a valid link."
 }
-
