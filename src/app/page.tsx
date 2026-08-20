@@ -2375,17 +2375,40 @@ const App = () => {
             const img = new (window as any).Image();
             img.onload = () => {
                 const canvas = document.createElement('canvas');
-                canvas.width = img.width;
-                canvas.height = img.height;
+                // Optimizamos el tamaño para el escaneo si es muy grande
+                const maxDim = 1024;
+                let width = img.width;
+                let height = img.height;
+                
+                if (width > maxDim || height > maxDim) {
+                    if (width > height) {
+                        height = (height / width) * maxDim;
+                        width = maxDim;
+                    } else {
+                        width = (width / height) * maxDim;
+                        height = maxDim;
+                    }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
                 const ctx = canvas.getContext('2d');
                 if (ctx) {
-                    ctx.drawImage(img, 0, 0);
-                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                    const code = jsQR(imageData.data, imageData.width, imageData.height);
+                    ctx.drawImage(img, 0, 0, width, height);
+                    const imageData = ctx.getImageData(0, 0, width, height);
+                    const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                        inversionAttempts: "dontInvert",
+                    });
+
                     if (code && code.data) {
                         const qrData = code.data;
                         if (qrData.startsWith('http')) {
-                            handleFieldChange('prizeImageUrl', qrData);
+                            // Si es un link de Google Photos o similar, preferimos el campo de URL externa para que la app lo procese mejor
+                            if (qrData.includes('photos.app.goo.gl') || qrData.includes('photos.google.com') || qrData.includes('drive.google.com')) {
+                                handleFieldChange('prizeExternalUrl', qrData);
+                            } else {
+                                handleFieldChange('prizeImageUrl', qrData);
+                            }
                             showNotification(t('imageUploadedSuccess'), 'success');
                         } else {
                             showNotification(t('invalidQrContent'), 'error');
