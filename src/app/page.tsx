@@ -1870,17 +1870,16 @@ const App = () => {
                 ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
                 const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
                 const code = jsQR(imageData.data, imageData.width, imageData.height, {
-                    inversionAttempts: "dontInvert",
+                    inversionAttempts: "attemptBoth",
                 });
 
                 if (code && code.data) {
                     const qrData = code.data;
-                    if (qrData.startsWith('http')) {
-                        handleFieldChange('prizeImageUrl', qrData);
-                        showNotification(t('imageUploadedSuccess'), 'success');
-                        stopCamera();
-                        return;
-                    }
+                    handleFieldChange('prizeExternalUrl', qrData);
+                    handleFieldChange('prizeImageUrl', '');
+                    showNotification(t('imageUploadedSuccess'), 'success');
+                    stopCamera();
+                    return;
                 }
             }
         }
@@ -2374,44 +2373,32 @@ const App = () => {
             const img = new (window as any).Image();
             img.onload = () => {
                 const canvas = document.createElement('canvas');
-                // Optimizamos el tamaño para el escaneo si es muy grande
-                const maxDim = 1024;
+                const maxDim = 1200;
                 let width = img.width;
                 let height = img.height;
                 
                 if (width > maxDim || height > maxDim) {
-                    if (width > height) {
-                        height = (height / width) * maxDim;
-                        width = maxDim;
-                    } else {
-                        width = (width / height) * maxDim;
-                        height = maxDim;
-                    }
+                    const ratio = Math.min(maxDim / width, maxDim / height);
+                    width = width * ratio;
+                    height = height * ratio;
                 }
 
                 canvas.width = width;
                 canvas.height = height;
-                const ctx = canvas.getContext('2d');
+                const ctx = canvas.getContext('2d', { willReadFrequently: true });
                 if (ctx) {
+                    ctx.clearRect(0, 0, width, height);
                     ctx.drawImage(img, 0, 0, width, height);
                     const imageData = ctx.getImageData(0, 0, width, height);
                     const code = jsQR(imageData.data, imageData.width, imageData.height, {
-                        inversionAttempts: "dontInvert",
+                        inversionAttempts: "attemptBoth",
                     });
 
                     if (code && code.data) {
-                        const qrData = code.data;
-                        if (qrData.startsWith('http')) {
-                            // Se asume que los QRs de galerías contienen un enlace.
-                            // Se prioriza el Link Externo para una mejor carga de recursos desde la nube.
-                            handleFieldChange('prizeExternalUrl', qrData);
-                            // Se limpia el otro campo para evitar conflictos
-                            handleFieldChange('prizeImageUrl', '');
-                            
-                            showNotification(t('imageUploadedSuccess'), 'success');
-                        } else {
-                            showNotification(t('invalidQrContent'), 'error');
-                        }
+                        const qrData = code.data.trim();
+                        handleFieldChange('prizeExternalUrl', qrData);
+                        handleFieldChange('prizeImageUrl', '');
+                        showNotification(t('imageUploadedSuccess'), 'success');
                     } else {
                         showNotification(t('noQrFoundInImage'), 'error');
                     }
