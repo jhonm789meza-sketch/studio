@@ -2373,7 +2373,7 @@ const App = () => {
             const img = new (window as any).Image();
             img.onload = () => {
                 const canvas = document.createElement('canvas');
-                const maxDim = 1200;
+                const maxDim = 1600;
                 let width = img.width;
                 let height = img.height;
                 
@@ -2396,9 +2396,16 @@ const App = () => {
 
                     if (code && code.data) {
                         const qrData = code.data.trim();
-                        handleFieldChange('prizeExternalUrl', qrData);
-                        handleFieldChange('prizeImageUrl', '');
-                        showNotification(t('imageUploadedSuccess'), 'success');
+                        // Actualizar localmente e intentar persistir de inmediato si es admin
+                        setRaffleState(prev => ({ ...prev, prizeExternalUrl: qrData, prizeImageUrl: '' }));
+                        if (raffleState.raffleRef && isCurrentUserAdmin) {
+                            const raffleDocRef = doc(db, "raffles", raffleState.raffleRef);
+                            setDoc(raffleDocRef, { prizeExternalUrl: qrData, prizeImageUrl: '' }, { merge: true })
+                                .then(() => showNotification(t('imageUploadedSuccess'), 'success'))
+                                .catch(err => console.error("Error updating QR scan to Firestore:", err));
+                        } else {
+                            showNotification(t('imageUploadedSuccess'), 'success');
+                        }
                     } else {
                         showNotification(t('noQrFoundInImage'), 'error');
                     }
@@ -2412,8 +2419,16 @@ const App = () => {
 
     const allNumbers = Array.from({ length: totalNumbers }, (_, i) => i);
     
+    // Si hay un link externo (QR), mostramos un QR generado. Si no, la imagen de premio.
+    const getPrizeDisplayUrl = (raffle: Raffle) => {
+        if (raffle.prizeExternalUrl) {
+            return `https://api.qrserver.com/v1/create-qr-code/?size=1000x1000&data=${encodeURIComponent(raffle.prizeExternalUrl)}&qzone=1&ecc=H`;
+        }
+        return raffle.prizeImageUrl;
+    };
+
     const globalBackgroundImage = raffleState.raffleRef 
-        ? (raffleState.prizeExternalUrl || raffleState.prizeImageUrl) 
+        ? getPrizeDisplayUrl(raffleState)
         : (appSettings.lockedBoardExternalImageUrl || appSettings.lockedBoardBackgroundImageUrl || '');
 
     const closeTicketModal = () => {
@@ -2460,6 +2475,7 @@ const App = () => {
 
     const renderBoardContent = () => {
         if (!raffleState.raffleRef) return null;
+        const prizeDisplayUrl = getPrizeDisplayUrl(raffleState);
         
         return (
             <>
@@ -2490,16 +2506,16 @@ const App = () => {
                         )}
                         
                         <div className="mb-6 rounded-lg overflow-hidden relative flex items-center justify-center shadow-lg bg-gray-200 aspect-auto group">
-                             {(raffleState.prizeExternalUrl || raffleState.prizeImageUrl) ? (
+                             {prizeDisplayUrl ? (
                                 <button onClick={() => isCurrentUserAdmin ? handleShare() : handleTabClick('register')} className="w-full flex items-center justify-center cursor-pointer relative" aria-label={t('rafflePrizeAlt')}>
                                     <Image 
-                                        src={raffleState.prizeExternalUrl || raffleState.prizeImageUrl} 
+                                        src={prizeDisplayUrl} 
                                         alt={t('rafflePrizeAlt')} 
                                         width={1200}
                                         height={1200}
                                         className="w-full h-auto object-contain max-h-[60vh] transition-transform duration-500 group-hover:scale-105"
                                         unoptimized 
-                                        key={raffleState.prizeExternalUrl || raffleState.prizeImageUrl}
+                                        key={prizeDisplayUrl}
                                     />
                                     {!isCurrentUserAdmin && (
                                         <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -3116,6 +3132,8 @@ const App = () => {
         );
     };
     
+    const prizeDisplayUrl = getPrizeDisplayUrl(raffleState);
+
     return (
         <div className="min-h-screen bg-background font-sans relative">
             {globalBackgroundImage && (
@@ -4809,7 +4827,7 @@ const App = () => {
             <Dialog open={isPrizeImageModalOpen} onOpenChange={setIsPrizeImageModalOpen}>
                 <DialogContent className="max-w-4xl w-auto bg-transparent border-none shadow-none p-2">
                     <DialogHeader><DialogTitle className="sr-only">{raffleState.prize || t('rafflePrizeAlt')}</DialogTitle></DialogHeader>
-                    {(raffleState.prizeExternalUrl || raffleState.prizeImageUrl) && (<Image src={raffleState.prizeExternalUrl || raffleState.prizeImageUrl} alt={raffleState.prize || t('rafflePrizeAlt')} width={1920} height={1080} className="rounded-lg object-contain max-h-[90vh] w-auto h-auto" unoptimized />)}
+                    {prizeDisplayUrl && (<Image src={prizeDisplayUrl} alt={raffleState.prize || t('rafflePrizeAlt')} width={1920} height={1080} className="rounded-lg object-contain max-h-[90vh] w-auto h-auto" unoptimized />)}
                 </DialogContent>
 
             </Dialog>
@@ -4936,6 +4954,9 @@ const App = () => {
                         <DialogTitle>{t('adminActivationTitle')}</DialogTitle>
                         <DialogDescription>{t('adminActivationDescription')}</DialogDescription>
                     </DialogHeader>
+                    <div className="py-4 text-center">
+                        <p className="mb-4 text-sm text-muted-foreground">{t('adminActivationDescription')}</p>
+                    </div>
                     <DialogFooter className="flex-col sm:flex-row gap-2">
                         <Button variant="outline" onClick={handleCancelActivation} className="w-full sm:auto">
                             {t('cancelReference')}

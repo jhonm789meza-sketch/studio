@@ -1,8 +1,7 @@
-
 'use client';
 /**
  * @fileOverview Página de previsualización del premio que actúa como un enlace funcional camuflado.
- * Muestra la imagen a pantalla completa y redirige automáticamente al juego.
+ * Muestra la imagen (o el código QR si es un link externo) a pantalla completa y redirige automáticamente al juego.
  */
 
 import { useEffect, useState } from 'react';
@@ -10,14 +9,14 @@ import { useRouter, useParams } from 'next/navigation';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import Image from 'next/image';
-import { Loader2, MousePointer2, Gamepad2 } from 'lucide-react';
+import { Loader2, Gamepad2 } from 'lucide-react';
 import Link from 'next/link';
 
 export default function PrizePreviewPage() {
     const router = useRouter();
     const params = useParams();
     const ref = params.ref as string;
-    const [imageUrl, setImageUrl] = useState<string | null>(null);
+    const [prizeUrl, setPrizeUrl] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
 
     const gameUrl = `/?ref=${ref}`;
@@ -29,11 +28,21 @@ export default function PrizePreviewPage() {
                 const docSnap = await getDoc(doc(db, 'raffles', ref.toUpperCase()));
                 if (docSnap.exists()) {
                     const data = docSnap.data();
-                    setImageUrl(data.prizeExternalUrl || data.prizeImageUrl);
+                    
+                    // Lógica idéntica al tablero principal
+                    let finalUrl = '';
+                    if (data.prizeExternalUrl) {
+                        finalUrl = `https://api.qrserver.com/v1/create-qr-code/?size=1000x1000&data=${encodeURIComponent(data.prizeExternalUrl)}&qzone=1&ecc=H`;
+                    } else {
+                        finalUrl = data.prizeImageUrl;
+                    }
+
+                    setPrizeUrl(finalUrl);
+                    
                     // Redirección ultra-rápida una vez que tenemos los datos
                     setTimeout(() => {
                         router.push(gameUrl);
-                    }, 3000); // 3 segundos para que vean el premio y luego entren
+                    }, 5000); // 5 segundos para que vean el premio/QR y luego entren
                 } else {
                     router.push('/');
                 }
@@ -57,13 +66,13 @@ export default function PrizePreviewPage() {
 
     return (
         <div className="min-h-screen bg-black flex flex-col items-center justify-center overflow-hidden">
-            {imageUrl ? (
+            {prizeUrl ? (
                 <Link href={gameUrl} className="relative w-full h-screen cursor-pointer group flex flex-col items-center justify-center">
                     <Image
-                        src={imageUrl}
+                        src={prizeUrl}
                         alt="Toca para jugar ahora"
                         fill
-                        className="object-contain"
+                        className="object-contain p-4"
                         unoptimized
                         priority
                     />
@@ -73,10 +82,9 @@ export default function PrizePreviewPage() {
                             ¡JUGAR AHORA!
                         </div>
                     </div>
-                    {/* El link real funcional está "escondido" en toda la superficie de la imagen */}
                     <div className="absolute bottom-10 left-0 right-0 text-center bg-black/40 py-2 backdrop-blur-sm">
                         <p className="text-white font-bold text-sm">👇 TOCA LA FOTO PARA ENTRAR AL JUEGO</p>
-                        <p className="text-white/50 text-xs font-mono">Redirigiendo automáticamente en 3 segundos...</p>
+                        <p className="text-white/50 text-xs font-mono">Redirigiendo automáticamente en unos segundos...</p>
                     </div>
                 </Link>
             ) : (
