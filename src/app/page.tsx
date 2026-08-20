@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect, useRef, useTransition } from 'react';
 import jsPDF from 'jspdf';
@@ -2650,36 +2651,30 @@ const App = () => {
                                             <div className="grid gap-2">
                                                 <Label className="text-xs text-muted-foreground">Opción 3 - Escaneo de QR</Label>
                                                 <div className="flex flex-wrap gap-2">
-                                                    <Button 
-                                                        type="button" 
-                                                        variant="secondary" 
-                                                        className="flex-1"
-                                                        disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
-                                                        onClick={startCamera}
-                                                    >
-                                                        <QrCode className="h-4 w-4 mr-2" />
-                                                        {t('takePrizePhoto')}
-                                                    </Button>
-                                                    <div className="flex-1">
-                                                        <input
-                                                            type="file"
-                                                            accept="image/*"
-                                                            className="hidden"
-                                                            id="qr-file-upload"
-                                                            onChange={(e) => {
-                                                                const file = e.target.files?.[0];
-                                                                if (file) handleScanQrFromFile(file);
-                                                            }}
-                                                        />
-                                                        <Label htmlFor="qr-file-upload">
-                                                            <Button type="button" variant="outline" className="w-full cursor-pointer" asChild>
-                                                                <span>
-                                                                    <Upload className="h-4 w-4 mr-2" />
-                                                                    {t('uploadFromFile')}
-                                                                </span>
-                                                            </Button>
-                                                        </Label>
-                                                    </div>
+                                                    <input
+                                                        type="file"
+                                                        accept="image/*"
+                                                        className="hidden"
+                                                        id="qr-file-upload"
+                                                        onChange={(e) => {
+                                                            const file = e.target.files?.[0];
+                                                            if (file) handleScanQrFromFile(file);
+                                                        }}
+                                                    />
+                                                    <Label htmlFor="qr-file-upload" className="w-full">
+                                                        <Button 
+                                                            type="button" 
+                                                            variant="secondary" 
+                                                            className="w-full cursor-pointer"
+                                                            disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
+                                                            asChild
+                                                        >
+                                                            <span>
+                                                                <QrCode className="h-4 w-4 mr-2" />
+                                                                {t('takePrizePhoto')}
+                                                            </span>
+                                                        </Button>
+                                                    </Label>
                                                 </div>
                                             </div>
                                         </div>
