@@ -28,7 +28,8 @@ export default function PrizePreviewPage() {
             try {
                 const docSnap = await getDoc(doc(db, 'raffles', ref.toUpperCase()));
                 if (docSnap.exists()) {
-                    setImageUrl(docSnap.data().prizeImageUrl);
+                    const data = docSnap.data();
+                    setImageUrl(data.prizeExternalUrl || data.prizeImageUrl);
                     // Redirección ultra-rápida una vez que tenemos los datos
                     setTimeout(() => {
                         router.push(gameUrl);

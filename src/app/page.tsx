@@ -1,7 +1,7 @@
 
 'use client';
 import { useState, useEffect, useRef, useTransition } from 'react';
-import jsPDF from 'jspdf';
+import jsPDF from 'jsPDF';
 import html2canvas from 'html2canvas';
 import { RaffleManager } from '@/lib/RaffleManager';
 import { db, storage } from '@/lib/firebase';
@@ -2403,12 +2403,12 @@ const App = () => {
                     if (code && code.data) {
                         const qrData = code.data;
                         if (qrData.startsWith('http')) {
-                            // Si es un link de Google Photos o similar, preferimos el campo de URL externa para que la app lo procese mejor
-                            if (qrData.includes('photos.app.goo.gl') || qrData.includes('photos.google.com') || qrData.includes('drive.google.com')) {
-                                handleFieldChange('prizeExternalUrl', qrData);
-                            } else {
-                                handleFieldChange('prizeImageUrl', qrData);
-                            }
+                            // Se asume que los QRs de galerías contienen un enlace.
+                            // Se prioriza el Link Externo para una mejor carga de recursos desde la nube.
+                            handleFieldChange('prizeExternalUrl', qrData);
+                            // Se limpia el otro campo para evitar conflictos
+                            handleFieldChange('prizeImageUrl', '');
+                            
                             showNotification(t('imageUploadedSuccess'), 'success');
                         } else {
                             showNotification(t('invalidQrContent'), 'error');
