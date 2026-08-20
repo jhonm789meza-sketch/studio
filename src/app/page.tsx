@@ -1,7 +1,6 @@
-
 'use client';
 import { useState, useEffect, useRef, useTransition } from 'react';
-import jsPDF from 'jsPDF';
+import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { RaffleManager } from '@/lib/RaffleManager';
 import { db, storage } from '@/lib/firebase';
