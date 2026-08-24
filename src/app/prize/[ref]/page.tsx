@@ -1,7 +1,7 @@
 'use client';
 /**
  * @fileOverview Página de previsualización del premio que actúa como un enlace funcional camuflado.
- * Muestra la imagen (o el código QR si es un link externo) a pantalla completa y redirige automáticamente al juego.
+ * Muestra la imagen a pantalla completa y redirige automáticamente al juego.
  */
 
 import { useEffect, useState } from 'react';
@@ -29,20 +29,15 @@ export default function PrizePreviewPage() {
                 if (docSnap.exists()) {
                     const data = docSnap.data();
                     
-                    // Lógica idéntica al tablero principal
-                    let finalUrl = '';
-                    if (data.prizeExternalUrl) {
-                        finalUrl = `https://api.qrserver.com/v1/create-qr-code/?size=1000x1000&data=${encodeURIComponent(data.prizeExternalUrl)}&qzone=1&ecc=H`;
-                    } else {
-                        finalUrl = data.prizeImageUrl;
-                    }
+                    // Solo usamos prizeImageUrl directamente
+                    const finalUrl = data.prizeImageUrl || '';
 
                     setPrizeUrl(finalUrl);
                     
                     // Redirección ultra-rápida una vez que tenemos los datos
                     setTimeout(() => {
                         router.push(gameUrl);
-                    }, 5000); // 5 segundos para que vean el premio/QR y luego entren
+                    }, 5000); // 5 segundos para que vean el premio y luego entren
                 } else {
                     router.push('/');
                 }

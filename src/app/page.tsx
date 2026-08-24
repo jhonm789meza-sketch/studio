@@ -275,10 +275,19 @@ const App = () => {
     const [isUsdPaymentConfigDialogOpen, setIsUsdPaymentConfigDialogOpen] = useState(false);
 
     const prizeTextareaRef = useRef<HTMLTextAreaElement>(null);
+
+    // --- Derived States (Fixed missing references) ---
     const isCurrentUserAdmin = !!raffleState.adminId && !!currentAdminId && raffleState.adminId === currentAdminId;
     const raffleMode = raffleState.raffleMode;
     const totalNumbers = raffleMode === 'two-digit' ? 100 : 1000;
     const numberLength = raffleMode === 'two-digit' ? 2 : 3;
+    const allAssignedNumbers = new Set(raffleState.participants?.map((p: Participant) => parseInt(p.raffleNumber, 10)) || []);
+    const pendingParticipants = raffleState.participants?.filter((p: Participant) => p.paymentStatus === 'pending') || [];
+    const confirmedParticipants = raffleState.participants?.filter((p: Participant) => p.paymentStatus === 'confirmed') || [];
+    const totalCollected = confirmedParticipants.length * (raffleState.value ? parseFloat(String(raffleState.value).replace(/[^\d.,]/g, '').replace(',', '.')) : 0);
+    const isRegisterFormValidForSubmit = raffleState.name && raffleState.phoneNumber && raffleState.raffleNumber && !allAssignedNumbers.has(parseInt(raffleState.raffleNumber || '0'));
+    const currentPartialWinners = (raffleState.partialWinners && raffleState.partialWinners.length > 0) ? raffleState.partialWinners : partialWinners;
+    const currentAppName = appSettings.appName || 'RIFA⚡ EXPRESS';
 
     useEffect(() => {
         if (typeof document !== 'undefined') {
@@ -411,6 +420,11 @@ const App = () => {
         }
     };
 
+    const closeTicketModal = () => {
+        setIsTicketModalOpen(false);
+        setTicketInfo(null);
+    };
+
     const handleGenerateTicket = async (participant: Participant) => {
         if (!raffleState.prize) {
             showNotification(t('generateTicketPrizeWarning'), 'warning');
@@ -423,7 +437,7 @@ const App = () => {
             organizerName: raffleState.organizerName,
             gameDate: raffleState.gameDate,
             lottery: raffleState.lottery === 'Otro' ? raffleState.customLottery : raffleState.lottery,
-            prizeImageUrl: raffleState.prizeExternalUrl || raffleState.prizeImageUrl,
+            prizeImageUrl: raffleState.prizeImageUrl,
             raffleRef: raffleState.raffleRef,
             value: raffleState.value,
             currencySymbol: raffleState.currencySymbol,
@@ -815,18 +829,6 @@ const App = () => {
         });
     };
     
-    
-    const allAssignedNumbers = new Set(raffleState.participants.map((p: Participant) => parseInt(p.raffleNumber, 10)) || []);
-    const pendingParticipants = raffleState.participants.filter((p: Participant) => p.paymentStatus === 'pending') || [];
-    const confirmedParticipants = raffleState.participants.filter((p: Participant) => p.paymentStatus === 'confirmed') || [];
-
-    const filteredPendingParticipants = pendingParticipants.filter(p =>
-        p.raffleNumber.toLowerCase().includes(pendingSearchQuery.toLowerCase()) ||
-        p.phoneNumber.toLowerCase().includes(pendingSearchQuery.toLowerCase())
-    );
-
-    const totalCollected = confirmedParticipants.length * (raffleState.value ? parseFloat(String(raffleState.value).replace(/[^\d.,]/g, '').replace(',', '.')) : 0);
-
     const toggleNumber = (number: number) => {
         if (!raffleState) return;
         if (!raffleState.isDetailsConfirmed) {
@@ -1050,7 +1052,7 @@ const App = () => {
                     organizerName: raffleState.organizerName,
                     gameDate: raffleState.gameDate,
                     lottery: raffleState.lottery === 'Otro' ? raffleState.customLottery : raffleState.lottery,
-                    prizeImageUrl: raffleState.prizeExternalUrl || raffleState.prizeImageUrl,
+                    prizeImageUrl: raffleState.prizeImageUrl,
                     raffleRef: raffleState.raffleRef,
                     value: raffleState.value,
                     currencySymbol: raffleState.currencySymbol,
@@ -1838,7 +1840,7 @@ const App = () => {
         
         setIsUploading(true);
         try {
-            const prizeImageUrl = raffleState.prizeExternalUrl || raffleState.prizeImageUrl;
+            const prizeImageUrl = raffleState.prizeImageUrl;
             if (!prizeImageUrl) {
                  showNotification(t('noPrizeImage'), 'warning');
                  return;
@@ -2202,20 +2204,12 @@ const App = () => {
     const allNumbers = Array.from({ length: totalNumbers }, (_, i) => i);
     
     const getPrizeDisplayUrl = (raffle: Raffle) => {
-        if (raffle.prizeExternalUrl) {
-            return `https://api.qrserver.com/v1/create-qr-code/?size=1000x1000&data=${encodeURIComponent(raffle.prizeExternalUrl)}&qzone=1&ecc=H`;
-        }
         return raffle.prizeImageUrl;
     };
 
     const globalBackgroundImage = raffleState.raffleRef 
         ? getPrizeDisplayUrl(raffleState)
         : (appSettings.lockedBoardExternalImageUrl || appSettings.lockedBoardBackgroundImageUrl || '');
-
-    const closeTicketModal = () => {
-        setIsTicketModalOpen(false);
-        setTicketInfo(null);
-    };
     
     const filteredGames = allRaffles.filter(raffle => {
         const searchMatch = raffle.raffleRef?.toLowerCase().includes(gameSearchQuery.toLowerCase());
@@ -2243,16 +2237,10 @@ const App = () => {
     const threeDigitCount = allRaffles.length > 0 ? allRaffles.filter(r => r.raffleMode === 'three-digit').length : 0;
     const infiniteCount = allRaffles.length > 0 ? allRaffles.filter(r => r.raffleMode === 'infinite').length : 0;
 
-    const currentAppName = appSettings.appName || 'RIFA⚡ EXPRESS';
-
     if (loading && !raffleState.raffleRef) {
         return <div className="flex justify-center items-center h-screen text-xl font-semibold">{t('loading')}...</div>;
     }
     
-    const isRegisterFormValidForSubmit = raffleState.name && raffleState.phoneNumber && raffleState.raffleNumber && !allAssignedNumbers.has(parseInt(raffleState.raffleNumber || '0'));
-    
-    const currentPartialWinners = (raffleState.partialWinners && raffleState.partialWinners.length > 0) ? raffleState.partialWinners : partialWinners;
-
     const renderBoardContent = () => {
         if (!raffleState.raffleRef) return null;
         
@@ -2285,7 +2273,7 @@ const App = () => {
                         )}
                         
                         <div className="mb-6 rounded-lg overflow-hidden relative flex items-center justify-center shadow-lg bg-gray-200 aspect-auto group">
-                             {(raffleState.prizeExternalUrl || raffleState.prizeImageUrl) ? (
+                             {(raffleState.prizeImageUrl) ? (
                                 <button onClick={() => isCurrentUserAdmin ? handleShare() : handleTabClick('register')} className="w-full flex items-center justify-center cursor-pointer relative" aria-label={t('rafflePrizeAlt')}>
                                     <Image 
                                         src={getPrizeDisplayUrl(raffleState)} 
@@ -2294,7 +2282,7 @@ const App = () => {
                                         height={1200}
                                         className="w-full h-auto object-contain max-h-[60vh] transition-transform duration-500 group-hover:scale-105"
                                         unoptimized 
-                                        key={raffleState.prizeExternalUrl || raffleState.prizeImageUrl}
+                                        key={raffleState.prizeImageUrl}
                                     />
                                     {!isCurrentUserAdmin && (
                                         <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -2419,7 +2407,7 @@ const App = () => {
                                     <div className="space-y-2 mt-1">
                                         <div className="grid gap-4">
                                             <div className="grid gap-2">
-                                                <Label htmlFor="prize-image-url-input" className="text-xs text-muted-foreground">Opción 1 - Link Directo</Label>
+                                                <Label htmlFor="prize-image-url-input" className="text-xs text-muted-foreground">Enlace Directo de Imagen</Label>
                                                 <div className="flex flex-wrap gap-2">
                                                     <Input
                                                         id="prize-image-url-input"
@@ -2438,19 +2426,6 @@ const App = () => {
                                                         </Button>
                                                     </a>
                                                 </div>
-                                            </div>
-                                            <div className="grid gap-2">
-                                                <Label htmlFor="prize-external-url-input" className="text-xs text-muted-foreground">Vínculo de la imagen (Opción 2 - Google Photos / Galería)</Label>
-                                                <Input
-                                                    id="prize-external-url-input"
-                                                    type="text"
-                                                    value={raffleState.prizeExternalUrl || ''}
-                                                    onChange={(e) => handleLocalFieldChange('prizeExternalUrl', e.target.value)}
-                                                    onBlur={(e) => handleFieldChange('prizeExternalUrl', e.target.value)}
-                                                    placeholder="https://photos.app.goo.gl/..."
-                                                    disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
-                                                    className="w-full"
-                                                />
                                             </div>
                                         </div>
                                     </div>
@@ -3691,7 +3666,7 @@ const App = () => {
                                             onChange={(e) => setPendingSearchQuery(e.target.value)}
                                         />
                                     </div>
-                                    {filteredPendingParticipants.length > 0 ? (
+                                    {pendingParticipants.length > 0 ? (
                                         <div className="overflow-x-auto">
                                             <table className="min-w-full divide-y divide-gray-200">
                                                 <thead className="bg-gray-50">
@@ -3704,7 +3679,7 @@ const App = () => {
                                                     </tr>
                                                 </thead>
                                                 <tbody className="bg-white divide-y divide-gray-200">
-                                                    {filteredPendingParticipants.sort((a, b) => a.raffleNumber.localeCompare(b.raffleNumber)).map((p: Participant) => (
+                                                    {pendingParticipants.sort((a, b) => a.raffleNumber.localeCompare(b.raffleNumber)).map((p: Participant) => (
                                                         <tr key={p.id}>
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-purple-600">{p.raffleNumber}</td>
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{p.name}</td>
@@ -4575,7 +4550,7 @@ const App = () => {
             <Dialog open={isPrizeImageModalOpen} onOpenChange={setIsPrizeImageModalOpen}>
                 <DialogContent className="max-w-4xl w-auto bg-transparent border-none shadow-none p-2">
                     <DialogHeader><DialogTitle className="sr-only">{raffleState.prize || t('rafflePrizeAlt')}</DialogTitle></DialogHeader>
-                    {(raffleState.prizeExternalUrl || raffleState.prizeImageUrl) && (<Image src={getPrizeDisplayUrl(raffleState)} alt={raffleState.prize || t('rafflePrizeAlt')} width={1920} height={1080} className="rounded-lg object-contain max-h-[90vh] w-auto h-auto" unoptimized />)}
+                    {(raffleState.prizeImageUrl) && (<Image src={getPrizeDisplayUrl(raffleState)} alt={raffleState.prize || t('rafflePrizeAlt')} width={1920} height={1080} className="rounded-lg object-contain max-h-[90vh] w-auto h-auto" unoptimized />)}
                 </DialogContent>
 
             </Dialog>
