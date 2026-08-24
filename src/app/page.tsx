@@ -2042,7 +2042,7 @@ const App = () => {
     };
     
     const handleChangeSuperAdminPassword = async () => {
-        if (!newPassword || newPassword !== confirmNewPassword) {
+        if (!newPassword || !newPassword !== confirmNewPassword) {
             showNotification(t('passwordsDoNotMatch'), 'error');
             return;
         }
@@ -2252,6 +2252,635 @@ const App = () => {
     const isRegisterFormValidForSubmit = raffleState.name && raffleState.phoneNumber && raffleState.raffleNumber && !allAssignedNumbers.has(parseInt(raffleState.raffleNumber || '0'));
     
     const currentPartialWinners = (raffleState.partialWinners && raffleState.partialWinners.length > 0) ? raffleState.partialWinners : partialWinners;
+
+    const renderBoardContent = () => {
+        if (!raffleState.raffleRef) return null;
+        
+        return (
+            <>
+                {isCurrentUserAdmin && (
+                    <div className="mb-4 p-3 bg-green-100 border border-green-300 text-green-800 rounded-lg text-center font-semibold">
+                        {t('adminMessage')}
+                    </div>
+                )}
+                <div className="flex flex-col lg:flex-row gap-8">
+                    <div className="lg:w-2/5 flex-shrink-0">
+                        <h2 className="text-2xl font-bold text-gray-800 mb-4">{t('prizeSettings')}</h2>
+                        {raffleState.raffleRef && (
+                            <div className="mb-4">
+                                <p className="text-sm text-gray-500">{t('gameReference')}</p>
+                                <div className="flex items-center gap-2">
+                                    <p className="text-2xl font-bold text-gray-800 tracking-wider">{raffleState.raffleRef}</p>
+                                    <button 
+                                        onClick={() => {
+                                            const cleanCode = (raffleState.organizerCountryCode || '+57').replace('+', '');
+                                            window.open(`https://wa.me/${cleanCode}${raffleState.organizerPhoneNumber}`, '_blank');
+                                        }} 
+                                        className="p-2 rounded-full hover:bg-gray-100"
+                                    >
+                                        <WhatsappIcon />
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                        
+                        <div className="mb-6 rounded-lg overflow-hidden relative flex items-center justify-center shadow-lg bg-gray-200 aspect-auto group">
+                             {(raffleState.prizeExternalUrl || raffleState.prizeImageUrl) ? (
+                                <button onClick={() => isCurrentUserAdmin ? handleShare() : handleTabClick('register')} className="w-full flex items-center justify-center cursor-pointer relative" aria-label={t('rafflePrizeAlt')}>
+                                    <Image 
+                                        src={getPrizeDisplayUrl(raffleState)} 
+                                        alt={t('rafflePrizeAlt')} 
+                                        width={1200}
+                                        height={1200}
+                                        className="w-full h-auto object-contain max-h-[60vh] transition-transform duration-500 group-hover:scale-105"
+                                        unoptimized 
+                                        key={raffleState.prizeExternalUrl || raffleState.prizeImageUrl}
+                                    />
+                                    {!isCurrentUserAdmin && (
+                                        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                            <div className="bg-yellow-400 text-black px-4 py-2 rounded-full font-bold text-sm shadow-xl flex items-center gap-2">
+                                                <MousePointer2 className="h-4 w-4" />
+                                                TOCA PARA JUGAR
+                                            </div>
+                                        </div>
+                                    )}
+                                </button>
+                            ) : (
+                                <div className="flex flex-col items-center gap-2 p-16">
+                                    <span className="text-gray-500">{t('noPrizeImage')}</span>
+                                </div>
+                            )}
+                             {isUploading && (
+                                <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center rounded-md p-4">
+                                    <Loader2 className="h-8 w-8 animate-spin text-white mb-2" />
+                                    <p className="text-white mt-2 text-sm">{t('uploadingImage')}</p>
+                                </div>
+                             )}
+                        </div>
+
+                        <div className="space-y-4 mb-6">
+                           <div>
+                               <Label htmlFor="organizer-name-input">{t('whoOrganizes')}:</Label>
+                               <Input
+                                   id="organizer-name-input"
+                                   type="text"
+                                   value={raffleState.organizerName}
+                                   onChange={(e) => handleLocalFieldChange('organizerName', e.target.value)}
+                                   onBlur={(e) => handleFieldChange('organizerName', e.target.value)}
+                                   placeholder={t('organizerNamePlaceholder')}
+                                   disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
+                                   className="w-full mt-1"
+                               />
+                           </div>
+                           <div>
+                                <Label htmlFor="organizer-phone-input">{t('organizerPhone')}:</Label>
+                                <div className="flex gap-2 mt-1">
+                                    <div className="w-[120px]">
+                                        <Select
+                                            value={raffleState.organizerCountryCode || '+57'}
+                                            onValueChange={(val) => {
+                                                handleLocalFieldChange('organizerCountryCode', val);
+                                                handleFieldChange('organizerCountryCode', val);
+                                            }}
+                                            disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
+                                        >
+                                            <SelectTrigger id="organizer-country-code">
+                                                <SelectValue placeholder="+57" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {countryIndicators.map((country) => (
+                                                    <SelectItem key={`${country.name}-${country.code}`} value={country.code}>
+                                                        <span className="flex items-center gap-2">
+                                                            <span>{country.flag}</span>
+                                                            <span>{country.code}</span>
+                                                        </span>
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <Input
+                                        id="organizer-phone-input"
+                                        type="tel"
+                                        value={raffleState.organizerPhoneNumber}
+                                        onChange={(e) => handleLocalFieldChange('organizerPhoneNumber', e.target.value.replace(/\D/g, ''))}
+                                        onBlur={(e) => handleFieldChange('organizerPhoneNumber', e.target.value.replace(/\D/g, ''))}
+                                        placeholder="3001234567"
+                                        disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
+                                        className="flex-grow"
+                                    />
+                                </div>
+                            </div>
+                            {isCurrentUserAdmin && !raffleState.isDetailsConfirmed && (
+                                <div>
+                                    <Label htmlFor="password-input">{t('adminPassword')}:</Label>
+                                    <div className="relative">
+                                        <Input
+                                            id="password-input"
+                                            type={showAdminPassword ? 'text' : 'password'}
+                                            value={raffleState.password || ''}
+                                            onChange={(e) => handleLocalFieldChange('password', e.target.value)}
+                                            onBlur={(e) => handleFieldChange('password', e.target.value)}
+                                            placeholder={t('adminPasswordPlaceholder')}
+                                            disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
+                                            className="w-full mt-1"
+                                        />
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon"
+                                            className="absolute inset-y-0 right-0 h-full px-3"
+                                            onClick={() => setShowAdminPassword(!showAdminPassword)}
+                                        >
+                                            {showAdminPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                            <span className="sr-only">{showAdminPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}</span>
+                                        </Button>
+                                    </div>
+                               </div>
+                            )}
+                           <div>
+                               <Label htmlFor="prize-input">{t('prize')}:</Label>
+                               <Textarea
+                                   ref={prizeTextareaRef}
+                                   id="prize-input"
+                                   rows={3}
+                                   style={{ overflowY: 'hidden' }}
+                                   value={raffleState.prize}
+                                   onChange={(e) => handleLocalFieldChange('prize', e.target.value)}
+                                   onBlur={(e) => handleFieldChange('prize', e.target.value)}
+                                   placeholder={raffleMode === 'infinite' ? t('prizePlaceholderInfinite') : t('prizePlaceholderFinite')}
+                                   disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
+                                   className="w-full mt-1"
+                               />
+                           </div>
+                           {isCurrentUserAdmin && !raffleState.isDetailsConfirmed && (
+                                <div>
+                                    <Label>{t('prizeImage')}</Label>
+                                    <div className="space-y-2 mt-1">
+                                        <div className="grid gap-4">
+                                            <div className="grid gap-2">
+                                                <Label htmlFor="prize-image-url-input" className="text-xs text-muted-foreground">Opción 1 - Link Directo</Label>
+                                                <div className="flex flex-wrap gap-2">
+                                                    <Input
+                                                        id="prize-image-url-input"
+                                                        type="text"
+                                                        value={raffleState.prizeImageUrl}
+                                                        onChange={(e) => handleLocalFieldChange('prizeImageUrl', e.target.value)}
+                                                        onBlur={(e) => handleFieldChange('prizeImageUrl', e.target.value)}
+                                                        placeholder={t('pasteImageLinkPlaceholder')}
+                                                        disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
+                                                        className="flex-grow"
+                                                    />
+                                                    <a href="https://www.google.com/imghp" target="_blank" rel="noopener noreferrer">
+                                                        <Button type="button" variant="outline" className="w-full sm:w-auto">
+                                                            <Search className="h-4 w-4 mr-2" />
+                                                            {t('searchOnGoogle')}
+                                                        </Button>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                            <div className="grid gap-2">
+                                                <Label htmlFor="prize-external-url-input" className="text-xs text-muted-foreground">Vínculo de la imagen (Opción 2 - Google Photos / Galería)</Label>
+                                                <Input
+                                                    id="prize-external-url-input"
+                                                    type="text"
+                                                    value={raffleState.prizeExternalUrl || ''}
+                                                    onChange={(e) => handleLocalFieldChange('prizeExternalUrl', e.target.value)}
+                                                    onBlur={(e) => handleFieldChange('prizeExternalUrl', e.target.value)}
+                                                    placeholder="https://photos.app.goo.gl/..."
+                                                    disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
+                                                    className="w-full"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                           )}
+                           <div>
+                                <Label htmlFor="value-input">{t('ticketValue')}:</Label>
+                                <Input
+                                    id="value-input"
+                                    type="text"
+                                    value={formatValueForDisplay(raffleState.value)}
+                                    onChange={(e) => handleLocalFieldChange('value', e.target.value)}
+                                    onBlur={(e) => handleFieldChange('value', raffleState.value)}
+                                    placeholder="Ej: 5000"
+                                    disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
+                                    className="w-full mt-1"
+                                />
+                            </div>
+                           {raffleState.raffleMode === 'infinite' && (
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <Label htmlFor="infinite-digits-input">{t('infiniteRaffleDigits')}:</Label>
+                                        <Input
+                                            id="infinite-digits-input"
+                                            type="number"
+                                            min="4"
+                                            value={raffleState.infiniteModeDigits || ''}
+                                            onChange={(e) => handleLocalFieldChange('infiniteModeDigits', e.target.value)}
+                                            onBlur={() => handleFieldChange('infiniteModeDigits', raffleState.infiniteModeDigits)}
+                                            placeholder={t('min4Digits')}
+                                            disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
+                                            className="w-full mt-1"
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label htmlFor="total-numbers-infinite">{t('totalNumbersToSell')}</Label>
+                                        <div className="relative mt-1">
+                                            <Input
+                                                id="total-numbers-infinite"
+                                                type="text"
+                                                readOnly
+                                                value={(raffleState.infiniteModeDigits && raffleState.infiniteModeDigits >= 4) ? Math.pow(10, raffleState.infiniteModeDigits).toLocaleString() : '0'}
+                                                disabled
+                                                className="w-full bg-slate-100 font-semibold mt-1"
+                                            />
+                                            <TicketIcon className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                            {raffleState.raffleMode === 'infinite' && isCurrentUserAdmin && !raffleState.isDetailsConfirmed && (
+                               <div className="flex items-center justify-between mt-2 p-3 bg-gray-50 rounded-lg">
+                                    <Label htmlFor="allow-partial-winners" className="flex flex-col space-y-1">
+                                        <span>{t('allowPartialWinners')}</span>
+                                        <span className="font-normal leading-snug text-muted-foreground text-sm">
+                                            {t('allowPartialWinnersDescription')}
+                                        </span>
+                                    </Label>
+                                    <Switch
+                                        id="allow-partial-winners"
+                                        checked={raffleState.allowPartialWinners}
+                                        onCheckedChange={(checked) => {
+                                            handleLocalFieldChange('allowPartialWinners', checked);
+                                            handleFieldChange('allowPartialWinners', checked);
+                                        }}
+                                        disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
+                                    />
+                                </div>
+                            )}
+                           <div>
+                               <Label htmlFor="game-date-input">{t('gameDate')}:</Label>
+                               <Input
+                                   id="game-date-input"
+                                   type="date"
+                                   min={new Date().toISOString().split('T')[0]}
+                                   value={raffleState.gameDate}
+                                   onChange={(e) => handleLocalFieldChange('gameDate', e.target.value)}
+                                   onBlur={() => handleFieldChange('gameDate', raffleState.gameDate)}
+                                   disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
+                                   className="w-full mt-1"
+                               />
+                           </div>
+                           {raffleState.raffleMode === 'infinite' && isCurrentUserAdmin && !raffleState.isDetailsConfirmed && (
+                               <div className="flex items-center space-x-2">
+                                   <Switch
+                                       id="automatic-draw"
+                                       checked={raffleState.automaticDraw}
+                                       onCheckedChange={(checked) => {
+                                          handleLocalFieldChange('automaticDraw', checked)
+                                          handleFieldChange('automaticDraw', checked)
+                                       }}
+                                   />
+                                   <Label htmlFor="automatic-draw">{t('automaticDraw')}</Label>
+                               </div>
+                            )}
+                           <div>
+                               <Label htmlFor="lottery-input">{t('lottery')}:</Label>
+                               <select
+                                   id="lottery-input"
+                                   value={raffleState.lottery}
+                                   onChange={(e) => {
+                                       const lotValue = e.target.value;
+                                       handleFieldChange('lottery', lotValue);
+                                   }}
+                                   disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed || (raffleMode === 'infinite' && raffleState.automaticDraw)}
+                                   className="w-full mt-1 px-3 py-2 text-base border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                               >
+                                   <option value="">{t('selectLottery')}</option>
+                                   {raffleState.organizerCountryCode === '+57' && (
+                                       <>
+                                           <option value="Lotería de Bogotá">{t('lotteryBogota')}</option>
+                                           <option value="Lotería de Medellín">{t('lotteryMedellin')}</option>
+                                           <option value="Lotería de Cundinamarca">{t('lotteryCundinamarca')}</option>
+                                           <option value="Lotería del Valle">{t('lotteryValle')}</option>
+                                           <option value="Lotería del Tolima">{t('lotteryTolima')}</option>
+                                           <option value="Lotería de la Cruz Roja">{t('lotteryRedCross')}</option>
+                                       </>
+                                   )}
+                                   <option value="Otro">{t('other')}</option>
+                               </select>
+                           </div>
+                           {raffleState.lottery === 'Otro' && (
+                                <div>
+                                    <Label htmlFor="custom-lottery-input">{t('specifyLottery')}:</Label>
+                                    <Input
+                                        id="custom-lottery-input"
+                                        type="text"
+                                        value={raffleState.customLottery}
+                                        onChange={(e) => handleLocalFieldChange('customLottery', e.target.value)}
+                                        onBlur={(e) => handleFieldChange('customLottery', e.target.value)}
+                                        placeholder={t('lotteryNamePlaceholder')}
+                                        disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
+                                        className="w-full mt-1"
+                                    />
+                                </div>
+                            )}
+                            <div>
+                                <Label htmlFor="nequi-account-input">{raffleState.organizerCountryCode === '+57' ? t('nequiAccount') : 'Cuenta'}:</Label>
+                                <div className="relative mt-1">
+                                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                                        <span className="text-gray-500 sm:text-sm">{raffleState.organizerCountryCode || '+57'}</span>
+                                    </div>
+                                    <Input
+                                        id="nequi-account-input"
+                                        type="tel"
+                                        value={raffleState.nequiAccountNumber}
+                                        onChange={(e) => handleLocalFieldChange('nequiAccountNumber', e.target.value.replace(/\D/g, ''))}
+                                        onBlur={(e) => handleFieldChange('nequiAccountNumber', e.target.value.replace(/\D/g, ''))}
+                                        placeholder="3001234567"
+                                        disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
+                                        className="w-full pl-12 mt-1"
+                                    />
+                                </div>
+                            </div>
+                            <div>
+                               <Label htmlFor="payment-link-input">{t('paymentLink')}:</Label>
+                               <Input
+                                   id="payment-link-input"
+                                   type="text"
+                                   value={raffleState.paymentLink}
+                                   onChange={(e) => handleLocalFieldChange('paymentLink', e.target.value)}
+                                   onBlur={(e) => handleFieldChange('paymentLink', e.target.value)}
+                                   placeholder="https://checkout.wompi.co/..."
+                                   disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
+                                   className="w-full mt-1"
+                               />
+                            </div>
+                            {isCurrentUserAdmin && !raffleState.isDetailsConfirmed && (
+                                <div className="col-span-1 md:col-span-2 mt-4">
+                                    <Button
+                                        onClick={handleConfirmDetails}
+                                        className="w-full bg-purple-500 text-white font-medium rounded-lg hover:bg-purple-600 transition-colors"
+                                    >
+                                        {t('confirmPrizeDetails')}
+                                    </Button>
+                                </div>
+                            )}
+                        </div>
+                   </div>
+
+                   <div className="lg:w-3/5 flex-grow">
+                       {isCurrentUserAdmin && (
+                         <div className="mb-6 p-4 border rounded-lg bg-gray-50">
+                            <h2 className="text-2xl font-bold text-gray-800 mb-4">{t('draw')}</h2>
+                             <div className="space-y-4">
+                                 <div className="flex flex-wrap gap-3 items-end">
+                                     <div className="flex-grow">
+                                        <Label htmlFor="manual-winner-input">{raffleState.automaticDraw ? t('winningNumber') + ' (auto)' : t('winningNumber')}</Label>
+                                        <div className="relative">
+                                            <Input
+                                                id="manual-winner-input"
+                                                type="text"
+                                                placeholder={t('winningNumberPlaceholder', { count: raffleState.raffleMode === 'infinite' ? (raffleState.infiniteModeDigits || 4) : numberLength })}
+                                                value={raffleState.manualWinnerNumber}
+                                                onChange={(e) => handleLocalFieldChange('manualWinnerNumber', e.target.value)}
+                                                maxLength={raffleState.raffleMode === 'infinite' ? raffleState.infiniteModeDigits : numberLength}
+                                                disabled={raffleState.isWinnerConfirmed || !!raffleState.winner || (raffleState.raffleMode === 'infinite' && raffleState.automaticDraw)}
+                                                className="w-full"
+                                            />
+                                            {!!raffleState.winner && <LockKeyhole className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />}
+                                        </div>
+                                     </div>
+                                     <div className="flex flex-col items-end">
+                                        {raffleState.raffleMode === 'infinite' && (
+                                            <div className="text-center mb-1">
+                                                <span className="text-sm font-bold text-green-600">{formatValue(raffleState.prize)}</span>
+                                                <p className="text-xs text-gray-500">{t('singleWinner')}</p>
+                                            </div>
+                                        )}
+                                        <Button
+                                            onClick={handleDrawWinner}
+                                            disabled={raffleState.isWinnerConfirmed || !!raffleState.winner}
+                                            className="bg-yellow-500 text-white font-medium rounded-lg hover:bg-yellow-600 transition-colors disabled:bg-gray-300"
+                                        >
+                                            {raffleState.automaticDraw ? t('automaticDraw') : t('findWinner')}
+                                        </Button>
+                                     </div>
+                                 </div>
+
+                                {raffleMode === 'infinite' && raffleState.allowPartialWinners && (
+                                    <>
+                                        <div className="flex flex-wrap gap-3 items-end">
+                                            <div className="flex-grow">
+                                                <Label htmlFor="manual-winner-3-input">{t('last3DigitsNumber')}</Label>
+                                                <div className="relative">
+                                                    <Input
+                                                        id="manual-winner-3-input"
+                                                        type="text"
+                                                        placeholder={t('last3Digits')}
+                                                        value={raffleState.manualWinnerNumber3}
+                                                        onChange={(e) => handleLocalFieldChange('manualWinnerNumber3', e.target.value)}
+                                                        maxLength={3}
+                                                        disabled={raffleState.isWinnerConfirmed || !!raffleState.winner}
+                                                        className="w-full"
+                                                    />
+                                                    {!!raffleState.winner && <LockKeyhole className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />}
+                                                </div>
+                                            </div>
+                                            <div className="w-24">
+                                                <Label>{t('percentage')}</Label>
+                                                <Input
+                                                    type="number"
+                                                    min="0"
+                                                    max="100"
+                                                    value={raffleState.partialWinnerPercentage3 || ''}
+                                                    onChange={(e) => handleLocalFieldChange('partialWinnerPercentage3', e.target.value)}
+                                                    onBlur={(e) => handleFieldChange('partialWinnerPercentage3', raffleState.partialWinnerPercentage3)}
+                                                    className="w-full"
+                                                    placeholder="%"
+                                                    disabled={raffleState.isWinnerConfirmed || !!raffleState.winner}
+                                                />
+                                            </div>
+                                            <div className="flex flex-col items-end">
+                                                <div className="text-center mb-1">
+                                                    <span className="text-sm font-bold text-green-600">{formatValue(parseFloat(String(raffleState.prize).replace(/\D/g, '') || '0') * (raffleState.partialWinnerPercentage3 || 0) / 100)}</span>
+                                                    <p className="text-xs text-gray-500">{t('otherWinners')}</p>
+                                                 </div>
+                                                <Button
+                                                    onClick={() => handleFindPartialWinners(3, raffleState.partialWinnerPercentage3 || 0)}
+                                                    disabled={raffleState.isWinnerConfirmed || !!raffleState.winner}
+                                                    className="bg-blue-500 text-white font-medium rounded-lg hover:bg-blue-600 transition-colors disabled:bg-gray-300"
+                                                >
+                                                    {t('findWinner')}
+                                                </Button>
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-wrap gap-3 items-end">
+                                            <div className="flex-grow">
+                                                <Label htmlFor="manual-winner-2-input">{t('last2DigitsNumber')}</Label>
+                                                <div className="relative">
+                                                    <Input
+                                                        id="manual-winner-2-input"
+                                                        type="text"
+                                                        placeholder={t('last2Digits')}
+                                                        value={raffleState.manualWinnerNumber2}
+                                                        onChange={(e) => handleLocalFieldChange('manualWinnerNumber2', e.target.value)}
+                                                        maxLength={2}
+                                                        disabled={raffleState.isWinnerConfirmed || !!raffleState.winner}
+                                                        className="w-full"
+                                                    />
+                                                    {!!raffleState.winner && <LockKeyhole className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />}
+                                                </div>
+                                            </div>
+                                            <div className="w-24">
+                                                 <Label>{t('percentage')}</Label>
+                                                 <Input
+                                                     type="number"
+                                                     min="0"
+                                                     max="100"
+                                                     value={raffleState.partialWinnerPercentage2 || ''}
+                                                     onChange={(e) => handleLocalFieldChange('partialWinnerPercentage2', e.target.value)}
+                                                     onBlur={(e) => handleFieldChange('partialWinnerPercentage2', raffleState.partialWinnerPercentage2)}
+                                                     className="w-full"
+                                                     placeholder="%"
+                                                     disabled={raffleState.isWinnerConfirmed || !!raffleState.winner}
+                                                 />
+                                            </div>
+                                            <div className="flex flex-col items-end">
+                                                 <div className="text-center mb-1">
+                                                    <span className="text-sm font-bold text-green-600">{formatValue(parseFloat(String(raffleState.prize).replace(/\D/g, '') || '0') * (raffleState.partialWinnerPercentage2 || 0) / 100)}</span>
+                                                    <p className="text-xs text-gray-500">{t('otherWinners')}</p>
+                                                 </div>
+                                                <Button
+                                                    onClick={() => handleFindPartialWinners(2, raffleState.partialWinnerPercentage2 || 0)}
+                                                    disabled={raffleState.isWinnerConfirmed || !!raffleState.winner}
+                                                    className="bg-blue-500 text-white font-medium rounded-lg hover:bg-blue-600 transition-colors disabled:bg-gray-300"
+                                                >
+                                                    {t('findWinner')}
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
+
+                                 <div className="flex flex-wrap gap-3 items-center">
+                                     {raffleState.winner && !raffleState.isWinnerConfirmed && (
+                                        <>
+                                            <Button
+                                                onClick={handleConfirmWinner}
+                                                className="bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 transition-colors"
+                                            >
+                                                {t('confirmResult')}
+                                            </Button>
+                                            <Button
+                                                onClick={handleCorrectWinner}
+                                                variant="outline"
+                                            >
+                                                {t('correctWinner')}
+                                            </Button>
+                                        </>
+                                     )}
+                                     <Button
+                                         onClick={resetBoard}
+                                         className="bg-red-500 text-white font-medium rounded-lg hover:bg-red-600 transition-colors"
+                                     >
+                                         {t('resetBoard')}
+                                     </Button>
+                                 </div>
+                             </div>
+                             {raffleState.isWinnerConfirmed && (
+                                 <p className="mt-4 text-green-600 font-semibold">{t('resultConfirmedAndBoardClosed')}</p>
+                             )}
+                         </div>
+                       )}
+
+                        {raffleMode !== 'infinite' ? (
+                           <div>
+                               <div className="flex justify-between items-center mb-4">
+                                   <h2 className="text-2xl font-bold text-gray-800 flex items-center">
+                                       {t('numberBoard')}
+                                   </h2>
+                                   {raffleState.raffleRef && (
+                                        <div className="font-semibold text-gray-700">
+                                            {t('mode')}: {raffleMode === 'two-digit' ? t('2digitMode') : t('3digitMode')}
+                                        </div>
+                                   )}
+                               </div>
+                               <div className={`grid gap-2 ${raffleMode === 'two-digit' ? 'grid-cols-10' : 'grid-cols-10 md:grid-cols-20 lg:grid-cols-25'}`}>
+                                   {allNumbers.map((num) => {
+                                       const formattedNum = String(num).padStart(numberLength, '0');
+                                       const participant = raffleState.participants.find((p: Participant) => p.raffleNumber === formattedNum);
+                                       const isConfirmed = participant && participant.paymentStatus === 'confirmed';
+                                       const isPending = participant && participant.paymentStatus === 'pending';
+
+                                       return (
+                                           <div
+                                               key={num}
+                                               onClick={() => toggleNumber(num)}
+                                               className={`
+                                                   number-cell text-center py-2 rounded-lg transition-all text-sm
+                                                   ${raffleState.isWinnerConfirmed || !raffleState.isDetailsConfirmed || !!raffleState.winner || isConfirmed || isPending ? 'cursor-not-allowed' : 'cursor-pointer'}
+                                                   ${isConfirmed
+                                                       ? 'bg-red-600 text-white shadow-lg'
+                                                       : isPending
+                                                       ? 'bg-yellow-400 text-yellow-900 shadow-md'
+                                                       : !raffleState.isDetailsConfirmed || !!raffleState.winner
+                                                       ? 'bg-gray-200 text-gray-500'
+                                                       : 'bg-green-200 text-green-800 hover:bg-green-300 hover:shadow-md'
+                                                   }
+                                                   ${raffleState.winner?.raffleNumber === formattedNum ? 'ring-4 ring-yellow-400 animate-pulse' : ''}
+                                               `}
+                                           >
+                                               {formattedNum}
+                                           </div>
+                                       );
+                                   })}
+                               </div>
+                                <div className="flex flex-wrap gap-4 mt-4 text-sm">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-4 h-4 rounded-full bg-green-200"></div>
+                                        <span>{t('available')}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-4 h-4 rounded-full bg-yellow-400"></div>
+                                        <span>{t('pending')}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-4 h-4 rounded-full bg-red-600"></div>
+                                        <span>{t('sold')}</span>
+                                    </div>
+                                </div>
+                               {!!raffleState.winner && !raffleState.isWinnerConfirmed && (
+                                    <div className="mt-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4" role="alert">
+                                        <p className="font-bold">{t('boardLocked')}</p>
+                                        <p>{t('boardLockedWinnerFound')}</p>
+                                    </div>
+                                )}
+                               {!raffleState.isDetailsConfirmed && (
+                                    <div className="mt-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4" role="alert">
+                                        <p className="font-bold">{t('boardLocked')}</p>
+                                        <p>{t('boardLockedConfirmDetails')}</p>
+                                    </div>
+                               )}
+                           </div>
+                        ) : (
+                            <div className="text-center p-8 bg-gray-50 rounded-lg">
+                                 <h2 className="text-2xl font-bold text-gray-800 flex items-center justify-center gap-2">
+                                    <InfinityIcon className="h-6 w-6"/>
+                                    {t('infiniteRaffle')}
+                                 </h2>
+                                <p className="text-gray-600 mt-2">
+                                    {t('infiniteRaffleDescription')}
+                                </p>
+                            </div>
+                        )}
+                   </div>
+                </div>
+            </>
+        );
+    };
 
     return (
         <div className="min-h-screen bg-background font-sans relative">
@@ -2605,7 +3234,7 @@ const App = () => {
                                             placeholder={t('searchRaffleByRefDescription')}
                                         />
                                         <Button onClick={() => handleAdminSearch({ refToSearch: publicRefSearch, isPublicSearch: true })} className="h-12 w-12 bg-blue-600 hover:bg-blue-700 shadow-lg">
-                                            <Search className="h-6 w-6" />
+                                            <Search className="h-6 v-6" />
                                         </Button>
                                     </div>
                                 </div>
