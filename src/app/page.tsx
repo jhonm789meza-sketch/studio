@@ -1,7 +1,9 @@
+
 'use client';
 import { useState, useEffect, useRef, useTransition } from 'react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import jsQR from 'jsqr';
 import { RaffleManager } from '@/lib/RaffleManager';
 import { db, storage } from '@/lib/firebase';
 import { doc, onSnapshot, setDoc, getDoc, deleteDoc, Unsubscribe, serverTimestamp, collection, query, where, getDocs, updateDoc, addDoc, orderBy, writeBatch, arrayUnion } from 'firebase/firestore';
@@ -275,6 +277,12 @@ const App = () => {
     const [isUsdPaymentConfigDialogOpen, setIsUsdPaymentConfigDialogOpen] = useState(false);
 
     const prizeTextareaRef = useRef<HTMLTextAreaElement>(null);
+
+    // QR Scanner States
+    const [isQrScannerOpen, setIsQrScannerOpen] = useState(false);
+    const qrVideoRef = useRef<HTMLVideoElement>(null);
+    const qrCanvasRef = useRef<HTMLCanvasElement>(null);
+    const [isScanning, setIsScanning] = useState(false);
 
     // --- Derived States (Fixed missing references) ---
     const isCurrentUserAdmin = !!raffleState.adminId && !!currentAdminId && raffleState.adminId === currentAdminId;
@@ -2201,6 +2209,96 @@ const App = () => {
         );
     };
 
+    // QR Scanner Handlers
+    const startQrCamera = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ 
+                video: { facingMode: 'environment' } 
+            });
+            if (qrVideoRef.current) {
+                qrVideoRef.current.srcObject = stream;
+                qrVideoRef.current.play();
+                setIsScanning(true);
+            }
+        } catch (err) {
+            console.error("Error accessing camera:", err);
+            showNotification(t('cameraPermissionDenied'), 'error');
+        }
+    };
+
+    const stopQrCamera = () => {
+        setIsScanning(false);
+        if (qrVideoRef.current && qrVideoRef.current.srcObject) {
+            const stream = qrVideoRef.current.srcObject as MediaStream;
+            stream.getTracks().forEach(track => track.stop());
+            qrVideoRef.current.srcObject = null;
+        }
+    };
+
+    const handleQrScanFromFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const img = new window.Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                if (context) {
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    context.drawImage(img, 0, 0);
+                    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+                    const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                        inversionAttempts: "dontInvert",
+                    });
+                    if (code) {
+                        handleFieldChange('prizeImageUrl', code.data);
+                        showNotification(t('imageUploadedSuccess'), 'success');
+                        setIsQrScannerOpen(false);
+                    } else {
+                        showNotification(t('noQrFoundInImage'), 'error');
+                    }
+                }
+            };
+            img.src = event.target?.result as string;
+        };
+        reader.readAsDataURL(file);
+    };
+
+    useEffect(() => {
+        let animationFrameId: number;
+        const scan = () => {
+            if (isScanning && qrVideoRef.current && qrVideoRef.current.readyState === qrVideoRef.current.HAVE_ENOUGH_DATA) {
+                const canvas = qrCanvasRef.current;
+                const video = qrVideoRef.current;
+                if (canvas) {
+                    const context = canvas.getContext('2d');
+                    if (context) {
+                        canvas.width = video.videoWidth;
+                        canvas.height = video.videoHeight;
+                        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                        const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+                        const code = jsQR(imageData.data, imageData.width, imageData.height);
+                        if (code) {
+                            handleFieldChange('prizeImageUrl', code.data);
+                            stopQrCamera();
+                            setIsQrScannerOpen(false);
+                            showNotification(t('imageUploadedSuccess'), 'success');
+                            return;
+                        }
+                    }
+                }
+            }
+            if (isScanning) {
+                animationFrameId = requestAnimationFrame(scan);
+            }
+        };
+        if (isScanning) animationFrameId = requestAnimationFrame(scan);
+        return () => cancelAnimationFrame(animationFrameId);
+    }, [isScanning]);
+
     const allNumbers = Array.from({ length: totalNumbers }, (_, i) => i);
     
     const getPrizeDisplayUrl = (raffle: Raffle) => {
@@ -2425,6 +2523,18 @@ const App = () => {
                                                             {t('searchOnGoogle')}
                                                         </Button>
                                                     </a>
+                                                </div>
+                                                <div className="mt-2">
+                                                    <Button 
+                                                        type="button" 
+                                                        variant="outline" 
+                                                        className="w-full sm:w-auto"
+                                                        onClick={() => setIsQrScannerOpen(true)}
+                                                        disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
+                                                    >
+                                                        <QrCode className="h-4 w-4 mr-2" />
+                                                        {t('takePhoto')}
+                                                    </Button>
                                                 </div>
                                             </div>
                                         </div>
@@ -4163,7 +4273,7 @@ const App = () => {
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="usd-infinite">Link USD (Infinita)</Label>
-                            <Input id="usd-infinite" value={paymentLinks.usdInfinite} onChange={(e) => setPaymentLinks(p => ({ ...p, usdInfinite: e.target.value }))} placeholder="https://paypal.me/..."/>
+                            <Input id="usd-infinite" value={paymentLinks.usdInfinite} onChange={(e) => setProjectSettings(p => ({ ...p, usdInfinite: e.target.value }))} placeholder="https://paypal.me/..."/>
                         </div>
                         <div className="grid gap-2 pt-2 border-t">
                             <Label htmlFor="usd-generic">Link USD Respaldo (Opcional)</Label>
@@ -4671,8 +4781,63 @@ const App = () => {
                 </DialogContent>
             </Dialog>
 
+            {/* QR Scanner Dialog */}
+            <Dialog open={isQrScannerOpen} onOpenChange={(open) => {
+                if (!open) stopQrCamera();
+                setIsQrScannerOpen(open);
+            }}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>{t('takePhoto')}</DialogTitle>
+                        <DialogDescription>{t('scanQrToPay')}</DialogDescription>
+                    </DialogHeader>
+                    <div className="flex flex-col items-center gap-4 py-4">
+                        {!isScanning ? (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
+                                <Button onClick={startQrCamera} className="w-full">
+                                    <Camera className="mr-2 h-4 w-4" />
+                                    {t('capture')}
+                                </Button>
+                                <div className="relative">
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        className="hidden"
+                                        id="qr-file-upload"
+                                        onChange={handleQrScanFromFile}
+                                    />
+                                    <Label htmlFor="qr-file-upload" className="w-full">
+                                        <Button variant="outline" className="w-full cursor-pointer" asChild>
+                                            <span>
+                                                <ImageIcon className="mr-2 h-4 w-4" />
+                                                {t('uploadFromFile')}
+                                            </span>
+                                        </Button>
+                                    </Label>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="relative w-full aspect-square bg-black rounded-lg overflow-hidden flex items-center justify-center">
+                                <video ref={qrVideoRef} className="absolute inset-0 w-full h-full object-cover" playsInline />
+                                <canvas ref={qrCanvasRef} className="hidden" />
+                                <div className="absolute inset-0 border-2 border-yellow-400 opacity-50 m-12 pointer-events-none" />
+                                <Button 
+                                    variant="destructive" 
+                                    size="icon" 
+                                    className="absolute top-2 right-2 rounded-full"
+                                    onClick={stopQrCamera}
+                                >
+                                    <X className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        )}
+                    </div>
+                </DialogContent>
+            </Dialog>
+
         </div>
     );
 };
 
 export default App;
+
