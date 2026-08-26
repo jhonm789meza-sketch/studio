@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef, useTransition } from 'react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-import jsQR from 'jsqr';
 import { RaffleManager } from '@/lib/RaffleManager';
 import { db, storage } from '@/lib/firebase';
 import { doc, onSnapshot, setDoc, getDoc, deleteDoc, Unsubscribe, serverTimestamp, collection, query, where, getDocs, updateDoc, addDoc, orderBy, writeBatch, arrayUnion } from 'firebase/firestore';
@@ -254,18 +253,14 @@ const App = () => {
         blockedInfinite: false,
     });
     
-    // App Branding Settings
     const [isAppNameLogoDialogOpen, setIsAppNameLogoDialogOpen] = useState(false);
     const [tempAppName, setTempAppName] = useState('');
     const [tempAppLogoUrl, setTempAppLogoUrl] = useState('');
 
     const [isLockedBoardBgDialogOpen, setIsLockedBoardBgDialogOpen] = useState(false);
     const [lockedBoardBgUrl, setLockedBoardBgUrl] = useState('');
-    const [lockedBoardExternalUrl, setLockedBoardExternalUrl] = useState('');
 
     const [isGamesSummaryDialogOpen, setIsGamesSummaryDialogOpen] = useState(false);
-    
-    // Free activation phone requested
     const [isFreeActivationDialogOpen, setIsFreeActivationDialogOpen] = useState(false);
     const [freeActivationPhone, setFreeActivationPhone] = useState('');
     const [freeActivationCountryCode, setFreeActivationCountryCode] = useState('+57');
@@ -278,13 +273,7 @@ const App = () => {
 
     const prizeTextareaRef = useRef<HTMLTextAreaElement>(null);
 
-    // QR Scanner States
-    const [isQrScannerOpen, setIsQrScannerOpen] = useState(false);
-    const qrVideoRef = useRef<HTMLVideoElement>(null);
-    const qrCanvasRef = useRef<HTMLCanvasElement>(null);
-    const [isScanning, setIsScanning] = useState(false);
-
-    // --- Derived States (Fixed missing references) ---
+    // --- Derived States ---
     const isCurrentUserAdmin = !!raffleState.adminId && !!currentAdminId && raffleState.adminId === currentAdminId;
     const raffleMode = raffleState.raffleMode;
     const totalNumbers = raffleMode === 'two-digit' ? 100 : 1000;
@@ -296,6 +285,14 @@ const App = () => {
     const isRegisterFormValidForSubmit = raffleState.name && raffleState.phoneNumber && raffleState.raffleNumber && !allAssignedNumbers.has(parseInt(raffleState.raffleNumber || '0'));
     const currentPartialWinners = (raffleState.partialWinners && raffleState.partialWinners.length > 0) ? raffleState.partialWinners : partialWinners;
     const currentAppName = appSettings.appName || 'RIFA⚡ EXPRESS';
+    
+    const prizeValueForGoal = raffleState.raffleMode === 'infinite' && raffleState.prize ? parseFloat(String(raffleState.prize).replace(/\D/g, '')) : 0;
+    const ticketValueForGoal = raffleState.raffleMode === 'infinite' && raffleState.value ? parseFloat(String(raffleState.value).replace(/\D/g, '')) : 0;
+    const ticketsToCoverPrize = ticketValueForGoal > 0 ? Math.ceil(prizeValueForGoal / ticketValueForGoal) : 0;
+
+    const globalBackgroundImage = raffleState.raffleRef 
+        ? raffleState.prizeImageUrl
+        : (appSettings.lockedBoardBackgroundImageUrl || '');
 
     useEffect(() => {
         if (typeof document !== 'undefined') {
@@ -364,7 +361,6 @@ const App = () => {
                     });
                     setPaymentQrImageUrl(settings.paymentQrImageUrl || '');
                     setLockedBoardBgUrl(settings.lockedBoardBackgroundImageUrl || '');
-                    setLockedBoardExternalUrl(settings.lockedBoardExternalImageUrl || '');
                     setTempAppName(settings.appName || '');
                     setTempAppLogoUrl(settings.appLogoUrl || '');
                 }
@@ -1827,12 +1823,6 @@ const App = () => {
         setIsShareDialogOpen(false);
     };
 
-    const handleShareRefToWhatsapp = (ref: string) => {
-        const shareMessage = encodeURIComponent(`Hola, te envío la referencia de tu nueva rifa: *${ref}*`);
-        const whatsappUrl = `https://wa.me/?text=${shareMessage}`;
-        window.open(whatsappUrl, '_blank');
-    };
-
     const handleShareToFacebook = () => {
         const urlToShare = new URL(window.location.origin);
         if (raffleState.raffleRef) {
@@ -2159,7 +2149,6 @@ const App = () => {
             const settingsDocRef = doc(db, 'internal', 'settings');
             await setDoc(settingsDocRef, {
                 lockedBoardBackgroundImageUrl: lockedBoardBgUrl,
-                lockedBoardExternalImageUrl: lockedBoardExternalUrl,
             }, { merge: true });
             showNotification(t('imageUploadedSuccess'), 'success');
             setIsLockedBoardBgDialogOpen(false);
@@ -2209,136 +2198,6 @@ const App = () => {
         );
     };
 
-    // QR Scanner Handlers
-    const startQrCamera = async () => {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ 
-                video: { facingMode: 'environment' } 
-            });
-            if (qrVideoRef.current) {
-                qrVideoRef.current.srcObject = stream;
-                qrVideoRef.current.play();
-                setIsScanning(true);
-            }
-        } catch (err) {
-            console.error("Error accessing camera:", err);
-            showNotification(t('cameraPermissionDenied'), 'error');
-        }
-    };
-
-    const stopQrCamera = () => {
-        setIsScanning(false);
-        if (qrVideoRef.current && qrVideoRef.current.srcObject) {
-            const stream = qrVideoRef.current.srcObject as MediaStream;
-            stream.getTracks().forEach(track => track.stop());
-            qrVideoRef.current.srcObject = null;
-        }
-    };
-
-    const handleQrScanFromFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            const img = new window.Image();
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                const context = canvas.getContext('2d');
-                if (context) {
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-                    context.drawImage(img, 0, 0);
-                    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-                    const code = jsQR(imageData.data, imageData.width, imageData.height, {
-                        inversionAttempts: "dontInvert",
-                    });
-                    if (code) {
-                        handleFieldChange('prizeImageUrl', code.data);
-                        showNotification(t('imageUploadedSuccess'), 'success');
-                        setIsQrScannerOpen(false);
-                    } else {
-                        showNotification(t('noQrFoundInImage'), 'error');
-                    }
-                }
-            };
-            img.src = event.target?.result as string;
-        };
-        reader.readAsDataURL(file);
-    };
-
-    useEffect(() => {
-        let animationFrameId: number;
-        const scan = () => {
-            if (isScanning && qrVideoRef.current && qrVideoRef.current.readyState === qrVideoRef.current.HAVE_ENOUGH_DATA) {
-                const canvas = qrCanvasRef.current;
-                const video = qrVideoRef.current;
-                if (canvas) {
-                    const context = canvas.getContext('2d');
-                    if (context) {
-                        canvas.width = video.videoWidth;
-                        canvas.height = video.videoHeight;
-                        context.drawImage(video, 0, 0, canvas.width, canvas.height);
-                        const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-                        const code = jsQR(imageData.data, imageData.width, imageData.height);
-                        if (code) {
-                            handleFieldChange('prizeImageUrl', code.data);
-                            stopQrCamera();
-                            setIsQrScannerOpen(false);
-                            showNotification(t('imageUploadedSuccess'), 'success');
-                            return;
-                        }
-                    }
-                }
-            }
-            if (isScanning) {
-                animationFrameId = requestAnimationFrame(scan);
-            }
-        };
-        if (isScanning) animationFrameId = requestAnimationFrame(scan);
-        return () => cancelAnimationFrame(animationFrameId);
-    }, [isScanning]);
-
-    const allNumbers = Array.from({ length: totalNumbers }, (_, i) => i);
-    
-    const getPrizeDisplayUrl = (raffle: Raffle) => {
-        return raffle.prizeImageUrl;
-    };
-
-    const globalBackgroundImage = raffleState.raffleRef 
-        ? getPrizeDisplayUrl(raffleState)
-        : (appSettings.lockedBoardExternalImageUrl || appSettings.lockedBoardBackgroundImageUrl || '');
-    
-    const filteredGames = allRaffles.filter(raffle => {
-        const searchMatch = raffle.raffleRef?.toLowerCase().includes(gameSearchQuery.toLowerCase());
-        if (!searchMatch) return false;
-        if (gamesFilter === 'winners') {
-            return !!raffle.winner;
-        }
-        if (gamesFilter === 'past_date') {
-            if (!raffle.gameDate) return false;
-            const gameDateObj = new Date(raffle.gameDate + 'T00:00:00');
-            return gameDateObj < today && !raffle.winner;
-        }
-        return true;
-    });
-
-    const deletableRaffles = filteredGames.filter(raffle => (raffle.participants || []).length === 0 || !!raffle.winner || (raffle.gameDate && new Date(raffle.gameDate + 'T00:00:00') < today && !raffle.winner));
-    const allDeletableSelected = deletableRaffles.length > 0 && deletableRaffles.every(raffle => selectedRafflesForDeletion.includes(raffle.raffleRef));
-    const isIndeterminate = selectedRafflesForDeletion.length > 0 && !allDeletableSelected;
-
-    const prizeValueForGoal = raffleState.raffleMode === 'infinite' && raffleState.prize ? parseFloat(String(raffleState.prize).replace(/\D/g, '')) : 0;
-    const ticketValueForGoal = raffleState.raffleMode === 'infinite' && raffleState.value ? parseFloat(String(raffleState.value).replace(/\D/g, '')) : 0;
-    const ticketsToCoverPrize = ticketValueForGoal > 0 ? Math.ceil(prizeValueForGoal / ticketValueForGoal) : 0;
-
-    const twoDigitCount = allRaffles.length > 0 ? allRaffles.filter(r => r.raffleMode === 'two-digit').length : 0;
-    const threeDigitCount = allRaffles.length > 0 ? allRaffles.filter(r => r.raffleMode === 'three-digit').length : 0;
-    const infiniteCount = allRaffles.length > 0 ? allRaffles.filter(r => r.raffleMode === 'infinite').length : 0;
-
-    if (loading && !raffleState.raffleRef) {
-        return <div className="flex justify-center items-center h-screen text-xl font-semibold">{t('loading')}...</div>;
-    }
-    
     const renderBoardContent = () => {
         if (!raffleState.raffleRef) return null;
         
@@ -2374,7 +2233,7 @@ const App = () => {
                              {(raffleState.prizeImageUrl) ? (
                                 <button onClick={() => isCurrentUserAdmin ? handleShare() : handleTabClick('register')} className="w-full flex items-center justify-center cursor-pointer relative" aria-label={t('rafflePrizeAlt')}>
                                     <Image 
-                                        src={getPrizeDisplayUrl(raffleState)} 
+                                        src={raffleState.prizeImageUrl} 
                                         alt={t('rafflePrizeAlt')} 
                                         width={1200}
                                         height={1200}
@@ -2523,18 +2382,6 @@ const App = () => {
                                                             {t('searchOnGoogle')}
                                                         </Button>
                                                     </a>
-                                                </div>
-                                                <div className="mt-2">
-                                                    <Button 
-                                                        type="button" 
-                                                        variant="outline" 
-                                                        className="w-full sm:w-auto"
-                                                        onClick={() => setIsQrScannerOpen(true)}
-                                                        disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
-                                                    >
-                                                        <QrCode className="h-4 w-4 mr-2" />
-                                                        {t('takePhoto')}
-                                                    </Button>
                                                 </div>
                                             </div>
                                         </div>
@@ -3702,7 +3549,7 @@ const App = () => {
                                                             <tr>
                                                                 <th className="p-4">
                                                                     <Checkbox
-                                                                        checked={allDeletableSelected ? true : isIndeterminate ? 'indeterminate' : false}
+                                                                        checked={deletableRaffles.length > 0 && deletableRaffles.every(raffle => selectedRafflesForDeletion.includes(raffle.raffleRef)) ? true : selectedRafflesForDeletion.length > 0 && !deletableRaffles.every(raffle => selectedRafflesForDeletion.includes(raffle.raffleRef)) ? 'indeterminate' : false}
                                                                         onCheckedChange={(checked) => {
                                                                             if (checked === true) {
                                                                                 setSelectedRafflesForDeletion(deletableRaffles.map(r => r.raffleRef));
@@ -3980,7 +3827,7 @@ const App = () => {
                     <div className="grid gap-4 py-4">
                         <Label htmlFor="super-admin-password">{t('password')}</Label>
                         <div className="relative">
-                            <Input id="super-admin-password" type={showSuperAdminPassword ? 'text' : 'password'} value={superAdminPassword} onChange={(e) => setSuperAdminPassword(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSuperAdminLogin()}/>
+                            <input id="super-admin-password" type={showSuperAdminPassword ? 'text' : 'password'} value={superAdminPassword} onChange={(e) => setSuperAdminPassword(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSuperAdminLogin()} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"/>
                             <Button type="button" variant="ghost" size="icon" className="absolute inset-y-0 right-0 h-full px-3" onClick={() => setShowSuperAdminPassword(!showSuperAdminPassword)}>{showSuperAdminPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button>
                         </div>
                     </div>
@@ -4273,7 +4120,7 @@ const App = () => {
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="usd-infinite">Link USD (Infinita)</Label>
-                            <Input id="usd-infinite" value={paymentLinks.usdInfinite} onChange={(e) => setProjectSettings(p => ({ ...p, usdInfinite: e.target.value }))} placeholder="https://paypal.me/..."/>
+                            <Input id="usd-infinite" value={paymentLinks.usdInfinite} onChange={(e) => setPaymentLinks(p => ({ ...p, usdInfinite: e.target.value }))} placeholder="https://paypal.me/..."/>
                         </div>
                         <div className="grid gap-2 pt-2 border-t">
                             <Label htmlFor="usd-generic">Link USD Respaldo (Opcional)</Label>
@@ -4466,7 +4313,7 @@ const App = () => {
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                         <div className="grid gap-2">
-                            <Label htmlFor="locked-board-bg-url">{t('lockedBoardBgUrlLabel')} (Opción 1 - Link Directo)</Label>
+                            <Label htmlFor="locked-board-bg-url">{t('lockedBoardBgUrlLabel')} (Link Directo)</Label>
                             <Input 
                                 id="locked-board-bg-url" 
                                 value={lockedBoardBgUrl} 
@@ -4474,20 +4321,11 @@ const App = () => {
                                 placeholder="https://example.com/background.jpg"
                             />
                         </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="locked-board-external-url">Opción 2 - Vínculo de la imagen (Google Photos / Otros)</Label>
-                            <Input 
-                                id="locked-board-external-url" 
-                                value={lockedBoardExternalUrl} 
-                                onChange={(e) => setLockedBoardExternalUrl(e.target.value)} 
-                                placeholder="https://photos.google.com/share/AF1QipMleoHFCuWaTydZg2jF8XbtmT5Bw-nC2wcrZ-LSPopQGbYJQo0kBAP4pdWcV4q_7g?key=X2JycjlfNUtqck9ZWEtzM2xFbV92bUowa0ZUUXBn"
-                            />
-                        </div>
-                        {(lockedBoardExternalUrl || lockedBoardBgUrl) && (
+                        {lockedBoardBgUrl && (
                             <div className="mt-4 p-4 border rounded-lg bg-gray-50 flex flex-col items-center gap-2">
                                 <Label>{t('preview')}</Label>
                                 <div className="relative w-full aspect-video rounded-lg overflow-hidden border">
-                                    <Image src={lockedBoardExternalUrl || lockedBoardBgUrl} alt="Preview" fill className="object-cover" unoptimized />
+                                    <Image src={lockedBoardBgUrl} alt="Preview" fill className="object-cover" unoptimized />
                                 </div>
                             </div>
                         )}
@@ -4660,7 +4498,7 @@ const App = () => {
             <Dialog open={isPrizeImageModalOpen} onOpenChange={setIsPrizeImageModalOpen}>
                 <DialogContent className="max-w-4xl w-auto bg-transparent border-none shadow-none p-2">
                     <DialogHeader><DialogTitle className="sr-only">{raffleState.prize || t('rafflePrizeAlt')}</DialogTitle></DialogHeader>
-                    {(raffleState.prizeImageUrl) && (<Image src={getPrizeDisplayUrl(raffleState)} alt={raffleState.prize || t('rafflePrizeAlt')} width={1920} height={1080} className="rounded-lg object-contain max-h-[90vh] w-auto h-auto" unoptimized />)}
+                    {(raffleState.prizeImageUrl) && (<Image src={raffleState.prizeImageUrl} alt={raffleState.prize || t('rafflePrizeAlt')} width={1920} height={1080} className="rounded-lg object-contain max-h-[90vh] w-auto h-auto" unoptimized />)}
                 </DialogContent>
 
             </Dialog>
@@ -4675,23 +4513,23 @@ const App = () => {
                         <div className="space-y-2">
                             <div className="flex justify-between text-sm font-medium">
                                 <span>{t('twoDigitGames')}</span>
-                                <span className="text-purple-600 font-bold">{twoDigitCount}</span>
+                                <span className="text-purple-600 font-bold">{allRaffles.filter(r => r.raffleMode === 'two-digit').length}</span>
                             </div>
-                            <Progress value={allRaffles.length > 0 ? (twoDigitCount / allRaffles.length) * 100 : 0} className="h-2 bg-purple-100" />
+                            <Progress value={allRaffles.length > 0 ? (allRaffles.filter(r => r.raffleMode === 'two-digit').length / allRaffles.length) * 100 : 0} className="h-2 bg-purple-100" />
                         </div>
                         <div className="space-y-2">
                             <div className="flex justify-between text-sm font-medium">
                                 <span>{t('threeDigitGames')}</span>
-                                <span className="text-blue-600 font-bold">{threeDigitCount}</span>
+                                <span className="text-blue-600 font-bold">{allRaffles.filter(r => r.raffleMode === 'three-digit').length}</span>
                             </div>
-                            <Progress value={allRaffles.length > 0 ? (threeDigitCount / allRaffles.length) * 100 : 0} className="h-2 bg-blue-100" />
+                            <Progress value={allRaffles.length > 0 ? (allRaffles.filter(r => r.raffleMode === 'three-digit').length / allRaffles.length) * 100 : 0} className="h-2 bg-blue-100" />
                         </div>
                         <div className="space-y-2">
                             <div className="flex justify-between text-sm font-medium">
                                 <span>{t('infiniteGames')}</span>
-                                <span className="text-red-600 font-bold">{infiniteCount}</span>
+                                <span className="text-red-600 font-bold">{allRaffles.filter(r => r.raffleMode === 'infinite').length}</span>
                             </div>
-                            <Progress value={allRaffles.length > 0 ? (infiniteCount / allRaffles.length) * 100 : 0} className="h-2 bg-red-100" />
+                            <Progress value={allRaffles.length > 0 ? (allRaffles.filter(r => r.raffleMode === 'infinite').length / allRaffles.length) * 100 : 0} className="h-2 bg-red-100" />
                         </div>
                         
                         <div className="pt-4 border-t border-dashed">
@@ -4781,63 +4619,8 @@ const App = () => {
                 </DialogContent>
             </Dialog>
 
-            {/* QR Scanner Dialog */}
-            <Dialog open={isQrScannerOpen} onOpenChange={(open) => {
-                if (!open) stopQrCamera();
-                setIsQrScannerOpen(open);
-            }}>
-                <DialogContent className="max-w-md">
-                    <DialogHeader>
-                        <DialogTitle>{t('takePhoto')}</DialogTitle>
-                        <DialogDescription>{t('scanQrToPay')}</DialogDescription>
-                    </DialogHeader>
-                    <div className="flex flex-col items-center gap-4 py-4">
-                        {!isScanning ? (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
-                                <Button onClick={startQrCamera} className="w-full">
-                                    <Camera className="mr-2 h-4 w-4" />
-                                    {t('capture')}
-                                </Button>
-                                <div className="relative">
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        className="hidden"
-                                        id="qr-file-upload"
-                                        onChange={handleQrScanFromFile}
-                                    />
-                                    <Label htmlFor="qr-file-upload" className="w-full">
-                                        <Button variant="outline" className="w-full cursor-pointer" asChild>
-                                            <span>
-                                                <ImageIcon className="mr-2 h-4 w-4" />
-                                                {t('uploadFromFile')}
-                                            </span>
-                                        </Button>
-                                    </Label>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="relative w-full aspect-square bg-black rounded-lg overflow-hidden flex items-center justify-center">
-                                <video ref={qrVideoRef} className="absolute inset-0 w-full h-full object-cover" playsInline />
-                                <canvas ref={qrCanvasRef} className="hidden" />
-                                <div className="absolute inset-0 border-2 border-yellow-400 opacity-50 m-12 pointer-events-none" />
-                                <Button 
-                                    variant="destructive" 
-                                    size="icon" 
-                                    className="absolute top-2 right-2 rounded-full"
-                                    onClick={stopQrCamera}
-                                >
-                                    <X className="h-4 w-4" />
-                                </Button>
-                            </div>
-                        )}
-                    </div>
-                </DialogContent>
-            </Dialog>
-
         </div>
     );
 };
 
 export default App;
-
