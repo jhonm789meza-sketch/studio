@@ -574,7 +574,7 @@ const App = () => {
         window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
         return () => {
-            window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+            window.removeEventListener('beforeinstallprompt', handleBeforePrompt);
         };
       }, []);
 
@@ -3186,81 +3186,114 @@ const App = () => {
                                 </div>
                                 <div className={activeTab === 'numbers' ? 'tab-content active' : 'tab-content'}>
                                     {raffleMode !== 'infinite' ? (
-                                       <div>
-                                           <div className="flex justify-between items-center mb-4">
-                                               <h2 className="text-2xl font-bold text-gray-800 flex items-center">
-                                                   {t('numberBoard')}
-                                               </h2>
+                                       <div className="flex flex-col gap-6">
+                                           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b pb-4">
+                                               <div className="flex items-center gap-4">
+                                                   {raffleState.prizeImageUrl && (
+                                                       <div className="relative h-16 w-16 rounded-lg overflow-hidden border shadow-sm bg-white shrink-0">
+                                                           <Image 
+                                                               src={raffleState.prizeImageUrl} 
+                                                               alt={t('rafflePrizeAlt')} 
+                                                               fill 
+                                                               className="object-cover" 
+                                                               unoptimized 
+                                                           />
+                                                       </div>
+                                                   )}
+                                                   <div>
+                                                       <h2 className="text-2xl font-bold text-gray-800 flex items-center">
+                                                           {t('numberBoard')}
+                                                       </h2>
+                                                       <p className="text-sm text-gray-500 font-medium line-clamp-1">{raffleState.prize}</p>
+                                                   </div>
+                                               </div>
                                                {raffleState.raffleRef && (
-                                                    <div className="font-semibold text-gray-700">
+                                                    <div className="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm font-bold border border-purple-200">
                                                         {t('mode')}: {raffleMode === 'two-digit' ? t('2digitMode') : t('3digitMode')}
                                                     </div>
                                                )}
                                            </div>
-                                           <div className={`grid gap-2 ${raffleMode === 'two-digit' ? 'grid-cols-10' : 'grid-cols-10 md:grid-cols-20 lg:grid-cols-25'}`}>
-                                               {allNumbers.map((num) => {
-                                                   const formattedNum = String(num).padStart(numberLength, '0');
-                                                   const participant = raffleState.participants.find((p: Participant) => p.raffleNumber === formattedNum);
-                                                   const isConfirmed = participant && participant.paymentStatus === 'confirmed';
-                                                   const isPending = participant && participant.paymentStatus === 'pending';
 
-                                                   return (
-                                                       <div
-                                                           key={num}
-                                                           onClick={() => toggleNumber(num)}
-                                                           className={`
-                                                               number-cell text-center py-2 rounded-lg transition-all text-sm
-                                                               ${raffleState.isWinnerConfirmed || !raffleState.isDetailsConfirmed || !!raffleState.winner || isConfirmed || isPending ? 'cursor-not-allowed' : 'cursor-pointer'}
-                                                               ${isConfirmed
-                                                                   ? 'bg-red-600 text-white shadow-lg'
-                                                                   : isPending
-                                                                   ? 'bg-yellow-400 text-yellow-900 shadow-md'
-                                                                   : !raffleState.isDetailsConfirmed || !!raffleState.winner
-                                                                   ? 'bg-gray-200 text-gray-500'
-                                                                   : 'bg-green-200 text-green-800 hover:bg-green-300 hover:shadow-md'
-                                                               }
-                                                               ${raffleState.winner?.raffleNumber === formattedNum ? 'ring-4 ring-yellow-400 animate-pulse' : ''}
-                                                           `}
-                                                       >
-                                                           {formattedNum}
+                                           <div className="relative p-2 rounded-xl overflow-hidden min-h-[300px]">
+                                               {raffleState.prizeImageUrl && (
+                                                   <div className="absolute inset-0 opacity-10 pointer-events-none flex items-center justify-center">
+                                                       <div className="relative w-full h-full">
+                                                          <Image 
+                                                              src={raffleState.prizeImageUrl} 
+                                                              alt="" 
+                                                              fill 
+                                                              className="object-contain p-8" 
+                                                              unoptimized 
+                                                          />
                                                        </div>
-                                                   );
-                                               })}
+                                                   </div>
+                                               )}
+                                               <div className={`grid gap-2 relative z-10 ${raffleMode === 'two-digit' ? 'grid-cols-10' : 'grid-cols-10 md:grid-cols-20 lg:grid-cols-25'}`}>
+                                                   {allNumbers.map((num) => {
+                                                       const formattedNum = String(num).padStart(numberLength, '0');
+                                                       const participant = raffleState.participants.find((p: Participant) => p.raffleNumber === formattedNum);
+                                                       const isConfirmed = participant && participant.paymentStatus === 'confirmed';
+                                                       const isPending = participant && participant.paymentStatus === 'pending';
+
+                                                       return (
+                                                           <div
+                                                               key={num}
+                                                               onClick={() => toggleNumber(num)}
+                                                               className={`
+                                                                   number-cell text-center py-2 rounded-lg transition-all text-sm font-semibold
+                                                                   ${raffleState.isWinnerConfirmed || !raffleState.isDetailsConfirmed || !!raffleState.winner || isConfirmed || isPending ? 'cursor-not-allowed' : 'cursor-pointer'}
+                                                                   ${isConfirmed
+                                                                       ? 'bg-red-600 text-white shadow-lg'
+                                                                       : isPending
+                                                                       ? 'bg-yellow-400 text-yellow-900 shadow-md'
+                                                                       : !raffleState.isDetailsConfirmed || !!raffleState.winner
+                                                                       ? 'bg-gray-100 text-gray-400'
+                                                                       : 'bg-green-100 text-green-800 border border-green-200 hover:bg-green-200 hover:shadow-md'
+                                                                   }
+                                                                   ${raffleState.winner?.raffleNumber === formattedNum ? 'ring-4 ring-yellow-400 animate-pulse z-20' : ''}
+                                                               `}
+                                                           >
+                                                               {formattedNum}
+                                                           </div>
+                                                       );
+                                                   })}
+                                               </div>
                                            </div>
-                                            <div className="flex flex-wrap gap-4 mt-4 text-sm">
+
+                                            <div className="flex flex-wrap gap-4 mt-4 text-sm font-medium">
                                                 <div className="flex items-center gap-2">
-                                                    <div className="w-4 h-4 rounded-full bg-green-200"></div>
+                                                    <div className="w-4 h-4 rounded-full bg-green-100 border border-green-300"></div>
                                                     <span>{t('available')}</span>
                                                 </div>
                                                 <div className="flex items-center gap-2">
-                                                    <div className="w-4 h-4 rounded-full bg-yellow-400"></div>
+                                                    <div className="w-4 h-4 rounded-full bg-yellow-400 border border-yellow-500"></div>
                                                     <span>{t('pending')}</span>
                                                 </div>
                                                 <div className="flex items-center gap-2">
-                                                    <div className="w-4 h-4 rounded-full bg-red-600"></div>
+                                                    <div className="w-4 h-4 rounded-full bg-red-600 border border-red-700"></div>
                                                     <span>{t('sold')}</span>
                                                 </div>
                                             </div>
                                            {!!raffleState.winner && !raffleState.isWinnerConfirmed && (
-                                                <div className="mt-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4" role="alert">
+                                                <div className="mt-4 bg-yellow-50 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded-r-md" role="alert">
                                                     <p className="font-bold">{t('boardLocked')}</p>
                                                     <p>{t('boardLockedWinnerFound')}</p>
                                                 </div>
                                             )}
                                            {!raffleState.isDetailsConfirmed && (
-                                                <div className="mt-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4" role="alert">
-                                                    <p className="font-bold">{t('boardLocked')}</p>
+                                                <div className="mt-4 bg-blue-50 border-l-4 border-blue-500 text-blue-700 p-4 rounded-r-md" role="alert">
+                                                    <p className="font-bold">{t('notice')}</p>
                                                     <p>{t('boardLockedConfirmDetails')}</p>
                                                 </div>
                                            )}
                                        </div>
                                     ) : (
-                                        <div className="text-center p-8 bg-gray-50 rounded-lg">
+                                        <div className="text-center p-12 bg-gray-50 rounded-xl border border-dashed border-gray-300">
                                              <h2 className="text-2xl font-bold text-gray-800 flex items-center justify-center gap-2">
-                                                <InfinityIcon className="h-6 w-6"/>
+                                                <InfinityIcon className="h-8 w-8 text-purple-600"/>
                                                 {t('infiniteRaffle')}
                                              </h2>
-                                            <p className="text-gray-600 mt-2">
+                                            <p className="text-gray-600 mt-4 max-w-md mx-auto">
                                                 {t('infiniteRaffleDescription')}
                                             </p>
                                         </div>
