@@ -278,6 +278,7 @@ const App = () => {
     const raffleMode = raffleState.raffleMode;
     const totalNumbers = raffleMode === 'two-digit' ? 100 : 1000;
     const numberLength = raffleMode === 'two-digit' ? 2 : 3;
+    const allNumbers = Array.from({ length: totalNumbers }, (_, i) => i);
     const allAssignedNumbers = new Set(raffleState.participants?.map((p: Participant) => parseInt(p.raffleNumber, 10)) || []);
     const pendingParticipants = raffleState.participants?.filter((p: Participant) => p.paymentStatus === 'pending') || [];
     const confirmedParticipants = raffleState.participants?.filter((p: Participant) => p.paymentStatus === 'confirmed') || [];
@@ -286,13 +287,42 @@ const App = () => {
     const currentPartialWinners = (raffleState.partialWinners && raffleState.partialWinners.length > 0) ? raffleState.partialWinners : partialWinners;
     const currentAppName = appSettings.appName || 'RIFA⚡ EXPRESS';
     
-    const prizeValueForGoal = raffleState.raffleMode === 'infinite' && raffleState.prize ? parseFloat(String(raffleState.prize).replace(/\D/g, '')) : 0;
-    const ticketValueForGoal = raffleState.raffleMode === 'infinite' && raffleState.value ? parseFloat(String(raffleState.value).replace(/\D/g, '')) : 0;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const prizeValueForGoal = raffleState.prize ? parseFloat(String(raffleState.prize).replace(/\D/g, '')) : 0;
+    const ticketValueForGoal = raffleState.value ? parseFloat(String(raffleState.value).replace(/\D/g, '')) : 0;
     const ticketsToCoverPrize = ticketValueForGoal > 0 ? Math.ceil(prizeValueForGoal / ticketValueForGoal) : 0;
 
     const globalBackgroundImage = raffleState.raffleRef 
         ? raffleState.prizeImageUrl
         : (appSettings.lockedBoardBackgroundImageUrl || '');
+
+    const filteredGames = allRaffles.filter(raffle => {
+        const matchesSearch = (raffle.raffleRef || '').toLowerCase().includes(gameSearchQuery.toLowerCase()) ||
+                            (raffle.organizerName || '').toLowerCase().includes(gameSearchQuery.toLowerCase());
+        
+        if (gamesFilter === 'winners') return matchesSearch && !!raffle.winner;
+        if (gamesFilter === 'past_date') {
+            if (!raffle.gameDate) return false;
+            const gameDateObj = new Date(raffle.gameDate + 'T00:00:00');
+            return matchesSearch && gameDateObj < today && !raffle.winner;
+        }
+        return matchesSearch;
+    });
+
+    const deletableRaffles = filteredGames.filter(raffle => {
+        const gameDateObj = raffle.gameDate ? new Date(raffle.gameDate + 'T00:00:00') : null;
+        const isPastDue = gameDateObj ? gameDateObj < today && !raffle.winner : false;
+        return (raffle.participants || []).length === 0 || !!raffle.winner || isPastDue;
+    });
+
+    const gamesWithWinner = allRaffles.filter(raffle => !!raffle.winner);
+    const pastDateRaffles = allRaffles.filter(raffle => {
+        if (!raffle.gameDate) return false;
+        const gameDateObj = new Date(raffle.gameDate + 'T00:00:00');
+        return gameDateObj < today && !raffle.winner;
+    });
 
     useEffect(() => {
         if (typeof document !== 'undefined') {
@@ -1168,17 +1198,6 @@ const App = () => {
             }
         );
     };
-
-    const gamesWithWinner = allRaffles.filter(raffle => !!raffle.winner);
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const pastDateRaffles = allRaffles.filter(raffle => {
-        if (!raffle.gameDate) return false;
-        const gameDateObj = new Date(raffle.gameDate + 'T00:00:00');
-        return gameDateObj < today && !raffle.winner;
-    });
 
     const handleDeleteAllWinnerRaffles = () => {
         showConfirmationDialog(
@@ -3521,7 +3540,7 @@ const App = () => {
                                                 {gamesFilter === 'past_date' && pastDateRaffles.length > 0 && (
                                                     <Button variant="destructive" onClick={handleDeleteAllPastDueRaffles}>
                                                         <Trash2 className="mr-2 h-4 w-4" />
-                                                        {t('deleteAllPastDueGames', { count: today && pastDateRaffles.length })}
+                                                        {t('deleteAllPastDueGames', { count: pastDateRaffles.length })}
                                                     </Button>
                                                 )}
                                             </div>
