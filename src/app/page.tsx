@@ -3215,9 +3215,9 @@ const App = () => {
                                            "relative flex flex-col gap-6 min-h-[70vh] rounded-2xl overflow-hidden p-4 sm:p-6 transition-all duration-500",
                                            appSettings.boardDesignImageUrl ? "bg-white/10 backdrop-blur-[2px]" : ""
                                        )}>
-                                           {/* Background design layer */}
+                                           {/* Background design layer that covers everything in the tab */}
                                            {appSettings.boardDesignImageUrl && (
-                                               <div className="absolute inset-0 z-0 opacity-20 pointer-events-none">
+                                               <div className="absolute inset-0 z-0 opacity-40 pointer-events-none transition-opacity duration-700">
                                                    <Image 
                                                        src={appSettings.boardDesignImageUrl} 
                                                        alt="" 
@@ -3225,15 +3225,15 @@ const App = () => {
                                                        className="object-cover" 
                                                        unoptimized 
                                                    />
-                                                   <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-background/50" />
+                                                   <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-background/30" />
                                                </div>
                                            )}
 
                                            <div className="relative z-10 space-y-6">
-                                               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b pb-4 bg-white/60 backdrop-blur-md p-4 rounded-xl border border-white/20 shadow-sm">
+                                               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b pb-4 bg-white/70 backdrop-blur-xl p-5 rounded-2xl border border-white/40 shadow-xl">
                                                    <div className="flex items-center gap-4">
                                                        {raffleState.prizeImageUrl && (
-                                                           <div className="relative h-16 w-16 rounded-lg overflow-hidden border shadow-sm bg-white shrink-0">
+                                                           <div className="relative h-20 w-20 rounded-xl overflow-hidden border-2 border-white shadow-lg bg-white shrink-0">
                                                                <Image 
                                                                    src={raffleState.prizeImageUrl} 
                                                                    alt={t('rafflePrizeAlt')} 
@@ -3244,34 +3244,34 @@ const App = () => {
                                                            </div>
                                                        )}
                                                        <div>
-                                                           <h2 className="text-2xl font-bold text-gray-800 flex items-center">
+                                                           <h2 className="text-3xl font-black text-gray-900 tracking-tight flex items-center">
                                                                {t('numberBoard')}
                                                            </h2>
-                                                           <p className="text-sm text-gray-500 font-medium line-clamp-1">{raffleState.prize}</p>
+                                                           <p className="text-base text-gray-600 font-bold line-clamp-1">{raffleState.prize}</p>
                                                        </div>
                                                    </div>
                                                    {raffleState.raffleRef && (
-                                                        <div className="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm font-bold border border-purple-200">
-                                                            {t('mode')}: {raffleMode === 'two-digit' ? t('2digitMode') : t('3digitMode')}
+                                                        <div className="bg-purple-600 text-white px-4 py-2 rounded-xl text-sm font-black shadow-lg border border-purple-500">
+                                                            {t('mode').toUpperCase()}: {raffleMode === 'two-digit' ? t('2digitMode') : t('3digitMode')}
                                                         </div>
                                                    )}
                                                </div>
 
-                                               {/* Imagen del premio incorporada en el tablero */}
+                                               {/* Prize Image incorporated in board with glass effect */}
                                                {raffleState.prizeImageUrl && (
-                                                   <div className="rounded-xl overflow-hidden shadow-md border bg-white/60 backdrop-blur-md max-w-xl mx-auto w-full group transition-all hover:shadow-xl border-white/30">
+                                                   <div className="rounded-2xl overflow-hidden shadow-2xl border-4 border-white/50 bg-white/70 backdrop-blur-xl max-w-2xl mx-auto w-full group transition-all hover:shadow-purple-200/50 hover:scale-[1.01]">
                                                        <Image 
                                                            src={raffleState.prizeImageUrl} 
                                                            alt={raffleState.prize || t('rafflePrizeAlt')} 
                                                            width={800}
                                                            height={450}
-                                                           className="w-full h-auto object-contain max-h-[350px] transition-transform duration-500 group-hover:scale-105"
+                                                           className="w-full h-auto object-contain max-h-[400px] transition-transform duration-700 group-hover:scale-105"
                                                            unoptimized 
                                                        />
                                                    </div>
                                                )}
 
-                                               <div className="bg-white/60 backdrop-blur-md p-4 rounded-2xl border border-white/30 shadow-inner">
+                                               <div className="bg-white/70 backdrop-blur-xl p-5 rounded-3xl border border-white/50 shadow-2xl">
                                                    <div className={`grid gap-2 relative z-10 ${raffleMode === 'two-digit' ? 'grid-cols-10' : 'grid-cols-10 md:grid-cols-20 lg:grid-cols-25'}`}>
                                                        {allNumbers.map((num) => {
                                                            const formattedNum = String(num).padStart(numberLength, '0');
@@ -3284,17 +3284,17 @@ const App = () => {
                                                                    key={num}
                                                                    onClick={() => toggleNumber(num)}
                                                                    className={`
-                                                                       number-cell text-center py-2 rounded-lg transition-all text-sm font-semibold
+                                                                       number-cell text-center py-2.5 rounded-xl transition-all text-sm font-black
                                                                        ${raffleState.isWinnerConfirmed || !raffleState.isDetailsConfirmed || !!raffleState.winner || isConfirmed || isPending ? 'cursor-not-allowed' : 'cursor-pointer'}
                                                                        ${isConfirmed
-                                                                           ? 'bg-red-600 text-white shadow-lg'
+                                                                           ? 'bg-red-600 text-white shadow-xl scale-95 opacity-90'
                                                                            : isPending
-                                                                           ? 'bg-yellow-400 text-yellow-900 shadow-md'
+                                                                           ? 'bg-yellow-400 text-yellow-950 shadow-lg scale-100'
                                                                            : !raffleState.isDetailsConfirmed || !!raffleState.winner
-                                                                           ? 'bg-gray-100 text-gray-400'
-                                                                           : 'bg-green-100 text-green-800 border border-green-200 hover:bg-green-200 hover:shadow-md'
+                                                                           ? 'bg-gray-200/50 text-gray-400'
+                                                                           : 'bg-green-500/10 text-green-700 border-2 border-green-500/30 hover:bg-green-500 hover:text-white hover:shadow-green-200 hover:scale-110 active:scale-90'
                                                                        }
-                                                                       ${raffleState.winner?.raffleNumber === formattedNum ? 'ring-4 ring-yellow-400 animate-pulse z-20' : ''}
+                                                                       ${raffleState.winner?.raffleNumber === formattedNum ? 'ring-4 ring-yellow-400 animate-pulse z-20 scale-125 bg-yellow-500 text-white shadow-yellow-400' : ''}
                                                                    `}
                                                                >
                                                                    {formattedNum}
@@ -3304,30 +3304,30 @@ const App = () => {
                                                    </div>
                                                </div>
 
-                                                <div className="flex flex-wrap gap-4 mt-4 text-sm font-medium bg-white/50 backdrop-blur-sm p-3 rounded-lg w-fit">
+                                                <div className="flex flex-wrap gap-4 mt-4 text-xs font-black bg-white/80 backdrop-blur-md p-4 rounded-2xl w-fit shadow-xl border border-white/50">
                                                     <div className="flex items-center gap-2">
-                                                        <div className="w-4 h-4 rounded-full bg-green-100 border border-green-300"></div>
-                                                        <span>{t('available')}</span>
+                                                        <div className="w-5 h-5 rounded-lg bg-green-500/20 border-2 border-green-500"></div>
+                                                        <span className="text-green-800">{t('available').toUpperCase()}</span>
                                                     </div>
                                                     <div className="flex items-center gap-2">
-                                                        <div className="w-4 h-4 rounded-full bg-yellow-400 border border-yellow-500"></div>
-                                                        <span>{t('pending')}</span>
+                                                        <div className="w-5 h-5 rounded-lg bg-yellow-400 border-2 border-yellow-600 shadow-sm"></div>
+                                                        <span className="text-yellow-900">{t('pending').toUpperCase()}</span>
                                                     </div>
                                                     <div className="flex items-center gap-2">
-                                                        <div className="w-4 h-4 rounded-full bg-red-600 border border-red-700"></div>
-                                                        <span>{t('sold')}</span>
+                                                        <div className="w-5 h-5 rounded-lg bg-red-600 border-2 border-red-800 shadow-inner"></div>
+                                                        <span className="text-red-700">{t('sold').toUpperCase()}</span>
                                                     </div>
                                                 </div>
                                                {!!raffleState.winner && !raffleState.isWinnerConfirmed && (
-                                                    <div className="mt-4 bg-yellow-50/80 backdrop-blur-md border-l-4 border-yellow-500 text-yellow-700 p-4 rounded-r-md" role="alert">
-                                                        <p className="font-bold">{t('boardLocked')}</p>
-                                                        <p>{t('boardLockedWinnerFound')}</p>
+                                                    <div className="mt-4 bg-yellow-500/90 backdrop-blur-xl border-l-8 border-yellow-700 text-yellow-950 p-6 rounded-2xl shadow-2xl animate-in slide-in-from-bottom-5" role="alert">
+                                                        <p className="font-black text-xl mb-1 flex items-center gap-2"><Lock className="h-6 w-6"/> {t('boardLocked').toUpperCase()}</p>
+                                                        <p className="font-bold opacity-80">{t('boardLockedWinnerFound')}</p>
                                                     </div>
                                                 )}
                                                {!raffleState.isDetailsConfirmed && (
-                                                    <div className="mt-4 bg-blue-50/80 backdrop-blur-md border-l-4 border-blue-500 text-blue-700 p-4 rounded-r-md" role="alert">
-                                                        <p className="font-bold">{t('notice')}</p>
-                                                        <p>{t('boardLockedConfirmDetails')}</p>
+                                                    <div className="mt-4 bg-blue-600/90 backdrop-blur-xl border-l-8 border-blue-800 text-white p-6 rounded-2xl shadow-2xl" role="alert">
+                                                        <p className="font-black text-xl mb-1 flex items-center gap-2"><MessageCircle className="h-6 w-6"/> {t('notice').toUpperCase()}</p>
+                                                        <p className="font-bold opacity-90">{t('boardLockedConfirmDetails')}</p>
                                                     </div>
                                                )}
                                            </div>
