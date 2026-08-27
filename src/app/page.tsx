@@ -574,7 +574,7 @@ const App = () => {
         window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
         return () => {
-            window.removeEventListener('beforeinstallprompt', handleBeforePrompt);
+            window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
         };
       }, []);
 
@@ -3213,6 +3213,20 @@ const App = () => {
                                                     </div>
                                                )}
                                            </div>
+
+                                           {/* Imagen del premio incorporada en el tablero */}
+                                           {raffleState.prizeImageUrl && (
+                                               <div className="rounded-xl overflow-hidden shadow-md border bg-white/50 backdrop-blur-sm max-w-xl mx-auto w-full group transition-all hover:shadow-xl">
+                                                   <Image 
+                                                       src={raffleState.prizeImageUrl} 
+                                                       alt={raffleState.prize || t('rafflePrizeAlt')} 
+                                                       width={800}
+                                                       height={450}
+                                                       className="w-full h-auto object-contain max-h-[350px] transition-transform duration-500 group-hover:scale-105"
+                                                       unoptimized 
+                                                   />
+                                               </div>
+                                           )}
 
                                            <div className="relative p-2 rounded-xl overflow-hidden min-h-[300px]">
                                                {raffleState.prizeImageUrl && (
