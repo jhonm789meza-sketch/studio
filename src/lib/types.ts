@@ -50,6 +50,7 @@ export interface AppSettings {
     isBlockedInfinite?: boolean;
     lockedBoardBackgroundImageUrl?: string;
     lockedBoardExternalImageUrl?: string;
+    boardDesignImageUrl?: string;
     appName?: string;
     appLogoUrl?: string;
 }

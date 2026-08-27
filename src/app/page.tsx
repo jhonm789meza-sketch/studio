@@ -13,7 +13,7 @@ import { requestNotificationPermission } from '@/lib/notification';
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House, Clock as ClockIcon, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages, Trophy, Trash2, Copy, Shield, LogOut, Eye, EyeOff, Gamepad2, Phone, TrendingUp, Globe, Landmark, RefreshCcw, LockKeyhole, Package, Camera, Check, Upload, FlipHorizontal, MousePointer2, ImageIcon, Ban, Settings2, LayoutGrid } from 'lucide-react';
+import { Menu, Award, Lock, House, Clock as ClockIcon, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages, Trophy, Trash2, Copy, Shield, LogOut, Eye, EyeOff, Gamepad2, Phone, TrendingUp, Globe, Landmark, RefreshCcw, LockKeyhole, Package, Camera, Check, Upload, FlipHorizontal, MousePointer2, ImageIcon, Ban, Settings2, LayoutGrid, Palette } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -271,6 +271,9 @@ const App = () => {
     const [isUsdPaymentDialogOpen, setIsUsdPaymentDialogOpen] = useState(false);
     const [isUsdPaymentConfigDialogOpen, setIsUsdPaymentConfigDialogOpen] = useState(false);
 
+    const [isBoardDesignDialogOpen, setIsBoardDesignDialogOpen] = useState(false);
+    const [boardDesignUrl, setBoardDesignUrl] = useState('');
+
     const prizeTextareaRef = useRef<HTMLTextAreaElement>(null);
 
     // --- Derived States ---
@@ -286,7 +289,7 @@ const App = () => {
     const isRegisterFormValidForSubmit = raffleState.name && raffleState.phoneNumber && raffleState.raffleNumber && !allAssignedNumbers.has(parseInt(raffleState.raffleNumber || '0'));
     const currentPartialWinners = (raffleState.partialWinners && raffleState.partialWinners.length > 0) ? raffleState.partialWinners : partialWinners;
     const currentAppName = appSettings.appName || 'RIFA⚡ EXPRESS';
-    const globalBackgroundImage = raffleState.raffleRef ? raffleState.prizeImageUrl : (appSettings.lockedBoardBackgroundImageUrl || '');
+    const globalBackgroundImage = raffleState.raffleRef ? (appSettings.boardDesignImageUrl || raffleState.prizeImageUrl) : (appSettings.lockedBoardBackgroundImageUrl || '');
     
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -388,6 +391,7 @@ const App = () => {
                     });
                     setPaymentQrImageUrl(settings.paymentQrImageUrl || '');
                     setLockedBoardBgUrl(settings.lockedBoardBackgroundImageUrl || '');
+                    setBoardDesignUrl(settings.boardDesignImageUrl || '');
                     setTempAppName(settings.appName || '');
                     setTempAppLogoUrl(settings.appLogoUrl || '');
                 }
@@ -1229,6 +1233,8 @@ const App = () => {
                 } catch (error) {
                     console.error('Error deleting all past due raffles:', error);
                     showNotification(t('selectedRafflesDeletedError'), 'error');
+                } finally {
+                    setLoading(false);
                 }
             }
         );
@@ -2174,6 +2180,21 @@ const App = () => {
         }
     };
 
+    const handleSaveBoardDesign = async () => {
+        if (!isSuperAdmin) return;
+        try {
+            const settingsDocRef = doc(db, 'internal', 'settings');
+            await setDoc(settingsDocRef, {
+                boardDesignImageUrl: boardDesignUrl,
+            }, { merge: true });
+            showNotification(t('imageUploadedSuccess'), 'success');
+            setIsBoardDesignDialogOpen(false);
+        } catch (error) {
+            console.error("Error saving board design:", error);
+            showNotification(t('errorSavingPaymentInfo'), 'error');
+        }
+    };
+
     const handleDeleteGeneratedRef = (raffleRef: string) => {
         showConfirmationDialog(
             t('deleteGeneratedRefConfirmation', { ref: raffleRef }),
@@ -2297,6 +2318,10 @@ const App = () => {
                                             <DropdownMenuItem onSelect={() => setIsLockedBoardBgDialogOpen(true)}>
                                                 <ImageIcon className="mr-2 h-4 w-4" />
                                                 <span>{t('manageLockedBoardBg')}</span>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onSelect={() => setIsBoardDesignDialogOpen(true)}>
+                                                <Palette className="mr-2 h-4 w-4" />
+                                                <span>Diseño del Tablero</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setIsPaymentInfoDialogOpen(true)}>
                                                 <Landmark className="mr-2 h-4 w-4" />
@@ -3229,11 +3254,11 @@ const App = () => {
                                            )}
 
                                            <div className="relative p-2 rounded-xl overflow-hidden min-h-[300px]">
-                                               {raffleState.prizeImageUrl && (
+                                               {(appSettings.boardDesignImageUrl || raffleState.prizeImageUrl) && (
                                                    <div className="absolute inset-0 opacity-10 pointer-events-none flex items-center justify-center">
                                                        <div className="relative w-full h-full">
                                                           <Image 
-                                                              src={raffleState.prizeImageUrl} 
+                                                              src={appSettings.boardDesignImageUrl || raffleState.prizeImageUrl} 
                                                               alt="" 
                                                               fill 
                                                               className="object-contain p-8" 
@@ -4393,6 +4418,38 @@ const App = () => {
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setIsLockedBoardBgDialogOpen(false)}>{t('cancel')}</Button>
                         <Button onClick={handleSaveLockedBoardBg}>{t('save')}</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={isBoardDesignDialogOpen} onOpenChange={setIsBoardDesignDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Diseño del Tablero</DialogTitle>
+                        <DialogDescription>Configura una imagen de fondo (marca de agua) para el tablero de números mediante un link.</DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="board-design-url">Link de la Imagen</Label>
+                            <Input 
+                                id="board-design-url" 
+                                value={boardDesignUrl} 
+                                onChange={(e) => setBoardDesignUrl(e.target.value)} 
+                                placeholder="https://example.com/diseno.jpg"
+                            />
+                        </div>
+                        {boardDesignUrl && (
+                            <div className="mt-4 p-4 border rounded-lg bg-gray-50 flex flex-col items-center gap-2">
+                                <Label>Vista Previa</Label>
+                                <div className="relative w-full aspect-video rounded-lg overflow-hidden border">
+                                    <Image src={boardDesignUrl} alt="Vista previa diseño" fill className="object-cover" unoptimized />
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsBoardDesignDialogOpen(false)}>Cancelar</Button>
+                        <Button onClick={handleSaveBoardDesign}>Guardar Diseño</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
