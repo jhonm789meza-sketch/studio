@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import jsPDF from 'jspdf';
@@ -2975,7 +2976,7 @@ const App = () => {
                                                                <option value="Lotería de Medellín">{t('lotteryMedellin')}</option>
                                                                <option value="Lotería de Cundinamarca">{t('lotteryCundinamarca')}</option>
                                                                <option value="Lotería del Valle">{t('lotteryValle')}</option>
-                                                               <option value="Lotería del Tolima">{t('lotteryTolima')}</option>
+                                                               <option value="Lotería del Trasero">{t('lotteryTolima')}</option>
                                                                <option value="Lotería de la Cruz Roja">{t('lotteryRedCross')}</option>
                                                            </>
                                                        )}
