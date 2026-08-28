@@ -13,7 +13,7 @@ import { requestNotificationPermission } from '@/lib/notification';
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House, Clock as ClockIcon, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages, Trophy, Trash2, Copy, Shield, LogOut, Eye, EyeOff, Gamepad2, Phone, TrendingUp, Globe, Landmark, RefreshCcw, LockKeyhole, Package, Camera, Check, Upload, FlipHorizontal, MousePointer2, ImageIcon, Ban, Settings2, LayoutGrid, Palette } from 'lucide-react';
+import { Menu, Award, Lock, House, Clock as ClockIcon, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages, Trophy, Trash2, Copy, Shield, LogOut, Eye, EyeOff, Gamepad2, Phone, TrendingUp, Globe, Landmark, RefreshCcw, LockKeyhole, Package, Camera, Check, Upload, FlipHorizontal, MousePointer2, ImageIcon, Ban, Settings2, LayoutGrid, Palette, Layout } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -2322,6 +2322,10 @@ const App = () => {
                                             <DropdownMenuItem onSelect={() => setIsBoardDesignDialogOpen(true)}>
                                                 <Palette className="mr-2 h-4 w-4" />
                                                 <span>Diseño del Tablero</span>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onSelect={() => {}}>
+                                                <Layout className="mr-2 h-4 w-4" />
+                                                <span>Temas de Diseño</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setIsPaymentInfoDialogOpen(true)}>
                                                 <Landmark className="mr-2 h-4 w-4" />
