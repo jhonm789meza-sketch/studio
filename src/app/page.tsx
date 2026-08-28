@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import jsPDF from 'jspdf';
@@ -276,7 +275,7 @@ const App = () => {
 
     const prizeTextareaRef = useRef<HTMLTextAreaElement>(null);
 
-    // --- Derived States (Declared early to prevent ReferenceErrors) ---
+    // --- Derived States ---
     const isCurrentUserAdmin = !!raffleState.adminId && !!currentAdminId && raffleState.adminId === currentAdminId;
     const raffleMode = raffleState.raffleMode;
     const totalNumbers = raffleMode === 'two-digit' ? 100 : 1000;
@@ -3217,7 +3216,7 @@ const App = () => {
                                        )}>
                                            {/* Background design layer that covers everything in the tab */}
                                            {appSettings.boardDesignImageUrl && (
-                                               <div className="absolute inset-0 z-0 opacity-40 pointer-events-none transition-opacity duration-700">
+                                               <div className="absolute inset-0 z-0 opacity-90 pointer-events-none transition-opacity duration-700">
                                                    <Image 
                                                        src={appSettings.boardDesignImageUrl} 
                                                        alt="" 
@@ -3230,7 +3229,7 @@ const App = () => {
                                            )}
 
                                            <div className="relative z-10 space-y-6">
-                                               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b pb-4 bg-white/70 backdrop-blur-xl p-5 rounded-2xl border border-white/40 shadow-xl">
+                                               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b pb-4 bg-white/40 backdrop-blur-xl p-5 rounded-2xl border border-white/40 shadow-xl">
                                                    <div className="flex items-center gap-4">
                                                        {raffleState.prizeImageUrl && (
                                                            <div className="relative h-20 w-20 rounded-xl overflow-hidden border-2 border-white shadow-lg bg-white shrink-0">
@@ -3259,7 +3258,7 @@ const App = () => {
 
                                                {/* Prize Image incorporated in board with glass effect */}
                                                {raffleState.prizeImageUrl && (
-                                                   <div className="rounded-2xl overflow-hidden shadow-2xl border-4 border-white/50 bg-white/70 backdrop-blur-xl max-w-2xl mx-auto w-full group transition-all hover:shadow-purple-200/50 hover:scale-[1.01]">
+                                                   <div className="rounded-2xl overflow-hidden shadow-2xl border-4 border-white/50 bg-white/40 backdrop-blur-xl max-w-2xl mx-auto w-full group transition-all hover:shadow-purple-200/50 hover:scale-[1.01]">
                                                        <Image 
                                                            src={raffleState.prizeImageUrl} 
                                                            alt={raffleState.prize || t('rafflePrizeAlt')} 
@@ -3271,7 +3270,7 @@ const App = () => {
                                                    </div>
                                                )}
 
-                                               <div className="bg-white/70 backdrop-blur-xl p-5 rounded-3xl border border-white/50 shadow-2xl">
+                                               <div className="bg-white/40 backdrop-blur-xl p-5 rounded-3xl border border-white/50 shadow-2xl">
                                                    <div className={`grid gap-2 relative z-10 ${raffleMode === 'two-digit' ? 'grid-cols-10' : 'grid-cols-10 md:grid-cols-20 lg:grid-cols-25'}`}>
                                                        {allNumbers.map((num) => {
                                                            const formattedNum = String(num).padStart(numberLength, '0');
@@ -3304,7 +3303,7 @@ const App = () => {
                                                    </div>
                                                </div>
 
-                                                <div className="flex flex-wrap gap-4 mt-4 text-xs font-black bg-white/80 backdrop-blur-md p-4 rounded-2xl w-fit shadow-xl border border-white/50">
+                                                <div className="flex flex-wrap gap-4 mt-4 text-xs font-black bg-white/50 backdrop-blur-md p-4 rounded-2xl w-fit shadow-xl border border-white/50">
                                                     <div className="flex items-center gap-2">
                                                         <div className="w-5 h-5 rounded-lg bg-green-500/20 border-2 border-green-500"></div>
                                                         <span className="text-green-800">{t('available').toUpperCase()}</span>
