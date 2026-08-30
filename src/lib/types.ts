@@ -53,6 +53,7 @@ export interface AppSettings {
     boardDesignImageUrl?: string;
     appName?: string;
     appLogoUrl?: string;
+    appTheme?: 'classic' | 'canvas' | 'bubble' | 'modern' | 'glass';
 }
 
 export interface Raffle {

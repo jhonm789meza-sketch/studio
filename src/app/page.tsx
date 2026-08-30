@@ -13,7 +13,7 @@ import { requestNotificationPermission } from '@/lib/notification';
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House, Clock as ClockIcon, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages, Trophy, Trash2, Copy, Shield, LogOut, Eye, EyeOff, Gamepad2, Phone, TrendingUp, Globe, Landmark, RefreshCcw, LockKeyhole, Package, Camera, Check, Upload, FlipHorizontal, MousePointer2, ImageIcon, Ban, Settings2, LayoutGrid, Palette, Layout } from 'lucide-react';
+import { Menu, Award, Lock, House, Clock as ClockIcon, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages, Trophy, Trash2, Copy, Shield, LogOut, Eye, EyeOff, Gamepad2, Phone, TrendingUp, Globe, Landmark, RefreshCcw, LockKeyhole, Package, Camera, Check, Upload, FlipHorizontal, MousePointer2, ImageIcon, Ban, Settings2, LayoutGrid, Palette, Layout, LayoutTemplate } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -260,6 +260,8 @@ const App = () => {
     const [isLockedBoardBgDialogOpen, setIsLockedBoardBgDialogOpen] = useState(false);
     const [lockedBoardBgUrl, setLockedBoardBgUrl] = useState('');
 
+    const [isThemesDialogOpen, setIsThemesDialogOpen] = useState(false);
+
     const [isGamesSummaryDialogOpen, setIsGamesSummaryDialogOpen] = useState(false);
     const [isFreeActivationDialogOpen, setIsFreeActivationDialogOpen] = useState(false);
     const [freeActivationPhone, setFreeActivationPhone] = useState('');
@@ -290,6 +292,7 @@ const App = () => {
     const currentPartialWinners = (raffleState.partialWinners && raffleState.partialWinners.length > 0) ? raffleState.partialWinners : partialWinners;
     const currentAppName = appSettings.appName || 'RIFA⚡ EXPRESS';
     const globalBackgroundImage = raffleState.raffleRef ? (appSettings.boardDesignImageUrl || raffleState.prizeImageUrl) : (appSettings.lockedBoardBackgroundImageUrl || '');
+    const currentTheme = appSettings.appTheme || 'classic';
     
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -2235,6 +2238,33 @@ const App = () => {
         );
     };
 
+    const handleSelectTheme = async (theme: AppSettings['appTheme']) => {
+        try {
+            const settingsDocRef = doc(db, 'internal', 'settings');
+            await setDoc(settingsDocRef, { appTheme: theme }, { merge: true });
+            showNotification(`Tema ${theme} aplicado correctamente.`, 'success');
+            setIsThemesDialogOpen(false);
+        } catch (error) {
+            console.error("Error saving theme:", error);
+            showNotification("Error al guardar el tema.", "error");
+        }
+    };
+
+    const getThemeClasses = (theme: string) => {
+        switch (theme) {
+            case 'canvas':
+                return "rounded-none border-2 border-slate-900 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] bg-white";
+            case 'bubble':
+                return "rounded-[3rem] border-none shadow-2xl bg-white/90";
+            case 'modern':
+                return "rounded-sm border border-slate-200 shadow-lg bg-slate-50";
+            case 'glass':
+                return "rounded-3xl border border-white/40 shadow-2xl bg-white/20 backdrop-blur-xl";
+            default:
+                return "rounded-none sm:rounded-2xl border bg-card/95 shadow-2xl backdrop-blur-sm";
+        }
+    };
+
     return (
         <div className="min-h-screen bg-background font-sans relative">
             {globalBackgroundImage && (
@@ -2246,8 +2276,8 @@ const App = () => {
             <div className="relative z-10 p-0 sm:p-4 min-h-screen sm:min-h-auto flex flex-col">
                 {showConfetti && <Confetti />}
                 <div className={cn(
-                    "max-w-6xl mx-auto rounded-none sm:rounded-2xl shadow-2xl overflow-hidden border transition-all duration-700 relative flex-grow w-full",
-                    !raffleState.raffleRef ? "border-white/20 min-h-screen sm:min-h-[80vh]" : "bg-card/95 backdrop-blur-sm"
+                    "max-w-6xl mx-auto overflow-hidden transition-all duration-700 relative flex-grow w-full",
+                    !raffleState.raffleRef ? "border-white/20 min-h-screen sm:min-h-[80vh]" : getThemeClasses(currentTheme)
                 )}>
                     <div className="bg-gradient-to-r from-purple-600/80 to-blue-600/80 text-white p-6 flex justify-between items-center relative overflow-hidden z-10">
                         <div className="absolute inset-0 bg-white/5 backdrop-blur-sm pointer-events-none" />
@@ -2323,9 +2353,9 @@ const App = () => {
                                                 <Palette className="mr-2 h-4 w-4" />
                                                 <span>Diseño del Tablero</span>
                                             </DropdownMenuItem>
-                                            <DropdownMenuItem onSelect={() => {}}>
-                                                <Layout className="mr-2 h-4 w-4" />
-                                                <span>Temas de Diseño</span>
+                                            <DropdownMenuItem onSelect={() => setIsThemesDialogOpen(true)} className="bg-purple-50 focus:bg-purple-100 font-bold">
+                                                <LayoutTemplate className="mr-2 h-4 w-4 text-purple-600" />
+                                                <span>Temas de Diseño (Canvas)</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setIsPaymentInfoDialogOpen(true)}>
                                                 <Landmark className="mr-2 h-4 w-4" />
@@ -3216,10 +3246,10 @@ const App = () => {
                                 <div className={activeTab === 'numbers' ? 'tab-content active' : 'tab-content'}>
                                     {raffleMode !== 'infinite' ? (
                                        <div className={cn(
-                                           "relative flex flex-col gap-6 min-h-[70vh] rounded-2xl overflow-hidden p-4 sm:p-6 transition-all duration-500",
+                                           "relative flex flex-col gap-6 min-h-[70vh] p-4 sm:p-6 transition-all duration-500",
                                            appSettings.boardDesignImageUrl ? "bg-white/10 backdrop-blur-[2px]" : ""
                                        )}>
-                                           {/* Background design layer that covers everything in the tab */}
+                                           {/* Background design layer */}
                                            {appSettings.boardDesignImageUrl && (
                                                <div className="absolute inset-0 z-0 opacity-90 pointer-events-none transition-opacity duration-700">
                                                    <Image 
@@ -3261,7 +3291,7 @@ const App = () => {
                                                    )}
                                                </div>
 
-                                               {/* Prize Image incorporated in board with glass effect */}
+                                               {/* Prize Image incorporated in board */}
                                                {raffleState.prizeImageUrl && (
                                                    <div className="rounded-2xl overflow-hidden shadow-2xl border-4 border-white/50 bg-white/40 backdrop-blur-xl max-w-2xl mx-auto w-full group transition-all hover:shadow-purple-200/50 hover:scale-[1.01]">
                                                        <Image 
@@ -3913,6 +3943,38 @@ const App = () => {
                             </DialogFooter>
                         </div>
                      )}
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={isThemesDialogOpen} onOpenChange={setIsThemesDialogOpen}>
+                <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2"><LayoutTemplate className="h-6 w-6 text-purple-600" /> Diseño Canvas: Estructura de Aplicación</DialogTitle>
+                        <DialogDescription>Selecciona la "forma" de tu tablero y aplicación. Los cambios se reflejan al instante para todos.</DialogDescription>
+                    </DialogHeader>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 py-6">
+                        <button onClick={() => handleSelectTheme('classic')} className={`group flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-all ${currentTheme === 'classic' ? 'border-purple-600 bg-purple-50 shadow-md' : 'border-slate-100 hover:border-slate-300'}`}>
+                            <div className="w-full aspect-square bg-slate-100 rounded-lg border-2 border-slate-300 flex items-center justify-center group-hover:scale-105 transition-transform"><Layout className="h-10 w-10 text-slate-400" /></div>
+                            <span className="font-bold text-slate-800">Clásico</span>
+                        </button>
+                        <button onClick={() => handleSelectTheme('canvas')} className={`group flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-all ${currentTheme === 'canvas' ? 'border-purple-600 bg-purple-50 shadow-md' : 'border-slate-100 hover:border-slate-300'}`}>
+                            <div className="w-full aspect-square bg-white rounded-none border-2 border-slate-900 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center group-hover:scale-105 transition-transform"><LayoutGrid className="h-10 w-10 text-slate-900" /></div>
+                            <span className="font-bold text-slate-800">Paneles Canvas</span>
+                        </button>
+                        <button onClick={() => handleSelectTheme('bubble')} className={`group flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-all ${currentTheme === 'bubble' ? 'border-purple-600 bg-purple-50 shadow-md' : 'border-slate-100 hover:border-slate-300'}`}>
+                            <div className="w-full aspect-square bg-slate-100 rounded-[2rem] border-2 border-slate-300 flex items-center justify-center group-hover:scale-105 transition-transform"><MousePointer2 className="h-10 w-10 text-slate-400" /></div>
+                            <span className="font-bold text-slate-800">Burbuja</span>
+                        </button>
+                        <button onClick={() => handleSelectTheme('modern')} className={`group flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-all ${currentTheme === 'modern' ? 'border-purple-600 bg-purple-50 shadow-md' : 'border-slate-100 hover:border-slate-300'}`}>
+                            <div className="w-full aspect-square bg-slate-800 rounded-sm border border-slate-600 flex items-center justify-center group-hover:scale-105 transition-transform"><LayoutTemplate className="h-10 w-10 text-slate-500" /></div>
+                            <span className="font-bold text-slate-800">Moderno</span>
+                        </button>
+                        <button onClick={() => handleSelectTheme('glass')} className={`group flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-all ${currentTheme === 'glass' ? 'border-purple-600 bg-purple-50 shadow-md' : 'border-slate-100 hover:border-slate-300'}`}>
+                            <div className="w-full aspect-square bg-white/20 backdrop-blur-md rounded-2xl border-2 border-white/50 flex items-center justify-center group-hover:scale-105 transition-transform"><Palette className="h-10 w-10 text-white" /></div>
+                            <span className="font-bold text-slate-800">Cristal</span>
+                        </button>
+                    </div>
+                    <DialogFooter><Button variant="outline" onClick={() => setIsThemesDialogOpen(false)} className="w-full">Cerrar</Button></DialogFooter>
                 </DialogContent>
             </Dialog>
 
@@ -4751,3 +4813,4 @@ const App = () => {
 };
 
 export default App;
+
