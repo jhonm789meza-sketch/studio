@@ -3266,12 +3266,12 @@ const App = () => {
                                     {raffleMode !== 'infinite' ? (
                                        <div className={cn(
                                            "relative flex flex-col gap-6 min-h-[70vh] p-4 sm:p-6 transition-all duration-500",
-                                           appSettings.boardDesignImageUrl ? "bg-white/10 backdrop-blur-[2px]" : ""
+                                           (appSettings.boardDesignImageUrl || appSettings.boardHeaderImageUrl) ? "bg-white/10 backdrop-blur-[2px]" : ""
                                        )}>
-                                           {appSettings.boardDesignImageUrl && (
+                                           {(appSettings.boardDesignImageUrl || appSettings.boardHeaderImageUrl) && (
                                                <div className="absolute inset-0 z-0 opacity-90 pointer-events-none transition-opacity duration-700">
                                                    <Image 
-                                                       src={appSettings.boardDesignImageUrl} 
+                                                       src={appSettings.boardHeaderImageUrl || appSettings.boardDesignImageUrl || ''} 
                                                        alt="" 
                                                        fill 
                                                        className="object-cover" 
@@ -4329,7 +4329,7 @@ const App = () => {
                             <div className="flex gap-2">
                                 <Input 
                                     id="app-logo-input" 
-                                    value={tempAppLogoUrl} 
+                                     value={tempAppLogoUrl} 
                                     onChange={(e) => setTempAppLogoUrl(e.target.value)} 
                                     placeholder="https://example.com/logo.png"
                                     className="flex-grow"
