@@ -51,6 +51,7 @@ export interface AppSettings {
     lockedBoardBackgroundImageUrl?: string;
     lockedBoardExternalImageUrl?: string;
     boardDesignImageUrl?: string;
+    boardHeaderImageUrl?: string;
     appName?: string;
     appLogoUrl?: string;
     appTheme?: 'classic' | 'canvas' | 'bubble' | 'modern' | 'glass';

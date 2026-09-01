@@ -13,7 +13,7 @@ import { requestNotificationPermission } from '@/lib/notification';
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House, Clock as ClockIcon, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages, Trophy, Trash2, Copy, Shield, LogOut, Eye, EyeOff, Gamepad2, Phone, TrendingUp, Globe, Landmark, RefreshCcw, LockKeyhole, Package, Camera, Check, Upload, FlipHorizontal, MousePointer2, ImageIcon, Ban, Settings2, LayoutGrid, Palette, Layout, LayoutTemplate } from 'lucide-react';
+import { Menu, Award, Lock, House, Clock as ClockIcon, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages, Trophy, Trash2, Copy, Shield, LogOut, Eye, EyeOff, Gamepad2, Phone, TrendingUp, Globe, Landmark, RefreshCcw, LockKeyhole, Package, Camera, Check, Upload, FlipHorizontal, MousePointer2, ImageIcon, Ban, Settings2, LayoutGrid, Palette, Layout, LayoutTemplate, Rows3 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -276,6 +276,9 @@ const App = () => {
     const [isBoardDesignDialogOpen, setIsBoardDesignDialogOpen] = useState(false);
     const [boardDesignUrl, setBoardDesignUrl] = useState('');
 
+    const [isBoardHeaderImageDialogOpen, setIsBoardHeaderImageDialogOpen] = useState(false);
+    const [boardHeaderImageUrl, setBoardHeaderImageUrl] = useState('');
+
     const prizeTextareaRef = useRef<HTMLTextAreaElement>(null);
 
     // --- Derived States ---
@@ -395,6 +398,7 @@ const App = () => {
                     setPaymentQrImageUrl(settings.paymentQrImageUrl || '');
                     setLockedBoardBgUrl(settings.lockedBoardBackgroundImageUrl || '');
                     setBoardDesignUrl(settings.boardDesignImageUrl || '');
+                    setBoardHeaderImageUrl(settings.boardHeaderImageUrl || '');
                     setTempAppName(settings.appName || '');
                     setTempAppLogoUrl(settings.appLogoUrl || '');
                 }
@@ -2198,6 +2202,21 @@ const App = () => {
         }
     };
 
+    const handleSaveBoardHeaderImage = async () => {
+        if (!isSuperAdmin) return;
+        try {
+            const settingsDocRef = doc(db, 'internal', 'settings');
+            await setDoc(settingsDocRef, {
+                boardHeaderImageUrl: boardHeaderImageUrl,
+            }, { merge: true });
+            showNotification(t('imageUploadedSuccess'), 'success');
+            setIsBoardHeaderImageDialogOpen(false);
+        } catch (error) {
+            console.error("Error saving board header image:", error);
+            showNotification(t('errorSavingPaymentInfo'), 'error');
+        }
+    };
+
     const handleDeleteGeneratedRef = (raffleRef: string) => {
         showConfirmationDialog(
             t('deleteGeneratedRefConfirmation', { ref: raffleRef }),
@@ -2353,9 +2372,9 @@ const App = () => {
                                                 <Palette className="mr-2 h-4 w-4" />
                                                 <span>Diseño del Tablero</span>
                                             </DropdownMenuItem>
-                                            <DropdownMenuItem onSelect={() => setIsThemesDialogOpen(true)} className="bg-purple-50 focus:bg-purple-100 font-bold">
-                                                <LayoutTemplate className="mr-2 h-4 w-4 text-purple-600" />
-                                                <span>Temas de Diseño (Canvas)</span>
+                                            <DropdownMenuItem onSelect={() => setIsBoardHeaderImageDialogOpen(true)}>
+                                                <Rows3 className="mr-2 h-4 w-4" />
+                                                <span>Imagen del Renglón</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setIsPaymentInfoDialogOpen(true)}>
                                                 <Landmark className="mr-2 h-4 w-4" />
@@ -3249,7 +3268,6 @@ const App = () => {
                                            "relative flex flex-col gap-6 min-h-[70vh] p-4 sm:p-6 transition-all duration-500",
                                            appSettings.boardDesignImageUrl ? "bg-white/10 backdrop-blur-[2px]" : ""
                                        )}>
-                                           {/* Background design layer */}
                                            {appSettings.boardDesignImageUrl && (
                                                <div className="absolute inset-0 z-0 opacity-90 pointer-events-none transition-opacity duration-700">
                                                    <Image 
@@ -3266,10 +3284,10 @@ const App = () => {
                                            <div className="relative z-10 space-y-6">
                                                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b pb-4 bg-white/40 backdrop-blur-xl p-5 rounded-2xl border border-white/40 shadow-xl">
                                                    <div className="flex items-center gap-4">
-                                                       {raffleState.prizeImageUrl && (
+                                                       {(appSettings.boardHeaderImageUrl || raffleState.prizeImageUrl) && (
                                                            <div className="relative h-20 w-20 rounded-xl overflow-hidden border-2 border-white shadow-lg bg-white shrink-0">
                                                                <Image 
-                                                                   src={raffleState.prizeImageUrl} 
+                                                                   src={appSettings.boardHeaderImageUrl || raffleState.prizeImageUrl} 
                                                                    alt={t('rafflePrizeAlt')} 
                                                                    fill 
                                                                    className="object-cover" 
@@ -3291,7 +3309,6 @@ const App = () => {
                                                    )}
                                                </div>
 
-                                               {/* Prize Image incorporated in board */}
                                                {raffleState.prizeImageUrl && (
                                                    <div className="rounded-2xl overflow-hidden shadow-2xl border-4 border-white/50 bg-white/40 backdrop-blur-xl max-w-2xl mx-auto w-full group transition-all hover:shadow-purple-200/50 hover:scale-[1.01]">
                                                        <Image 
@@ -4526,6 +4543,38 @@ const App = () => {
                 </DialogContent>
             </Dialog>
 
+            <Dialog open={isBoardHeaderImageDialogOpen} onOpenChange={setIsBoardHeaderImageDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Imagen del Renglón</DialogTitle>
+                        <DialogDescription>Configura la imagen pequeña que aparece en el encabezado del tablero de números.</DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="board-header-image-url">Link de la Imagen</Label>
+                            <Input 
+                                id="board-header-image-url" 
+                                value={boardHeaderImageUrl} 
+                                onChange={(e) => setBoardHeaderImageUrl(e.target.value)} 
+                                placeholder="https://example.com/icono.png"
+                            />
+                        </div>
+                        {boardHeaderImageUrl && (
+                            <div className="mt-4 p-4 border rounded-lg bg-gray-50 flex flex-col items-center gap-2">
+                                <Label>Vista Previa</Label>
+                                <div className="relative h-20 w-20 rounded-xl overflow-hidden border-2 border-white shadow-lg bg-white">
+                                    <Image src={boardHeaderImageUrl} alt="Vista previa renglón" fill className="object-cover" unoptimized />
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsBoardHeaderImageDialogOpen(false)}>Cancelar</Button>
+                        <Button onClick={handleSaveBoardHeaderImage}>Guardar Imagen</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
             <Dialog open={isPaymentInfoDialogOpen} onOpenChange={setIsPaymentInfoDialogOpen}>
                 <DialogContent>
                     <DialogHeader>
@@ -4813,4 +4862,3 @@ const App = () => {
 };
 
 export default App;
-
