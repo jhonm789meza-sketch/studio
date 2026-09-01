@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import jsPDF from 'jspdf';
@@ -3265,29 +3264,30 @@ const App = () => {
                                 <div className={activeTab === 'numbers' ? 'tab-content active' : 'tab-content'}>
                                     {raffleMode !== 'infinite' ? (
                                        <div className={cn(
-                                           "relative flex flex-col gap-6 min-h-[70vh] p-4 sm:p-6 transition-all duration-500",
-                                           (appSettings.boardDesignImageUrl || appSettings.boardHeaderImageUrl) ? "bg-white/10 backdrop-blur-[2px]" : ""
+                                           "relative flex flex-col gap-6 min-h-[70vh] p-4 sm:p-6 transition-all duration-500 overflow-hidden",
+                                           appSettings.boardHeaderImageUrl ? "bg-white/10 backdrop-blur-[2px]" : ""
                                        )}>
-                                           {(appSettings.boardDesignImageUrl || appSettings.boardHeaderImageUrl) && (
-                                               <div className="absolute inset-0 z-0 opacity-90 pointer-events-none transition-opacity duration-700">
+                                           {/* FONDO DE TODA LA SECCIÓN: Imagen del Renglón */}
+                                           {appSettings.boardHeaderImageUrl && (
+                                               <div className="absolute inset-0 z-0 pointer-events-none transition-opacity duration-700">
                                                    <Image 
-                                                       src={appSettings.boardHeaderImageUrl || appSettings.boardDesignImageUrl || ''} 
+                                                       src={appSettings.boardHeaderImageUrl} 
                                                        alt="" 
                                                        fill 
                                                        className="object-cover" 
                                                        unoptimized 
                                                    />
-                                                   <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-background/30" />
+                                                   <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-background/20" />
                                                </div>
                                            )}
 
                                            <div className="relative z-10 space-y-6">
                                                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b pb-4 bg-white/40 backdrop-blur-xl p-5 rounded-2xl border border-white/40 shadow-xl">
                                                    <div className="flex items-center gap-4">
-                                                       {(appSettings.boardHeaderImageUrl || raffleState.prizeImageUrl) && (
+                                                       {(raffleState.prizeImageUrl) && (
                                                            <div className="relative h-20 w-20 rounded-xl overflow-hidden border-2 border-white shadow-lg bg-white shrink-0">
                                                                <Image 
-                                                                   src={appSettings.boardHeaderImageUrl || raffleState.prizeImageUrl} 
+                                                                   src={raffleState.prizeImageUrl} 
                                                                    alt={t('rafflePrizeAlt')} 
                                                                    fill 
                                                                    className="object-cover" 
@@ -3322,7 +3322,19 @@ const App = () => {
                                                    </div>
                                                )}
 
-                                               <div className="bg-white/40 backdrop-blur-xl p-5 rounded-3xl border border-white/50 shadow-2xl">
+                                               {/* CONTENEDOR DE LA TABLA: Imagen de Diseño (Watermark) */}
+                                               <div className="bg-white/40 backdrop-blur-xl p-5 rounded-3xl border border-white/50 shadow-2xl relative overflow-hidden">
+                                                   {appSettings.boardDesignImageUrl && (
+                                                       <div className="absolute inset-0 z-0 opacity-40 pointer-events-none">
+                                                           <Image 
+                                                               src={appSettings.boardDesignImageUrl} 
+                                                               alt="" 
+                                                               fill 
+                                                               className="object-contain p-8" 
+                                                               unoptimized 
+                                                           />
+                                                       </div>
+                                                   )}
                                                    <div className={`grid gap-2 relative z-10 ${raffleMode === 'two-digit' ? 'grid-cols-10' : 'grid-cols-10 md:grid-cols-20 lg:grid-cols-25'}`}>
                                                        {allNumbers.map((num) => {
                                                            const formattedNum = String(num).padStart(numberLength, '0');
@@ -4547,7 +4559,7 @@ const App = () => {
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Imagen del Renglón</DialogTitle>
-                        <DialogDescription>Configura la imagen pequeña que aparece en el encabezado del tablero de números.</DialogDescription>
+                        <DialogDescription>Configura la imagen de fondo principal para toda la pestaña del tablero.</DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                         <div className="grid gap-2">
@@ -4562,7 +4574,7 @@ const App = () => {
                         {boardHeaderImageUrl && (
                             <div className="mt-4 p-4 border rounded-lg bg-gray-50 flex flex-col items-center gap-2">
                                 <Label>Vista Previa</Label>
-                                <div className="relative h-20 w-20 rounded-xl overflow-hidden border-2 border-white shadow-lg bg-white">
+                                <div className="relative w-full aspect-video rounded-lg overflow-hidden border">
                                     <Image src={boardHeaderImageUrl} alt="Vista previa renglón" fill className="object-cover" unoptimized />
                                 </div>
                             </div>
