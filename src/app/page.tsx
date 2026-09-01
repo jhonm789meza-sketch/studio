@@ -3325,12 +3325,12 @@ const App = () => {
                                                {/* CONTENEDOR DE LA TABLA: Imagen de Diseño (Watermark) */}
                                                <div className="bg-white/40 backdrop-blur-xl p-5 rounded-3xl border border-white/50 shadow-2xl relative overflow-hidden">
                                                    {appSettings.boardDesignImageUrl && (
-                                                       <div className="absolute inset-0 z-0 opacity-40 pointer-events-none">
+                                                       <div className="absolute inset-0 z-0 opacity-60 pointer-events-none">
                                                            <Image 
                                                                src={appSettings.boardDesignImageUrl} 
                                                                alt="" 
                                                                fill 
-                                                               className="object-contain p-8" 
+                                                               className="object-cover" 
                                                                unoptimized 
                                                            />
                                                        </div>
