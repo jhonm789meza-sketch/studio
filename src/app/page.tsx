@@ -3307,7 +3307,7 @@ const App = () => {
                                                )}
 
                                                {/* CONTENEDOR DE LA TABLA: Imagen de Diseño (Watermark) */}
-                                               <div className="bg-white/40 backdrop-blur-xl p-5 rounded-3xl border border-white/50 shadow-2xl relative overflow-hidden">
+                                               <div className="bg-white/40 backdrop-blur-xl p-5 rounded-3xl border border-white/50 shadow-2xl relative overflow-hidden" style={{ perspective: '1200px' }}>
                                                    {appSettings.boardDesignImageUrl && (
                                                        <div className="absolute inset-0 z-0 pointer-events-none">
                                                            <Image 
@@ -3319,6 +3319,22 @@ const App = () => {
                                                            />
                                                        </div>
                                                    )}
+
+                                                   {/* CAPA 3D FRONTAL: Imagen del Renglón */}
+                                                   {appSettings.boardHeaderImageUrl && (
+                                                       <div className="absolute inset-0 z-40 pointer-events-none flex items-center justify-center">
+                                                           <div className="w-[80%] h-[80%] relative transform-gpu" style={{ transform: 'translateZ(150px) rotateX(5deg) rotateY(-5deg)', filter: 'drop-shadow(0 25px 25px rgba(0,0,0,0.3))' }}>
+                                                               <Image 
+                                                                   src={appSettings.boardHeaderImageUrl} 
+                                                                   alt="" 
+                                                                   fill 
+                                                                   className="object-contain opacity-30 select-none" 
+                                                                   unoptimized 
+                                                               />
+                                                           </div>
+                                                       </div>
+                                                   )}
+
                                                    <div className={`grid gap-2 relative z-10 ${raffleMode === 'two-digit' ? 'grid-cols-10' : 'grid-cols-10 md:grid-cols-20 lg:grid-cols-25'}`}>
                                                        {allNumbers.map((num) => {
                                                            const formattedNum = String(num).padStart(numberLength, '0');
