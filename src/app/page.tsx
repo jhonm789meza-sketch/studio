@@ -2257,33 +2257,6 @@ const App = () => {
         );
     };
 
-    const handleSelectTheme = async (theme: AppSettings['appTheme']) => {
-        try {
-            const settingsDocRef = doc(db, 'internal', 'settings');
-            await setDoc(settingsDocRef, { appTheme: theme }, { merge: true });
-            showNotification(`Tema ${theme} aplicado correctamente.`, 'success');
-            setIsThemesDialogOpen(false);
-        } catch (error) {
-            console.error("Error saving theme:", error);
-            showNotification("Error al guardar el tema.", "error");
-        }
-    };
-
-    const getThemeClasses = (theme: string) => {
-        switch (theme) {
-            case 'canvas':
-                return "rounded-none border-2 border-slate-900 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] bg-white";
-            case 'bubble':
-                return "rounded-[3rem] border-none shadow-2xl bg-white/90";
-            case 'modern':
-                return "rounded-sm border border-slate-200 shadow-lg bg-slate-50";
-            case 'glass':
-                return "rounded-3xl border border-white/40 shadow-2xl bg-white/20 backdrop-blur-xl";
-            default:
-                return "rounded-none sm:rounded-2xl border bg-card/95 shadow-2xl backdrop-blur-sm";
-        }
-    };
-
     return (
         <div className="min-h-screen bg-background font-sans relative">
             {globalBackgroundImage && (
@@ -2296,7 +2269,7 @@ const App = () => {
                 {showConfetti && <Confetti />}
                 <div className={cn(
                     "max-w-6xl mx-auto overflow-hidden transition-all duration-700 relative flex-grow w-full",
-                    !raffleState.raffleRef ? "border-white/20 min-h-screen sm:min-h-[80vh]" : getThemeClasses(currentTheme)
+                    !raffleState.raffleRef ? "border-white/20 min-h-screen sm:min-h-[80vh]" : "rounded-none sm:rounded-2xl border bg-card/95 shadow-2xl backdrop-blur-sm"
                 )}>
                     <div className="bg-gradient-to-r from-purple-600/80 to-blue-600/80 text-white p-6 flex justify-between items-center relative overflow-hidden z-10">
                         <div className="absolute inset-0 bg-white/5 backdrop-blur-sm pointer-events-none" />
@@ -3293,37 +3266,13 @@ const App = () => {
                                                    )}
                                                </div>
 
-                                               {raffleState.prizeImageUrl && (
-                                                   <div className="rounded-2xl overflow-hidden shadow-2xl border-4 border-white/50 bg-white/40 backdrop-blur-xl max-w-2xl mx-auto w-full group transition-all hover:shadow-purple-200/50 hover:scale-[1.01]">
-                                                       <Image 
-                                                           src={raffleState.prizeImageUrl} 
-                                                           alt={raffleState.prize || t('rafflePrizeAlt')} 
-                                                           width={800}
-                                                           height={450}
-                                                           className="w-full h-auto object-contain max-h-[400px] transition-transform duration-700 group-hover:scale-105"
-                                                           unoptimized 
-                                                       />
-                                                   </div>
-                                               )}
-
-                                               {/* CONTENEDOR DE LA TABLA: Imagen de Diseño (Watermark) */}
-                                               <div className="bg-white/40 backdrop-blur-xl p-5 rounded-3xl border border-white/50 shadow-2xl relative overflow-hidden" style={{ perspective: '1200px' }}>
-                                                   {appSettings.boardDesignImageUrl && (
-                                                       <div className="absolute inset-0 z-0 pointer-events-none">
-                                                           <Image 
-                                                               src={appSettings.boardDesignImageUrl} 
-                                                               alt="" 
-                                                               fill 
-                                                               className="object-cover" 
-                                                               unoptimized 
-                                                           />
-                                                       </div>
-                                                   )}
-
-                                                   {/* CAPA 3D FRONTAL: Imagen del Renglón */}
+                                               {/* CONTENEDOR DE CONTENIDO PRINCIPAL: Envuelve Premio y Tablero */}
+                                               <div className="relative w-full max-w-5xl mx-auto">
+                                                   
+                                                   {/* IMAGEN DEL RENGLÓN: Capa frontal que cubre TODO (Premio + Tablero) */}
                                                    {appSettings.boardHeaderImageUrl && (
-                                                       <div className="absolute inset-0 z-40 pointer-events-none flex items-center justify-center">
-                                                           <div className="w-[80%] h-[80%] relative transform-gpu" style={{ transform: 'translateZ(150px) rotateX(5deg) rotateY(-5deg)', filter: 'drop-shadow(0 25px 25px rgba(0,0,0,0.3))' }}>
+                                                       <div className="absolute inset-0 z-50 pointer-events-none flex items-center justify-center">
+                                                           <div className="w-full h-full relative">
                                                                <Image 
                                                                    src={appSettings.boardHeaderImageUrl} 
                                                                    alt="" 
@@ -3335,35 +3284,65 @@ const App = () => {
                                                        </div>
                                                    )}
 
-                                                   <div className={`grid gap-2 relative z-10 ${raffleMode === 'two-digit' ? 'grid-cols-10' : 'grid-cols-10 md:grid-cols-20 lg:grid-cols-25'}`}>
-                                                       {allNumbers.map((num) => {
-                                                           const formattedNum = String(num).padStart(numberLength, '0');
-                                                           const participant = raffleState.participants.find((p: Participant) => p.raffleNumber === formattedNum);
-                                                           const isConfirmed = participant && participant.paymentStatus === 'confirmed';
-                                                           const isPending = participant && participant.paymentStatus === 'pending';
+                                                   <div className="space-y-6 relative z-10">
+                                                       {raffleState.prizeImageUrl && (
+                                                           <div className="rounded-2xl overflow-hidden shadow-2xl border-4 border-white/50 bg-white/40 backdrop-blur-xl w-full group transition-all hover:shadow-purple-200/50 hover:scale-[1.01]">
+                                                               <Image 
+                                                                   src={raffleState.prizeImageUrl} 
+                                                                   alt={raffleState.prize || t('rafflePrizeAlt')} 
+                                                                   width={800}
+                                                                   height={450}
+                                                                   className="w-full h-auto object-contain max-h-[400px] transition-transform duration-700 group-hover:scale-105"
+                                                                   unoptimized 
+                                                               />
+                                                           </div>
+                                                       )}
 
-                                                           return (
-                                                               <div
-                                                                   key={num}
-                                                                   onClick={() => toggleNumber(num)}
-                                                                   className={`
-                                                                       number-cell text-center py-2.5 rounded-xl transition-all text-sm font-black
-                                                                       ${raffleState.isWinnerConfirmed || !raffleState.isDetailsConfirmed || !!raffleState.winner || isConfirmed || isPending ? 'cursor-not-allowed' : 'cursor-pointer'}
-                                                                       ${isConfirmed
-                                                                           ? 'bg-red-600 text-white shadow-xl scale-95 opacity-90'
-                                                                           : isPending
-                                                                           ? 'bg-yellow-400 text-yellow-950 shadow-lg scale-100'
-                                                                           : !raffleState.isDetailsConfirmed || !!raffleState.winner
-                                                                           ? 'bg-gray-200/50 text-gray-400'
-                                                                           : 'bg-green-500/10 text-green-700 border-2 border-green-500/30 hover:bg-green-500 hover:text-white hover:shadow-green-200 hover:scale-110 active:scale-90'
-                                                                       }
-                                                                       ${raffleState.winner?.raffleNumber === formattedNum ? 'ring-4 ring-yellow-400 animate-pulse z-20 scale-125 bg-yellow-500 text-white shadow-yellow-400' : ''}
-                                                                   `}
-                                                               >
-                                                                   {formattedNum}
+                                                       {/* CONTENEDOR DE LA TABLA: Imagen de Diseño (Watermark) */}
+                                                       <div className="bg-white/40 backdrop-blur-xl p-5 rounded-3xl border border-white/50 shadow-2xl relative overflow-hidden">
+                                                           {appSettings.boardDesignImageUrl && (
+                                                               <div className="absolute inset-0 z-0 pointer-events-none">
+                                                                   <Image 
+                                                                       src={appSettings.boardDesignImageUrl} 
+                                                                       alt="" 
+                                                                       fill 
+                                                                       className="object-cover" 
+                                                                       unoptimized 
+                                                                   />
                                                                </div>
-                                                           );
-                                                       })}
+                                                           )}
+
+                                                           <div className={`grid gap-2 relative z-10 ${raffleMode === 'two-digit' ? 'grid-cols-10' : 'grid-cols-10 md:grid-cols-20 lg:grid-cols-25'}`}>
+                                                               {allNumbers.map((num) => {
+                                                                   const formattedNum = String(num).padStart(numberLength, '0');
+                                                                   const participant = raffleState.participants.find((p: Participant) => p.raffleNumber === formattedNum);
+                                                                   const isConfirmed = participant && participant.paymentStatus === 'confirmed';
+                                                                   const isPending = participant && participant.paymentStatus === 'pending';
+
+                                                                   return (
+                                                                       <div
+                                                                           key={num}
+                                                                           onClick={() => toggleNumber(num)}
+                                                                           className={`
+                                                                               number-cell text-center py-2.5 rounded-xl transition-all text-sm font-black
+                                                                               ${raffleState.isWinnerConfirmed || !raffleState.isDetailsConfirmed || !!raffleState.winner || isConfirmed || isPending ? 'cursor-not-allowed' : 'cursor-pointer'}
+                                                                               ${isConfirmed
+                                                                                   ? 'bg-red-600 text-white shadow-xl scale-95 opacity-90'
+                                                                                   : isPending
+                                                                                   ? 'bg-yellow-400 text-yellow-950 shadow-lg scale-100'
+                                                                                   : !raffleState.isDetailsConfirmed || !!raffleState.winner
+                                                                                   ? 'bg-gray-200/50 text-gray-400'
+                                                                                   : 'bg-green-500/10 text-green-700 border-2 border-green-500/30 hover:bg-green-500 hover:text-white hover:shadow-green-200 hover:scale-110 active:scale-90'
+                                                                               }
+                                                                               ${raffleState.winner?.raffleNumber === formattedNum ? 'ring-4 ring-yellow-400 animate-pulse z-20 scale-125 bg-yellow-500 text-white shadow-yellow-400' : ''}
+                                                                           `}
+                                                                       >
+                                                                           {formattedNum}
+                                                                       </div>
+                                                                   );
+                                                               })}
+                                                           </div>
+                                                       </div>
                                                    </div>
                                                </div>
 
@@ -3972,38 +3951,6 @@ const App = () => {
                             </DialogFooter>
                         </div>
                      )}
-                </DialogContent>
-            </Dialog>
-
-            <Dialog open={isThemesDialogOpen} onOpenChange={setIsThemesDialogOpen}>
-                <DialogContent className="max-w-2xl">
-                    <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2"><LayoutTemplate className="h-6 w-6 text-purple-600" /> Diseño Canvas: Estructura de Aplicación</DialogTitle>
-                        <DialogDescription>Selecciona la "forma" de tu tablero y aplicación. Los cambios se reflejan al instante para todos.</DialogDescription>
-                    </DialogHeader>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 py-6">
-                        <button onClick={() => handleSelectTheme('classic')} className={`group flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-all ${currentTheme === 'classic' ? 'border-purple-600 bg-purple-50 shadow-md' : 'border-slate-100 hover:border-slate-300'}`}>
-                            <div className="w-full aspect-square bg-slate-100 rounded-lg border-2 border-slate-300 flex items-center justify-center group-hover:scale-105 transition-transform"><Layout className="h-10 w-10 text-slate-400" /></div>
-                            <span className="font-bold text-slate-800">Clásico</span>
-                        </button>
-                        <button onClick={() => handleSelectTheme('canvas')} className={`group flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-all ${currentTheme === 'canvas' ? 'border-purple-600 bg-purple-50 shadow-md' : 'border-slate-100 hover:border-slate-300'}`}>
-                            <div className="w-full aspect-square bg-white rounded-none border-2 border-slate-900 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center group-hover:scale-105 transition-transform"><LayoutGrid className="h-10 w-10 text-slate-900" /></div>
-                            <span className="font-bold text-slate-800">Paneles Canvas</span>
-                        </button>
-                        <button onClick={() => handleSelectTheme('bubble')} className={`group flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-all ${currentTheme === 'bubble' ? 'border-purple-600 bg-purple-50 shadow-md' : 'border-slate-100 hover:border-slate-300'}`}>
-                            <div className="w-full aspect-square bg-slate-100 rounded-[2rem] border-2 border-slate-300 flex items-center justify-center group-hover:scale-105 transition-transform"><MousePointer2 className="h-10 w-10 text-slate-400" /></div>
-                            <span className="font-bold text-slate-800">Burbuja</span>
-                        </button>
-                        <button onClick={() => handleSelectTheme('modern')} className={`group flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-all ${currentTheme === 'modern' ? 'border-purple-600 bg-purple-50 shadow-md' : 'border-slate-100 hover:border-slate-300'}`}>
-                            <div className="w-full aspect-square bg-slate-800 rounded-sm border border-slate-600 flex items-center justify-center group-hover:scale-105 transition-transform"><LayoutTemplate className="h-10 w-10 text-slate-500" /></div>
-                            <span className="font-bold text-slate-800">Moderno</span>
-                        </button>
-                        <button onClick={() => handleSelectTheme('glass')} className={`group flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-all ${currentTheme === 'glass' ? 'border-purple-600 bg-purple-50 shadow-md' : 'border-slate-100 hover:border-slate-300'}`}>
-                            <div className="w-full aspect-square bg-white/20 backdrop-blur-md rounded-2xl border-2 border-white/50 flex items-center justify-center group-hover:scale-105 transition-transform"><Palette className="h-10 w-10 text-white" /></div>
-                            <span className="font-bold text-slate-800">Cristal</span>
-                        </button>
-                    </div>
-                    <DialogFooter><Button variant="outline" onClick={() => setIsThemesDialogOpen(false)} className="w-full">Cerrar</Button></DialogFooter>
                 </DialogContent>
             </Dialog>
 
