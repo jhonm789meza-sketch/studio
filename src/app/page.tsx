@@ -4592,6 +4592,32 @@ const App = () => {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+             <Dialog open={isSuperAdminChangePasswordOpen} onOpenChange={(isOpen) => { if (!isOpen) { setNewPassword(''); setConfirmNewPassword(''); setShowNewPassword(false); } setIsSuperAdminChangePasswordOpen(isOpen); }}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{t('changeExecutivePasswordTitle')}</DialogTitle>
+                        <DialogDescription>{t('changeExecutivePasswordDescription')}</DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="new-super-admin-password-v2">{t('newPassword')}</Label>
+                            <div className="relative">
+                                <Input id="new-super-admin-password-v2" type={showNewPassword ? 'text' : 'password'} value={newPassword} onChange={(e) => setNewPassword(e.target.value)}/>
+                                <Button type="button" variant="ghost" size="icon" className="absolute inset-y-0 right-0 h-full px-3" onClick={() => setShowNewPassword(!showNewPassword)}>{showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button>
+                            </div>
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="confirm-new-super-admin-password-v2">{t('confirmNewPassword')}</Label>
+                             <div className="relative">
+                                <Input id="confirm-new-super-admin-password-v2" type={showNewPassword ? 'text' : 'password'} value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)}/>
+                                 <Button type="button" variant="ghost" size="icon" className="absolute inset-y-0 right-0 h-full px-3" onClick={() => setShowNewPassword(!showNewPassword)}>{showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button>
+                            </div>
+                        </div>
+                    </div>
+                    <DialogFooter><Button variant="outline" onClick={() => setIsSuperAdminChangePasswordOpen(false)}>{t('cancel')}</Button><Button onClick={handleChangeSuperAdminPassword}>{t('changePasswordButton')}</Button></DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };
