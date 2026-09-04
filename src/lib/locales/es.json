@@ -1,3 +1,4 @@
+
 {
     "loading": "Cargando",
     "adminMessage": "Eres el administrador de este juego",
@@ -430,5 +431,13 @@
     "brandingSaved": "Identidad de la aplicación guardada.",
     "errorSavingBranding": "Error al guardar la identidad.",
     "noQrFoundInImage": "No se encontró ningún código QR en la imagen.",
-    "invalidQrContent": "El código QR no contiene un enlace válido."
+    "invalidQrContent": "El código QR no contiene un enlace válido.",
+    "boardColors": "Colores del Tablero",
+    "boardColorsDescription": "Personaliza los colores de los números según su estado.",
+    "availableColor": "Disponible",
+    "pendingColor": "Pendiente",
+    "soldColor": "Vendido",
+    "bgColor": "Fondo",
+    "textColor": "Texto",
+    "boardColorsSaved": "Colores del tablero guardados con éxito."
 }

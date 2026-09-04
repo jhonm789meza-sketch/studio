@@ -55,6 +55,12 @@ export interface AppSettings {
     appName?: string;
     appLogoUrl?: string;
     appTheme?: 'classic' | 'canvas' | 'bubble' | 'modern' | 'glass';
+    numberBgAvailable?: string;
+    numberTextAvailable?: string;
+    numberBgPending?: string;
+    numberTextPending?: string;
+    numberBgSold?: string;
+    numberTextSold?: string;
 }
 
 export interface Raffle {

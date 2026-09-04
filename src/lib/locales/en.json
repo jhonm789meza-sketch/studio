@@ -1,3 +1,4 @@
+
 {
     "loading": "Loading",
     "adminMessage": "You are the administrator of this game",
@@ -426,5 +427,13 @@
     "brandingSaved": "Application identity saved.",
     "errorSavingBranding": "Error saving identity.",
     "noQrFoundInImage": "No QR code found in the image.",
-    "invalidQrContent": "The QR code does not contain a valid link."
+    "invalidQrContent": "The QR code does not contain a valid link.",
+    "boardColors": "Board Colors",
+    "boardColorsDescription": "Customize the colors of the numbers based on their state.",
+    "availableColor": "Available",
+    "pendingColor": "Pending",
+    "soldColor": "Sold",
+    "bgColor": "Background",
+    "textColor": "Text",
+    "boardColorsSaved": "Board colors saved successfully."
 }

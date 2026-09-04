@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import jsPDF from 'jspdf';
@@ -173,7 +172,7 @@ const App = () => {
     const [currentAdminId, setCurrentAdminId] = useState<string | null>(null);
     const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
     const [isQrDialogOpen, setIsQrDialogOpen] = useState(false);
-    const [showAdminPassword, setShowAdminPassword] = useState(false);
+    const [showAdminPasswordValue, setShowAdminPasswordValue] = useState(false);
     
     const [selectedRaffleMode, setSelectedRaffleMode] = useState<RaffleMode | null>(null);
     const [partialWinners, setPartialWinners] = useState<PartialWinnerInfo[]>([]);
@@ -276,6 +275,16 @@ const App = () => {
     const [isBoardHeaderImageDialogOpen, setIsBoardHeaderImageDialogOpen] = useState(false);
     const [boardHeaderImageUrl, setBoardHeaderImageUrl] = useState('');
 
+    const [isBoardColorsDialogOpen, setIsBoardColorsDialogOpen] = useState(false);
+    const [boardColors, setBoardColors] = useState({
+        availableBg: '',
+        availableText: '',
+        pendingBg: '',
+        pendingText: '',
+        soldBg: '',
+        soldText: '',
+    });
+
     const prizeTextareaRef = useRef<HTMLTextAreaElement>(null);
 
     // --- Derived States ---
@@ -371,6 +380,14 @@ const App = () => {
                     blockedTwoDigit: !!settings.isBlockedTwoDigit,
                     blockedThreeDigit: !!settings.isBlockedThreeDigit,
                     blockedInfinite: !!settings.isBlockedInfinite,
+                });
+                setBoardColors({
+                    availableBg: settings.numberBgAvailable || '',
+                    availableText: settings.numberTextAvailable || '',
+                    pendingBg: settings.numberBgPending || '',
+                    pendingText: settings.numberTextPending || '',
+                    soldBg: settings.numberBgSold || '',
+                    soldText: settings.numberTextSold || '',
                 });
                 if (isSuperAdmin) {
                     setSupportContacts(Array.isArray(settings.supportContacts) ? settings.supportContacts : []);
@@ -2044,6 +2061,25 @@ const App = () => {
         }
     };
 
+    const handleSaveBoardColors = async () => {
+        try {
+            const settingsDocRef = doc(db, 'internal', 'settings');
+            await setDoc(settingsDocRef, {
+                numberBgAvailable: boardColors.availableBg,
+                numberTextAvailable: boardColors.availableText,
+                numberBgPending: boardColors.pendingBg,
+                numberTextPending: boardColors.pendingText,
+                numberBgSold: boardColors.soldBg,
+                numberTextSold: boardColors.soldText,
+            }, { merge: true });
+            showNotification(t('boardColorsSaved'), 'success');
+            setIsBoardColorsDialogOpen(false);
+        } catch (error) {
+            console.error("Error saving board colors:", error);
+            showNotification(t('errorSavingBoardColors'), 'error');
+        }
+    };
+
     const handleChangePassword = async () => {
         if (!raffleToChangePassword || !raffleToChangePassword.raffleRef) return;
     
@@ -2068,7 +2104,7 @@ const App = () => {
     };
     
     const handleChangeSuperAdminPassword = async () => {
-        if (!newPassword || !newPassword !== confirmNewPassword) {
+        if (!newPassword || newPassword !== confirmNewPassword) {
             showNotification(t('passwordsDoNotMatch'), 'error');
             return;
         }
@@ -2342,6 +2378,10 @@ const App = () => {
                                                 <Palette className="mr-2 h-4 w-4" />
                                                 <span>Diseño del Tablero</span>
                                             </DropdownMenuItem>
+                                            <DropdownMenuItem onSelect={() => setIsBoardColorsDialogOpen(true)}>
+                                                <Palette className="mr-2 h-4 w-4" />
+                                                <span>{t('boardColors')}</span>
+                                            </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setIsBoardHeaderImageDialogOpen(true)}>
                                                 <Rows3 className="mr-2 h-4 w-4" />
                                                 <span>Imagen del Renglón</span>
@@ -2381,7 +2421,7 @@ const App = () => {
                                             )}
                                             <DropdownMenuItem onSelect={() => {
                                                 setGamesFilter('winners');
-                                                handleTabClick('games');
+                                                handleTabClick('winners');
                                             }}>
                                                 <div className="flex items-center justify-between w-full">
                                                     <div className="flex items-center">
@@ -2820,7 +2860,7 @@ const App = () => {
                                                         <div className="relative">
                                                             <Input
                                                                 id="password-input"
-                                                                type={showAdminPassword ? 'text' : 'password'}
+                                                                type={showAdminPasswordValue ? 'text' : 'password'}
                                                                 value={raffleState.password || ''}
                                                                 onChange={(e) => handleLocalFieldChange('password', e.target.value)}
                                                                 onBlur={(e) => handleFieldChange('password', e.target.value)}
@@ -2833,10 +2873,10 @@ const App = () => {
                                                                 variant="ghost"
                                                                 size="icon"
                                                                 className="absolute inset-y-0 right-0 h-full px-3"
-                                                                onClick={() => setShowAdminPassword(!showAdminPassword)}
+                                                                onClick={() => setShowAdminPasswordValue(!showAdminPasswordValue)}
                                                             >
-                                                                {showAdminPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                                                                <span className="sr-only">{showAdminPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}</span>
+                                                                {showAdminPasswordValue ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                                                <span className="sr-only">{showAdminPasswordValue ? 'Ocultar contraseña' : 'Mostrar contraseña'}</span>
                                                             </Button>
                                                         </div>
                                                    </div>
@@ -3228,21 +3268,21 @@ const App = () => {
                                         </div>
                                     </div>
                                 </div>
-                                <div className={activeTab === 'numbers' ? 'tab-content active' : 'tab-content'}>
+                                <div className={activeTab === 'numbers' ? 'tab-content active relative' : 'tab-content p-6 relative'}>
+                                    {/* IMAGEN DEL RENGLON - Capa frontal perfecta que cubre de arriba a abajo */}
+                                    {appSettings.boardHeaderImageUrl && (
+                                        <div className="absolute inset-0 z-50 pointer-events-none">
+                                            <Image 
+                                                src={appSettings.boardHeaderImageUrl} 
+                                                alt="" 
+                                                fill 
+                                                className="object-fill opacity-25" 
+                                                unoptimized 
+                                            />
+                                        </div>
+                                    )}
                                     {raffleMode !== 'infinite' ? (
                                        <div className="relative flex flex-col gap-6 min-h-[70vh] p-4 sm:p-6 transition-all duration-500 overflow-hidden">
-                                           {appSettings.boardHeaderImageUrl && (
-                                               <div className="absolute inset-0 z-50 pointer-events-none">
-                                                   <Image 
-                                                       src={appSettings.boardHeaderImageUrl} 
-                                                       alt="" 
-                                                       fill 
-                                                       className="object-fill opacity-25 select-none" 
-                                                       unoptimized 
-                                                   />
-                                               </div>
-                                           )}
-
                                            <div className="relative z-10 space-y-6">
                                                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b pb-4 bg-white/40 backdrop-blur-xl p-5 rounded-2xl border border-white/40 shadow-xl">
                                                    <div className="flex items-center gap-4">
@@ -3305,20 +3345,32 @@ const App = () => {
                                                                const isConfirmed = participant && participant.paymentStatus === 'confirmed';
                                                                const isPending = participant && participant.paymentStatus === 'pending';
 
+                                                               const availBg = appSettings.numberBgAvailable || 'rgba(34, 197, 94, 0.1)';
+                                                               const availText = appSettings.numberTextAvailable || '#15803d';
+                                                               const pendBg = appSettings.numberBgPending || '#facc15';
+                                                               const pendText = appSettings.numberTextPending || '#422006';
+                                                               const sldBg = appSettings.numberBgSold || '#dc2626';
+                                                               const sldText = appSettings.numberTextSold || '#ffffff';
+
                                                                return (
                                                                    <div
                                                                        key={num}
                                                                        onClick={() => toggleNumber(num)}
+                                                                       style={{
+                                                                           backgroundColor: isConfirmed ? sldBg : isPending ? pendBg : (!raffleState.isDetailsConfirmed || !!raffleState.winner ? undefined : availBg),
+                                                                           color: isConfirmed ? sldText : isPending ? pendText : (!raffleState.isDetailsConfirmed || !!raffleState.winner ? undefined : availText),
+                                                                           borderColor: (!isConfirmed && !isPending && raffleState.isDetailsConfirmed && !raffleState.winner) ? availText + '4D' : undefined
+                                                                       }}
                                                                        className={`
-                                                                           number-cell text-center py-2.5 rounded-xl transition-all text-sm font-black
+                                                                           number-cell text-center py-2.5 rounded-xl transition-all text-sm
                                                                            ${raffleState.isWinnerConfirmed || !raffleState.isDetailsConfirmed || !!raffleState.winner || isConfirmed || isPending ? 'cursor-not-allowed' : 'cursor-pointer'}
                                                                            ${isConfirmed
-                                                                               ? 'bg-red-600 text-white shadow-xl scale-95 opacity-90'
+                                                                               ? 'shadow-xl scale-95 opacity-90'
                                                                                : isPending
-                                                                               ? 'bg-yellow-400 text-yellow-950 shadow-lg scale-100'
+                                                                               ? 'shadow-lg scale-100'
                                                                                : !raffleState.isDetailsConfirmed || !!raffleState.winner
                                                                                ? 'bg-gray-200/50 text-gray-400'
-                                                                               : 'bg-green-500/10 text-green-700 border-2 border-green-500/30 hover:bg-green-500 hover:text-white hover:shadow-green-200 hover:scale-110 active:scale-90'
+                                                                               : 'border-2 hover:opacity-80 hover:scale-110 active:scale-90'
                                                                            }
                                                                            ${raffleState.winner?.raffleNumber === formattedNum ? 'ring-4 ring-yellow-400 animate-pulse z-20 scale-125 bg-yellow-500 text-white shadow-yellow-400' : ''}
                                                                        `}
@@ -3333,15 +3385,15 @@ const App = () => {
 
                                                 <div className="flex flex-wrap gap-4 mt-4 text-xs font-black bg-white/50 backdrop-blur-md p-4 rounded-2xl w-fit shadow-xl border border-white/50">
                                                     <div className="flex items-center gap-2">
-                                                        <div className="w-5 h-5 rounded-lg bg-green-500/20 border-2 border-green-500"></div>
+                                                        <div className="w-5 h-5 rounded-lg border-2" style={{ backgroundColor: appSettings.numberBgAvailable || 'rgba(34, 197, 94, 0.1)', borderColor: appSettings.numberTextAvailable || '#15803d' }}></div>
                                                         <span className="text-green-800">{t('available').toUpperCase()}</span>
                                                     </div>
                                                     <div className="flex items-center gap-2">
-                                                        <div className="w-5 h-5 rounded-lg bg-yellow-400 border-2 border-yellow-600 shadow-sm"></div>
+                                                        <div className="w-5 h-5 rounded-lg border-2 shadow-sm" style={{ backgroundColor: appSettings.numberBgPending || '#facc15', borderColor: appSettings.numberTextPending || '#422006' }}></div>
                                                         <span className="text-yellow-900">{t('pending').toUpperCase()}</span>
                                                     </div>
                                                     <div className="flex items-center gap-2">
-                                                        <div className="w-5 h-5 rounded-lg bg-red-600 border-2 border-red-800 shadow-inner"></div>
+                                                        <div className="w-5 h-5 rounded-lg border-2 shadow-inner" style={{ backgroundColor: appSettings.numberBgSold || '#dc2626', borderColor: appSettings.numberTextSold || '#ffffff' }}></div>
                                                         <span className="text-red-700">{t('sold').toUpperCase()}</span>
                                                     </div>
                                                 </div>
@@ -3877,6 +3929,7 @@ const App = () => {
                         </div>
                     )}
 
+                    {/* DIALOGOS DEL DIRECTOR EJECUTIVO Y GENERALES */}
                     <Dialog open={isAppNameLogoDialogOpen} onOpenChange={setIsAppNameLogoDialogOpen}>
                         <DialogContent>
                             <DialogHeader>
@@ -3892,11 +3945,15 @@ const App = () => {
                                     <Label htmlFor="app-logo-input">{t('appLogoUrlLabel')}</Label>
                                     <div className="flex gap-2">
                                         <Input id="app-logo-input" value={tempAppLogoUrl} onChange={(e) => setTempAppLogoUrl(e.target.value)} className="flex-grow" />
-                                        <div className="relative">
-                                            <input type="file" accept="image/*" className="hidden" id="app-logo-upload" onChange={async (e) => { const file = e.target.files?.[0]; if (file) { const url = await uploadImage(file, 'app-branding'); setTempAppLogoUrl(url); } }} />
-                                            <Label htmlFor="app-logo-upload"><Button type="button" variant="outline" className="cursor-pointer" asChild><span>{isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}</span></Button></Label>
-                                        </div>
+                                        <a href="https://www.google.com/imghp" target="_blank" rel="noopener noreferrer">
+                                            <Button type="button" variant="outline" size="icon"><Search className="h-4 w-4" /></Button>
+                                        </a>
                                     </div>
+                                    {tempAppLogoUrl && (
+                                        <div className="mt-2 border rounded-md overflow-hidden bg-gray-50 flex items-center justify-center p-2 h-40">
+                                            <img src={tempAppLogoUrl} alt="Vista previa logo" className="max-h-full object-contain" />
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                             <DialogFooter><Button variant="outline" onClick={() => setIsAppNameLogoDialogOpen(false)}>{t('cancel')}</Button><Button onClick={handleSaveAppNameLogo}>{t('save')}</Button></DialogFooter>
@@ -3942,14 +3999,17 @@ const App = () => {
 
                     <Dialog open={isUsdPaymentConfigDialogOpen} onOpenChange={setIsUsdPaymentConfigDialogOpen}>
                         <DialogContent className="sm:max-w-md">
-                            <DialogHeader><DialogTitle>Configurar Pagos USD</DialogTitle></DialogHeader>
+                            <DialogHeader>
+                                <DialogTitle>Configurar Pagos USD</DialogTitle>
+                                <DialogDescription>Configura links de PayPal o Stripe independientes para cada modalidad.</DialogDescription>
+                            </DialogHeader>
                             <div className="grid gap-4 py-4">
                                 <div className="grid gap-2"><Label htmlFor="usd-two-digit">Link USD (2 Cifras)</Label><Input id="usd-two-digit" value={paymentLinks.usdTwoDigit} onChange={(e) => setPaymentLinks(p => ({ ...p, usdTwoDigit: e.target.value }))}/></div>
                                 <div className="grid gap-2"><Label htmlFor="usd-three-digit">Link USD (3 Cifras)</Label><Input id="usd-three-digit" value={paymentLinks.usdThreeDigit} onChange={(e) => setPaymentLinks(p => ({ ...p, usdThreeDigit: e.target.value }))}/></div>
                                 <div className="grid gap-2"><Label htmlFor="usd-infinite">Link USD (Infinita)</Label><Input id="usd-infinite" value={paymentLinks.usdInfinite} onChange={(e) => setPaymentLinks(p => ({ ...p, usdInfinite: e.target.value }))}/></div>
                                 <div className="grid gap-2 pt-2 border-t"><Label htmlFor="usd-generic">Link USD Respaldo (Opcional)</Label><Input id="usd-generic" value={paymentLinks.usd} onChange={(e) => setPaymentLinks(p => ({ ...p, usd: e.target.value }))}/></div>
                             </div>
-                            <DialogFooter><Button onClick={handleSavePaymentLinks}>Guardar Todo</Button></DialogFooter>
+                            <DialogFooter><Button variant="outline" onClick={() => setIsUsdPaymentConfigDialogOpen(false)}>Cancelar</Button><Button onClick={handleSavePaymentLinks}>Guardar Todo</Button></DialogFooter>
                         </DialogContent>
                     </Dialog>
 
@@ -3976,6 +4036,39 @@ const App = () => {
                         </DialogContent>
                     </Dialog>
 
+                    <Dialog open={isBoardColorsDialogOpen} onOpenChange={setIsBoardColorsDialogOpen}>
+                        <DialogContent className="sm:max-w-md">
+                            <DialogHeader>
+                                <DialogTitle>{t('boardColors')}</DialogTitle>
+                                <DialogDescription>{t('boardColorsDescription')}</DialogDescription>
+                            </DialogHeader>
+                            <div className="grid gap-6 py-4">
+                                <div className="space-y-4">
+                                    <h4 className="font-bold text-sm text-purple-600 uppercase tracking-wider">{t('availableColor')}</h4>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2"><Label>{t('bgColor')}</Label><div className="flex gap-2"><Input type="color" className="h-10 w-12 p-1" value={boardColors.availableBg} onChange={(e) => setBoardColors(p => ({ ...p, availableBg: e.target.value }))}/><Input value={boardColors.availableBg} onChange={(e) => setBoardColors(p => ({ ...p, availableBg: e.target.value }))} className="flex-grow font-mono text-xs"/></div></div>
+                                        <div className="space-y-2"><Label>{t('textColor')}</Label><div className="flex gap-2"><Input type="color" className="h-10 w-12 p-1" value={boardColors.availableText} onChange={(e) => setBoardColors(p => ({ ...p, availableText: e.target.value }))}/><Input value={boardColors.availableText} onChange={(e) => setBoardColors(p => ({ ...p, availableText: e.target.value }))} className="flex-grow font-mono text-xs"/></div></div>
+                                    </div>
+                                </div>
+                                <div className="space-y-4">
+                                    <h4 className="font-bold text-sm text-yellow-600 uppercase tracking-wider">{t('pendingColor')}</h4>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2"><Label>{t('bgColor')}</Label><div className="flex gap-2"><Input type="color" className="h-10 w-12 p-1" value={boardColors.pendingBg} onChange={(e) => setBoardColors(p => ({ ...p, pendingBg: e.target.value }))}/><Input value={boardColors.pendingBg} onChange={(e) => setBoardColors(p => ({ ...p, pendingBg: e.target.value }))} className="flex-grow font-mono text-xs"/></div></div>
+                                        <div className="space-y-2"><Label>{t('textColor')}</Label><div className="flex gap-2"><Input type="color" className="h-10 w-12 p-1" value={boardColors.pendingText} onChange={(e) => setBoardColors(p => ({ ...p, pendingText: e.target.value }))}/><Input value={boardColors.pendingText} onChange={(e) => setBoardColors(p => ({ ...p, pendingText: e.target.value }))} className="flex-grow font-mono text-xs"/></div></div>
+                                    </div>
+                                </div>
+                                <div className="space-y-4">
+                                    <h4 className="font-bold text-sm text-red-600 uppercase tracking-wider">{t('soldColor')}</h4>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2"><Label>{t('bgColor')}</Label><div className="flex gap-2"><Input type="color" className="h-10 w-12 p-1" value={boardColors.soldBg} onChange={(e) => setBoardColors(p => ({ ...p, soldBg: e.target.value }))}/><Input value={boardColors.soldBg} onChange={(e) => setBoardColors(p => ({ ...p, soldBg: e.target.value }))} className="flex-grow font-mono text-xs"/></div></div>
+                                        <div className="space-y-2"><Label>{t('textColor')}</Label><div className="flex gap-2"><Input type="color" className="h-10 w-12 p-1" value={boardColors.soldText} onChange={(e) => setBoardColors(p => ({ ...p, soldText: e.target.value }))}/><Input value={boardColors.soldText} onChange={(e) => setBoardColors(p => ({ ...p, soldText: e.target.value }))} className="flex-grow font-mono text-xs"/></div></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <DialogFooter><Button variant="outline" onClick={() => setIsBoardColorsDialogOpen(false)}>{t('cancel')}</Button><Button onClick={handleSaveBoardColors}>{t('save')}</Button></DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+
                     <Dialog open={isBoardHeaderImageDialogOpen} onOpenChange={setIsBoardHeaderImageDialogOpen}>
                         <DialogContent>
                             <DialogHeader><DialogTitle>Imagen del Renglón</DialogTitle></DialogHeader>
@@ -3999,625 +4092,378 @@ const App = () => {
                         </DialogContent>
                     </Dialog>
 
+                    <Dialog open={isLockedBoardBgDialogOpen} onOpenChange={setIsLockedBoardBgDialogOpen}>
+                        <DialogContent>
+                            <DialogHeader><DialogTitle>{t('manageLockedBoardBg')}</DialogTitle></DialogHeader>
+                            <div className="grid gap-4 py-4">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="locked-board-bg-url">{t('lockedBoardBgUrlLabel')} (Link Directo)</Label>
+                                    <div className="flex gap-2">
+                                        <Input id="locked-board-bg-url" value={lockedBoardBgUrl} onChange={(e) => setLockedBoardBgUrl(e.target.value)} className="flex-grow" />
+                                        <a href="https://www.google.com/imghp" target="_blank" rel="noopener noreferrer">
+                                            <Button type="button" variant="outline" size="icon"><Search className="h-4 w-4" /></Button>
+                                        </a>
+                                    </div>
+                                    {lockedBoardBgUrl && (
+                                        <div className="mt-2 border rounded-md overflow-hidden bg-gray-50 flex items-center justify-center p-2 h-40">
+                                            <img src={lockedBoardBgUrl} alt="Vista previa fondo" className="max-h-full object-contain" />
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                            <DialogFooter><Button onClick={handleSaveLockedBoardBg}>{t('save')}</Button></DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+
+                    <Dialog open={isPaymentInfoDialogOpen} onOpenChange={setIsPaymentInfoDialogOpen}>
+                        <DialogContent>
+                            <DialogHeader><DialogTitle>{t('managePaymentInfo')}</DialogTitle></DialogHeader>
+                            <div className="grid gap-4 py-4">
+                                <div className="grid gap-2"><Label htmlFor="payment-info-line1">{t('bankInfoLine1Label')}</Label><Input id="payment-info-line1" value={paymentInfo.line1} onChange={(e) => setPaymentInfo(p => ({ ...p, line1: e.target.value }))}/></div>
+                                <div className="grid gap-2"><Label htmlFor="payment-info-line2">{t('bankInfoLine2Label')}</Label><Input id="payment-info-line2" value={paymentInfo.line2} onChange={(e) => setPaymentInfo(p => ({ ...p, line2: e.target.value }))}/></div>
+                            </div>
+                            <DialogFooter><Button onClick={handleSavePaymentInfo}>{t('save')}</Button></DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+
+                    <Dialog open={isPaymentQrImageDialogOpen} onOpenChange={setIsPaymentQrImageDialogOpen}>
+                        <DialogContent>
+                            <DialogHeader><DialogTitle>{t('managePaymentQrImage')}</DialogTitle></DialogHeader>
+                            <div className="grid gap-4 py-4"><div className="grid gap-2"><Label htmlFor="payment-qr-text">Código QR (Pegar texto)</Label><Textarea id="payment-qr-text" value={paymentQrImageUrl} onChange={(e) => setPaymentQrImageUrl(e.target.value)} rows={4}/></div></div>
+                            <DialogFooter><Button onClick={handleSavePaymentQrImage}>{t('save')}</Button></DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+
+                    <Dialog open={isGamesSummaryDialogOpen} onOpenChange={setIsGamesSummaryDialogOpen}>
+                        <DialogContent className="max-w-md">
+                            <DialogHeader><DialogTitle>{t('gamesSummaryTitle')}</DialogTitle></DialogHeader>
+                            <div className="py-6 space-y-6">
+                                <div className="space-y-2"><div className="flex justify-between text-sm font-medium"><span>{t('twoDigitGames')}</span><span className="text-purple-600 font-bold">{allRaffles.filter(r => r.raffleMode === 'two-digit').length}</span></div><Progress value={allRaffles.length > 0 ? (allRaffles.filter(r => r.raffleMode === 'two-digit').length / allRaffles.length) * 100 : 0} className="h-2" /></div>
+                                <div className="space-y-2"><div className="flex justify-between text-sm font-medium"><span>{t('threeDigitGames')}</span><span className="text-blue-600 font-bold">{allRaffles.filter(r => r.raffleMode === 'three-digit').length}</span></div><Progress value={allRaffles.length > 0 ? (allRaffles.filter(r => r.raffleMode === 'three-digit').length / allRaffles.length) * 100 : 0} className="h-2" /></div>
+                                <div className="space-y-2"><div className="flex justify-between text-sm font-medium"><span>{t('infiniteGames')}</span><span className="text-red-600 font-bold">{allRaffles.filter(r => r.raffleMode === 'infinite').length}</span></div><Progress value={allRaffles.length > 0 ? (allRaffles.filter(r => r.raffleMode === 'infinite').length / allRaffles.length) * 100 : 0} className="h-2" /></div>
+                            </div>
+                            <DialogFooter><Button type="button" variant="outline" onClick={() => setIsGamesSummaryDialogOpen(false)} className="w-full">{t('close')}</Button></DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+                    
+                    <Dialog open={isFreeActivationDialogOpen} onOpenChange={setIsFreeActivationDialogOpen}>
+                        <DialogContent className="max-md">
+                            <DialogHeader><DialogTitle>{t('freeActivationTitle')}</DialogTitle></DialogHeader>
+                            <div className="py-4 space-y-4"><div className="grid gap-2"><Label htmlFor="free-activation-phone">{t('whatsappNumber')}</Label><div className="flex gap-2"><Input id="free-activation-phone" type="tel" value={freeActivationPhone} onChange={(e) => setFreeActivationPhone(e.target.value.replace(/\D/g, ''))} className="flex-grow"/></div></div></div>
+                            <DialogFooter><Button onClick={handleConfirmFreeActivation}>{t('sendToWhatsapp')}</Button></DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+
+                    <Dialog open={showAdminActivationNotice} onOpenChange={(open) => { if (!open && !raffleState.isActive) { handleCancelActivation(); } else { setShowAdminActivationNotice(open); } }}>
+                        <DialogContent>
+                            <DialogHeader><DialogTitle>{t('adminActivationTitle')}</DialogTitle><DialogDescription>{t('adminActivationDescription')}</DialogDescription></DialogHeader>
+                            <DialogFooter className="flex-col sm:flex-row gap-2"><Button variant="outline" onClick={handleCancelActivation}> {t('cancelReference')}</Button><Button onClick={handleConfirmOnline} className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold h-12"><Check className="mr-2 h-5 w-5" />{t('activateRaffleButton')}</Button></DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+                    
+                    <Dialog open={isGoalModalOpen} onOpenChange={setIsGoalModalOpen}>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>{t('goalTitle')}</DialogTitle>
+                                <DialogDescription>{t('goalDescription')}</DialogDescription>
+                            </DialogHeader>
+                            <div className="py-4 space-y-4">
+                                <div className="flex justify-between items-center bg-blue-50 p-4 rounded-lg">
+                                    <p className="font-semibold text-blue-700">{t('prizeValue')}:</p>
+                                    <p className="font-bold text-xl text-blue-900">{formatValue(prizeValueForGoal)}</p>
+                                </div>
+                                <div className="flex justify-between items-center bg-purple-50 p-4 rounded-lg">
+                                    <p className="font-semibold text-purple-700">{t('ticketValue')}:</p>
+                                    <p className="font-bold text-xl text-purple-900">{formatValue(ticketValueForGoal)}</p>
+                                </div>
+                                <div className="flex justify-between items-center bg-green-100 p-4 rounded-lg border-2 border-green-500">
+                                    <p className="font-bold text-green-800">{t('ticketsToCoverPrize')}:</p>
+                                    <p className="font-black text-3xl text-green-900">{ticketsToCoverPrize}</p>
+                                </div>
+                                 <div className="space-y-1">
+                                    <div className="flex justify-between text-xs font-bold text-gray-500 uppercase">
+                                        <span>{t('progress')}</span>
+                                        <span>{confirmedParticipants.length} / {ticketsToCoverPrize}</span>
+                                    </div>
+                                    <Progress value={ticketsToCoverPrize > 0 ? (confirmedParticipants.length / ticketsToCoverPrize) * 100 : 0} className="h-3 bg-gray-200" />
+                                    {confirmedParticipants.length >= ticketsToCoverPrize ? (
+                                        <p className="text-center text-green-600 font-bold text-sm mt-2">¡META ALCANZADA! 🥳</p>
+                                    ) : (
+                                        <p className="text-center text-gray-500 text-xs mt-2">Faltan {Math.max(0, ticketsToCoverPrize - confirmedParticipants.length)} boletas para cubrir el costo.</p>
+                                    )}
+                                </div>
+                            </div>
+                            <DialogFooter><Button type="button" variant="outline" onClick={() => setIsGoalModalOpen(false)}>{t('close')}</Button></DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+
+                    <Dialog open={isPaymentQrDialogOpen} onOpenChange={setIsPaymentQrDialogOpen}>
+                        <DialogContent className="max-w-xs">
+                            <DialogHeader>
+                                <DialogTitle className="text-center">{t('payWithQr')}</DialogTitle>
+                                <DialogDescription className="text-center">{t('scanQrToPay')}</DialogDescription>
+                            </DialogHeader>
+                            <div className="flex justify-center items-center p-4">
+                                <div className="relative inline-block p-4 bg-white rounded-lg shadow-md border-2 border-gray-100">
+                                     {appSettings.paymentQrImageUrl ? (
+                                        <div className="p-2 bg-white rounded-md whitespace-pre-wrap font-mono text-[10px] break-all max-h-[300px] overflow-auto select-all">
+                                            {appSettings.paymentQrImageUrl}
+                                        </div>
+                                     ) : (
+                                        <div className="h-48 w-48 flex items-center justify-center bg-gray-50 rounded text-gray-400 text-xs text-center p-4">
+                                            {t('noPaymentQrImage')}
+                                        </div>
+                                     )}
+                                </div>
+                            </div>
+                             <DialogFooter>
+                                <Button variant="outline" onClick={() => setIsPaymentQrDialogOpen(false)} className="w-full">{t('close')}</Button>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+
+                     <Dialog open={isSuperAdminChangePasswordOpen} onOpenChange={(isOpen) => { if (!isOpen) { setNewPassword(''); setConfirmNewPassword(''); setShowNewPassword(false); } setIsSuperAdminChangePasswordOpen(isOpen); }}>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>{t('changeExecutivePasswordTitle')}</DialogTitle>
+                                <DialogDescription>{t('changeExecutivePasswordDescription')}</DialogDescription>
+                            </DialogHeader>
+                            <div className="grid gap-4 py-4">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="new-super-admin-password-v2">{t('newPassword')}</Label>
+                                    <div className="relative">
+                                        <Input id="new-super-admin-password-v2" type={showNewPassword ? 'text' : 'password'} value={newPassword} onChange={(e) => setNewPassword(e.target.value)}/>
+                                        <Button type="button" variant="ghost" size="icon" className="absolute inset-y-0 right-0 h-full px-3" onClick={() => setShowNewPassword(!showNewPassword)}>{showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button>
+                                    </div>
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="confirm-new-super-admin-password-v2">{t('confirmNewPassword')}</Label>
+                                     <div className="relative">
+                                        <Input id="confirm-new-super-admin-password-v2" type={showNewPassword ? 'text' : 'password'} value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)}/>
+                                         <Button type="button" variant="ghost" size="icon" className="absolute inset-y-0 right-0 h-full px-3" onClick={() => setShowNewPassword(!showNewPassword)}>{showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button>
+                                    </div>
+                                </div>
+                            </div>
+                            <DialogFooter><Button variant="outline" onClick={() => setIsSuperAdminChangePasswordOpen(false)}>{t('cancel')}</Button><Button onClick={handleChangeSuperAdminPassword}>{t('changePasswordButton')}</Button></DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+                    
+                    <Dialog open={isUsdPaymentDialogOpen} onOpenChange={setIsUsdPaymentDialogOpen}>
+                        <DialogContent>
+                            <DialogHeader><DialogTitle>{t('payWithUsd')}</DialogTitle><DialogDescription>{t('usdPaymentInstructions')}</DialogDescription></DialogHeader>
+                            <div className="py-4 bg-blue-50 p-4 rounded-lg border border-blue-100"><p className="text-sm text-blue-800 font-medium">{t('usdPaymentNote')}</p></div>
+                            <DialogFooter><Button variant="outline" onClick={() => setIsUsdPaymentDialogOpen(false)}>{t('cancel')}</Button><Button onClick={handleUsdPayment} className="bg-blue-600 hover:bg-blue-700 text-white font-bold">{t('goToUsdPayment')}</Button></DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+
+                    <Dialog open={isSupportContactDialogOpen} onOpenChange={setIsSupportContactDialogOpen}>
+                        <DialogContent className="sm:max-w-md">
+                            <DialogHeader><DialogTitle>{t('secondaryContact')}</DialogTitle><DialogDescription>{t('savedContacts')}</DialogDescription></DialogHeader>
+                            <div className="space-y-4 py-4">
+                                <div className="flex gap-2">
+                                    <Input placeholder={t('enterPhoneNumber')} value={newSupportContact} onChange={(e) => setNewSupportContact(e.target.value.replace(/\D/g, ''))} />
+                                    <Button onClick={handleAddSupportContact}>{t('add')}</Button>
+                                </div>
+                                <ScrollArea className="h-40 border rounded-md p-2">
+                                    {supportContacts.length > 0 ? (
+                                        <div className="space-y-2">
+                                            {supportContacts.map((contact, index) => (
+                                                <div key={index} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                                                    <span className="font-mono">{contact}</span>
+                                                    <Button variant="ghost" size="icon" onClick={() => handleRemoveSupportContact(contact)}><X className="h-4 w-4 text-red-500" /></Button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (<p className="text-center text-gray-500 py-4">{t('noSavedContacts')}</p>)}
+                                </ScrollArea>
+                            </div>
+                            <DialogFooter><Button onClick={() => setIsSupportContactDialogOpen(false)}>{t('close')}</Button></DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+
+                    <Dialog open={isPaymentLinksDialogOpen} onOpenChange={setIsPaymentLinksDialogOpen}>
+                        <DialogContent className="sm:max-w-md">
+                            <DialogHeader><DialogTitle>{t('managePaymentLinks')}</DialogTitle><DialogDescription>{t('managePaymentLinksDescription')}</DialogDescription></DialogHeader>
+                            <div className="grid gap-4 py-4">
+                                <div className="grid gap-2"><Label htmlFor="payment-link-2">{t('paymentLinkTwoDigit')}</Label><Input id="payment-link-2" value={paymentLinks.twoDigit} onChange={(e) => setPaymentLinks(p => ({ ...p, twoDigit: e.target.value }))}/></div>
+                                <div className="grid gap-2"><Label htmlFor="payment-link-3">{t('paymentLinkThreeDigit')}</Label><Input id="payment-link-3" value={paymentLinks.threeDigit} onChange={(e) => setPaymentLinks(p => ({ ...p, threeDigit: e.target.value }))}/></div>
+                                <div className="grid gap-2"><Label htmlFor="payment-link-inf">{t('paymentLinkInfinite')}</Label><Input id="payment-link-inf" value={paymentLinks.infinite} onChange={(e) => setPaymentLinks(p => ({ ...p, infinite: e.target.value }))}/></div>
+                            </div>
+                            <DialogFooter><Button variant="outline" onClick={() => setIsPaymentLinksDialogOpen(false)}>{t('cancel')}</Button><Button onClick={handleSavePaymentLinks}>{t('save')}</Button></DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+
+                    <Dialog open={isActivationPricesDialogOpen} onOpenChange={setIsActivationPricesDialogOpen}>
+                        <DialogContent className="sm:max-w-md">
+                            <DialogHeader><DialogTitle>{t('manageActivationPrices')}</DialogTitle><DialogDescription>{t('manageActivationPricesDescription')}</DialogDescription></DialogHeader>
+                            <div className="grid gap-4 py-4">
+                                <div className="grid gap-2"><Label htmlFor="price-2">{t('activationPriceTwoDigit')}</Label><Input id="price-2" value={activationPrices.twoDigit} onChange={(e) => setActivationPrices(p => ({ ...p, twoDigit: e.target.value }))}/></div>
+                                <div className="grid gap-2"><Label htmlFor="price-3">{t('activationPriceThreeDigit')}</Label><Input id="price-3" value={activationPrices.threeDigit} onChange={(e) => setActivationPrices(p => ({ ...p, threeDigit: e.target.value }))}/></div>
+                                <div className="grid gap-2"><Label htmlFor="price-inf">{t('activationPriceInfinite')}</Label><Input id="price-inf" value={activationPrices.infinite} onChange={(e) => setActivationPrices(p => ({ ...p, infinite: e.target.value }))}/></div>
+                            </div>
+                            <DialogFooter><Button variant="outline" onClick={() => setIsActivationPricesDialogOpen(false)}>{t('cancel')}</Button><Button onClick={handleSaveActivationPrices}>{t('save')}</Button></DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+
+                    <Dialog open={isFreeGamesDialogOpen} onOpenChange={setIsFreeGamesDialogOpen}>
+                        <DialogContent className="sm:max-w-md">
+                            <DialogHeader><DialogTitle>{t('manageFreeGames')}</DialogTitle><DialogDescription>{t('manageFreeGamesDescription')}</DialogDescription></DialogHeader>
+                            <div className="grid gap-6 py-4">
+                                <div className="space-y-4">
+                                    <h4 className="font-bold text-sm text-purple-600 uppercase tracking-wider">Activar Modalidad Gratis</h4>
+                                    <div className="flex items-center justify-between"><Label htmlFor="free-2">{t('freeTwoDigit')}</Label><Switch id="free-2" checked={freeGamesConfig.twoDigit} onCheckedChange={(val) => setFreeGamesConfig(p => ({ ...p, twoDigit: val }))}/></div>
+                                    <div className="flex items-center justify-between"><Label htmlFor="free-3">{t('freeThreeDigit')}</Label><Switch id="free-3" checked={freeGamesConfig.threeDigit} onCheckedChange={(val) => setFreeGamesConfig(p => ({ ...p, threeDigit: val }))}/></div>
+                                    <div className="flex items-center justify-between"><Label htmlFor="free-inf">{t('freeInfinite')}</Label><Switch id="free-inf" checked={freeGamesConfig.infinite} onCheckedChange={(val) => setFreeGamesConfig(p => ({ ...p, infinite: val }))}/></div>
+                                </div>
+                                <div className="space-y-4 pt-4 border-t">
+                                    <h4 className="font-bold text-sm text-red-600 uppercase tracking-wider">Bloquear Modalidades</h4>
+                                    <div className="flex items-center justify-between"><Label htmlFor="block-2">{t('blockTwoDigit')}</Label><Switch id="block-2" checked={freeGamesConfig.blockedTwoDigit} onCheckedChange={(val) => setFreeGamesConfig(p => ({ ...p, blockedTwoDigit: val }))}/></div>
+                                    <div className="flex items-center justify-between"><Label htmlFor="block-3">{t('blockThreeDigit')}</Label><Switch id="block-3" checked={freeGamesConfig.blockedThreeDigit} onCheckedChange={(val) => setFreeGamesConfig(p => ({ ...p, blockedThreeDigit: val }))}/></div>
+                                    <div className="flex items-center justify-between"><Label htmlFor="block-inf">{t('blockInfinite')}</Label><Switch id="block-inf" checked={freeGamesConfig.blockedInfinite} onCheckedChange={(val) => setFreeGamesConfig(p => ({ ...p, blockedInfinite: val }))}/></div>
+                                </div>
+                            </div>
+                            <DialogFooter><Button variant="outline" onClick={() => setIsFreeGamesDialogOpen(false)}>{t('cancel')}</Button><Button onClick={handleSaveFreeGamesSettings}>{t('save')}</Button></DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+
+                    <Dialog open={activationConfirmationOpen} onOpenChange={setActivationConfirmationOpen}>
+                        <DialogContent>
+                            <DialogHeader><DialogTitle>{t('confirmActivationTitle')}</DialogTitle><DialogDescription>{t('confirmActivationDescription')}</DialogDescription></DialogHeader>
+                            {activationToConfirm && (
+                                <div className="py-4 space-y-2">
+                                    <p><strong>{t('transactionId')}:</strong> {activationToConfirm.activation.transactionId}</p>
+                                    <p><strong>{t('raffleType')}:</strong> {activationToConfirm.activation.raffleMode}</p>
+                                    <p><strong>{t('newRaffleRef')}:</strong> {activationToConfirm.newRaffleRef}</p>
+                                </div>
+                            )}
+                            <DialogFooter><Button variant="outline" onClick={() => setActivationConfirmationOpen(false)}>{t('cancel')}</Button><Button onClick={confirmAndActivateBoard} className="bg-green-600 hover:bg-green-700 text-white font-bold">{t('confirmAndActivate')}</Button></DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+
+                    <Dialog open={isCopyOptionsDialogOpen} onOpenChange={setIsCopyOptionsDialogOpen}>
+                        <DialogContent className="sm:max-w-md">
+                            <DialogHeader><DialogTitle>{t('copyPaymentTitle')}</DialogTitle><DialogDescription>{t('copyPaymentDescription')}</DialogDescription></DialogHeader>
+                            <div className="grid gap-4 py-4">
+                                <Button onClick={() => { navigator.clipboard.writeText(appSettings.bankInfoLine1 || 'Banco Caja Social: 24096711314'); showNotification(t('accountNumberCopied'), 'success'); }} variant="outline" className="justify-start"><Copy className="mr-2 h-4 w-4" />{t('copyAccountNumber')}</Button>
+                                <Button onClick={() => { navigator.clipboard.writeText(appSettings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054'); showNotification(t('brebKeyCopied'), 'success'); }} variant="outline" className="justify-start"><Copy className="mr-2 h-4 w-4" />{t('copyBrebKey')}</Button>
+                                <Button onClick={() => setIsPaymentQrDialogOpen(true)} variant="outline" className="justify-start"><QrCode className="mr-2 h-4 w-4" />{t('payWithQr')}</Button>
+                                {(appSettings.paymentLinkUsd || (selectedRaffleMode === 'two-digit' && appSettings.paymentLinkUsdTwoDigit) || (selectedRaffleMode === 'three-digit' && appSettings.paymentLinkUsdThreeDigit) || (selectedRaffleMode === 'infinite' && appSettings.paymentLinkUsdInfinite)) && (
+                                    <Button onClick={() => setIsUsdPaymentDialogOpen(true)} variant="outline" className="justify-start bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"><DollarSign className="mr-2 h-4 w-4" />{t('payWithUsd')}</Button>
+                                )}
+                            </div>
+                            <DialogFooter><Button onClick={() => setIsCopyOptionsDialogOpen(false)}>{t('close')}</Button></DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+
+                     <Dialog open={isChangePasswordDialogOpen} onOpenChange={(isOpen) => { if (!isOpen) { setNewPassword(''); setConfirmNewPassword(''); setShowNewPassword(false); } setIsChangePasswordDialogOpen(isOpen); }}>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>{t('changePasswordTitle')}</DialogTitle>
+                                <DialogDescription>{raffleToChangePassword ? t('changePasswordDescription', { ref: raffleToChangePassword.raffleRef }) : ''}</DialogDescription>
+                            </DialogHeader>
+                            <div className="grid gap-4 py-4">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="new-password-v2">{t('newPassword')}</Label>
+                                    <div className="relative">
+                                        <Input id="new-password-v2" type={showNewPassword ? 'text' : 'password'} value={newPassword} onChange={(e) => setNewPassword(e.target.value)}/>
+                                        <Button type="button" variant="ghost" size="icon" className="absolute inset-y-0 right-0 h-full px-3" onClick={() => setShowNewPassword(!showNewPassword)}>{showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button>
+                                    </div>
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="confirm-new-password-v2">{t('confirmNewPassword')}</Label>
+                                     <div className="relative">
+                                        <Input id="confirm-new-password-v2" type={showNewPassword ? 'text' : 'password'} value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)}/>
+                                         <Button type="button" variant="ghost" size="icon" className="absolute inset-y-0 right-0 h-full px-3" onClick={() => setShowNewPassword(!showNewPassword)}>{showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button>
+                                    </div>
+                                </div>
+                            </div>
+                            <DialogFooter><Button variant="outline" onClick={() => setIsChangePasswordDialogOpen(false)}>{t('cancel')}</Button><Button onClick={handleChangePassword}>{t('changePasswordButton')}</Button></DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+
+                    <Dialog open={isAdminLoginOpen} onOpenChange={setIsAdminLoginOpen}>
+                        <DialogContent>
+                            <DialogHeader><DialogTitle>{t('recoverAdminAccess')}</DialogTitle><DialogDescription>{t('recoverAdminAccessDescription')}</DialogDescription></DialogHeader>
+                            <div className="grid gap-4 py-4">
+                                <div className="grid gap-2"><Label htmlFor="admin-ref-search">{t('gameReference')}</Label><Input id="admin-ref-search" value={adminRefSearch} onChange={(e) => setAdminRefSearch(e.target.value)} placeholder="JM1234567" /></div>
+                                <div className="grid gap-2"><Label htmlFor="admin-phone-search">{t('organizerPhone')}</Label><Input id="admin-phone-search" value={adminPhoneSearch} onChange={(e) => setAdminPhoneSearch(e.target.value)} placeholder="3001234567" /></div>
+                                <div className="grid gap-2"><Label htmlFor="admin-password-search">{t('password')}</Label><Input id="admin-password-search" type="password" value={adminPasswordSearch} onChange={(e) => setAdminPasswordSearch(e.target.value)} placeholder={t('yourPassword')} /></div>
+                            </div>
+                            <DialogFooter><Button onClick={() => handleAdminSearch({ refToSearch: adminRefSearch, phoneToSearch: adminPhoneSearch, passwordToSearch: adminPasswordSearch })} className="w-full bg-purple-600 hover:bg-purple-700">{t('recover')}</Button></DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+
+                    <Dialog open={isPublicSearchOpen} onOpenChange={setIsPublicSearchOpen}>
+                        <DialogContent>
+                            <DialogHeader><DialogTitle>{t('searchRaffleByRef')}</DialogTitle><DialogDescription>{t('searchRaffleByRefDescription')}</DialogDescription></DialogHeader>
+                            <div className="grid gap-4 py-4"><div className="grid gap-2"><Label htmlFor="public-ref-search">{t('reference')}</Label><Input id="public-ref-search" value={publicRefSearch} onChange={(e) => setPublicRefSearch(e.target.value)} placeholder="JM1234567" /></div></div>
+                            <DialogFooter><Button onClick={() => handleAdminSearch({ refToSearch: publicRefSearch, isPublicSearch: true })} className="w-full bg-blue-600 hover:bg-blue-700">{t('search')}</Button></DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+
+                    <Dialog open={isSalesModalOpen} onOpenChange={setIsSalesModalOpen}>
+                        <DialogContent>
+                            <DialogHeader><DialogTitle>{t('salesCollection')}</DialogTitle><DialogDescription>{t('salesCollectionDescription')}</DialogDescription></DialogHeader>
+                            <div className="py-6 space-y-6">
+                                <div className="flex justify-between items-center bg-gray-50 p-4 rounded-lg"><div><p className="text-sm text-gray-500 font-medium">{t('ticketsSold')}</p><p className="text-3xl font-bold text-gray-900">{confirmedParticipants.length}</p></div><div className="h-12 w-12 bg-purple-100 rounded-full flex items-center justify-center"><TicketIcon className="h-6 w-6 text-purple-600" /></div></div>
+                                <div className="flex justify-between items-center bg-green-50 p-4 rounded-lg border border-green-100"><div><p className="text-sm text-green-600 font-medium">{t('totalCollected')}</p><p className="text-3xl font-bold text-green-700">{formatValue(totalCollected)}</p></div><div className="h-12 w-12 bg-green-100 rounded-full flex items-center justify-center"><DollarSign className="h-6 w-6 text-green-600" /></div></div>
+                            </div>
+                            <DialogFooter><Button onClick={() => setIsSalesModalOpen(false)} className="w-full">{t('close')}</Button></DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+
+                    <Dialog open={isShareDialogOpen} onOpenChange={setIsShareDialogOpen}>
+                        <DialogContent className="sm:max-w-md">
+                            <DialogHeader><DialogTitle>{t('shareRaffle')}</DialogTitle><DialogDescription>{t('shareRaffleAppDescription')}</DialogDescription></DialogHeader>
+                            <div className="grid grid-cols-1 gap-4 py-4">
+                                <Button onClick={handleShareToWhatsApp} variant="outline" className="flex items-center justify-start gap-3 h-12 text-green-600 border-green-200 hover:bg-green-50"><WhatsappIcon className="h-6 w-6" /> {t('shareOnWhatsApp')}</Button>
+                                <Button onClick={handleShareToFacebook} variant="outline" className="flex items-center justify-start gap-3 h-12 text-blue-600 border-blue-200 hover:bg-blue-50"><FacebookIcon /> {t('shareOnFacebook')}</Button>
+                                {raffleState.raffleRef && (
+                                    <Button onClick={handleSharePlayNow} variant="outline" className="flex items-center justify-start gap-3 h-12 text-purple-600 border-purple-200 hover:bg-purple-50"><Gamepad2 className="h-6 w-6" /> Botón ¡JUGAR AHORA!</Button>
+                                )}
+                                <Button onClick={() => { navigator.clipboard.writeText(`${window.location.origin}${raffleState.raffleRef ? `?ref=${raffleState.raffleRef}` : ''}`); showNotification(t('linkCopied'), 'success'); setIsShareDialogOpen(false); }} variant="outline" className="flex items-center justify-start gap-3 h-12"><LinkIcon className="h-6 w-6" /> {t('copyUrl')}</Button>
+                            </div>
+                        </DialogContent>
+                    </Dialog>
+
+                    <Dialog open={isQrDialogOpen} onOpenChange={setIsQrDialogOpen}>
+                        <DialogContent className="sm:max-w-md">
+                            <DialogHeader><DialogTitle>{t('shareWithQR')}</DialogTitle><DialogDescription>{t('shareWithQRDescription')}</DialogDescription></DialogHeader>
+                            <div className="flex flex-col items-center justify-center p-6 bg-white rounded-xl shadow-inner my-4">
+                                <div className="p-4 bg-white rounded-lg border-4 border-purple-100">
+                                    <QrCode className="h-48 w-48 text-purple-600" />
+                                </div>
+                                <p className="mt-4 font-bold text-gray-800 tracking-wider">{raffleState.raffleRef || 'RIFA⚡EXPRESS'}</p>
+                            </div>
+                            <DialogFooter><Button onClick={() => setIsQrDialogOpen(false)} className="w-full">{t('close')}</Button></DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+
+                    <Dialog open={isSuperAdminLoginOpen} onOpenChange={setIsSuperAdminLoginOpen}>
+                        <DialogContent>
+                            <DialogHeader><DialogTitle>{t('superAdminLogin')}</DialogTitle></DialogHeader>
+                            <div className="grid gap-4 py-4">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="super-admin-password">{t('password')}</Label>
+                                    <div className="relative">
+                                        <Input id="super-admin-password" type={showSuperAdminPassword ? 'text' : 'password'} value={superAdminPassword} onChange={(e) => setSuperAdminPassword(e.target.value)} placeholder={t('yourPassword')} />
+                                        <Button type="button" variant="ghost" size="icon" className="absolute inset-y-0 right-0 h-full px-3" onClick={() => setShowSuperAdminPassword(!showSuperAdminPassword)}>{showSuperAdminPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button>
+                                    </div>
+                                </div>
+                            </div>
+                            <DialogFooter><Button onClick={handleSuperAdminLogin} className="w-full bg-slate-900 hover:bg-black">{t('login')}</Button></DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+
+                    <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
+                        <DialogContent>
+                            <DialogHeader><DialogTitle>{t('confirmAction')}</DialogTitle><DialogDescription>{confirmationMessage}</DialogDescription></DialogHeader>
+                            <DialogFooter className="gap-2 sm:gap-0"><Button variant="outline" onClick={() => setShowConfirmation(false)}>{t('cancel')}</Button><Button className="bg-red-600 hover:bg-red-700" onClick={() => { if (confirmationAction) confirmationAction(); setShowConfirmation(false); }}>{t('confirm')}</Button></DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+
                 </div>
             </div>
-
-
-            {showConfirmation && (
-                <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-[101]">
-                    <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full">
-                        <h3 className="text-lg font-medium text-gray-900 mb-4">{t('confirmAction')}</h3>
-                        <p className="text-gray-500 mb-6">{confirmationMessage}</p>
-                        <div className="flex justify-end space-x-3">
-                            <button onClick={() => setShowConfirmation(false)} className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">{t('cancel')}</button>
-                            <button onClick={() => { if(confirmationAction) confirmationAction(); setShowConfirmation(false); }} className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">{t('confirm')}</button>
-                        </div>
-                    </div>
-                </div>
-            )}
-            
-            <Dialog open={isTicketModalOpen} onOpenChange={closeTicketModal}>
-                <DialogContent className="w-auto max-w-xs p-0 border-0 bg-transparent shadow-none font-sans">
-                     <DialogHeader><DialogTitle className="sr-only">{t('raffleTicket')}</DialogTitle></DialogHeader>
-                     {ticketInfo && (
-                        <div>
-                            <div ref={ticketModalRef} className="bg-white p-2 rounded-lg shadow-lg font-mono text-gray-800 text-[11px] relative overflow-hidden" style={{width: '280px'}}>
-                                <div className="absolute inset-0 flex items-center justify-center z-0 opacity-50">
-                                    <p className="text-gray-200/50 text-7xl font-bold -rotate-45 select-none flex items-center justify-center gap-1"><span>{currentAppName}</span></p>
-                                </div>
-                                <div className="relative z-10">
-                                    <div className="text-center mb-4">
-                                        <h3 className="text-xl font-bold">{currentAppName}</h3>
-                                        <p>{t('reference')}: {ticketInfo.raffleRef}</p>
-                                        <p className="font-semibold">{t('purchaseReceipt')}</p>
-                                    </div>
-                                    <p className="text-center text-xs mb-4">{ticketInfo.timestamp?.toDate ? format(ticketInfo.timestamp.toDate(), "d 'de' MMMM 'de' yyyy - h:mm a", { locale: language === 'es' ? es : enUS }) : t('dateNotAvailable')}</p>
-                                    <div className="border-t border-dashed border-gray-400 my-4"></div>
-                                    <div className="space-y-1"><div className="flex justify-between"><span>{t('client')}:</span><span className="font-semibold text-right">{ticketInfo.name}</span></div></div>
-                                    <div className="border-t border-dashed border-gray-400 my-4"></div>
-                                    <h4 className="font-bold text-center mb-2">{t('raffleDetails')}</h4>
-                                    <div className="space-y-1">
-                                        <div className="flex justify-between"><span>{t('prize_caps')}:</span><span className="font-semibold text-right">{isNaN(Number(ticketInfo.prize)) ? ticketInfo.prize : formatValue(ticketInfo.prize)}</span></div>
-                                        <div className="flex justify-between"><span>{t('ticketValue_caps')}:</span><span className="font-semibold text-right">{formatValue(ticketInfo.value)}</span></div>
-                                        <div className="flex justify-between"><span>{t('drawDate_caps')}:</span><span className="font-semibold text-right">{ticketInfo.gameDate ? format(new Date(ticketInfo.gameDate + 'T00:00:00'), "d 'de' MMMM 'de' yyyy", { locale: language === 'es' ? es : enUS }) : 'N/A'}</span></div>
-                                        <div className="flex justify-between"><span>{t('playedWith_caps')}:</span><span className="font-semibold text-right">{ticketInfo.lottery}</span></div>
-                                        <div className="flex justify-between"><span>{t('organizedBy_caps')}:</span><span className="font-semibold text-right">{ticketInfo.organizerName}</span></div>
-                                    </div>
-                                    <div className="border-t border-dashed border-gray-400 my-4"></div>
-                                    <div className="text-center my-4">
-                                        <p className="font-bold">{t('assignedNumber_caps')}</p>
-                                        <p className="text-5xl font-bold text-violet-600 tracking-wider">{ticketInfo.raffleNumber}</p>
-                                    </div>
-                                    <div className="border-t border-dashed border-gray-400 my-4"></div>
-                                    <p className="text-center font-semibold">{t('thanksForParticipating')}</p>
-                                </div>
-                            </div>
-                            <DialogFooter className="flex-col sm:flex-col sm:space-x-0 gap-2 w-full pt-4">
-                                <Button onClick={handleDownloadTicket} className="w-full bg-purple-500 text-white">{t('downloadTicket')}</Button>
-                                <Button onClick={handleShareTicket} className="w-full bg-green-500 text-white flex items-center justify-center gap-2"><WhatsappIcon/>{t('share')}</Button>
-                                <Button onClick={closeTicketModal} variant="outline" className="w-full bg-white/80">{t('close')}</Button>
-                            </DialogFooter>
-                        </div>
-                     )}
-                </DialogContent>
-            </Dialog>
-
-            <Dialog open={isSuperAdminLoginOpen} onOpenChange={setIsSuperAdminLoginOpen}>
-                <DialogContent>
-                    <DialogHeader><DialogTitle>{t('superAdminLogin')}</DialogTitle></DialogHeader>
-                    <div className="grid gap-4 py-4">
-                        <Label htmlFor="super-admin-password">{t('password')}</Label>
-                        <div className="relative">
-                            <input id="super-admin-password" type={showSuperAdminPassword ? 'text' : 'password'} value={superAdminPassword} onChange={(e) => setSuperAdminPassword(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSuperAdminLogin()} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"/>
-                            <Button type="button" variant="ghost" size="icon" className="absolute inset-y-0 right-0 h-full px-3" onClick={() => setShowSuperAdminPassword(!showSuperAdminPassword)}>{showSuperAdminPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button>
-                        </div>
-                    </div>
-                    <DialogFooter><Button type="button" onClick={handleSuperAdminLogin}>{t('login')}</Button></DialogFooter>
-                </DialogContent>
-            </Dialog>
-
-            <Dialog open={isAdminLoginOpen} onOpenChange={setIsAdminLoginOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>{t('recoverAdminAccess')}</DialogTitle>
-                        <DialogDescription>{t('recoverAdminAccessDescription')}</DialogDescription>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="admin-ref-search" className="text-right">{t('reference')}</Label>
-                            <Input id="admin-ref-search" value={adminRefSearch} onChange={(e) => setAdminRefSearch(e.target.value)} className="col-span-3" placeholder="Ej: JM1"/>
-                        </div>
-                        {!isSuperAdmin && (
-                            <>
-                                <div className="grid grid-cols-4 items-center gap-4">
-                                    <Label htmlFor="admin-phone-search" className="text-right">{t('phone')}</Label>
-                                    <div className="relative col-span-3">
-                                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3"><span className="text-gray-500 sm:text-sm">+57</span></div>
-                                        <Input id="admin-phone-search" type="tel" value={adminPhoneSearch} onChange={(e) => setAdminPhoneSearch(e.target.value.replace(/\D/g, ''))} className="pl-12" placeholder="3001234567"/>
-                                    </div>
-                                </div>
-                                <div className="grid grid-cols-4 items-center gap-4">
-                                    <Label htmlFor="admin-password-search" className="text-right">{t('password')}</Label>
-                                    <Input id="admin-password-search" type="password" value={adminPasswordSearch} onChange={(e) => setAdminPasswordSearch(e.target.value)} className="col-span-3" placeholder={t('yourPassword')}/>
-                                </div>
-                            </>
-                        )}
-                    </div>
-                    <DialogFooter>
-                        <Button type="button" variant="outline" onClick={() => isAdminLoginOpen(false)}>{t('cancel')}</Button>
-                        <Button type="submit" onClick={() => handleAdminSearch({ refToSearch: adminRefSearch, isPublicSearch: true })}>{t('recover')}</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-
-            <Dialog open={isPublicSearchOpen} onOpenChange={setIsPublicSearchOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>{t('searchRaffleByRef')}</DialogTitle>
-                        <DialogDescription>{t('searchRaffleByRefDescription')}</DialogDescription>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="public-ref-search" className="text-right">{t('reference')}</Label>
-                            <Input id="public-ref-search" value={publicRefSearch} onChange={(e) => setPublicRefSearch(e.target.value)} className="col-span-3" placeholder="Ej: JM1"/>
-                        </div>
-                    </div>
-                    <DialogFooter>
-                        <Button type="button" variant="outline" onClick={() => setIsPublicSearchOpen(false)}>{t('cancel')}</Button>
-                        <Button type="submit" onClick={() => handleAdminSearch({ isPublicSearch: true })}>{t('search')}</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-
-             <Dialog open={isSalesModalOpen} onOpenChange={setIsSalesModalOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>{t('salesCollection')}</DialogTitle>
-                        <DialogDescription>{t('salesCollectionDescription')}</DialogDescription>
-                    </DialogHeader>
-                    <div className="py-4">
-                        <div className="flex justify-between items-center bg-gray-100 p-4 rounded-lg">
-                            <p className="font-semibold text-gray-600">{t('ticketsSold')}:</p>
-                            <p className="font-bold text-xl text-gray-800">{confirmedParticipants.length}</p>
-                        </div>
-                        <div className="flex justify-between items-center bg-green-100 p-4 rounded-lg mt-4">
-                            <p className="font-semibold text-green-800">{t('totalCollected')}:</p>
-                            <p className="font-bold text-2xl text-green-800">{formatValue(totalCollected)}</p>
-                        </div>
-                    </div>
-                    <DialogFooter><Button type="button" variant="outline" onClick={() => setIsSalesModalOpen(false)}>{t('close')}</Button></DialogFooter>
-                </DialogContent>
-            </Dialog>
-
-            <Dialog open={isShareDialogOpen} onOpenChange={setIsShareDialogOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>{t('shareRaffle')}</DialogTitle>
-                        <DialogDescription>{t('shareRaffleAppDescription')}</DialogDescription>
-                    </DialogHeader>
-                    <div className="flex flex-col space-y-4 py-4">
-                        <Button onClick={() => handleShareToWhatsApp()} className="w-full bg-green-500 text-white hover:bg-green-600 flex items-center justify-center gap-2"><WhatsappIcon /><span>{t('shareOnWhatsApp')}</span></Button>
-                        <Button onClick={() => handleShareToFacebook()} className="w-full bg-blue-600 text-white hover:bg-blue-700 flex items-center justify-center gap-2"><FacebookIcon /><span>{t('shareOnFacebook')}</span></Button>
-                        <Button onClick={() => handleSharePlayNow()} className="w-full bg-yellow-500 text-white hover:bg-yellow-600 flex items-center justify-center gap-2"><Gamepad2 className="h-5 w-5" /><span>{t('sendPrizePhoto')}</span></Button>
-                    </div>
-                    <DialogFooter><Button variant="outline" onClick={() => setIsShareDialogOpen(false)}>{t('close')}</Button></DialogFooter>
-                </DialogContent>
-            </Dialog>
-
-            <Dialog open={isQrDialogOpen} onOpenChange={setIsQrDialogOpen}>
-                <DialogContent className="max-w-xs">
-                    <DialogHeader>
-                        <DialogTitle className="text-center">{t('shareWithQR')}</DialogTitle>
-                        <DialogDescription className="text-center">{t('shareWithQRDescription')}</DialogDescription>
-                    </DialogHeader>
-                    {appUrl && (
-                        <div className="flex justify-center items-center p-4">
-                            <div className="relative inline-block p-4 bg-white rounded-lg shadow-md">
-                                <Image src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(window.location.origin)}&qzone=1&ecc=H`} alt={t('appQRCodeAlt')} width={200} height={200}/>
-                                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                     <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/90 shadow-md backdrop-blur-sm"><span className="font-bold text-5xl text-yellow-500">⚡</span></div>
-                                 </div>
-                            </div>
-                        </div>
-                    )}
-                </DialogContent>
-            </Dialog>
-            
-            <Dialog open={activationConfirmationOpen} onOpenChange={setActivationConfirmationOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>{t('confirmActivationTitle')}</DialogTitle>
-                        <DialogDescription>{t('confirmActivationDescription')}</DialogDescription>
-                    </DialogHeader>
-                    <div className="py-4 space-y-2">
-                        <p>{t('transactionId')}: <span className="font-mono bg-gray-100 p-1 rounded">{activationToConfirm?.activation.transactionId}</span></p>
-                        <p>{t('newRaffleRef')}: <span className="font-mono bg-gray-100 p-1 rounded font-bold">{activationToConfirm?.newRaffleRef}</span></p>
-                    </div>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setActivationConfirmationOpen(false)}>{t('cancel')}</Button>
-                        <Button onClick={confirmAndActivateBoard}>{t('confirmAndActivate')}</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-
-            <Dialog open={isSupportContactDialogOpen} onOpenChange={setIsSupportContactDialogOpen}>
-                <DialogContent>
-                    <DialogHeader><DialogTitle>{t('secondaryContact')}</DialogTitle></DialogHeader>
-                    <div className="grid gap-4 py-4">
-                        <Label htmlFor="new-support-contact-input">{t('addNewContact')}</Label>
-                        <div className="flex gap-2">
-                            <div className="relative flex-grow">
-                                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3"><span className="text-gray-500 sm:text-sm">+57</span></div>
-                                <Input id="new-support-contact-input" type="tel" value={newSupportContact} onChange={(e) => setNewSupportContact(e.target.value.replace(/\D/g, ''))} placeholder="3001234567" className="pl-12"/>
-                            </div>
-                            <Button onClick={handleAddSupportContact} disabled={!newSupportContact}>{t('add')}</Button>
-                        </div>
-                        <div className="space-y-2 mt-4">
-                             <Label>{t('savedContacts')}</Label>
-                             {Array.isArray(supportContacts) && supportContacts.length > 0 ? (
-                                supportContacts.map((contact, index) => (
-                                    <div key={index} className="flex items-center justify-between bg-gray-100 p-2 rounded-md">
-                                        <span>+57 {contact}</span>
-                                        <Button variant="ghost" size="icon" onClick={() => handleRemoveSupportContact(contact)}><Trash2 className="h-4 w-4 text-red-500" /></Button>
-                                    </div>
-                                ))
-                             ) : (<p className="text-sm text-gray-500">{t('noSavedContacts')}</p>)}
-                        </div>
-                    </div>
-                    <DialogFooter>
-                        <Button type="button" variant="outline" onClick={() => setIsSupportContactDialogOpen(false)}>{t('cancel')}</Button>
-                        <Button type="button" onClick={handleSaveSupportContacts}>{t('save')}</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-            
-            <Dialog open={isContactDialogOpen} onOpenChange={setIsContactDialogOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>{t('contact')}</DialogTitle>
-                        <DialogDescription>{t('contactDialogDescription')}</DialogDescription>
-                    </DialogHeader>
-                    <div className="flex flex-col space-y-4 py-4">
-                        {Array.isArray(appSettings.supportContacts) && appSettings.supportContacts?.map((contact, index) => (
-                            <Button
-                                key={index}
-                                onClick={() => { window.open(`https://wa.me/57${contact}`, '_blank'); setIsContactDialogOpen(false); }}
-                                className="w-full bg-green-500 text-white hover:bg-green-600 flex items-center justify-center gap-2"
-                            >
-                                <WhatsappIcon />
-                                <span>{t('assignReference')} {appSettings.supportContacts.length > 1 ? index + 1 : ''}</span>
-                            </Button>
-                        ))}
-                    </div>
-                </DialogContent>
-            </Dialog>
-
-            <Dialog open={isChangePasswordDialogOpen} onOpenChange={(isOpen) => { if (!isOpen) { setNewPassword(''); setConfirmNewPassword(''); setShowNewPassword(false); } setIsChangePasswordDialogOpen(isOpen); }}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>{t('changePasswordTitle')}</DialogTitle>
-                        <DialogDescription>{t('changePasswordDescription', { ref: raffleToChangePassword?.raffleRef })}</DialogDescription>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                         <div className="grid gap-2">
-                             <Label htmlFor="current-password">{t('currentPassword')}</Label>
-                             <div className="relative">
-                                 <Input id="current-password" type="text" readOnly value={raffleToChangePassword?.password || ''} />
-                                 <Button variant="ghost" size="icon" className="absolute top-1/2 right-2 -translate-y-1/2 h-7 w-7" onClick={() => navigator.clipboard.writeText(raffleToChangePassword?.password || '')}><Copy className="h-4 w-4" /></Button>
-                             </div>
-                         </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="new-password">{t('newPassword')}</Label>
-                            <div className="relative">
-                                <Input id="new-password" type={showNewPassword ? 'text' : 'password'} value={newPassword} onChange={(e) => setNewPassword(e.target.value)}/>
-                                <Button type="button" variant="ghost" size="icon" className="absolute inset-y-0 right-0 h-full px-3" onClick={() => setShowNewPassword(!showNewPassword)}>{showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button>
-                            </div>
-                        </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="confirm-new-password">{t('confirmNewPassword')}</Label>
-                             <div className="relative">
-                                <Input id="confirm-new-password" type={showNewPassword ? 'text' : 'password'} value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)}/>
-                                 <Button type="button" variant="ghost" size="icon" className="absolute inset-y-0 right-0 h-full px-3" onClick={() => setShowNewPassword(!showNewPassword)}>{showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button>
-                            </div>
-                        </div>
-                    </div>
-                    <DialogFooter><Button variant="outline" onClick={() => setIsChangePasswordDialogOpen(false)}>{t('cancel')}</Button><Button onClick={handleChangePassword}>{t('changePasswordButton')}</Button></DialogFooter>
-                </DialogContent>
-            </Dialog>
-
-            <Dialog open={isSuperAdminChangePasswordOpen} onOpenChange={(isOpen) => { if (!isOpen) { setNewPassword(''); setConfirmNewPassword(''); setShowNewPassword(false); } setIsSuperAdminChangePasswordOpen(isOpen); }}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>{t('changeExecutivePasswordTitle')}</DialogTitle>
-                        <DialogDescription>{t('changeExecutivePasswordDescription')}</DialogDescription>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                        <div className="grid gap-2">
-                            <Label htmlFor="new-super-admin-password">{t('newPassword')}</Label>
-                            <div className="relative">
-                                <Input id="new-super-admin-password" type={showNewPassword ? 'text' : 'password'} value={newPassword} onChange={(e) => setNewPassword(e.target.value)}/>
-                                <Button type="button" variant="ghost" size="icon" className="absolute inset-y-0 right-0 h-full px-3" onClick={() => setShowNewPassword(!showNewPassword)}>{showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button>
-                            </div>
-                        </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="confirm-new-super-admin-password">{t('confirmNewPassword')}</Label>
-                             <div className="relative">
-                                <Input id="confirm-new-super-admin-password" type={showNewPassword ? 'text' : 'password'} value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)}/>
-                                 <Button type="button" variant="ghost" size="icon" className="absolute inset-y-0 right-0 h-full px-3" onClick={() => setShowNewPassword(!showNewPassword)}>{showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button>
-                            </div>
-                        </div>
-                    </div>
-                    <DialogFooter><Button variant="outline" onClick={() => setIsSuperAdminChangePasswordOpen(false)}>{t('cancel')}</Button><Button onClick={handleChangeSuperAdminPassword}>{t('changePasswordButton')}</Button></DialogFooter>
-                </DialogContent>
-            </Dialog>
-
-            <Dialog open={isPaymentLinksDialogOpen} onOpenChange={setIsPaymentLinksDialogOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>{t('managePaymentLinks')}</DialogTitle>
-                        <DialogDescription>{t('managePaymentLinksDescription')}</DialogDescription>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                        <div className="grid gap-2">
-                            <Label htmlFor="payment-link-two-digit">{t('paymentLinkTwoDigit')}</Label>
-                            <div className="flex gap-2">
-                                <Input id="payment-link-two-digit" value={paymentLinks.twoDigit} onChange={(e) => setPaymentLinks(p => ({ ...p, twoDigit: e.target.value }))}/>
-                                <Button variant="ghost" size="icon" onClick={() => setPaymentLinks(p => ({ ...p, twoDigit: '' }))}><Trash2 className="h-4 w-4 text-red-500" /></Button>
-                            </div>
-                        </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="payment-link-three-digit">{t('paymentLinkThreeDigit')}</Label>
-                            <div className="flex gap-2">
-                                <Input id="payment-link-three-digit" value={paymentLinks.threeDigit} onChange={(e) => setPaymentLinks(p => ({ ...p, threeDigit: e.target.value }))}/>
-                                <Button variant="ghost" size="icon" onClick={() => setPaymentLinks(p => ({ ...p, threeDigit: '' }))}><Trash2 className="h-4 w-4 text-red-500" /></Button>
-                            </div>
-                        </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="payment-link-infinite">{t('paymentLinkInfinite')}</Label>
-                             <div className="flex gap-2">
-                                <Input id="payment-link-infinite" value={paymentLinks.infinite} onChange={(e) => setPaymentLinks(p => ({ ...p, infinite: e.target.value }))}/>
-                                <Button variant="ghost" size="icon" onClick={() => setPaymentLinks(p => ({ ...p, infinite: '' }))}><Trash2 className="h-4 w-4 text-red-500" /></Button>
-                            </div>
-                        </div>
-                    </div>
-                    <DialogFooter><Button variant="outline" onClick={() => setIsPaymentLinksDialogOpen(false)}>{t('cancel')}</Button><Button onClick={handleSavePaymentLinks}>{t('save')}</Button></DialogFooter>
-                </DialogContent>
-            </Dialog>
-
-            <Dialog open={isUsdPaymentConfigDialogOpen} onOpenChange={setIsUsdPaymentConfigDialogOpen}>
-                <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                        <DialogTitle>Configurar Pagos USD</DialogTitle>
-                        <DialogDescription>Configura links de PayPal o Stripe independientes para cada modalidad.</DialogDescription>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                        <div className="grid gap-2"><Label htmlFor="usd-two-digit">Link USD (2 Cifras)</Label><Input id="usd-two-digit" value={paymentLinks.usdTwoDigit} onChange={(e) => setPaymentLinks(p => ({ ...p, usdTwoDigit: e.target.value }))}/></div>
-                        <div className="grid gap-2"><Label htmlFor="usd-three-digit">Link USD (3 Cifras)</Label><Input id="usd-three-digit" value={paymentLinks.usdThreeDigit} onChange={(e) => setPaymentLinks(p => ({ ...p, usdThreeDigit: e.target.value }))}/></div>
-                        <div className="grid gap-2"><Label htmlFor="usd-infinite">Link USD (Infinita)</Label><Input id="usd-infinite" value={paymentLinks.usdInfinite} onChange={(e) => setPaymentLinks(p => ({ ...p, usdInfinite: e.target.value }))}/></div>
-                        <div className="grid gap-2 pt-2 border-t"><Label htmlFor="usd-generic">Link USD Respaldo (Opcional)</Label><Input id="usd-generic" value={paymentLinks.usd} onChange={(e) => setPaymentLinks(p => ({ ...p, usd: e.target.value }))}/></div>
-                    </div>
-                    <DialogFooter><Button variant="outline" onClick={() => setIsUsdPaymentConfigDialogOpen(false)}>Cancelar</Button><Button onClick={handleSavePaymentLinks}>Guardar Todo</Button></DialogFooter>
-                </DialogContent>
-            </Dialog>
-
-            <Dialog open={isCopyOptionsDialogOpen} onOpenChange={setIsCopyOptionsDialogOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>{t('activationOptionsTitle')}</DialogTitle>
-                        <DialogDescription>{t('activationOptionsDescription')}</DialogDescription>
-                    </DialogHeader>
-                    <div className="flex flex-col space-y-3 py-4">
-                        <Button onClick={() => { setIsCopyOptionsDialogOpen(false); setIsPaymentQrDialogOpen(true); }} className="w-full bg-black hover:bg-gray-900 text-white font-bold flex items-center gap-2 justify-center"><QrCode className="h-5 w-5" />{t('payWithQr')}</Button>
-                        <Button onClick={() => { const acctLine1 = (appSettings.bankInfoLine1 || 'Banco Caja Social: 24096711314').split(':').pop()?.trim() || ''; navigator.clipboard.writeText(acctLine1); showNotification(t('accountNumberCopied'), 'success'); setIsCopyOptionsDialogOpen(false); }}>{t('copyAccountNumber')}</Button>
-                        <Button onClick={() => { const acctLine2 = (appSettings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054'); const keyMatch = acctLine2.match(/(@\S+)/); const keyToCopyStr = keyMatch ? keyMatch[0] : acctLine2; if (keyToCopyStr) { navigator.clipboard.writeText(keyToCopyStr); showNotification(t('brebKeyCopied'), 'success'); } setIsCopyOptionsDialogOpen(false); }}>{t('copyBrebKey')}</Button>
-                        {(appSettings.paymentLinkUsd || (selectedRaffleMode === 'two-digit' && appSettings.paymentLinkUsdTwoDigit) || (selectedRaffleMode === 'three-digit' && appSettings.paymentLinkUsdThreeDigit) || (selectedRaffleMode === 'infinite' && appSettings.paymentLinkUsdInfinite)) && (
-                            <Button onClick={() => setIsUsdPaymentDialogOpen(true)} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold flex items-center gap-2 justify-center"><DollarSign className="h-3 w-3" />{t('payWithUsd')}</Button>
-                        )}
-                    </div>
-                </DialogContent>
-            </Dialog>
-
-            <Dialog open={isUsdPaymentDialogOpen} onOpenChange={setIsUsdPaymentDialogOpen}>
-                <DialogContent>
-                    <DialogHeader><DialogTitle>{t('payWithUsd')}</DialogTitle><DialogDescription>{t('usdPaymentInstructions')}</DialogDescription></DialogHeader>
-                    <div className="py-4 text-center"><p className="mb-4 text-sm text-muted-foreground">{t('usdPaymentNote')}</p><Button onClick={handleUsdPayment} className="w-full bg-blue-600 hover:bg-blue-700 h-12 text-lg">{t('goToUsdPayment')}</Button></div>
-                </DialogContent>
-            </Dialog>
-
-            <Dialog open={isActivationPricesDialogOpen} onOpenChange={setIsActivationPricesDialogOpen}>
-                <DialogContent>
-                    <DialogHeader><DialogTitle>{t('manageActivationPrices')}</DialogTitle></DialogHeader>
-                    <div className="grid gap-4 py-4">
-                        <div className="grid gap-2"><Label htmlFor="price-two-digit">{t('activationPriceTwoDigit')}</Label><Input id="price-two-digit" value={activationPrices.twoDigit} onChange={(e) => setActivationPrices(p => ({ ...p, twoDigit: e.target.value }))}/></div>
-                        <div className="grid gap-2"><Label htmlFor="price-three-digit">{t('activationPriceThreeDigit')}</Label><Input id="price-three-digit" value={activationPrices.threeDigit} onChange={(e) => setActivationPrices(p => ({ ...p, threeDigit: e.target.value }))}/></div>
-                        <div className="grid gap-2"><Label htmlFor="price-infinite">{t('activationPriceInfinite')}</Label><Input id="price-infinite" value={activationPrices.infinite} onChange={(e) => setActivationPrices(p => ({ ...p, infinite: e.target.value }))}/></div>
-                    </div>
-                    <DialogFooter><Button onClick={handleSaveActivationPrices}>{t('save')}</Button></DialogFooter>
-                </DialogContent>
-            </Dialog>
-
-            <Dialog open={isFreeGamesDialogOpen} onOpenChange={setIsFreeGamesDialogOpen}>
-                <DialogContent className="max-w-md">
-                    <DialogHeader><DialogTitle>{t('manageFreeGames')}</DialogTitle></DialogHeader>
-                    <div className="grid gap-6 py-4">
-                        <div className="space-y-4">
-                            <h4 className="font-bold text-blue-600 border-b pb-1">Gratuidad</h4>
-                            <div className="flex items-center justify-between"><Label htmlFor="free-two-digit">{t('freeTwoDigit')}</Label><Switch id="free-two-digit" checked={freeGamesConfig.twoDigit} onCheckedChange={(checked) => setFreeGamesConfig(p => ({ ...p, twoDigit: checked }))}/></div>
-                            <div className="flex items-center justify-between"><Label htmlFor="free-three-digit">{t('freeThreeDigit')}</Label><Switch id="free-three-digit" checked={freeGamesConfig.threeDigit} onCheckedChange={(checked) => setFreeGamesConfig(p => ({ ...p, threeDigit: checked }))}/></div>
-                            <div className="flex items-center justify-between"><Label htmlFor="free-infinite">{t('freeInfinite')}</Label><Switch id="free-infinite" checked={freeGamesConfig.infinite} onCheckedChange={(checked) => setFreeGamesConfig(p => ({ ...p, infinite: checked }))}/></div>
-                        </div>
-                        <div className="space-y-4">
-                            <h4 className="font-bold text-red-600 border-b pb-1">Bloqueo</h4>
-                            <div className="flex items-center justify-between"><Label htmlFor="block-two-digit" className="flex items-center gap-2"><Ban className="h-4 w-4 text-red-500" /> {t('blockTwoDigit')}</Label><Switch id="block-two-digit" checked={freeGamesConfig.blockedTwoDigit} onCheckedChange={(checked) => setFreeGamesConfig(p => ({ ...p, blockedTwoDigit: checked }))}/></div>
-                            <div className="flex items-center justify-between"><Label htmlFor="block-three-digit" className="flex items-center gap-2"><Ban className="h-4 w-4 text-red-500" /> {t('blockThreeDigit')}</Label><Switch id="block-three-digit" checked={freeGamesConfig.blockedThreeDigit} onCheckedChange={(checked) => setFreeGamesConfig(p => ({ ...p, blockedThreeDigit: checked }))}/></div>
-                            <div className="flex items-center justify-between"><Label htmlFor="block-infinite" className="flex items-center gap-2"><Ban className="h-4 w-4 text-red-500" /> {t('blockInfinite')}</Label><Switch id="block-infinite" checked={freeGamesConfig.blockedInfinite} onCheckedChange={(checked) => setFreeGamesConfig(p => ({ ...p, blockedInfinite: checked }))}/></div>
-                        </div>
-                    </div>
-                    <DialogFooter><Button onClick={handleSaveFreeGamesSettings}>{t('save')}</Button></DialogFooter>
-                </DialogContent>
-            </Dialog>
-
-            <Dialog open={isLockedBoardBgDialogOpen} onOpenChange={setIsLockedBoardBgDialogOpen}>
-                <DialogContent>
-                    <DialogHeader><DialogTitle>{t('manageLockedBoardBg')}</DialogTitle></DialogHeader>
-                    <div className="grid gap-4 py-4">
-                        <div className="grid gap-2">
-                            <Label htmlFor="locked-board-bg-url">{t('lockedBoardBgUrlLabel')} (Link Directo)</Label>
-                            <div className="flex gap-2">
-                                <Input id="locked-board-bg-url" value={lockedBoardBgUrl} onChange={(e) => setLockedBoardBgUrl(e.target.value)} className="flex-grow" />
-                                <a href="https://www.google.com/imghp" target="_blank" rel="noopener noreferrer">
-                                    <Button type="button" variant="outline" size="icon"><Search className="h-4 w-4" /></Button>
-                                </a>
-                            </div>
-                            {lockedBoardBgUrl && (
-                                <div className="mt-2 border rounded-md overflow-hidden bg-gray-50 flex items-center justify-center p-2 h-40">
-                                    <img src={lockedBoardBgUrl} alt="Vista previa fondo" className="max-h-full object-contain" />
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                    <DialogFooter><Button onClick={handleSaveLockedBoardBg}>{t('save')}</Button></DialogFooter>
-                </DialogContent>
-            </Dialog>
-
-            <Dialog open={isBoardDesignDialogOpen} onOpenChange={setIsBoardDesignDialogOpen}>
-                <DialogContent>
-                    <DialogHeader><DialogTitle>Diseño del Tablero</DialogTitle></DialogHeader>
-                    <div className="grid gap-4 py-4">
-                        <div className="grid gap-2">
-                            <Label htmlFor="board-design-url">Link de la Imagen</Label>
-                            <div className="flex gap-2">
-                                <Input id="board-design-url" value={boardDesignUrl} onChange={(e) => setBoardDesignUrl(e.target.value)} className="flex-grow" />
-                                <a href="https://www.google.com/imghp" target="_blank" rel="noopener noreferrer">
-                                    <Button type="button" variant="outline" size="icon"><Search className="h-4 w-4" /></Button>
-                                </a>
-                            </div>
-                            {boardDesignUrl && (
-                                <div className="mt-2 border rounded-md overflow-hidden bg-gray-50 flex items-center justify-center p-2 h-40">
-                                    <img src={boardDesignUrl} alt="Vista previa diseño" className="max-h-full object-contain" />
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                    <DialogFooter><Button onClick={handleSaveBoardDesign}>Guardar Diseño</Button></DialogFooter>
-                </DialogContent>
-            </Dialog>
-
-            <Dialog open={isBoardHeaderImageDialogOpen} onOpenChange={setIsBoardHeaderImageDialogOpen}>
-                <DialogContent>
-                    <DialogHeader><DialogTitle>Imagen del Renglón</DialogTitle></DialogHeader>
-                    <div className="grid gap-4 py-4">
-                        <div className="grid gap-2">
-                            <Label htmlFor="board-header-image-url">Link de la Imagen</Label>
-                            <div className="flex gap-2">
-                                <Input id="board-header-image-url" value={boardHeaderImageUrl} onChange={(e) => setBoardHeaderImageUrl(e.target.value)} className="flex-grow" />
-                                <a href="https://www.google.com/imghp" target="_blank" rel="noopener noreferrer">
-                                    <Button type="button" variant="outline" size="icon"><Search className="h-4 w-4" /></Button>
-                                </a>
-                            </div>
-                            {boardHeaderImageUrl && (
-                                <div className="mt-2 border rounded-md overflow-hidden bg-gray-50 flex items-center justify-center p-2 h-40">
-                                    <img src={boardHeaderImageUrl} alt="Vista previa renglón" className="max-h-full object-contain" />
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                    <DialogFooter><Button onClick={handleSaveBoardHeaderImage}>Guardar Imagen</Button></DialogFooter>
-                </DialogContent>
-            </Dialog>
-
-            <Dialog open={isPaymentInfoDialogOpen} onOpenChange={setIsPaymentInfoDialogOpen}>
-                <DialogContent>
-                    <DialogHeader><DialogTitle>{t('managePaymentInfo')}</DialogTitle></DialogHeader>
-                    <div className="grid gap-4 py-4">
-                        <div className="grid gap-2"><Label htmlFor="payment-info-line1">{t('bankInfoLine1Label')}</Label><Input id="payment-info-line1" value={paymentInfo.line1} onChange={(e) => setPaymentInfo(p => ({ ...p, line1: e.target.value }))}/></div>
-                        <div className="grid gap-2"><Label htmlFor="payment-info-line2">{t('bankInfoLine2Label')}</Label><Input id="payment-info-line2" value={paymentInfo.line2} onChange={(e) => setPaymentInfo(p => ({ ...p, line2: e.target.value }))}/></div>
-                    </div>
-                    <DialogFooter><Button onClick={handleSavePaymentInfo}>{t('save')}</Button></DialogFooter>
-                </DialogContent>
-            </Dialog>
-
-            <Dialog open={isPaymentQrImageDialogOpen} onOpenChange={setIsPaymentQrImageDialogOpen}>
-                <DialogContent>
-                    <DialogHeader><DialogTitle>{t('managePaymentQrImage')}</DialogTitle></DialogHeader>
-                    <div className="grid gap-4 py-4"><div className="grid gap-2"><Label htmlFor="payment-qr-text">Código QR (Pegar texto)</Label><Textarea id="payment-qr-text" value={paymentQrImageUrl} onChange={(e) => setPaymentQrImageUrl(e.target.value)} rows={4}/></div></div>
-                    <DialogFooter><Button onClick={handleSavePaymentQrImage}>{t('save')}</Button></DialogFooter>
-                </DialogContent>
-            </Dialog>
-
-            <Dialog open={isGamesSummaryDialogOpen} onOpenChange={setIsGamesSummaryDialogOpen}>
-                <DialogContent className="max-w-md">
-                    <DialogHeader><DialogTitle>{t('gamesSummaryTitle')}</DialogTitle></DialogHeader>
-                    <div className="py-6 space-y-6">
-                        <div className="space-y-2"><div className="flex justify-between text-sm font-medium"><span>{t('twoDigitGames')}</span><span className="text-purple-600 font-bold">{allRaffles.filter(r => r.raffleMode === 'two-digit').length}</span></div><Progress value={allRaffles.length > 0 ? (allRaffles.filter(r => r.raffleMode === 'two-digit').length / allRaffles.length) * 100 : 0} className="h-2" /></div>
-                        <div className="space-y-2"><div className="flex justify-between text-sm font-medium"><span>{t('threeDigitGames')}</span><span className="text-blue-600 font-bold">{allRaffles.filter(r => r.raffleMode === 'three-digit').length}</span></div><Progress value={allRaffles.length > 0 ? (allRaffles.filter(r => r.raffleMode === 'three-digit').length / allRaffles.length) * 100 : 0} className="h-2" /></div>
-                        <div className="space-y-2"><div className="flex justify-between text-sm font-medium"><span>{t('infiniteGames')}</span><span className="text-red-600 font-bold">{allRaffles.filter(r => r.raffleMode === 'infinite').length}</span></div><Progress value={allRaffles.length > 0 ? (allRaffles.filter(r => r.raffleMode === 'infinite').length / allRaffles.length) * 100 : 0} className="h-2" /></div>
-                    </div>
-                    <DialogFooter><Button type="button" variant="outline" onClick={() => setIsGamesSummaryDialogOpen(false)} className="w-full">{t('close')}</Button></DialogFooter>
-                </DialogContent>
-            </Dialog>
-            
-            <Dialog open={isFreeActivationDialogOpen} onOpenChange={setIsFreeActivationDialogOpen}>
-                <DialogContent className="max-md">
-                    <DialogHeader><DialogTitle>{t('freeActivationTitle')}</DialogTitle></DialogHeader>
-                    <div className="py-4 space-y-4"><div className="grid gap-2"><Label htmlFor="free-activation-phone">{t('whatsappNumber')}</Label><div className="flex gap-2"><Input id="free-activation-phone" type="tel" value={freeActivationPhone} onChange={(e) => setFreeActivationPhone(e.target.value.replace(/\D/g, ''))} className="flex-grow"/></div></div></div>
-                    <DialogFooter><Button onClick={handleConfirmFreeActivation}>{t('sendToWhatsapp')}</Button></DialogFooter>
-                </DialogContent>
-            </Dialog>
-
-            <Dialog open={showAdminActivationNotice} onOpenChange={(open) => { if (!open && !raffleState.isActive) { handleCancelActivation(); } else { setShowAdminActivationNotice(open); } }}>
-                <DialogContent>
-                    <DialogHeader><DialogTitle>{t('adminActivationTitle')}</DialogTitle><DialogDescription>{t('adminActivationDescription')}</DialogDescription></DialogHeader>
-                    <DialogFooter className="flex-col sm:flex-row gap-2"><Button variant="outline" onClick={handleCancelActivation}> {t('cancelReference')}</Button><Button onClick={handleConfirmOnline} className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold h-12"><Check className="mr-2 h-5 w-5" />{t('activateRaffleButton')}</Button></DialogFooter>
-                </DialogContent>
-            </Dialog>
-            
-            <Dialog open={isGoalModalOpen} onOpenChange={setIsGoalModalOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>{t('goalTitle')}</DialogTitle>
-                        <DialogDescription>{t('goalDescription')}</DialogDescription>
-                    </DialogHeader>
-                    <div className="py-4 space-y-4">
-                        <div className="flex justify-between items-center bg-blue-50 p-4 rounded-lg">
-                            <p className="font-semibold text-blue-700">{t('prizeValue')}:</p>
-                            <p className="font-bold text-xl text-blue-900">{formatValue(prizeValueForGoal)}</p>
-                        </div>
-                        <div className="flex justify-between items-center bg-purple-50 p-4 rounded-lg">
-                            <p className="font-semibold text-purple-700">{t('ticketValue')}:</p>
-                            <p className="font-bold text-xl text-purple-900">{formatValue(ticketValueForGoal)}</p>
-                        </div>
-                        <div className="flex justify-between items-center bg-green-100 p-4 rounded-lg border-2 border-green-500">
-                            <p className="font-bold text-green-800">{t('ticketsToCoverPrize')}:</p>
-                            <p className="font-black text-3xl text-green-900">{ticketsToCoverPrize}</p>
-                        </div>
-                         <div className="space-y-1">
-                            <div className="flex justify-between text-xs font-bold text-gray-500 uppercase">
-                                <span>{t('progress')}</span>
-                                <span>{confirmedParticipants.length} / {ticketsToCoverPrize}</span>
-                            </div>
-                            <Progress value={ticketsToCoverPrize > 0 ? (confirmedParticipants.length / ticketsToCoverPrize) * 100 : 0} className="h-3 bg-gray-200" />
-                            {confirmedParticipants.length >= ticketsToCoverPrize ? (
-                                <p className="text-center text-green-600 font-bold text-sm mt-2">¡META ALCANZADA! 🥳</p>
-                            ) : (
-                                <p className="text-center text-gray-500 text-xs mt-2">Faltan {Math.max(0, ticketsToCoverPrize - confirmedParticipants.length)} boletas para cubrir el costo.</p>
-                            )}
-                        </div>
-                    </div>
-                    <DialogFooter><Button type="button" variant="outline" onClick={() => setIsGoalModalOpen(false)}>{t('close')}</Button></DialogFooter>
-                </DialogContent>
-            </Dialog>
-
-            <Dialog open={isPaymentQrDialogOpen} onOpenChange={setIsPaymentQrDialogOpen}>
-                <DialogContent className="max-w-xs">
-                    <DialogHeader>
-                        <DialogTitle className="text-center">{t('payWithQr')}</DialogTitle>
-                        <DialogDescription className="text-center">{t('scanQrToPay')}</DialogDescription>
-                    </DialogHeader>
-                    <div className="flex justify-center items-center p-4">
-                        <div className="relative inline-block p-4 bg-white rounded-lg shadow-md border-2 border-gray-100">
-                             {appSettings.paymentQrImageUrl ? (
-                                <div className="p-2 bg-white rounded-md whitespace-pre-wrap font-mono text-[10px] break-all max-h-[300px] overflow-auto select-all">
-                                    {appSettings.paymentQrImageUrl}
-                                </div>
-                             ) : (
-                                <div className="h-48 w-48 flex items-center justify-center bg-gray-50 rounded text-gray-400 text-xs text-center p-4">
-                                    {t('noPaymentQrImage')}
-                                </div>
-                             )}
-                        </div>
-                    </div>
-                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsPaymentQrDialogOpen(false)} className="w-full">{t('close')}</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-
-             <Dialog open={isSuperAdminChangePasswordOpen} onOpenChange={(isOpen) => { if (!isOpen) { setNewPassword(''); setConfirmNewPassword(''); setShowNewPassword(false); } setIsSuperAdminChangePasswordOpen(isOpen); }}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>{t('changeExecutivePasswordTitle')}</DialogTitle>
-                        <DialogDescription>{t('changeExecutivePasswordDescription')}</DialogDescription>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                        <div className="grid gap-2">
-                            <Label htmlFor="new-super-admin-password-v2">{t('newPassword')}</Label>
-                            <div className="relative">
-                                <Input id="new-super-admin-password-v2" type={showNewPassword ? 'text' : 'password'} value={newPassword} onChange={(e) => setNewPassword(e.target.value)}/>
-                                <Button type="button" variant="ghost" size="icon" className="absolute inset-y-0 right-0 h-full px-3" onClick={() => setShowNewPassword(!showNewPassword)}>{showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button>
-                            </div>
-                        </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="confirm-new-super-admin-password-v2">{t('confirmNewPassword')}</Label>
-                             <div className="relative">
-                                <Input id="confirm-new-super-admin-password-v2" type={showNewPassword ? 'text' : 'password'} value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)}/>
-                                 <Button type="button" variant="ghost" size="icon" className="absolute inset-y-0 right-0 h-full px-3" onClick={() => setShowNewPassword(!showNewPassword)}>{showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button>
-                            </div>
-                        </div>
-                    </div>
-                    <DialogFooter><Button variant="outline" onClick={() => setIsSuperAdminChangePasswordOpen(false)}>{t('cancel')}</Button><Button onClick={handleChangeSuperAdminPassword}>{t('changePasswordButton')}</Button></DialogFooter>
-                </DialogContent>
-            </Dialog>
         </div>
     );
 };
