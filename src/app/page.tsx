@@ -2358,10 +2358,6 @@ const App = () => {
                                                 <KeyRound className="mr-2 h-4 w-4" />
                                                 <span>{t('changePasswordTitle')}</span>
                                             </DropdownMenuItem>
-                                            <DropdownMenuItem onSelect={fetchNextRefs}>
-                                                <RefreshCcw className="mr-2 h-4 w-4" />
-                                                <span>{t('refreshRefs')}</span>
-                                            </DropdownMenuItem>
                                             <DropdownMenuSeparator />
                                             <DropdownMenuItem onSelect={() => {
                                                 setGamesFilter('past_date');
@@ -3235,7 +3231,6 @@ const App = () => {
                                 <div className={activeTab === 'numbers' ? 'tab-content active' : 'tab-content'}>
                                     {raffleMode !== 'infinite' ? (
                                        <div className="relative flex flex-col gap-6 min-h-[70vh] p-4 sm:p-6 transition-all duration-500 overflow-hidden">
-                                           {/* IMAGEN DEL RENGLÓN: Ocupa perfectamente toda la sección */}
                                            {appSettings.boardHeaderImageUrl && (
                                                <div className="absolute inset-0 z-50 pointer-events-none">
                                                    <Image 
@@ -3290,7 +3285,6 @@ const App = () => {
                                                        </div>
                                                    )}
 
-                                                   {/* CONTENEDOR DE LA TABLA: Imagen de Diseño (Watermark) solo aquí */}
                                                    <div className="bg-white/40 backdrop-blur-xl p-5 rounded-3xl border border-white/50 shadow-2xl relative overflow-hidden">
                                                        {appSettings.boardDesignImageUrl && (
                                                            <div className="absolute inset-0 z-0 pointer-events-none">
@@ -3963,7 +3957,20 @@ const App = () => {
                         <DialogContent>
                             <DialogHeader><DialogTitle>Diseño del Tablero</DialogTitle></DialogHeader>
                             <div className="grid gap-4 py-4">
-                                <div className="grid gap-2"><Label htmlFor="board-design-url">Link de la Imagen</Label><Input id="board-design-url" value={boardDesignUrl} onChange={(e) => setBoardDesignUrl(e.target.value)} /></div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="board-design-url">Link de la Imagen</Label>
+                                    <div className="flex gap-2">
+                                        <Input id="board-design-url" value={boardDesignUrl} onChange={(e) => setBoardDesignUrl(e.target.value)} className="flex-grow" />
+                                        <a href="https://www.google.com/imghp" target="_blank" rel="noopener noreferrer">
+                                            <Button type="button" variant="outline" size="icon"><Search className="h-4 w-4" /></Button>
+                                        </a>
+                                    </div>
+                                    {boardDesignUrl && (
+                                        <div className="mt-2 border rounded-md overflow-hidden bg-gray-50 flex items-center justify-center p-2 h-40">
+                                            <img src={boardDesignUrl} alt="Vista previa diseño" className="max-h-full object-contain" />
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                             <DialogFooter><Button onClick={handleSaveBoardDesign}>Guardar Diseño</Button></DialogFooter>
                         </DialogContent>
@@ -3973,7 +3980,20 @@ const App = () => {
                         <DialogContent>
                             <DialogHeader><DialogTitle>Imagen del Renglón</DialogTitle></DialogHeader>
                             <div className="grid gap-4 py-4">
-                                <div className="grid gap-2"><Label htmlFor="board-header-image-url">Link de la Imagen</Label><Input id="board-header-image-url" value={boardHeaderImageUrl} onChange={(e) => setBoardHeaderImageUrl(e.target.value)} /></div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="board-header-image-url">Link de la Imagen</Label>
+                                    <div className="flex gap-2">
+                                        <Input id="board-header-image-url" value={boardHeaderImageUrl} onChange={(e) => setBoardHeaderImageUrl(e.target.value)} className="flex-grow" />
+                                        <a href="https://www.google.com/imghp" target="_blank" rel="noopener noreferrer">
+                                            <Button type="button" variant="outline" size="icon"><Search className="h-4 w-4" /></Button>
+                                        </a>
+                                    </div>
+                                    {boardHeaderImageUrl && (
+                                        <div className="mt-2 border rounded-md overflow-hidden bg-gray-50 flex items-center justify-center p-2 h-40">
+                                            <img src={boardHeaderImageUrl} alt="Vista previa renglón" className="max-h-full object-contain" />
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                             <DialogFooter><Button onClick={handleSaveBoardHeaderImage}>Guardar Imagen</Button></DialogFooter>
                         </DialogContent>
@@ -4400,7 +4420,22 @@ const App = () => {
             <Dialog open={isLockedBoardBgDialogOpen} onOpenChange={setIsLockedBoardBgDialogOpen}>
                 <DialogContent>
                     <DialogHeader><DialogTitle>{t('manageLockedBoardBg')}</DialogTitle></DialogHeader>
-                    <div className="grid gap-4 py-4"><div className="grid gap-2"><Label htmlFor="locked-board-bg-url">{t('lockedBoardBgUrlLabel')} (Link Directo)</Label><Input id="locked-board-bg-url" value={lockedBoardBgUrl} onChange={(e) => setLockedBoardBgUrl(e.target.value)} /></div></div>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="locked-board-bg-url">{t('lockedBoardBgUrlLabel')} (Link Directo)</Label>
+                            <div className="flex gap-2">
+                                <Input id="locked-board-bg-url" value={lockedBoardBgUrl} onChange={(e) => setLockedBoardBgUrl(e.target.value)} className="flex-grow" />
+                                <a href="https://www.google.com/imghp" target="_blank" rel="noopener noreferrer">
+                                    <Button type="button" variant="outline" size="icon"><Search className="h-4 w-4" /></Button>
+                                </a>
+                            </div>
+                            {lockedBoardBgUrl && (
+                                <div className="mt-2 border rounded-md overflow-hidden bg-gray-50 flex items-center justify-center p-2 h-40">
+                                    <img src={lockedBoardBgUrl} alt="Vista previa fondo" className="max-h-full object-contain" />
+                                </div>
+                            )}
+                        </div>
+                    </div>
                     <DialogFooter><Button onClick={handleSaveLockedBoardBg}>{t('save')}</Button></DialogFooter>
                 </DialogContent>
             </Dialog>
@@ -4408,7 +4443,22 @@ const App = () => {
             <Dialog open={isBoardDesignDialogOpen} onOpenChange={setIsBoardDesignDialogOpen}>
                 <DialogContent>
                     <DialogHeader><DialogTitle>Diseño del Tablero</DialogTitle></DialogHeader>
-                    <div className="grid gap-4 py-4"><div className="grid gap-2"><Label htmlFor="board-design-url">Link de la Imagen</Label><Input id="board-design-url" value={boardDesignUrl} onChange={(e) => setBoardDesignUrl(e.target.value)} /></div></div>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="board-design-url">Link de la Imagen</Label>
+                            <div className="flex gap-2">
+                                <Input id="board-design-url" value={boardDesignUrl} onChange={(e) => setBoardDesignUrl(e.target.value)} className="flex-grow" />
+                                <a href="https://www.google.com/imghp" target="_blank" rel="noopener noreferrer">
+                                    <Button type="button" variant="outline" size="icon"><Search className="h-4 w-4" /></Button>
+                                </a>
+                            </div>
+                            {boardDesignUrl && (
+                                <div className="mt-2 border rounded-md overflow-hidden bg-gray-50 flex items-center justify-center p-2 h-40">
+                                    <img src={boardDesignUrl} alt="Vista previa diseño" className="max-h-full object-contain" />
+                                </div>
+                            )}
+                        </div>
+                    </div>
                     <DialogFooter><Button onClick={handleSaveBoardDesign}>Guardar Diseño</Button></DialogFooter>
                 </DialogContent>
             </Dialog>
@@ -4416,7 +4466,22 @@ const App = () => {
             <Dialog open={isBoardHeaderImageDialogOpen} onOpenChange={setIsBoardHeaderImageDialogOpen}>
                 <DialogContent>
                     <DialogHeader><DialogTitle>Imagen del Renglón</DialogTitle></DialogHeader>
-                    <div className="grid gap-4 py-4"><div className="grid gap-2"><Label htmlFor="board-header-image-url">Link de la Imagen</Label><Input id="board-header-image-url" value={boardHeaderImageUrl} onChange={(e) => setBoardHeaderImageUrl(e.target.value)} /></div></div>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="board-header-image-url">Link de la Imagen</Label>
+                            <div className="flex gap-2">
+                                <Input id="board-header-image-url" value={boardHeaderImageUrl} onChange={(e) => setBoardHeaderImageUrl(e.target.value)} className="flex-grow" />
+                                <a href="https://www.google.com/imghp" target="_blank" rel="noopener noreferrer">
+                                    <Button type="button" variant="outline" size="icon"><Search className="h-4 w-4" /></Button>
+                                </a>
+                            </div>
+                            {boardHeaderImageUrl && (
+                                <div className="mt-2 border rounded-md overflow-hidden bg-gray-50 flex items-center justify-center p-2 h-40">
+                                    <img src={boardHeaderImageUrl} alt="Vista previa renglón" className="max-h-full object-contain" />
+                                </div>
+                            )}
+                        </div>
+                    </div>
                     <DialogFooter><Button onClick={handleSaveBoardHeaderImage}>Guardar Imagen</Button></DialogFooter>
                 </DialogContent>
             </Dialog>
@@ -4453,7 +4518,7 @@ const App = () => {
             </Dialog>
             
             <Dialog open={isFreeActivationDialogOpen} onOpenChange={setIsFreeActivationDialogOpen}>
-                <DialogContent className="max-w-md">
+                <DialogContent className="max-md">
                     <DialogHeader><DialogTitle>{t('freeActivationTitle')}</DialogTitle></DialogHeader>
                     <div className="py-4 space-y-4"><div className="grid gap-2"><Label htmlFor="free-activation-phone">{t('whatsappNumber')}</Label><div className="flex gap-2"><Input id="free-activation-phone" type="tel" value={freeActivationPhone} onChange={(e) => setFreeActivationPhone(e.target.value.replace(/\D/g, ''))} className="flex-grow"/></div></div></div>
                     <DialogFooter><Button onClick={handleConfirmFreeActivation}>{t('sendToWhatsapp')}</Button></DialogFooter>
@@ -4532,4 +4597,3 @@ const App = () => {
 };
 
 export default App;
-
