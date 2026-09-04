@@ -4149,7 +4149,34 @@ const App = () => {
                     <Dialog open={isFreeActivationDialogOpen} onOpenChange={setIsFreeActivationDialogOpen}>
                         <DialogContent className="max-md">
                             <DialogHeader><DialogTitle>{t('freeActivationTitle')}</DialogTitle></DialogHeader>
-                            <div className="py-4 space-y-4"><div className="grid gap-2"><Label htmlFor="free-activation-phone">{t('whatsappNumber')}</Label><div className="flex gap-2"><Input id="free-activation-phone" type="tel" value={freeActivationPhone} onChange={(e) => setFreeActivationPhone(e.target.value.replace(/\D/g, ''))} className="flex-grow"/></div></div></div>
+                            <div className="py-4 space-y-4">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="free-activation-phone">{t('whatsappNumber')}</Label>
+                                    <div className="flex gap-2">
+                                        <div className="w-[120px]">
+                                            <Select
+                                                value={freeActivationCountryCode}
+                                                onValueChange={(val) => setFreeActivationCountryCode(val)}
+                                            >
+                                                <SelectTrigger id="free-activation-country-code">
+                                                    <SelectValue placeholder="+57" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {countryIndicators.map((country) => (
+                                                        <SelectItem key={`free-${country.name}-${country.code}`} value={country.code}>
+                                                            <span className="flex items-center gap-2">
+                                                                <span>{country.flag}</span>
+                                                                <span>{country.code}</span>
+                                                            </span>
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <Input id="free-activation-phone" type="tel" value={freeActivationPhone} onChange={(e) => setFreeActivationPhone(e.target.value.replace(/\D/g, ''))} className="flex-grow" placeholder="3001234567" />
+                                    </div>
+                                </div>
+                            </div>
                             <DialogFooter><Button onClick={handleConfirmFreeActivation}>{t('sendToWhatsapp')}</Button></DialogFooter>
                         </DialogContent>
                     </Dialog>
