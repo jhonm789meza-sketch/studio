@@ -260,8 +260,6 @@ const App = () => {
     const [isLockedBoardBgDialogOpen, setIsLockedBoardBgDialogOpen] = useState(false);
     const [lockedBoardBgUrl, setLockedBoardBgUrl] = useState('');
 
-    const [isThemesDialogOpen, setIsThemesDialogOpen] = useState(false);
-
     const [isGamesSummaryDialogOpen, setIsGamesSummaryDialogOpen] = useState(false);
     const [isFreeActivationDialogOpen, setIsFreeActivationDialogOpen] = useState(false);
     const [freeActivationPhone, setFreeActivationPhone] = useState('');
@@ -294,8 +292,8 @@ const App = () => {
     const isRegisterFormValidForSubmit = raffleState.name && raffleState.phoneNumber && raffleState.raffleNumber && !allAssignedNumbers.has(parseInt(raffleState.raffleNumber || '0'));
     const currentPartialWinners = (raffleState.partialWinners && raffleState.partialWinners.length > 0) ? raffleState.partialWinners : partialWinners;
     const currentAppName = appSettings.appName || 'RIFA⚡ EXPRESS';
-    const globalBackgroundImage = raffleState.raffleRef ? (appSettings.boardDesignImageUrl || raffleState.prizeImageUrl) : (appSettings.lockedBoardBackgroundImageUrl || '');
-    const currentTheme = appSettings.appTheme || 'classic';
+    
+    const globalBackgroundImage = raffleState.raffleRef ? raffleState.prizeImageUrl : (appSettings.lockedBoardBackgroundImageUrl || '');
     
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -2542,7 +2540,7 @@ const App = () => {
                                                     </div>
                                                 )}
                                                 {isSuperAdmin && nextRaffleRefs.threeDigit.refs.length > 0 && (
-                                                    <div className="text-xs text-center text-slate-700 font-black p-2 bg-yellow-100 rounded-md">
+                                                    <div className="text-xs text-center text-slate-700 font-black p-2 bg-blue-100 rounded-md">
                                                         {t('nextRefs3Digit')}{' '}
                                                         {nextRaffleRefs.threeDigit.refs.map((ref, index) => (
                                                              <span key={`ref-3-digit-${index}`}>
@@ -3002,7 +3000,7 @@ const App = () => {
                                                                <option value="Lotería de Medellín">{t('lotteryMedellin')}</option>
                                                                <option value="Lotería de Cundinamarca">{t('lotteryCundinamarca')}</option>
                                                                <option value="Lotería del Valle">{t('lotteryValle')}</option>
-                                                               <option value="Lotería del Trasero">{t('lotteryTolima')}</option>
+                                                               <option value="Lotería del Tolima">{t('lotteryTolima')}</option>
                                                                <option value="Lotería de la Cruz Roja">{t('lotteryRedCross')}</option>
                                                            </>
                                                        )}
@@ -3238,13 +3236,26 @@ const App = () => {
                                 <div className={activeTab === 'numbers' ? 'tab-content active' : 'tab-content'}>
                                     {raffleMode !== 'infinite' ? (
                                        <div className="relative flex flex-col gap-6 min-h-[70vh] p-4 sm:p-6 transition-all duration-500 overflow-hidden">
+                                           {/* IMAGEN DEL RENGLÓN: Ocupa toda la sección desde el título hasta la leyenda */}
+                                           {appSettings.boardHeaderImageUrl && (
+                                               <div className="absolute inset-0 z-50 pointer-events-none">
+                                                   <Image 
+                                                       src={appSettings.boardHeaderImageUrl} 
+                                                       alt="" 
+                                                       fill 
+                                                       className="object-cover opacity-25 select-none" 
+                                                       unoptimized 
+                                                   />
+                                               </div>
+                                           )}
+
                                            <div className="relative z-10 space-y-6">
                                                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b pb-4 bg-white/40 backdrop-blur-xl p-5 rounded-2xl border border-white/40 shadow-xl">
                                                    <div className="flex items-center gap-4">
-                                                       {(appSettings.boardHeaderImageUrl || raffleState.prizeImageUrl) && (
+                                                       {(raffleState.prizeImageUrl) && (
                                                            <div className="relative h-20 w-20 rounded-xl overflow-hidden border-2 border-white shadow-lg bg-white shrink-0">
                                                                <Image 
-                                                                   src={appSettings.boardHeaderImageUrl || raffleState.prizeImageUrl} 
+                                                                   src={raffleState.prizeImageUrl} 
                                                                    alt={t('rafflePrizeAlt')} 
                                                                    fill 
                                                                    className="object-cover" 
@@ -3266,82 +3277,63 @@ const App = () => {
                                                    )}
                                                </div>
 
-                                               {/* CONTENEDOR DE CONTENIDO PRINCIPAL: Envuelve Premio y Tablero */}
-                                               <div className="relative w-full max-w-5xl mx-auto">
-                                                   
-                                                   {/* IMAGEN DEL RENGLÓN: Capa frontal que cubre TODO (Premio + Tablero) */}
-                                                   {appSettings.boardHeaderImageUrl && (
-                                                       <div className="absolute inset-0 z-50 pointer-events-none flex items-center justify-center">
-                                                           <div className="w-full h-full relative">
-                                                               <Image 
-                                                                   src={appSettings.boardHeaderImageUrl} 
-                                                                   alt="" 
-                                                                   fill 
-                                                                   className="object-contain opacity-30 select-none" 
-                                                                   unoptimized 
-                                                               />
-                                                           </div>
+                                               <div className="relative w-full max-w-5xl mx-auto space-y-6">
+                                                   {raffleState.prizeImageUrl && (
+                                                       <div className="rounded-2xl overflow-hidden shadow-2xl border-4 border-white/50 bg-white/40 backdrop-blur-xl w-full group transition-all hover:shadow-purple-200/50 hover:scale-[1.01]">
+                                                           <Image 
+                                                               src={raffleState.prizeImageUrl} 
+                                                               alt={raffleState.prize || t('rafflePrizeAlt')} 
+                                                               width={800}
+                                                               height={450}
+                                                               className="w-full h-auto object-contain max-h-[400px] transition-transform duration-700 group-hover:scale-105"
+                                                               unoptimized 
+                                                           />
                                                        </div>
                                                    )}
 
-                                                   <div className="space-y-6 relative z-10">
-                                                       {raffleState.prizeImageUrl && (
-                                                           <div className="rounded-2xl overflow-hidden shadow-2xl border-4 border-white/50 bg-white/40 backdrop-blur-xl w-full group transition-all hover:shadow-purple-200/50 hover:scale-[1.01]">
+                                                   {/* CONTENEDOR DE LA TABLA: Imagen de Diseño (Watermark) solo aquí */}
+                                                   <div className="bg-white/40 backdrop-blur-xl p-5 rounded-3xl border border-white/50 shadow-2xl relative overflow-hidden">
+                                                       {appSettings.boardDesignImageUrl && (
+                                                           <div className="absolute inset-0 z-0 pointer-events-none">
                                                                <Image 
-                                                                   src={raffleState.prizeImageUrl} 
-                                                                   alt={raffleState.prize || t('rafflePrizeAlt')} 
-                                                                   width={800}
-                                                                   height={450}
-                                                                   className="w-full h-auto object-contain max-h-[400px] transition-transform duration-700 group-hover:scale-105"
+                                                                   src={appSettings.boardDesignImageUrl} 
+                                                                   alt="" 
+                                                                   fill 
+                                                                   className="object-cover" 
                                                                    unoptimized 
                                                                />
                                                            </div>
                                                        )}
 
-                                                       {/* CONTENEDOR DE LA TABLA: Imagen de Diseño (Watermark) */}
-                                                       <div className="bg-white/40 backdrop-blur-xl p-5 rounded-3xl border border-white/50 shadow-2xl relative overflow-hidden">
-                                                           {appSettings.boardDesignImageUrl && (
-                                                               <div className="absolute inset-0 z-0 pointer-events-none">
-                                                                   <Image 
-                                                                       src={appSettings.boardDesignImageUrl} 
-                                                                       alt="" 
-                                                                       fill 
-                                                                       className="object-cover" 
-                                                                       unoptimized 
-                                                                   />
-                                                               </div>
-                                                           )}
+                                                       <div className={`grid gap-2 relative z-10 ${raffleMode === 'two-digit' ? 'grid-cols-10' : 'grid-cols-10 md:grid-cols-20 lg:grid-cols-25'}`}>
+                                                           {allNumbers.map((num) => {
+                                                               const formattedNum = String(num).padStart(numberLength, '0');
+                                                               const participant = raffleState.participants.find((p: Participant) => p.raffleNumber === formattedNum);
+                                                               const isConfirmed = participant && participant.paymentStatus === 'confirmed';
+                                                               const isPending = participant && participant.paymentStatus === 'pending';
 
-                                                           <div className={`grid gap-2 relative z-10 ${raffleMode === 'two-digit' ? 'grid-cols-10' : 'grid-cols-10 md:grid-cols-20 lg:grid-cols-25'}`}>
-                                                               {allNumbers.map((num) => {
-                                                                   const formattedNum = String(num).padStart(numberLength, '0');
-                                                                   const participant = raffleState.participants.find((p: Participant) => p.raffleNumber === formattedNum);
-                                                                   const isConfirmed = participant && participant.paymentStatus === 'confirmed';
-                                                                   const isPending = participant && participant.paymentStatus === 'pending';
-
-                                                                   return (
-                                                                       <div
-                                                                           key={num}
-                                                                           onClick={() => toggleNumber(num)}
-                                                                           className={`
-                                                                               number-cell text-center py-2.5 rounded-xl transition-all text-sm font-black
-                                                                               ${raffleState.isWinnerConfirmed || !raffleState.isDetailsConfirmed || !!raffleState.winner || isConfirmed || isPending ? 'cursor-not-allowed' : 'cursor-pointer'}
-                                                                               ${isConfirmed
-                                                                                   ? 'bg-red-600 text-white shadow-xl scale-95 opacity-90'
-                                                                                   : isPending
-                                                                                   ? 'bg-yellow-400 text-yellow-950 shadow-lg scale-100'
-                                                                                   : !raffleState.isDetailsConfirmed || !!raffleState.winner
-                                                                                   ? 'bg-gray-200/50 text-gray-400'
-                                                                                   : 'bg-green-500/10 text-green-700 border-2 border-green-500/30 hover:bg-green-500 hover:text-white hover:shadow-green-200 hover:scale-110 active:scale-90'
-                                                                               }
-                                                                               ${raffleState.winner?.raffleNumber === formattedNum ? 'ring-4 ring-yellow-400 animate-pulse z-20 scale-125 bg-yellow-500 text-white shadow-yellow-400' : ''}
-                                                                           `}
-                                                                       >
-                                                                           {formattedNum}
-                                                                       </div>
-                                                                   );
-                                                               })}
-                                                           </div>
+                                                               return (
+                                                                   <div
+                                                                       key={num}
+                                                                       onClick={() => toggleNumber(num)}
+                                                                       className={`
+                                                                           number-cell text-center py-2.5 rounded-xl transition-all text-sm font-black
+                                                                           ${raffleState.isWinnerConfirmed || !raffleState.isDetailsConfirmed || !!raffleState.winner || isConfirmed || isPending ? 'cursor-not-allowed' : 'cursor-pointer'}
+                                                                           ${isConfirmed
+                                                                               ? 'bg-red-600 text-white shadow-xl scale-95 opacity-90'
+                                                                               : isPending
+                                                                               ? 'bg-yellow-400 text-yellow-950 shadow-lg scale-100'
+                                                                               : !raffleState.isDetailsConfirmed || !!raffleState.winner
+                                                                               ? 'bg-gray-200/50 text-gray-400'
+                                                                               : 'bg-green-500/10 text-green-700 border-2 border-green-500/30 hover:bg-green-500 hover:text-white hover:shadow-green-200 hover:scale-110 active:scale-90'
+                                                                           }
+                                                                           ${raffleState.winner?.raffleNumber === formattedNum ? 'ring-4 ring-yellow-400 animate-pulse z-20 scale-125 bg-yellow-500 text-white shadow-yellow-400' : ''}
+                                                                       `}
+                                                                   >
+                                                                       {formattedNum}
+                                                                   </div>
+                                                               );
+                                                           })}
                                                        </div>
                                                    </div>
                                                </div>
@@ -3891,6 +3883,103 @@ const App = () => {
                             {notification.message}
                         </div>
                     )}
+
+                    <Dialog open={isAppNameLogoDialogOpen} onOpenChange={setIsAppNameLogoDialogOpen}>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>{t('appNameAndLogo')}</DialogTitle>
+                                <DialogDescription>{t('appNameAndLogoDescription')}</DialogDescription>
+                            </DialogHeader>
+                            <div className="grid gap-4 py-4">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="app-name-input">{t('appNameLabel')}</Label>
+                                    <Input id="app-name-input" value={tempAppName} onChange={(e) => setTempAppName(e.target.value)} />
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="app-logo-input">{t('appLogoUrlLabel')}</Label>
+                                    <div className="flex gap-2">
+                                        <Input id="app-logo-input" value={tempAppLogoUrl} onChange={(e) => setTempAppLogoUrl(e.target.value)} className="flex-grow" />
+                                        <div className="relative">
+                                            <input type="file" accept="image/*" className="hidden" id="app-logo-upload" onChange={async (e) => { const file = e.target.files?.[0]; if (file) { const url = await uploadImage(file, 'app-branding'); setTempAppLogoUrl(url); } }} />
+                                            <Label htmlFor="app-logo-upload"><Button type="button" variant="outline" className="cursor-pointer" asChild><span>{isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}</span></Button></Label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <DialogFooter><Button variant="outline" onClick={() => setIsAppNameLogoDialogOpen(false)}>{t('cancel')}</Button><Button onClick={handleSaveAppNameLogo}>{t('save')}</Button></DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+
+                    <Dialog open={isAssignPackageDialogOpen} onOpenChange={setIsAssignPackageDialogOpen}>
+                        <DialogContent className="max-w-2xl">
+                            <DialogHeader>
+                                <DialogTitle>{t('assignPackage')}</DialogTitle>
+                                <DialogDescription>{t('assignPackageDescription')}</DialogDescription>
+                            </DialogHeader>
+                            <div className="grid gap-4 py-4">
+                                <div className="flex flex-col sm:flex-row gap-4 items-end">
+                                    <div className="grid gap-2 flex-1 w-full"><Label htmlFor="package-quantity">{t('quantity')}</Label><Input id="package-quantity" type="number" value={packageQuantity} onChange={(e) => setPackageQuantity(Number(e.target.value))} /></div>
+                                    <div className="grid gap-2 flex-1 w-full">
+                                        <Label htmlFor="package-raffle-mode">{t('raffleType')}</Label>
+                                        <Select onValueChange={(val: RaffleMode) => setPackageRaffleMode(val)} defaultValue={packageRaffleMode}>
+                                            <SelectTrigger id="package-raffle-mode"><SelectValue placeholder={t('raffleType')} /></SelectTrigger>
+                                            <SelectContent><SelectItem value="two-digit">{t('2digitMode')}</SelectItem><SelectItem value="three-digit">{t('3digitMode')}</SelectItem><SelectItem value="infinite">{t('infiniteRaffle')}</SelectItem></SelectContent>
+                                        </Select>
+                                    </div>
+                                    <Button onClick={handleGeneratePackage} disabled={isGenerating}>{isGenerating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{t('generate')}</Button>
+                                </div>
+                                {generatedPackage.length > 0 && (
+                                    <div className="mt-6 space-y-4">
+                                        <div className="flex justify-between items-center"><h4 className="font-bold">{t('generatedReferences')}</h4><div className="flex gap-2"><Button size="sm" variant="outline" onClick={() => { const text = generatedPackage.map(p => `${p.ref}: ${p.url}`).join('\n'); navigator.clipboard.writeText(text); showNotification(t('listCopied'), 'success'); }}><Copy className="h-4 w-4 mr-2" />{t('copyList')}</Button><Button size="sm" variant="destructive" onClick={handleDeleteAllGeneratedRefs} disabled={isGenerating}><Trash2 className="h-4 w-4 mr-2" />{t('deleteAll')}</Button></div></div>
+                                        <ScrollArea className="h-64 border rounded-md p-4 bg-gray-50">
+                                            <div className="space-y-2">
+                                                {generatedPackage.map((p, i) => (
+                                                    <div key={i} className="flex items-center justify-between p-2 bg-white rounded border border-gray-200 group">
+                                                        <div className="flex-grow min-w-0 mr-4"><p className="font-bold text-sm text-purple-700">{p.ref}</p><p className="text-xs text-gray-500 truncate">{p.url}</p></div>
+                                                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { navigator.clipboard.writeText(p.url); showNotification(t('linkCopied'), 'success'); }}><Copy className="h-4 w-4" /></Button><Button variant="ghost" size="icon" className="h-8 w-8 text-red-500" onClick={() => handleDeleteGeneratedRef(p.ref)}><Trash2 className="h-4 w-4" /></Button></div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </ScrollArea>
+                                    </div>
+                                )}
+                            </div>
+                        </DialogContent>
+                    </Dialog>
+
+                    <Dialog open={isUsdPaymentConfigDialogOpen} onOpenChange={setIsUsdPaymentConfigDialogOpen}>
+                        <DialogContent className="sm:max-w-md">
+                            <DialogHeader><DialogTitle>Configurar Pagos USD</DialogTitle></DialogHeader>
+                            <div className="grid gap-4 py-4">
+                                <div className="grid gap-2"><Label htmlFor="usd-two-digit">Link USD (2 Cifras)</Label><Input id="usd-two-digit" value={paymentLinks.usdTwoDigit} onChange={(e) => setPaymentLinks(p => ({ ...p, usdTwoDigit: e.target.value }))}/></div>
+                                <div className="grid gap-2"><Label htmlFor="usd-three-digit">Link USD (3 Cifras)</Label><Input id="usd-three-digit" value={paymentLinks.usdThreeDigit} onChange={(e) => setPaymentLinks(p => ({ ...p, usdThreeDigit: e.target.value }))}/></div>
+                                <div className="grid gap-2"><Label htmlFor="usd-infinite">Link USD (Infinita)</Label><Input id="usd-infinite" value={paymentLinks.usdInfinite} onChange={(e) => setPaymentLinks(p => ({ ...p, usdInfinite: e.target.value }))}/></div>
+                                <div className="grid gap-2 pt-2 border-t"><Label htmlFor="usd-generic">Link USD Respaldo (Opcional)</Label><Input id="usd-generic" value={paymentLinks.usd} onChange={(e) => setPaymentLinks(p => ({ ...p, usd: e.target.value }))}/></div>
+                            </div>
+                            <DialogFooter><Button onClick={handleSavePaymentLinks}>Guardar Todo</Button></DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+
+                    <Dialog open={isBoardDesignDialogOpen} onOpenChange={setIsBoardDesignDialogOpen}>
+                        <DialogContent>
+                            <DialogHeader><DialogTitle>Diseño del Tablero</DialogTitle></DialogHeader>
+                            <div className="grid gap-4 py-4">
+                                <div className="grid gap-2"><Label htmlFor="board-design-url">Link de la Imagen</Label><Input id="board-design-url" value={boardDesignUrl} onChange={(e) => setBoardDesignUrl(e.target.value)} /></div>
+                            </div>
+                            <DialogFooter><Button onClick={handleSaveBoardDesign}>Guardar Diseño</Button></DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+
+                    <Dialog open={isBoardHeaderImageDialogOpen} onOpenChange={setIsBoardHeaderImageDialogOpen}>
+                        <DialogContent>
+                            <DialogHeader><DialogTitle>Imagen del Renglón</DialogTitle></DialogHeader>
+                            <div className="grid gap-4 py-4">
+                                <div className="grid gap-2"><Label htmlFor="board-header-image-url">Link de la Imagen</Label><Input id="board-header-image-url" value={boardHeaderImageUrl} onChange={(e) => setBoardHeaderImageUrl(e.target.value)} /></div>
+                            </div>
+                            <DialogFooter><Button onClick={handleSaveBoardHeaderImage}>Guardar Imagen</Button></DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+
                 </div>
             </div>
 
@@ -3996,7 +4085,7 @@ const App = () => {
                         )}
                     </div>
                     <DialogFooter>
-                        <Button type="button" variant="outline" onClick={() => setIsAdminLoginOpen(false)}>{t('cancel')}</Button>
+                        <Button type="button" variant="outline" onClick={() => isAdminLoginOpen(false)}>{t('cancel')}</Button>
                         <Button type="submit" onClick={() => handleAdminSearch({ refToSearch: adminRefSearch, isPublicSearch: true })}>{t('recover')}</Button>
                     </DialogFooter>
                 </DialogContent>
@@ -4239,97 +4328,16 @@ const App = () => {
             <Dialog open={isUsdPaymentConfigDialogOpen} onOpenChange={setIsUsdPaymentConfigDialogOpen}>
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
-                        <DialogTitle>Configurar Pagos USD por Rifa</DialogTitle>
+                        <DialogTitle>Configurar Pagos USD</DialogTitle>
                         <DialogDescription>Configura links de PayPal o Stripe independientes para cada modalidad.</DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
-                        <div className="grid gap-2">
-                            <Label htmlFor="usd-two-digit">Link USD (2 Cifras)</Label>
-                            <Input id="usd-two-digit" value={paymentLinks.usdTwoDigit} onChange={(e) => setPaymentLinks(p => ({ ...p, usdTwoDigit: e.target.value }))} placeholder="https://paypal.me/..."/>
-                        </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="usd-three-digit">Link USD (3 Cifras)</Label>
-                            <Input id="usd-three-digit" value={paymentLinks.usdThreeDigit} onChange={(e) => setPaymentLinks(p => ({ ...p, usdThreeDigit: e.target.value }))} placeholder="https://paypal.me/..."/>
-                        </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="usd-infinite">Link USD (Infinita)</Label>
-                            <Input id="usd-infinite" value={paymentLinks.usdInfinite} onChange={(e) => setPaymentLinks(p => ({ ...p, usdInfinite: e.target.value }))} placeholder="https://paypal.me/..."/>
-                        </div>
-                        <div className="grid gap-2 pt-2 border-t">
-                            <Label htmlFor="usd-generic">Link USD Respaldo (Opcional)</Label>
-                            <Input id="usd-generic" value={paymentLinks.usd} onChange={(e) => setPaymentLinks(p => ({ ...p, usd: e.target.value }))} placeholder="https://paypal.me/..."/>
-                        </div>
+                        <div className="grid gap-2"><Label htmlFor="usd-two-digit">Link USD (2 Cifras)</Label><Input id="usd-two-digit" value={paymentLinks.usdTwoDigit} onChange={(e) => setPaymentLinks(p => ({ ...p, usdTwoDigit: e.target.value }))}/></div>
+                        <div className="grid gap-2"><Label htmlFor="usd-three-digit">Link USD (3 Cifras)</Label><Input id="usd-three-digit" value={paymentLinks.usdThreeDigit} onChange={(e) => setPaymentLinks(p => ({ ...p, usdThreeDigit: e.target.value }))}/></div>
+                        <div className="grid gap-2"><Label htmlFor="usd-infinite">Link USD (Infinita)</Label><Input id="usd-infinite" value={paymentLinks.usdInfinite} onChange={(e) => setPaymentLinks(p => ({ ...p, usdInfinite: e.target.value }))}/></div>
+                        <div className="grid gap-2 pt-2 border-t"><Label htmlFor="usd-generic">Link USD Respaldo (Opcional)</Label><Input id="usd-generic" value={paymentLinks.usd} onChange={(e) => setPaymentLinks(p => ({ ...p, usd: e.target.value }))}/></div>
                     </div>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsUsdPaymentConfigDialogOpen(false)}>Cancelar</Button>
-                        <Button onClick={handleSavePaymentLinks}>Guardar Todo</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-
-            <Dialog open={isAppNameLogoDialogOpen} onOpenChange={setIsAppNameLogoDialogOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>{t('appNameAndLogo')}</DialogTitle>
-                        <DialogDescription>{t('appNameAndLogoDescription')}</DialogDescription>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                        <div className="grid gap-2">
-                            <Label htmlFor="app-name-input">{t('appNameLabel')}</Label>
-                            <Input 
-                                id="app-name-input" 
-                                value={tempAppName} 
-                                onChange={(e) => setTempAppName(e.target.value)} 
-                                placeholder="RIFA⚡ EXPRESS"
-                            />
-                        </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="app-logo-input">{t('appLogoUrlLabel')}</Label>
-                            <div className="flex gap-2">
-                                <Input 
-                                    id="app-logo-input" 
-                                     value={tempAppLogoUrl} 
-                                    onChange={(e) => setTempAppLogoUrl(e.target.value)} 
-                                    placeholder="https://example.com/logo.png"
-                                    className="flex-grow"
-                                />
-                                <div className="relative">
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        className="hidden"
-                                        id="app-logo-upload"
-                                        onChange={async (e) => {
-                                            const file = e.target.files?.[0];
-                                            if (file) {
-                                                const url = await uploadImage(file, 'app-branding');
-                                                setTempAppLogoUrl(url);
-                                            }
-                                        }}
-                                    />
-                                    <Label htmlFor="app-logo-upload">
-                                        <Button type="button" variant="outline" className="cursor-pointer" asChild>
-                                            <span>
-                                                {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                                            </span>
-                                        </Button>
-                                    </Label>
-                                </div>
-                            </div>
-                        </div>
-                        {tempAppLogoUrl && (
-                            <div className="mt-2 flex flex-col items-center gap-2">
-                                <Label>{t('logoPreview')}</Label>
-                                <div className="relative h-20 w-20 rounded-full overflow-hidden border shadow-sm">
-                                    <Image src={tempAppLogoUrl} alt="Logo Preview" fill className="object-cover" unoptimized />
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsAppNameLogoDialogOpen(false)}>{t('cancel')}</Button>
-                        <Button onClick={handleSaveAppNameLogo}>{t('save')}</Button>
-                    </DialogFooter>
+                    <DialogFooter><Button variant="outline" onClick={() => setIsUsdPaymentConfigDialogOpen(false)}>Cancelar</Button><Button onClick={handleSavePaymentLinks}>Guardar Todo</Button></DialogFooter>
                 </DialogContent>
             </Dialog>
 
@@ -4343,14 +4351,8 @@ const App = () => {
                         <Button onClick={() => { setIsCopyOptionsDialogOpen(false); setIsPaymentQrDialogOpen(true); }} className="w-full bg-black hover:bg-gray-900 text-white font-bold flex items-center gap-2 justify-center"><QrCode className="h-5 w-5" />{t('payWithQr')}</Button>
                         <Button onClick={() => { const acctLine1 = (appSettings.bankInfoLine1 || 'Banco Caja Social: 24096711314').split(':').pop()?.trim() || ''; navigator.clipboard.writeText(acctLine1); showNotification(t('accountNumberCopied'), 'success'); setIsCopyOptionsDialogOpen(false); }}>{t('copyAccountNumber')}</Button>
                         <Button onClick={() => { const acctLine2 = (appSettings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054'); const keyMatch = acctLine2.match(/(@\S+)/); const keyToCopyStr = keyMatch ? keyMatch[0] : acctLine2; if (keyToCopyStr) { navigator.clipboard.writeText(keyToCopyStr); showNotification(t('brebKeyCopied'), 'success'); } setIsCopyOptionsDialogOpen(false); }}>{t('copyBrebKey')}</Button>
-                        {(appSettings.paymentLinkUsd || 
-                          (selectedRaffleMode === 'two-digit' && appSettings.paymentLinkUsdTwoDigit) ||
-                          (selectedRaffleMode === 'three-digit' && appSettings.paymentLinkUsdThreeDigit) ||
-                          (selectedRaffleMode === 'infinite' && appSettings.paymentLinkUsdInfinite)) && (
-                            <Button onClick={() => setIsUsdPaymentDialogOpen(true)} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold flex items-center gap-2 justify-center">
-                                <DollarSign className="h-3 w-3" />
-                                {t('payWithUsd')}
-                            </Button>
+                        {(appSettings.paymentLinkUsd || (selectedRaffleMode === 'two-digit' && appSettings.paymentLinkUsdTwoDigit) || (selectedRaffleMode === 'three-digit' && appSettings.paymentLinkUsdThreeDigit) || (selectedRaffleMode === 'infinite' && appSettings.paymentLinkUsdInfinite)) && (
+                            <Button onClick={() => setIsUsdPaymentDialogOpen(true)} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold flex items-center gap-2 justify-center"><DollarSign className="h-3 w-3" />{t('payWithUsd')}</Button>
                         )}
                     </div>
                 </DialogContent>
@@ -4358,461 +4360,111 @@ const App = () => {
 
             <Dialog open={isUsdPaymentDialogOpen} onOpenChange={setIsUsdPaymentDialogOpen}>
                 <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>{t('payWithUsd')}</DialogTitle>
-                        <DialogDescription>{t('usdPaymentInstructions')}</DialogDescription>
-                    </DialogHeader>
-                    <div className="py-4 text-center">
-                        <p className="mb-4 text-sm text-muted-foreground">{t('usdPaymentNote')}</p>
-                        <Button onClick={handleUsdPayment} className="w-full bg-blue-600 hover:bg-blue-700 h-12 text-lg">
-                            {t('goToUsdPayment')}
-                        </Button>
-                    </div>
+                    <DialogHeader><DialogTitle>{t('payWithUsd')}</DialogTitle><DialogDescription>{t('usdPaymentInstructions')}</DialogDescription></DialogHeader>
+                    <div className="py-4 text-center"><p className="mb-4 text-sm text-muted-foreground">{t('usdPaymentNote')}</p><Button onClick={handleUsdPayment} className="w-full bg-blue-600 hover:bg-blue-700 h-12 text-lg">{t('goToUsdPayment')}</Button></div>
                 </DialogContent>
             </Dialog>
 
             <Dialog open={isActivationPricesDialogOpen} onOpenChange={setIsActivationPricesDialogOpen}>
                 <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>{t('manageActivationPrices')}</DialogTitle>
-                        <DialogDescription>{t('manageActivationPricesDescription')}</DialogDescription>
-                    </DialogHeader>
+                    <DialogHeader><DialogTitle>{t('manageActivationPrices')}</DialogTitle></DialogHeader>
                     <div className="grid gap-4 py-4">
-                        <div className="grid gap-2">
-                            <Label htmlFor="price-two-digit">{t('activationPriceTwoDigit')}</Label>
-                            <Input id="price-two-digit" value={activationPrices.twoDigit} onChange={(e) => setActivationPrices(p => ({ ...p, twoDigit: e.target.value }))} placeholder="Ej: 12.000"/>
-                        </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="price-three-digit">{t('activationPriceThreeDigit')}</Label>
-                            <Input id="price-three-digit" value={activationPrices.threeDigit} onChange={(e) => setActivationPrices(p => ({ ...p, threeDigit: e.target.value }))} placeholder="Ej: 15.000"/>
-                        </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="price-infinite">{t('activationPriceInfinite')}</Label>
-                            <Input id="price-infinite" value={activationPrices.infinite} onChange={(e) => setActivationPrices(p => ({ ...p, infinite: e.target.value }))} placeholder="Ej: 30.000"/>
-                        </div>
+                        <div className="grid gap-2"><Label htmlFor="price-two-digit">{t('activationPriceTwoDigit')}</Label><Input id="price-two-digit" value={activationPrices.twoDigit} onChange={(e) => setActivationPrices(p => ({ ...p, twoDigit: e.target.value }))}/></div>
+                        <div className="grid gap-2"><Label htmlFor="price-three-digit">{t('activationPriceThreeDigit')}</Label><Input id="price-three-digit" value={activationPrices.threeDigit} onChange={(e) => setActivationPrices(p => ({ ...p, threeDigit: e.target.value }))}/></div>
+                        <div className="grid gap-2"><Label htmlFor="price-infinite">{t('activationPriceInfinite')}</Label><Input id="price-infinite" value={activationPrices.infinite} onChange={(e) => setActivationPrices(p => ({ ...p, infinite: e.target.value }))}/></div>
                     </div>
-                    <DialogFooter><Button variant="outline" onClick={() => setIsActivationPricesDialogOpen(false)}>{t('cancel')}</Button><Button onClick={handleSaveActivationPrices}>{t('save')}</Button></DialogFooter>
+                    <DialogFooter><Button onClick={handleSaveActivationPrices}>{t('save')}</Button></DialogFooter>
                 </DialogContent>
             </Dialog>
 
             <Dialog open={isFreeGamesDialogOpen} onOpenChange={setIsFreeGamesDialogOpen}>
-                <DialogContent className="max-md">
-                    <DialogHeader>
-                        <DialogTitle>{t('manageFreeGames')}</DialogTitle>
-                        <DialogDescription>{t('manageFreeGamesDescription')}</DialogDescription>
-                    </DialogHeader>
+                <DialogContent className="max-w-md">
+                    <DialogHeader><DialogTitle>{t('manageFreeGames')}</DialogTitle></DialogHeader>
                     <div className="grid gap-6 py-4">
                         <div className="space-y-4">
                             <h4 className="font-bold text-blue-600 border-b pb-1">Gratuidad</h4>
-                            <div className="flex items-center justify-between">
-                                <Label htmlFor="free-two-digit">{t('freeTwoDigit')}</Label>
-                                <Switch id="free-two-digit" checked={freeGamesConfig.twoDigit} onCheckedChange={(checked) => setFreeGamesConfig(p => ({ ...p, twoDigit: checked }))}/>
-                            </div>
-                            <div className="flex items-center justify-between">
-                                <Label htmlFor="free-three-digit">{t('freeThreeDigit')}</Label>
-                                <Switch id="free-three-digit" checked={freeGamesConfig.threeDigit} onCheckedChange={(checked) => setFreeGamesConfig(p => ({ ...p, threeDigit: checked }))}/>
-                            </div>
-                            <div className="flex items-center justify-between">
-                                <Label htmlFor="free-infinite">{t('freeInfinite')}</Label>
-                                <Switch id="free-infinite" checked={freeGamesConfig.infinite} onCheckedChange={(checked) => setFreeGamesConfig(p => ({ ...p, infinite: checked }))}/>
-                            </div>
+                            <div className="flex items-center justify-between"><Label htmlFor="free-two-digit">{t('freeTwoDigit')}</Label><Switch id="free-two-digit" checked={freeGamesConfig.twoDigit} onCheckedChange={(checked) => setFreeGamesConfig(p => ({ ...p, twoDigit: checked }))}/></div>
+                            <div className="flex items-center justify-between"><Label htmlFor="free-three-digit">{t('freeThreeDigit')}</Label><Switch id="free-three-digit" checked={freeGamesConfig.threeDigit} onCheckedChange={(checked) => setFreeGamesConfig(p => ({ ...p, threeDigit: checked }))}/></div>
+                            <div className="flex items-center justify-between"><Label htmlFor="free-infinite">{t('freeInfinite')}</Label><Switch id="free-infinite" checked={freeGamesConfig.infinite} onCheckedChange={(checked) => setFreeGamesConfig(p => ({ ...p, infinite: checked }))}/></div>
                         </div>
-
                         <div className="space-y-4">
                             <h4 className="font-bold text-red-600 border-b pb-1">Bloqueo</h4>
-                            <div className="flex items-center justify-between">
-                                <Label htmlFor="block-two-digit" className="flex items-center gap-2"><Ban className="h-4 w-4 text-red-500" /> {t('blockTwoDigit')}</Label>
-                                <Switch id="block-two-digit" checked={freeGamesConfig.blockedTwoDigit} onCheckedChange={(checked) => setFreeGamesConfig(p => ({ ...p, blockedTwoDigit: checked }))}/>
-                            </div>
-                            <div className="flex items-center justify-between">
-                                <Label htmlFor="block-three-digit" className="flex items-center gap-2"><Ban className="h-4 w-4 text-red-500" /> {t('blockThreeDigit')}</Label>
-                                <Switch id="block-three-digit" checked={freeGamesConfig.blockedThreeDigit} onCheckedChange={(checked) => setFreeGamesConfig(p => ({ ...p, blockedThreeDigit: checked }))}/>
-                            </div>
-                            <div className="flex items-center justify-between">
-                                <Label htmlFor="block-infinite" className="flex items-center gap-2"><Ban className="h-4 w-4 text-red-500" /> {t('blockInfinite')}</Label>
-                                <Switch id="block-infinite" checked={freeGamesConfig.blockedInfinite} onCheckedChange={(checked) => setFreeGamesConfig(p => ({ ...p, blockedInfinite: checked }))}/>
-                            </div>
+                            <div className="flex items-center justify-between"><Label htmlFor="block-two-digit" className="flex items-center gap-2"><Ban className="h-4 w-4 text-red-500" /> {t('blockTwoDigit')}</Label><Switch id="block-two-digit" checked={freeGamesConfig.blockedTwoDigit} onCheckedChange={(checked) => setFreeGamesConfig(p => ({ ...p, blockedTwoDigit: checked }))}/></div>
+                            <div className="flex items-center justify-between"><Label htmlFor="block-three-digit" className="flex items-center gap-2"><Ban className="h-4 w-4 text-red-500" /> {t('blockThreeDigit')}</Label><Switch id="block-three-digit" checked={freeGamesConfig.blockedThreeDigit} onCheckedChange={(checked) => setFreeGamesConfig(p => ({ ...p, blockedThreeDigit: checked }))}/></div>
+                            <div className="flex items-center justify-between"><Label htmlFor="block-infinite" className="flex items-center gap-2"><Ban className="h-4 w-4 text-red-500" /> {t('blockInfinite')}</Label><Switch id="block-infinite" checked={freeGamesConfig.blockedInfinite} onCheckedChange={(checked) => setFreeGamesConfig(p => ({ ...p, blockedInfinite: checked }))}/></div>
                         </div>
                     </div>
-                    <DialogFooter><Button variant="outline" onClick={() => setIsFreeGamesDialogOpen(false)}>{t('cancel')}</Button><Button onClick={handleSaveFreeGamesSettings}>{t('save')}</Button></DialogFooter>
+                    <DialogFooter><Button onClick={handleSaveFreeGamesSettings}>{t('save')}</Button></DialogFooter>
                 </DialogContent>
             </Dialog>
 
             <Dialog open={isLockedBoardBgDialogOpen} onOpenChange={setIsLockedBoardBgDialogOpen}>
                 <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>{t('manageLockedBoardBg')}</DialogTitle>
-                        <DialogDescription>{t('manageLockedBoardBgDescription')}</DialogDescription>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                        <div className="grid gap-2">
-                            <Label htmlFor="locked-board-bg-url">{t('lockedBoardBgUrlLabel')} (Link Directo)</Label>
-                            <Input 
-                                id="locked-board-bg-url" 
-                                value={lockedBoardBgUrl} 
-                                onChange={(e) => setLockedBoardBgUrl(e.target.value)} 
-                                placeholder="https://example.com/background.jpg"
-                            />
-                        </div>
-                        {lockedBoardBgUrl && (
-                            <div className="mt-4 p-4 border rounded-lg bg-gray-50 flex flex-col items-center gap-2">
-                                <Label>{t('preview')}</Label>
-                                <div className="relative w-full aspect-video rounded-lg overflow-hidden border">
-                                    <Image src={lockedBoardBgUrl} alt="Preview" fill className="object-cover" unoptimized />
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsLockedBoardBgDialogOpen(false)}>{t('cancel')}</Button>
-                        <Button onClick={handleSaveLockedBoardBg}>{t('save')}</Button>
-                    </DialogFooter>
+                    <DialogHeader><DialogTitle>{t('manageLockedBoardBg')}</DialogTitle></DialogHeader>
+                    <div className="grid gap-4 py-4"><div className="grid gap-2"><Label htmlFor="locked-board-bg-url">{t('lockedBoardBgUrlLabel')} (Link Directo)</Label><Input id="locked-board-bg-url" value={lockedBoardBgUrl} onChange={(e) => setLockedBoardBgUrl(e.target.value)} /></div></div>
+                    <DialogFooter><Button onClick={handleSaveLockedBoardBg}>{t('save')}</Button></DialogFooter>
                 </DialogContent>
             </Dialog>
 
             <Dialog open={isBoardDesignDialogOpen} onOpenChange={setIsBoardDesignDialogOpen}>
                 <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Diseño del Tablero</DialogTitle>
-                        <DialogDescription>Configura una imagen de fondo (marca de agua) para el tablero de números mediante un link.</DialogDescription>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                        <div className="grid gap-2">
-                            <Label htmlFor="board-design-url">Link de la Imagen</Label>
-                            <Input 
-                                id="board-design-url" 
-                                value={boardDesignUrl} 
-                                onChange={(e) => setBoardDesignUrl(e.target.value)} 
-                                placeholder="https://example.com/diseno.jpg"
-                            />
-                        </div>
-                        {boardDesignUrl && (
-                            <div className="mt-4 p-4 border rounded-lg bg-gray-50 flex flex-col items-center gap-2">
-                                <Label>Vista Previa</Label>
-                                <div className="relative w-full aspect-video rounded-lg overflow-hidden border">
-                                    <Image src={boardDesignUrl} alt="Vista previa diseño" fill className="object-cover" unoptimized />
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsBoardDesignDialogOpen(false)}>Cancelar</Button>
-                        <Button onClick={handleSaveBoardDesign}>Guardar Diseño</Button>
-                    </DialogFooter>
+                    <DialogHeader><DialogTitle>Diseño del Tablero</DialogTitle></DialogHeader>
+                    <div className="grid gap-4 py-4"><div className="grid gap-2"><Label htmlFor="board-design-url">Link de la Imagen</Label><Input id="board-design-url" value={boardDesignUrl} onChange={(e) => setBoardDesignUrl(e.target.value)} /></div></div>
+                    <DialogFooter><Button onClick={handleSaveBoardDesign}>Guardar Diseño</Button></DialogFooter>
                 </DialogContent>
             </Dialog>
 
             <Dialog open={isBoardHeaderImageDialogOpen} onOpenChange={setIsBoardHeaderImageDialogOpen}>
                 <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Imagen del Renglón</DialogTitle>
-                        <DialogDescription>Configura la imagen que aparecerá en el encabezado del tablero de números.</DialogDescription>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                        <div className="grid gap-2">
-                            <Label htmlFor="board-header-image-url">Link de la Imagen</Label>
-                            <Input 
-                                id="board-header-image-url" 
-                                value={boardHeaderImageUrl} 
-                                onChange={(e) => setBoardHeaderImageUrl(e.target.value)} 
-                                placeholder="https://example.com/renglon.png"
-                            />
-                        </div>
-                        {boardHeaderImageUrl && (
-                            <div className="mt-4 p-4 border rounded-lg bg-gray-50 flex flex-col items-center gap-2">
-                                <Label>Vista Previa</Label>
-                                <div className="relative h-20 w-20 rounded-xl overflow-hidden border shadow-sm">
-                                    <Image src={boardHeaderImageUrl} alt="Vista previa renglón" fill className="object-cover" unoptimized />
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsBoardHeaderImageDialogOpen(false)}>Cancelar</Button>
-                        <Button onClick={handleSaveBoardHeaderImage}>Guardar Imagen</Button>
-                    </DialogFooter>
+                    <DialogHeader><DialogTitle>Imagen del Renglón</DialogTitle></DialogHeader>
+                    <div className="grid gap-4 py-4"><div className="grid gap-2"><Label htmlFor="board-header-image-url">Link de la Imagen</Label><Input id="board-header-image-url" value={boardHeaderImageUrl} onChange={(e) => setBoardHeaderImageUrl(e.target.value)} /></div></div>
+                    <DialogFooter><Button onClick={handleSaveBoardHeaderImage}>Guardar Imagen</Button></DialogFooter>
                 </DialogContent>
             </Dialog>
 
             <Dialog open={isPaymentInfoDialogOpen} onOpenChange={setIsPaymentInfoDialogOpen}>
                 <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>{t('managePaymentInfo')}</DialogTitle>
-                        <DialogDescription>{t('managePaymentInfoDescription')}</DialogDescription>
-                    </DialogHeader>
+                    <DialogHeader><DialogTitle>{t('managePaymentInfo')}</DialogTitle></DialogHeader>
                     <div className="grid gap-4 py-4">
-                        <div className="grid gap-2">
-                            <Label htmlFor="payment-info-line1">{t('bankInfoLine1Label')}</Label>
-                            <Input id="payment-info-line1" value={paymentInfo.line1} onChange={(e) => setPaymentInfo(p => ({ ...p, line1: e.target.value }))}/>
-                        </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="payment-info-line2">{t('bankInfoLine2Label')}</Label>
-                            <Input id="payment-info-line2" value={paymentInfo.line2} onChange={(e) => setPaymentInfo(p => ({ ...p, line2: e.target.value }))}/>
-                        </div>
+                        <div className="grid gap-2"><Label htmlFor="payment-info-line1">{t('bankInfoLine1Label')}</Label><Input id="payment-info-line1" value={paymentInfo.line1} onChange={(e) => setPaymentInfo(p => ({ ...p, line1: e.target.value }))}/></div>
+                        <div className="grid gap-2"><Label htmlFor="payment-info-line2">{t('bankInfoLine2Label')}</Label><Input id="payment-info-line2" value={paymentInfo.line2} onChange={(e) => setPaymentInfo(p => ({ ...p, line2: e.target.value }))}/></div>
                     </div>
-                    <DialogFooter><Button variant="outline" onClick={() => setIsPaymentInfoDialogOpen(false)}>{t('cancel')}</Button><Button onClick={handleSavePaymentInfo}>{t('save')}</Button></DialogFooter>
-                </DialogContent>
-            </Dialog>
-            <Dialog open={isAssignPackageDialogOpen} onOpenChange={setIsAssignPackageDialogOpen}>
-                <DialogContent className="max-2xl">
-                    <DialogHeader>
-                        <DialogTitle>{t('assignPackage')}</DialogTitle>
-                        <DialogDescription>{t('assignPackageDescription')}</DialogDescription>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                        <div className="flex flex-col sm:flex-row gap-4 items-end">
-                            <div className="grid gap-2 flex-1 w-full">
-                                <Label htmlFor="package-quantity">{t('quantity')}</Label>
-                                <Input id="package-quantity" type="number" value={packageQuantity} onChange={(e) => setPackageQuantity(Number(e.target.value))} placeholder="e.g., 100"/>
-                            </div>
-                            <div className="grid gap-2 flex-1 w-full">
-                                <Label htmlFor="package-raffle-mode">{t('raffleType')}</Label>
-                                <Select onValueChange={(val: RaffleMode) => setPackageRaffleMode(val)} defaultValue={packageRaffleMode}>
-                                    <SelectTrigger id="package-raffle-mode"><SelectValue placeholder={t('raffleType')} /></SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="two-digit">{t('2digitMode')}</SelectItem>
-                                        <SelectItem value="three-digit">{t('3digitMode')}</SelectItem>
-                                        <SelectItem value="infinite">{t('infiniteRaffle')}</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <Button onClick={handleGeneratePackage} disabled={isGenerating}>{isGenerating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{t('generate')}</Button>
-                        </div>
-                        <div className="mt-4">
-                            <div className="flex justify-between items-center mb-2">
-                                <h4 className="font-semibold">{t('generatedReferences')}</h4>
-                                {generatedPackage.length > 0 && (
-                                    <div className="flex items-center gap-2">
-                                        <Button variant="destructive" size="sm" onClick={handleDeleteAllGeneratedRefs}><Trash2 className="mr-2 h-3 w-3" />{t('deleteAll')}</Button>
-                                        <Button variant="outline" size="sm" onClick={() => { const textToCopy = generatedPackage.map(p => `Referencia: ${p.ref}, Enlace de Administrador: ${p.url}`).join('\n'); navigator.clipboard.writeText(textToCopy); showNotification(t('listCopied'), 'success'); }}><Copy className="mr-2 h-3 w-3" />{t('copyList')}</Button>
-                                    </div>
-                                )}
-                            </div>
-                            <ScrollArea className="h-64 mt-2 border rounded-md p-4 bg-gray-50/50">
-                                {isGenerating ? (<div className="flex items-center justify-center h-full"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>) : generatedPackage.length > 0 ? (
-                                    <div className="space-y-3 text-sm">
-                                        {generatedPackage.map((p) => (
-                                            <div key={p.ref} className="p-2 bg-white rounded-md border space-y-1">
-                                                <div className="flex justify-between items-center"><div><span className="font-semibold">Referencia:</span> <span className="font-mono bg-yellow-100 text-yellow-800 px-2 py-1 rounded">{p.ref}</span></div></div>
-                                                <div className="flex items-center gap-2">
-                                                    <Input readOnly value={p.url} className="text-xs h-8" />
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { navigator.clipboard.writeText(p.url); showNotification(t('linkCopied'), 'success'); }}><Copy className="h-4 w-4" /></Button>
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:bg-red-100" onClick={() => handleDeleteGeneratedRef(p.ref)}><Trash2 className="h-4 w-4" /></Button>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : (<p className="text-muted-foreground text-center pt-8">{t('generateToSeeRefs')}</p>)}
-                            </ScrollArea>
-                        </div>
-                    </div>
-                </DialogContent>
-            </Dialog>
-
-            <Dialog open={isGoalModalOpen} onOpenChange={setIsGoalModalOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>{t('goalTitle')}</DialogTitle>
-                        <DialogDescription>{t('goalDescription')}</DialogDescription>
-                    </DialogHeader>
-                    <div className="py-4 space-y-4">
-                        <div className="flex justify-between items-center bg-gray-100 p-4 rounded-lg"><p className="font-semibold text-gray-600">{t('prizeValue')}:</p><p className="font-bold text-xl text-gray-800">{formatValue(raffleState.prize)}</p></div>
-                        <div className="flex justify-between items-center bg-gray-100 p-4 rounded-lg"><p className="font-semibold text-gray-600">{t('ticketValue')}:</p><p className="font-bold text-xl text-gray-800">{formatValue(raffleState.value)}</p></div>
-                        <div className="flex justify-between items-center bg-green-100 p-4 rounded-lg"><p className="font-semibold text-green-800">{t('ticketsToCoverPrize')}:</p><p className="font-bold text-2xl text-green-800">{ticketsToCoverPrize.toLocaleString(language === 'es' ? 'es-CO' : 'en-US')}</p></div>
-                    </div>
-                    <DialogFooter><Button type="button" variant="outline" onClick={() => setIsGoalModalOpen(false)}>{t('close')}</Button></DialogFooter>
-                </DialogContent>
-            </Dialog>
-
-            <Dialog open={isPaymentQrDialogOpen} onOpenChange={setIsPaymentQrDialogOpen}>
-                <DialogContent className="max-md">
-                    <DialogHeader>
-                        <DialogTitle className="text-center">{t('payWithQr')}</DialogTitle>
-                        <DialogDescription className="text-center">{t('scanQrToPay')}</DialogDescription>
-                    </DialogHeader>
-                    <div className="flex justify-center items-center p-4">
-                        {appSettings.paymentQrImageUrl ? (
-                            <div className="relative inline-block bg-white rounded-lg shadow-md">
-                                <Image 
-                                    src={appSettings.paymentQrImageUrl.startsWith('http') ? appSettings.paymentQrImageUrl : `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(appSettings.paymentQrImageUrl)}&qzone=1&ecc=H`} 
-                                    alt={t('paymentQrCodeAlt')} 
-                                    width={400} 
-                                    height={400} 
-                                    className="object-contain" 
-                                    unoptimized 
-                                />
-                            </div>
-                        ) : (<div className="text-muted-foreground bg-gray-100 p-8 rounded-lg flex items-center justify-center h-[300px] w-[300px]"><p>{t('noPrizeImage')}</p></div>)}
-                    </div>
-                    <DialogFooter><Button type="button" variant="outline" onClick={() => setIsPaymentQrDialogOpen(false)}>{t('close')}</Button></DialogFooter>
+                    <DialogFooter><Button onClick={handleSavePaymentInfo}>{t('save')}</Button></DialogFooter>
                 </DialogContent>
             </Dialog>
 
             <Dialog open={isPaymentQrImageDialogOpen} onOpenChange={setIsPaymentQrImageDialogOpen}>
                 <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>{t('managePaymentQrImage')}</DialogTitle>
-                        <DialogDescription>{t('managePaymentQrImageDescription')}</DialogDescription>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                        <div className="grid gap-2">
-                            <Label htmlFor="payment-qr-text">Código QR (Pegar texto)</Label>
-                            <Textarea 
-                                id="payment-qr-text" 
-                                placeholder="Pegue aquí el código del QR (ej: 0002010102112638...)"
-                                value={paymentQrImageUrl}
-                                onChange={(e) => setPaymentQrImageUrl(e.target.value)}
-                                rows={4}
-                            />
-                        </div>
-                        {paymentQrImageUrl && (
-                            <div className="mt-2 p-4 border rounded-lg bg-gray-50 flex flex-col items-center gap-2">
-                                <Label>{t('preview')}</Label>
-                                <div className="relative inline-block bg-white rounded-lg shadow-md overflow-hidden">
-                                    <Image 
-                                        key={paymentQrImageUrl} 
-                                        src={paymentQrImageUrl.startsWith('http') ? paymentQrImageUrl : `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(paymentQrImageUrl)}&ecc=M&qzone=1`} 
-                                        alt={t('paymentQrCodeAlt')} 
-                                        width={200} 
-                                        height={200} 
-                                        className="object-contain" 
-                                        unoptimized 
-                                    />
-                                </div>
-                                <Button variant="ghost" size="sm" className="text-red-500" onClick={() => setPaymentQrImageUrl('')}>
-                                    <Trash2 className="h-4 w-4 mr-2" /> {t('delete')}
-                                </Button>
-                            </div>
-                        )}
-                    </div>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsPaymentQrImageDialogOpen(false)} disabled={isUploading}>{t('cancel')}</Button>
-                        <Button onClick={handleSavePaymentQrImage} disabled={isUploading}>{t('save')}</Button>
-                    </DialogFooter>
+                    <DialogHeader><DialogTitle>{t('managePaymentQrImage')}</DialogTitle></DialogHeader>
+                    <div className="grid gap-4 py-4"><div className="grid gap-2"><Label htmlFor="payment-qr-text">Código QR (Pegar texto)</Label><Textarea id="payment-qr-text" value={paymentQrImageUrl} onChange={(e) => setPaymentQrImageUrl(e.target.value)} rows={4}/></div></div>
+                    <DialogFooter><Button onClick={handleSavePaymentQrImage}>{t('save')}</Button></DialogFooter>
                 </DialogContent>
-            </Dialog>
-
-            <Dialog open={isPrizeImageModalOpen} onOpenChange={setIsPrizeImageModalOpen}>
-                <DialogContent className="max-w-4xl w-auto bg-transparent border-none shadow-none p-2">
-                    <DialogHeader><DialogTitle className="sr-only">{raffleState.prize || t('rafflePrizeAlt')}</DialogTitle></DialogHeader>
-                    {(raffleState.prizeImageUrl) && (<Image src={raffleState.prizeImageUrl} alt={raffleState.prize || t('rafflePrizeAlt')} width={1920} height={1080} className="rounded-lg object-contain max-h-[90vh] w-auto h-auto" unoptimized />)}
-                </DialogContent>
-
             </Dialog>
 
             <Dialog open={isGamesSummaryDialogOpen} onOpenChange={setIsGamesSummaryDialogOpen}>
-                <DialogContent className="max-md">
-                    <DialogHeader>
-                        <DialogTitle>{t('gamesSummaryTitle')}</DialogTitle>
-                        <DialogDescription>{t('gamesSummaryDescription')}</DialogDescription>
-                    </DialogHeader>
+                <DialogContent className="max-w-md">
+                    <DialogHeader><DialogTitle>{t('gamesSummaryTitle')}</DialogTitle></DialogHeader>
                     <div className="py-6 space-y-6">
-                        <div className="space-y-2">
-                            <div className="flex justify-between text-sm font-medium">
-                                <span>{t('twoDigitGames')}</span>
-                                <span className="text-purple-600 font-bold">{allRaffles.filter(r => r.raffleMode === 'two-digit').length}</span>
-                            </div>
-                            <Progress value={allRaffles.length > 0 ? (allRaffles.filter(r => r.raffleMode === 'two-digit').length / allRaffles.length) * 100 : 0} className="h-2 bg-purple-100" />
-                        </div>
-                        <div className="space-y-2">
-                            <div className="flex justify-between text-sm font-medium">
-                                <span>{t('threeDigitGames')}</span>
-                                <span className="text-blue-600 font-bold">{allRaffles.filter(r => r.raffleMode === 'three-digit').length}</span>
-                            </div>
-                            <Progress value={allRaffles.length > 0 ? (allRaffles.filter(r => r.raffleMode === 'three-digit').length / allRaffles.length) * 100 : 0} className="h-2 bg-blue-100" />
-                        </div>
-                        <div className="space-y-2">
-                            <div className="flex justify-between text-sm font-medium">
-                                <span>{t('infiniteGames')}</span>
-                                <span className="text-red-600 font-bold">{allRaffles.filter(r => r.raffleMode === 'infinite').length}</span>
-                            </div>
-                            <Progress value={allRaffles.length > 0 ? (allRaffles.filter(r => r.raffleMode === 'infinite').length / allRaffles.length) * 100 : 0} className="h-2 bg-red-100" />
-                        </div>
-                        
-                        <div className="pt-4 border-t border-dashed">
-                            <div className="flex justify-between items-center font-bold text-lg">
-                                <span>Total de juegos:</span>
-                                <span className="text-green-600">{allRaffles.length}</span>
-                            </div>
-                        </div>
+                        <div className="space-y-2"><div className="flex justify-between text-sm font-medium"><span>{t('twoDigitGames')}</span><span className="text-purple-600 font-bold">{allRaffles.filter(r => r.raffleMode === 'two-digit').length}</span></div><Progress value={allRaffles.length > 0 ? (allRaffles.filter(r => r.raffleMode === 'two-digit').length / allRaffles.length) * 100 : 0} className="h-2" /></div>
+                        <div className="space-y-2"><div className="flex justify-between text-sm font-medium"><span>{t('threeDigitGames')}</span><span className="text-blue-600 font-bold">{allRaffles.filter(r => r.raffleMode === 'three-digit').length}</span></div><Progress value={allRaffles.length > 0 ? (allRaffles.filter(r => r.raffleMode === 'three-digit').length / allRaffles.length) * 100 : 0} className="h-2" /></div>
+                        <div className="space-y-2"><div className="flex justify-between text-sm font-medium"><span>{t('infiniteGames')}</span><span className="text-red-600 font-bold">{allRaffles.filter(r => r.raffleMode === 'infinite').length}</span></div><Progress value={allRaffles.length > 0 ? (allRaffles.filter(r => r.raffleMode === 'infinite').length / allRaffles.length) * 100 : 0} className="h-2" /></div>
                     </div>
-                    <DialogFooter>
-                        <Button type="button" variant="outline" onClick={() => setIsGamesSummaryDialogOpen(false)} className="w-full">
-                            {t('close')}
-                        </Button>
-                    </DialogFooter>
+                    <DialogFooter><Button type="button" variant="outline" onClick={() => setIsGamesSummaryDialogOpen(false)} className="w-full">{t('close')}</Button></DialogFooter>
                 </DialogContent>
             </Dialog>
             
             <Dialog open={isFreeActivationDialogOpen} onOpenChange={setIsFreeActivationDialogOpen}>
-                <DialogContent className="max-md">
-                    <DialogHeader>
-                        <DialogTitle>{t('freeActivationTitle')}</DialogTitle>
-                        <DialogDescription>{t('freeActivationDescription')}</DialogDescription>
-                    </DialogHeader>
-                    <div className="py-4 space-y-4">
-                        <div className="grid gap-2">
-                            <Label htmlFor="free-activation-phone">{t('whatsappNumber')}</Label>
-                            <div className="flex gap-2">
-                                <div className="w-[120px]">
-                                    <Select
-                                        value={freeActivationCountryCode}
-                                        onValueChange={setFreeActivationCountryCode}
-                                    >
-                                        <SelectTrigger id="free-activation-country-code">
-                                            <SelectValue placeholder="+57" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {countryIndicators.map((country) => (
-                                                <SelectItem key={`free-${country.name}-${country.code}`} value={country.code}>
-                                                    <span className="flex items-center gap-2">
-                                                        <span>{country.flag}</span>
-                                                        <span>{country.code}</span>
-                                                    </span>
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <Input
-                                    id="free-activation-phone"
-                                    type="tel"
-                                    value={freeActivationPhone}
-                                    onChange={(e) => setFreeActivationPhone(e.target.value.replace(/\D/g, ''))}
-                                    placeholder="3001234567"
-                                    className="flex-grow"
-                                />
-                            </div>
-                        </div>
-                    </div>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => { setIsFreeActivationDialogOpen(false); setFreeActivationPhone(''); }}>{t('cancel')}</Button>
-                        <Button onClick={handleConfirmFreeActivation} disabled={!freeActivationPhone.trim()}>{t('sendToWhatsapp')}</Button>
-                    </DialogFooter>
+                <DialogContent className="max-w-md">
+                    <DialogHeader><DialogTitle>{t('freeActivationTitle')}</DialogTitle></DialogHeader>
+                    <div className="py-4 space-y-4"><div className="grid gap-2"><Label htmlFor="free-activation-phone">{t('whatsappNumber')}</Label><div className="flex gap-2"><Input id="free-activation-phone" type="tel" value={freeActivationPhone} onChange={(e) => setFreeActivationPhone(e.target.value.replace(/\D/g, ''))} className="flex-grow"/></div></div></div>
+                    <DialogFooter><Button onClick={handleConfirmFreeActivation}>{t('sendToWhatsapp')}</Button></DialogFooter>
                 </DialogContent>
             </Dialog>
 
-            <Dialog open={showAdminActivationNotice} onOpenChange={(open) => {
-                if (!open && !raffleState.isActive) {
-                    handleCancelActivation();
-                } else {
-                    setShowAdminActivationNotice(open);
-                }
-            }}>
+            <Dialog open={showAdminActivationNotice} onOpenChange={(open) => { if (!open && !raffleState.isActive) { handleCancelActivation(); } else { setShowAdminActivationNotice(open); } }}>
                 <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>{t('adminActivationTitle')}</DialogTitle>
-                        <DialogDescription>{t('adminActivationDescription')}</DialogDescription>
-                    </DialogHeader>
-                    <DialogFooter className="flex-col sm:flex-row gap-2">
-                        <Button variant="outline" onClick={handleCancelActivation} className="w-full sm:auto">
-                            {t('cancelReference')}
-                        </Button>
-                        <Button onClick={handleConfirmOnline} className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold h-12">
-                            <Check className="mr-2 h-5 w-5" />
-                            {t('activateRaffleButton')}
-                        </Button>
-                    </DialogFooter>
+                    <DialogHeader><DialogTitle>{t('adminActivationTitle')}</DialogTitle><DialogDescription>{t('adminActivationDescription')}</DialogDescription></DialogHeader>
+                    <DialogFooter className="flex-col sm:flex-row gap-2"><Button variant="outline" onClick={handleCancelActivation}> {t('cancelReference')}</Button><Button onClick={handleConfirmOnline} className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold h-12"><Check className="mr-2 h-5 w-5" />{t('activateRaffleButton')}</Button></DialogFooter>
                 </DialogContent>
             </Dialog>
 
