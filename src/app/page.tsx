@@ -210,6 +210,8 @@ const App = () => {
     const [showNewPassword, setShowNewPassword] = useState(false);
     const [isSuperAdminChangePasswordOpen, setIsSuperAdminChangePasswordOpen] = useState(false);
     const [isPaymentLinksDialogOpen, setIsPaymentLinksDialogOpen] = useState(false);
+    const [isUsdPaymentDialogOpen, setIsUsdPaymentDialogOpen] = useState(false);
+    const [isUsdPaymentConfigDialogOpen, setIsUsdPaymentConfigDialogOpen] = useState(false);
     const [paymentLinks, setPaymentLinks] = useState({
         twoDigit: '',
         threeDigit: '',
@@ -267,9 +269,6 @@ const App = () => {
     const [freeActivationMode, setFreeActivationMode] = useState<RaffleMode | null>(null);
 
     const [showAdminActivationNotice, setShowAdminActivationNotice] = useState(false);
-
-    const [isUsdPaymentDialogOpen, setIsUsdPaymentDialogOpen] = useState(false);
-    const [isUsdPaymentConfigDialogOpen, setIsUsdPaymentConfigDialogOpen] = useState(false);
 
     const [isBoardDesignDialogOpen, setIsBoardDesignDialogOpen] = useState(false);
     const [boardDesignUrl, setBoardDesignUrl] = useState('');
@@ -3236,14 +3235,14 @@ const App = () => {
                                 <div className={activeTab === 'numbers' ? 'tab-content active' : 'tab-content'}>
                                     {raffleMode !== 'infinite' ? (
                                        <div className="relative flex flex-col gap-6 min-h-[70vh] p-4 sm:p-6 transition-all duration-500 overflow-hidden">
-                                           {/* IMAGEN DEL RENGLÓN: Ocupa toda la sección desde el título hasta la leyenda */}
+                                           {/* IMAGEN DEL RENGLÓN: Ocupa perfectamente toda la sección */}
                                            {appSettings.boardHeaderImageUrl && (
                                                <div className="absolute inset-0 z-50 pointer-events-none">
                                                    <Image 
                                                        src={appSettings.boardHeaderImageUrl} 
                                                        alt="" 
                                                        fill 
-                                                       className="object-cover opacity-25 select-none" 
+                                                       className="object-fill opacity-25 select-none" 
                                                        unoptimized 
                                                    />
                                                </div>
@@ -4467,9 +4466,70 @@ const App = () => {
                     <DialogFooter className="flex-col sm:flex-row gap-2"><Button variant="outline" onClick={handleCancelActivation}> {t('cancelReference')}</Button><Button onClick={handleConfirmOnline} className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold h-12"><Check className="mr-2 h-5 w-5" />{t('activateRaffleButton')}</Button></DialogFooter>
                 </DialogContent>
             </Dialog>
+            
+            <Dialog open={isGoalModalOpen} onOpenChange={setIsGoalModalOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{t('goalTitle')}</DialogTitle>
+                        <DialogDescription>{t('goalDescription')}</DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4 space-y-4">
+                        <div className="flex justify-between items-center bg-blue-50 p-4 rounded-lg">
+                            <p className="font-semibold text-blue-700">{t('prizeValue')}:</p>
+                            <p className="font-bold text-xl text-blue-900">{formatValue(prizeValueForGoal)}</p>
+                        </div>
+                        <div className="flex justify-between items-center bg-purple-50 p-4 rounded-lg">
+                            <p className="font-semibold text-purple-700">{t('ticketValue')}:</p>
+                            <p className="font-bold text-xl text-purple-900">{formatValue(ticketValueForGoal)}</p>
+                        </div>
+                        <div className="flex justify-between items-center bg-green-100 p-4 rounded-lg border-2 border-green-500">
+                            <p className="font-bold text-green-800">{t('ticketsToCoverPrize')}:</p>
+                            <p className="font-black text-3xl text-green-900">{ticketsToCoverPrize}</p>
+                        </div>
+                         <div className="space-y-1">
+                            <div className="flex justify-between text-xs font-bold text-gray-500 uppercase">
+                                <span>{t('progress')}</span>
+                                <span>{confirmedParticipants.length} / {ticketsToCoverPrize}</span>
+                            </div>
+                            <Progress value={ticketsToCoverPrize > 0 ? (confirmedParticipants.length / ticketsToCoverPrize) * 100 : 0} className="h-3 bg-gray-200" />
+                            {confirmedParticipants.length >= ticketsToCoverPrize ? (
+                                <p className="text-center text-green-600 font-bold text-sm mt-2">¡META ALCANZADA! 🥳</p>
+                            ) : (
+                                <p className="text-center text-gray-500 text-xs mt-2">Faltan {Math.max(0, ticketsToCoverPrize - confirmedParticipants.length)} boletas para cubrir el costo.</p>
+                            )}
+                        </div>
+                    </div>
+                    <DialogFooter><Button type="button" variant="outline" onClick={() => setIsGoalModalOpen(false)}>{t('close')}</Button></DialogFooter>
+                </DialogContent>
+            </Dialog>
 
+            <Dialog open={isPaymentQrDialogOpen} onOpenChange={setIsPaymentQrDialogOpen}>
+                <DialogContent className="max-w-xs">
+                    <DialogHeader>
+                        <DialogTitle className="text-center">{t('payWithQr')}</DialogTitle>
+                        <DialogDescription className="text-center">{t('scanQrToPay')}</DialogDescription>
+                    </DialogHeader>
+                    <div className="flex justify-center items-center p-4">
+                        <div className="relative inline-block p-4 bg-white rounded-lg shadow-md border-2 border-gray-100">
+                             {appSettings.paymentQrImageUrl ? (
+                                <div className="p-2 bg-white rounded-md whitespace-pre-wrap font-mono text-[10px] break-all max-h-[300px] overflow-auto select-all">
+                                    {appSettings.paymentQrImageUrl}
+                                </div>
+                             ) : (
+                                <div className="h-48 w-48 flex items-center justify-center bg-gray-50 rounded text-gray-400 text-xs text-center p-4">
+                                    {t('noPaymentQrImage')}
+                                </div>
+                             )}
+                        </div>
+                    </div>
+                     <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsPaymentQrDialogOpen(false)} className="w-full">{t('close')}</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };
 
 export default App;
+
