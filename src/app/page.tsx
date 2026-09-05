@@ -305,7 +305,9 @@ const App = () => {
     const currentAppName = appSettings.appName || 'RIFA⚡ EXPRESS';
     
     const globalBackgroundImage = raffleState.raffleRef ? raffleState.prizeImageUrl : (appSettings.lockedBoardBackgroundImageUrl || '');
-    
+    const currentRaffleUrl = typeof window !== 'undefined' ? `${window.location.origin}${raffleState.raffleRef ? '?ref=' + raffleState.raffleRef : ''}` : '';
+    const dynamicQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(currentRaffleUrl)}`;
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -2279,7 +2281,7 @@ const App = () => {
                     setGeneratedPackage((prev) => prev.filter((p) => p.ref !== raffleRef));
                     showNotification(t('generatedRefDeletedSuccess', { ref: raffleRef }), 'success');
                 } catch (error) {
-                    console.error("Error deleting generated ref:", error);
+                    console.error("Error deleting generated reference:", error);
                     showNotification(t('generatedRefDeletedError'), 'error');
                 }
             }
@@ -2301,7 +2303,7 @@ const App = () => {
                     setGeneratedPackage([]);
                     showNotification(t('allGeneratedRefsDeletedSuccess'), 'success');
                 } catch (error) {
-                    console.error("Error deleting all generated refs:", error);
+                    console.error("Error deleting all generated references:", error);
                     showNotification(t('allGeneratedRefsDeletedError'), 'error');
                 } finally {
                     setIsGenerating(false);
@@ -3949,7 +3951,6 @@ const App = () => {
                         </div>
                     )}
 
-                    {/* DIALOGOS DEL DIRECTOR EJECUTIVO Y GENERALES */}
                     <Dialog open={isAppNameLogoDialogOpen} onOpenChange={setIsAppNameLogoDialogOpen}>
                         <DialogContent>
                             <DialogHeader>
@@ -4341,7 +4342,10 @@ const App = () => {
 
                     <Dialog open={isActivationPricesDialogOpen} onOpenChange={setIsActivationPricesDialogOpen}>
                         <DialogContent className="sm:max-w-md">
-                            <DialogHeader><DialogTitle>{t('manageActivationPrices')}</DialogTitle><DialogDescription>{t('manageActivationPricesDescription')}</DialogDescription></DialogHeader>
+                            <DialogHeader>
+                                <DialogTitle>{t('manageActivationPrices')}</DialogTitle>
+                                <DialogDescription>{t('manageActivationPricesDescription')}</DialogDescription>
+                            </DialogHeader>
                             <div className="grid gap-4 py-4">
                                 <div className="grid gap-2"><Label htmlFor="price-2">{t('activationPriceTwoDigit')}</Label><Input id="price-2" value={activationPrices.twoDigit} onChange={(e) => setActivationPrices(p => ({ ...p, twoDigit: e.target.value }))}/></div>
                                 <div className="grid gap-2"><Label htmlFor="price-3">{t('activationPriceThreeDigit')}</Label><Input id="price-3" value={activationPrices.threeDigit} onChange={(e) => setActivationPrices(p => ({ ...p, threeDigit: e.target.value }))}/></div>
@@ -4474,12 +4478,17 @@ const App = () => {
                         <DialogContent className="sm:max-w-md">
                             <DialogHeader><DialogTitle>{t('shareRaffle')}</DialogTitle><DialogDescription>{t('shareRaffleAppDescription')}</DialogDescription></DialogHeader>
                             <div className="grid grid-cols-1 gap-4 py-4">
+                                <div className="flex justify-center mb-4">
+                                    <div className="p-4 bg-white rounded-lg border-4 border-purple-100 shadow-md">
+                                        <img src={dynamicQrUrl} alt="QR de la rifa" className="h-40 w-40 object-contain" />
+                                    </div>
+                                </div>
                                 <Button onClick={handleShareToWhatsApp} variant="outline" className="flex items-center justify-start gap-3 h-12 text-green-600 border-green-200 hover:bg-green-50"><WhatsappIcon className="h-6 w-6" /> {t('shareOnWhatsApp')}</Button>
                                 <Button onClick={handleShareToFacebook} variant="outline" className="flex items-center justify-start gap-3 h-12 text-blue-600 border-blue-200 hover:bg-blue-50"><FacebookIcon /> {t('shareOnFacebook')}</Button>
                                 {raffleState.raffleRef && (
                                     <Button onClick={handleSharePlayNow} variant="outline" className="flex items-center justify-start gap-3 h-12 text-purple-600 border-purple-200 hover:bg-purple-50"><Gamepad2 className="h-6 w-6" /> Botón ¡JUGAR AHORA!</Button>
                                 )}
-                                <Button onClick={() => { navigator.clipboard.writeText(`${window.location.origin}${raffleState.raffleRef ? `?ref=${raffleState.raffleRef}` : ''}`); showNotification(t('linkCopied'), 'success'); setIsShareDialogOpen(false); }} variant="outline" className="flex items-center justify-start gap-3 h-12"><LinkIcon className="h-6 w-6" /> {t('copyUrl')}</Button>
+                                <Button onClick={() => { navigator.clipboard.writeText(currentRaffleUrl); showNotification(t('linkCopied'), 'success'); setIsShareDialogOpen(false); }} variant="outline" className="flex items-center justify-start gap-3 h-12"><LinkIcon className="h-6 w-6" /> {t('copyUrl')}</Button>
                             </div>
                         </DialogContent>
                     </Dialog>
@@ -4489,11 +4498,11 @@ const App = () => {
                             <DialogHeader><DialogTitle>{t('shareWithQR')}</DialogTitle><DialogDescription>{t('shareWithQRDescription')}</DialogDescription></DialogHeader>
                             <div className="flex flex-col items-center justify-center p-6 bg-white rounded-xl shadow-inner my-4">
                                 <div className="p-4 bg-white rounded-lg border-4 border-purple-100">
-                                    <QrCode className="h-48 w-48 text-purple-600" />
+                                    <img src={dynamicQrUrl} alt="QR funcional" className="h-48 w-48 object-contain" />
                                 </div>
                                 <p className="mt-4 font-bold text-gray-800 tracking-wider">{raffleState.raffleRef || 'RIFA⚡EXPRESS'}</p>
                             </div>
-                            <DialogFooter><Button onClick={setIsQrDialogOpen} className="w-full">{t('close')}</Button></DialogFooter>
+                            <DialogFooter><Button onClick={() => setIsQrDialogOpen(false)} className="w-full">{t('close')}</Button></DialogFooter>
                         </DialogContent>
                     </Dialog>
 
@@ -4519,7 +4528,6 @@ const App = () => {
                             <DialogFooter className="gap-2 sm:gap-0"><Button variant="outline" onClick={() => setShowConfirmation(false)}>{t('cancel')}</Button><Button className="bg-red-600 hover:bg-red-700" onClick={() => { if (confirmationAction) confirmationAction(); setShowConfirmation(false); }}>{t('confirm')}</Button></DialogFooter>
                         </DialogContent>
                     </Dialog>
-
                 </div>
             </div>
         </div>
