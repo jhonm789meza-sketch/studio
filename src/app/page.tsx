@@ -4148,7 +4148,22 @@ const App = () => {
                     <Dialog open={isPaymentQrImageDialogOpen} onOpenChange={setIsPaymentQrImageDialogOpen}>
                         <DialogContent>
                             <DialogHeader><DialogTitle>{t('managePaymentQrImage')}</DialogTitle></DialogHeader>
-                            <div className="grid gap-4 py-4"><div className="grid gap-2"><Label htmlFor="payment-qr-text">Código QR (Pegar texto)</Label><Textarea id="payment-qr-text" value={paymentQrImageUrl} onChange={(e) => setPaymentQrImageUrl(e.target.value)} rows={4}/></div></div>
+                            <div className="grid gap-4 py-4">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="payment-qr-url">Link de la Imagen QR</Label>
+                                    <div className="flex gap-2">
+                                        <Input id="payment-qr-url" value={paymentQrImageUrl} onChange={(e) => setPaymentQrImageUrl(e.target.value)} className="flex-grow" />
+                                        <a href="https://www.google.com/imghp" target="_blank" rel="noopener noreferrer">
+                                            <Button type="button" variant="outline" size="icon"><Search className="h-4 w-4" /></Button>
+                                        </a>
+                                    </div>
+                                    {paymentQrImageUrl && (
+                                        <div className="mt-2 border rounded-md overflow-hidden bg-gray-50 flex items-center justify-center p-2 h-40">
+                                            <img src={paymentQrImageUrl} alt="Vista previa QR" className="max-h-full object-contain" />
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
                             <DialogFooter><Button onClick={handleSavePaymentQrImage}>{t('save')}</Button></DialogFooter>
                         </DialogContent>
                     </Dialog>
@@ -4250,11 +4265,13 @@ const App = () => {
                                 <DialogDescription className="text-center">{t('scanQrToPay')}</DialogDescription>
                             </DialogHeader>
                             <div className="flex justify-center items-center p-4">
-                                <div className="relative inline-block p-4 bg-white rounded-lg shadow-md border-2 border-gray-100">
+                                <div className="relative inline-block p-4 bg-white rounded-lg shadow-md border-2 border-gray-100 min-h-[200px] w-full flex items-center justify-center">
                                      {appSettings.paymentQrImageUrl ? (
-                                        <div className="p-2 bg-white rounded-md whitespace-pre-wrap font-mono text-[10px] break-all max-h-[300px] overflow-auto select-all">
-                                            {appSettings.paymentQrImageUrl}
-                                        </div>
+                                        <img 
+                                            src={appSettings.paymentQrImageUrl} 
+                                            alt="QR de Pago" 
+                                            className="max-w-full max-h-[300px] object-contain" 
+                                        />
                                      ) : (
                                         <div className="h-48 w-48 flex items-center justify-center bg-gray-50 rounded text-gray-400 text-xs text-center p-4">
                                             {t('noPaymentQrImage')}
