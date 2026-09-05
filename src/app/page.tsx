@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import jsPDF from 'jspdf';
@@ -1863,7 +1864,7 @@ const App = () => {
     };
 
     const handleContactSupport = () => {
-        if (appSettings.supportContacts && appSettings.supportContacts.length > 0 && !raffleState.raffleRef) {
+        if (appSettings.supportContacts && appSettings.supportContacts.length > 1 && !raffleState.raffleRef) {
             setIsContactDialogOpen(true);
         } else if (appSettings.supportContacts && appSettings.supportContacts.length > 0) {
             const primaryContact = appSettings.supportContacts[0];
@@ -2007,8 +2008,17 @@ const App = () => {
         }
     };
 
-    const handleRemoveSupportContact = (contactToRemove: string) => {
-        setSupportContacts(supportContacts.filter(contact => contact !== contactToRemove));
+    const handleRemoveSupportContact = async (contactToRemove: string) => {
+        const updatedContacts = supportContacts.filter(contact => contact !== contactToRemove);
+        setSupportContacts(updatedContacts);
+        try {
+            const settingsDocRef = doc(db, 'internal', 'settings');
+            await setDoc(settingsDocRef, { supportContacts: updatedContacts }, { merge: true });
+            showNotification(t('secondaryContactSaved'), 'success');
+        } catch (error) {
+            console.error("Error removing support contact:", error);
+            showNotification(t('errorSavingSecondaryContact'), 'error');
+        }
     };
 
     const handleSavePaymentLinks = async () => {
