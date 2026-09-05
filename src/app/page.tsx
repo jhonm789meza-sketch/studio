@@ -3799,10 +3799,21 @@ const App = () => {
                                                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{raffle.raffleMode === 'infinite' ? formatValue(raffle.prize) : raffle.prize}</td>
                                                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{raffle.organizerName}</td>
                                                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{raffle.gameDate}</td>
-                                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setRaffleToChangePassword(raffle); setIsChangePasswordDialogOpen(true); }}>
-                                                                                <KeyRound className="h-4 w-4 text-gray-500" />
-                                                                            </Button>
+                                                                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                                                            <div className="flex items-center gap-2">
+                                                                                <span className="font-mono bg-slate-100 text-slate-700 px-2 py-1 rounded border border-slate-200 font-black text-xs">
+                                                                                    {raffle.password || '----'}
+                                                                                </span>
+                                                                                <Button 
+                                                                                    variant="ghost" 
+                                                                                    size="icon" 
+                                                                                    className="h-8 w-8 hover:text-purple-600" 
+                                                                                    onClick={() => { setRaffleToChangePassword(raffle); setIsChangePasswordDialogOpen(true); }}
+                                                                                    title={t('changePasswordButton')}
+                                                                                >
+                                                                                    <KeyRound className="h-4 w-4" />
+                                                                                </Button>
+                                                                            </div>
                                                                         </td>
                                                                         <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-600">{formatValue(gameCollected)}</td>
                                                                         <td className="px-6 py-4 whitespace-nowrap text-sm space-x-2">
