@@ -195,6 +195,7 @@ const App = () => {
     const [pendingSearchQuery, setPendingSearchQuery] = useState('');
     const [gamesFilter, setGamesFilter] = useState<'all' | 'winners' | 'past_date'>('all');
 
+    const [recentRefs, setRecentRefs] = useState<string[]>([]);
 
     const [activationConfirmationOpen, setActivationConfirmationOpen] = useState(false);
     const [activationToConfirm, setActivationToConfirm] = useState<{ activation: PendingActivation; newRaffleRef: string; } | null>(null);
@@ -286,8 +287,6 @@ const App = () => {
         soldText: '',
     });
 
-    const [recentAdminRefs, setRecentAdminRefs] = useState<{ref: string, name: string}[]>([]);
-
     const prizeTextareaRef = useRef<HTMLTextAreaElement>(null);
 
     // --- Derived States ---
@@ -370,20 +369,6 @@ const App = () => {
             requestNotificationPermission(raffleState.raffleRef);
         }
     }, [isCurrentUserAdmin, raffleState.raffleRef]);
-
-    useEffect(() => {
-        const saved = localStorage.getItem('recentAdminRefs');
-        if (saved) setRecentAdminRefs(JSON.parse(saved));
-    }, []);
-
-    const addToRecentRefs = (ref: string, name: string) => {
-        setRecentAdminRefs(prev => {
-            const filtered = prev.filter(r => r.ref !== ref);
-            const updated = [{ref, name: name || 'Rifa Especial'}, ...filtered].slice(0, 5);
-            localStorage.setItem('recentAdminRefs', JSON.stringify(updated));
-            return updated;
-        });
-    };
 
     useEffect(() => {
         const settingsDocRef = doc(db, 'internal', 'settings');
@@ -485,6 +470,22 @@ const App = () => {
             }
         }
     }, [isSuperAdmin]);
+
+    useEffect(() => {
+        const saved = localStorage.getItem('recentRaffleRefs');
+        if (saved) {
+            setRecentRefs(JSON.parse(saved));
+        }
+    }, []);
+
+    const addToRecentRefs = (ref: string) => {
+        setRecentRefs(prev => {
+            const filtered = prev.filter(r => r !== ref);
+            const updated = [ref, ...filtered].slice(0, 5);
+            localStorage.setItem('recentRaffleRefs', JSON.stringify(updated));
+            return updated;
+        });
+    };
 
 
     const handleTabClick = (tab: Tab) => {
@@ -837,7 +838,6 @@ const App = () => {
                 numericValue = 0;
             }
             if (numericValue < 0) numericValue = 0;
-            if (numericValue < 0) numericValue = 0;
             if (numericValue > 100) numericValue = 100;
             newState[field as keyof Raffle] = numericValue;
         } else if (field === 'infiniteModeDigits') {
@@ -1112,7 +1112,6 @@ const App = () => {
             showNotification(t('nequiPaymentPendingNotification', { number: formattedRaffleNumber, name: participantName }), 'success');
         } else {
             await setDoc(doc(db, "raffles", raffleState.raffleRef), { participants: updatedParticipants }, { merge: true });
-            setRaffleState(s => ({ ...s, name: '', phoneNumber: '', raffleNumber: '' }));
             
             if (confirmPayment === 'separated') {
                 showNotification(t('numberSeparatedSuccess', { number: formattedRaffleNumber }), 'success');
@@ -1136,6 +1135,8 @@ const App = () => {
                 };
                 setGeneratedTicketData(ticketData);
             }
+            
+            setRaffleState(s => ({ ...s, name: '', phoneNumber: '', raffleNumber: '' }));
         }
 
         if (confirmPayment === false || confirmPayment === 'separated') {
@@ -1363,8 +1364,8 @@ const App = () => {
                          if (isSuperAdmin || (data.organizerPhoneNumber === aPhone && data.password === aPassword)) {
                              localStorage.setItem('rifaAdminId', data.adminId!);
                              setCurrentAdminId(data.adminId);
-                             addToRecentRefs(aRef, data.organizerName || data.prize || '');
                              showNotification(t('adminAccessRestored'), 'success');
+                             addToRecentRefs(aRef);
                          } else {
                              showNotification(t('phoneOrPasswordMismatch'), 'error');
                              setLoading(false);
@@ -1434,7 +1435,6 @@ const App = () => {
                         const adminIdFromStorage = localStorage.getItem('rifaAdminId');
                         if (adminIdFromStorage && data.adminId === adminIdFromStorage) {
                             setCurrentAdminId(adminIdFromStorage);
-                            addToRecentRefs(aRef, data.organizerName || data.prize || '');
                         } else {
                             setCurrentAdminId(null);
                         }
@@ -1821,7 +1821,6 @@ const App = () => {
             if (loadBoard) {
                 localStorage.setItem('rifaAdminId', adminId);
                 setCurrentAdminId(adminId);
-                addToRecentRefs(finalRaffleRef, '');
             }
     
             const newRaffleData: Raffle = {
@@ -3308,7 +3307,6 @@ const App = () => {
                                     </div>
                                 </div>
                                 <div className={activeTab === 'numbers' ? 'tab-content active relative' : 'tab-content p-6 relative'}>
-                                    {/* IMAGEN DEL RENGLON - Capa frontal perfecta con color original */}
                                     {appSettings.boardHeaderImageUrl && (
                                         <div className="absolute inset-0 z-50 pointer-events-none">
                                             <Image 
@@ -3988,12 +3986,12 @@ const App = () => {
                             <div className="grid gap-4 py-4">
                                 <div className="grid gap-2">
                                     <Label htmlFor="app-name-input">{t('appNameLabel')}</Label>
-                                    <Input id="app-name-input" value={tempAppName} onChange={(e) => setTempAppName(e.target.value)} />
+                                    <input id="app-name-input" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={tempAppName} onChange={(e) => setTempAppName(e.target.value)} />
                                 </div>
                                 <div className="grid gap-2">
                                     <Label htmlFor="app-logo-input">{t('appLogoUrlLabel')}</Label>
                                     <div className="flex gap-2">
-                                        <Input id="app-logo-input" value={tempAppLogoUrl} onChange={(e) => setTempAppLogoUrl(e.target.value)} className="flex-grow" />
+                                        <input id="app-logo-input" className="flex-grow flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm" value={tempAppLogoUrl} onChange={(e) => setTempAppLogoUrl(e.target.value)} />
                                         <a href="https://www.google.com/imghp" target="_blank" rel="noopener noreferrer">
                                             <Button type="button" variant="outline" size="icon"><Search className="h-4 w-4" /></Button>
                                         </a>
@@ -4484,14 +4482,12 @@ const App = () => {
                         <DialogContent>
                             <DialogHeader><DialogTitle>{t('recoverAdminAccess')}</DialogTitle><DialogDescription>{t('recoverAdminAccessDescription')}</DialogDescription></DialogHeader>
                             <div className="grid gap-4 py-4">
-                                {recentAdminRefs.length > 0 && (
+                                {recentRefs.length > 0 && (
                                     <div className="space-y-2">
-                                        <Label className="text-xs font-bold text-muted-foreground uppercase">{t('recentReferences')}</Label>
+                                        <Label>{t('recentReferences')}</Label>
                                         <div className="flex flex-wrap gap-2">
-                                            {recentAdminRefs.map((r, i) => (
-                                                <Button key={i} variant="secondary" size="sm" className="h-8 text-[10px]" onClick={() => setAdminRefSearch(r.ref)}>
-                                                    {r.ref} - {r.name.slice(0, 10)}...
-                                                </Button>
+                                            {recentRefs.map(ref => (
+                                                <Button key={ref} variant="secondary" size="sm" onClick={() => setAdminRefSearch(ref)}>{ref}</Button>
                                             ))}
                                         </div>
                                     </div>
@@ -4602,6 +4598,21 @@ const App = () => {
                                 <Button onClick={() => setIsContactDialogOpen(false)} variant="outline" className="w-full">{t('close')}</Button>
                             </DialogFooter>
                         </DialogContent>
+                    </Dialog>
+
+                    <Dialog open={isTicketModalOpen} onOpenChange={setIsTicketModalOpen}>
+                         <DialogContent className="max-w-[320px] p-0 border-none bg-transparent shadow-none">
+                             <InlineTicket 
+                                 ticketModalRef={ticketModalRef} 
+                                 ticketData={ticketInfo} 
+                                 setGeneratedTicketData={() => setIsTicketModalOpen(false)} 
+                                 handleDownloadTicket={handleDownloadTicket} 
+                                 handleShareTicket={handleShareTicket} 
+                                 formatValue={formatValue} 
+                                 t={t} 
+                                 language={language}
+                             />
+                         </DialogContent>
                     </Dialog>
 
                     <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
