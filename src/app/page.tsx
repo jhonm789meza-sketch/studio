@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import jsPDF from 'jspdf';
@@ -4519,6 +4518,39 @@ const App = () => {
                                 </div>
                             </div>
                             <DialogFooter><Button onClick={handleSuperAdminLogin} className="w-full bg-slate-900 hover:bg-black">{t('login')}</Button></DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+
+                    <Dialog open={isContactDialogOpen} onOpenChange={setIsContactDialogOpen}>
+                        <DialogContent className="sm:max-w-md">
+                            <DialogHeader>
+                                <DialogTitle>{t('contact')}</DialogTitle>
+                                <DialogDescription>{t('contactDialogDescription')}</DialogDescription>
+                            </DialogHeader>
+                            <div className="grid gap-4 py-4">
+                                {appSettings.supportContacts && appSettings.supportContacts.map((contact, index) => (
+                                    <Button
+                                        key={index}
+                                        onClick={() => window.open(`https://wa.me/57${contact}`, '_blank')}
+                                        variant="outline"
+                                        className="flex items-center justify-start gap-3 h-12 text-green-600 border-green-200 hover:bg-green-50"
+                                    >
+                                        <WhatsappIcon className="h-6 w-6" /> {t('whatsappNumber')}: {contact}
+                                    </Button>
+                                ))}
+                                {(!appSettings.supportContacts || appSettings.supportContacts.length === 0) && (
+                                    <Button
+                                        onClick={() => window.open(`https://wa.me/573145696687`, '_blank')}
+                                        variant="outline"
+                                        className="flex items-center justify-start gap-3 h-12 text-green-600 border-green-200 hover:bg-green-50"
+                                    >
+                                        <WhatsappIcon className="h-6 w-6" /> WhatsApp Soporte
+                                    </Button>
+                                )}
+                            </div>
+                            <DialogFooter>
+                                <Button onClick={() => setIsContactDialogOpen(false)} variant="outline" className="w-full">{t('close')}</Button>
+                            </DialogFooter>
                         </DialogContent>
                     </Dialog>
 
