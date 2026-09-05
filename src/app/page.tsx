@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import jsPDF from 'jspdf';
@@ -833,6 +834,7 @@ const App = () => {
             if (isNaN(numericValue) || value === '') {
                 numericValue = 0;
             }
+            if (numericValue < 0) numericValue = 0;
             if (numericValue < 0) numericValue = 0;
             if (numericValue > 100) numericValue = 100;
             newState[field as keyof Raffle] = numericValue;
@@ -3287,14 +3289,14 @@ const App = () => {
                                     </div>
                                 </div>
                                 <div className={activeTab === 'numbers' ? 'tab-content active relative' : 'tab-content p-6 relative'}>
-                                    {/* IMAGEN DEL RENGLON - Capa frontal perfecta que cubre de arriba a abajo */}
+                                    {/* IMAGEN DEL RENGLON - Capa frontal perfecta con color original */}
                                     {appSettings.boardHeaderImageUrl && (
                                         <div className="absolute inset-0 z-50 pointer-events-none">
                                             <Image 
                                                 src={appSettings.boardHeaderImageUrl} 
                                                 alt="" 
                                                 fill 
-                                                className="object-fill opacity-25" 
+                                                className="object-fill" 
                                                 unoptimized 
                                             />
                                         </div>
@@ -4491,7 +4493,7 @@ const App = () => {
                                 </div>
                                 <p className="mt-4 font-bold text-gray-800 tracking-wider">{raffleState.raffleRef || 'RIFA⚡EXPRESS'}</p>
                             </div>
-                            <DialogFooter><Button onClick={() => setIsQrDialogOpen(false)} className="w-full">{t('close')}</Button></DialogFooter>
+                            <DialogFooter><Button onClick={setIsQrDialogOpen} className="w-full">{t('close')}</Button></DialogFooter>
                         </DialogContent>
                     </Dialog>
 
