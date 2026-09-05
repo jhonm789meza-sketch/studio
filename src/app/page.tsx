@@ -2311,6 +2311,14 @@ const App = () => {
         );
     };
 
+    const paymentQrDisplayUrl = useMemo(() => {
+        if (!appSettings.paymentQrImageUrl) return '';
+        if (appSettings.paymentQrImageUrl.startsWith('http') && !appSettings.paymentQrImageUrl.includes(' ')) {
+            return appSettings.paymentQrImageUrl;
+        }
+        return `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(appSettings.paymentQrImageUrl)}`;
+    }, [appSettings.paymentQrImageUrl]);
+
     return (
         <div className="min-h-screen bg-background font-sans relative">
             {globalBackgroundImage && (
@@ -4150,7 +4158,7 @@ const App = () => {
                             <DialogHeader><DialogTitle>{t('managePaymentQrImage')}</DialogTitle></DialogHeader>
                             <div className="grid gap-4 py-4">
                                 <div className="grid gap-2">
-                                    <Label htmlFor="payment-qr-url">Link de la Imagen QR</Label>
+                                    <Label htmlFor="payment-qr-url">Link de la Imagen o Datos del QR (Link/Texto)</Label>
                                     <div className="flex gap-2">
                                         <Input id="payment-qr-url" value={paymentQrImageUrl} onChange={(e) => setPaymentQrImageUrl(e.target.value)} className="flex-grow" />
                                         <a href="https://www.google.com/imghp" target="_blank" rel="noopener noreferrer">
@@ -4159,7 +4167,11 @@ const App = () => {
                                     </div>
                                     {paymentQrImageUrl && (
                                         <div className="mt-2 border rounded-md overflow-hidden bg-gray-50 flex items-center justify-center p-2 h-40">
-                                            <img src={paymentQrImageUrl} alt="Vista previa QR" className="max-h-full object-contain" />
+                                            <img 
+                                                src={paymentQrImageUrl.startsWith('http') && !paymentQrImageUrl.includes(' ') ? paymentQrImageUrl : `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(paymentQrImageUrl)}`} 
+                                                alt="Vista previa QR" 
+                                                className="max-h-full object-contain" 
+                                            />
                                         </div>
                                     )}
                                 </div>
@@ -4266,9 +4278,9 @@ const App = () => {
                             </DialogHeader>
                             <div className="flex justify-center items-center p-4">
                                 <div className="relative inline-block p-4 bg-white rounded-lg shadow-md border-2 border-gray-100 min-h-[200px] w-full flex items-center justify-center">
-                                     {appSettings.paymentQrImageUrl ? (
+                                     {paymentQrDisplayUrl ? (
                                         <img 
-                                            src={appSettings.paymentQrImageUrl} 
+                                            src={paymentQrDisplayUrl} 
                                             alt="QR de Pago" 
                                             className="max-w-full max-h-[300px] object-contain" 
                                         />
