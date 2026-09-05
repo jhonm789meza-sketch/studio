@@ -285,6 +285,8 @@ const App = () => {
         soldText: '',
     });
 
+    const [recentAdminRefs, setRecentAdminRefs] = useState<{ref: string, name: string}[]>([]);
+
     const prizeTextareaRef = useRef<HTMLTextAreaElement>(null);
 
     // --- Derived States ---
@@ -366,6 +368,19 @@ const App = () => {
         }
     }, [isCurrentUserAdmin, raffleState.raffleRef]);
 
+    useEffect(() => {
+        const saved = localStorage.getItem('recentAdminRefs');
+        if (saved) setRecentAdminRefs(JSON.parse(saved));
+    }, []);
+
+    const addToRecentRefs = (ref: string, name: string) => {
+        setRecentAdminRefs(prev => {
+            const filtered = prev.filter(r => r.ref !== ref);
+            const updated = [{ref, name: name || 'Rifa Especial'}, ...filtered].slice(0, 5);
+            localStorage.setItem('recentAdminRefs', JSON.stringify(updated));
+            return updated;
+        });
+    };
 
     useEffect(() => {
         const settingsDocRef = doc(db, 'internal', 'settings');
@@ -1344,6 +1359,7 @@ const App = () => {
                          if (isSuperAdmin || (data.organizerPhoneNumber === aPhone && data.password === aPassword)) {
                              localStorage.setItem('rifaAdminId', data.adminId!);
                              setCurrentAdminId(data.adminId);
+                             addToRecentRefs(aRef, data.organizerName || data.prize || '');
                              showNotification(t('adminAccessRestored'), 'success');
                          } else {
                              showNotification(t('phoneOrPasswordMismatch'), 'error');
@@ -1414,6 +1430,7 @@ const App = () => {
                         const adminIdFromStorage = localStorage.getItem('rifaAdminId');
                         if (adminIdFromStorage && data.adminId === adminIdFromStorage) {
                             setCurrentAdminId(adminIdFromStorage);
+                            addToRecentRefs(aRef, data.organizerName || data.prize || '');
                         } else {
                             setCurrentAdminId(null);
                         }
@@ -1800,6 +1817,7 @@ const App = () => {
             if (loadBoard) {
                 localStorage.setItem('rifaAdminId', adminId);
                 setCurrentAdminId(adminId);
+                addToRecentRefs(finalRaffleRef, '');
             }
     
             const newRaffleData: Raffle = {
@@ -4007,7 +4025,6 @@ const App = () => {
                                 <div className="grid gap-2"><Label htmlFor="usd-two-digit">Link USD (2 Cifras)</Label><Input id="usd-two-digit" value={paymentLinks.usdTwoDigit} onChange={(e) => setPaymentLinks(p => ({ ...p, usdTwoDigit: e.target.value }))}/></div>
                                 <div className="grid gap-2"><Label htmlFor="usd-three-digit">Link USD (3 Cifras)</Label><Input id="usd-three-digit" value={paymentLinks.usdThreeDigit} onChange={(e) => setPaymentLinks(p => ({ ...p, usdThreeDigit: e.target.value }))}/></div>
                                 <div className="grid gap-2"><Label htmlFor="usd-infinite">Link USD (Infinita)</Label><Input id="usd-infinite" value={paymentLinks.usdInfinite} onChange={(e) => setPaymentLinks(p => ({ ...p, usdInfinite: e.target.value }))}/></div>
-                                <div className="grid gap-2 pt-2 border-t"><Label htmlFor="usd-generic">Link USD Respaldo (Opcional)</Label><Input id="usd-generic" value={paymentLinks.usd} onChange={(e) => setPaymentLinks(p => ({ ...p, usd: e.target.value }))}/></div>
                             </div>
                             <DialogFooter><Button variant="outline" onClick={() => setIsUsdPaymentConfigDialogOpen(false)}>Cancelar</Button><Button onClick={handleSavePaymentLinks}>Guardar Todo</Button></DialogFooter>
                         </DialogContent>
@@ -4412,11 +4429,23 @@ const App = () => {
                         <DialogContent>
                             <DialogHeader><DialogTitle>{t('recoverAdminAccess')}</DialogTitle><DialogDescription>{t('recoverAdminAccessDescription')}</DialogDescription></DialogHeader>
                             <div className="grid gap-4 py-4">
+                                {recentAdminRefs.length > 0 && (
+                                    <div className="space-y-2">
+                                        <Label className="text-xs font-bold text-muted-foreground uppercase">{t('recentReferences')}</Label>
+                                        <div className="flex flex-wrap gap-2">
+                                            {recentAdminRefs.map((r, i) => (
+                                                <Button key={i} variant="secondary" size="sm" className="h-8 text-[10px]" onClick={() => setAdminRefSearch(r.ref)}>
+                                                    {r.ref} - {r.name.slice(0, 10)}...
+                                                </Button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                                 <div className="grid gap-2"><Label htmlFor="admin-ref-search">{t('gameReference')}</Label><Input id="admin-ref-search" value={adminRefSearch} onChange={(e) => setAdminRefSearch(e.target.value)} placeholder="JM1234567" /></div>
                                 <div className="grid gap-2"><Label htmlFor="admin-phone-search">{t('organizerPhone')}</Label><Input id="admin-phone-search" value={adminPhoneSearch} onChange={(e) => setAdminPhoneSearch(e.target.value)} placeholder="3001234567" /></div>
                                 <div className="grid gap-2"><Label htmlFor="admin-password-search">{t('password')}</Label><Input id="admin-password-search" type="password" value={adminPasswordSearch} onChange={(e) => setAdminPasswordSearch(e.target.value)} placeholder={t('yourPassword')} /></div>
                             </div>
-                            <DialogFooter><Button onClick={() => handleAdminSearch({ refToSearch: adminRefSearch, phoneToSearch: adminPhoneSearch, passwordToSearch: adminPasswordSearch })} className="w-full bg-purple-600 hover:bg-purple-700">{t('recover')}</Button></DialogFooter>
+                            <DialogFooter><Button onClick={() => handleAdminSearch({ refToSearch: adminRefSearch, phoneToSearch: adminPhoneSearch, passwordToSearch: adminPasswordSearch })} className="w-full bg-purple-600 hover:bg-purple-700">{t('recoverRestore')}</Button></DialogFooter>
                         </DialogContent>
                     </Dialog>
 

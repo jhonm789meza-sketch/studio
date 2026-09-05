@@ -1,4 +1,3 @@
-
 {
     "loading": "Cargando",
     "adminMessage": "Eres el administrador de este juego",
@@ -439,5 +438,7 @@
     "soldColor": "Vendido",
     "bgColor": "Fondo",
     "textColor": "Texto",
-    "boardColorsSaved": "Colores del tablero guardados con éxito."
+    "boardColorsSaved": "Colores del tablero guardados con éxito.",
+    "recentReferences": "Referencias Recientes",
+    "recoverRestore": "Entrar / Restaurar"
 }

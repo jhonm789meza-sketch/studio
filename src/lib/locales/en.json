@@ -1,4 +1,3 @@
-
 {
     "loading": "Loading",
     "adminMessage": "You are the administrator of this game",
@@ -435,5 +434,7 @@
     "soldColor": "Sold",
     "bgColor": "Background",
     "textColor": "Text",
-    "boardColorsSaved": "Board colors saved successfully."
+    "boardColorsSaved": "Board colors saved successfully.",
+    "recentReferences": "Recent References",
+    "recoverRestore": "Login / Restore"
 }
