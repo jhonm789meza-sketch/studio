@@ -157,6 +157,7 @@ const App = () => {
     const [notification, setNotification] = useState({ show: false, message: '', type: '' });
     
     const ticketModalRef = useRef<HTMLDivElement>(null);
+    const boardCaptureRef = useRef<HTMLDivElement>(null);
     const raffleSubscription = useRef<Unsubscribe | null>(null);
     const loadedRaffleIdRef = useRef<string | null>(null);
     
@@ -287,6 +288,8 @@ const App = () => {
         soldText: '',
     });
 
+    const [isPrizeImagesManagerOpen, setIsPrizeImagesManagerOpen] = useState(false);
+
     const prizeTextareaRef = useRef<HTMLTextAreaElement>(null);
 
     // --- Derived States ---
@@ -339,6 +342,8 @@ const App = () => {
         const gameDateObj = new Date(raffle.gameDate + 'T00:00:00');
         return gameDateObj < today && !raffle.winner;
     });
+
+    const rafflesWithImages = allRaffles.filter(r => !!r.prizeImageUrl);
 
     useEffect(() => {
         if (typeof document !== 'undefined') {
@@ -1902,35 +1907,41 @@ const App = () => {
         
         setIsUploading(true);
         try {
-            const prizeImageUrl = raffleState.prizeImageUrl;
-            if (!prizeImageUrl) {
-                 showNotification(t('noPrizeImage'), 'warning');
-                 return;
+            const boardElement = boardCaptureRef.current;
+            if (!boardElement) {
+                showNotification(t('errorCapturingPhoto'), 'error');
+                return;
             }
 
-            const response = await fetch(prizeImageUrl);
-            const blob = await response.blob();
-            const file = new File([blob], 'premio_jugar.jpg', { type: blob.type });
+            const canvas = await html2canvas(boardElement, {
+                useCORS: true,
+                backgroundColor: null,
+                scale: 2,
+            });
 
-            const raffleUrl = `${window.location.origin}/prize/${raffleState.raffleRef}`;
-            const shareText = `${raffleUrl}\n\n¡TOCA AQUÍ PARA JUGAR YA! ⚡\n\n🎯 Rifa: ${raffleState.prize || 'Especial'}\n👉 ¡Participa con tu número favorito!`;
+            const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.8));
+            if (!blob) throw new Error("Canvas to Blob failed");
+            
+            const file = new File([blob], 'tablero_rifa.jpg', { type: 'image/jpeg' });
+
+            const raffleUrl = `${window.location.origin}/?ref=${raffleState.raffleRef}`;
+            const shareText = `¡TOCA AQUÍ PARA JUGAR YA! ⚡\n\n🎯 Rifa: ${raffleState.prize || 'Especial'}\n👉 ¡Participa con tu número favorito!`;
 
             if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
                 await navigator.share({
                     title: '¡Juega Ya!',
-                    text: shareText,
+                    text: `${shareText}\n${raffleUrl}`,
                     files: [file],
-                    url: raffleUrl,
                 });
             } else {
-                const encodedMessage = encodeURIComponent(shareText);
+                const encodedMessage = encodeURIComponent(`${shareText}\n${raffleUrl}`);
                 window.open(`https://wa.me/?text=${encodedMessage}`, '_blank');
             }
         } catch (error) {
             console.error("Error sharing Play Now button:", error);
-            const raffleUrl = `${window.location.origin}/prize/${raffleState.raffleRef}`;
-            const shareText = `${raffleUrl}\n\n¡TOCA ARRIBA PARA JUGAR YA! ⚡`;
-            window.open(`https://wa.me/?text=${shareText}`, '_blank');
+            const raffleUrl = `${window.location.origin}/?ref=${raffleState.raffleRef}`;
+            const shareText = `¡TOCA AQUÍ PARA JUGAR YA! ⚡\n${raffleUrl}`;
+            window.open(`https://wa.me/?text=${encodeURIComponent(shareText)}`, '_blank');
         } finally {
             setIsUploading(false);
             setIsShareDialogOpen(false);
@@ -2320,6 +2331,18 @@ const App = () => {
         );
     };
 
+    const handleDeletePrizeImage = async (raffleRef: string) => {
+        try {
+            await updateDoc(doc(db, 'raffles', raffleRef), {
+                prizeImageUrl: ''
+            });
+            showNotification(t('imageLinkDeleted'), 'success');
+        } catch (error) {
+            console.error("Error deleting prize image link:", error);
+            showNotification(t('errorDeletingImageLink'), 'error');
+        }
+    };
+
     const paymentQrDisplayUrl = useMemo(() => {
         if (!appSettings.paymentQrImageUrl) return '';
         if (appSettings.paymentQrImageUrl.startsWith('http') && !appSettings.paymentQrImageUrl.includes(' ')) {
@@ -2382,6 +2405,10 @@ const App = () => {
                                             <DropdownMenuItem onSelect={() => setIsGamesSummaryDialogOpen(true)} className="bg-blue-50 focus:bg-blue-100 cursor-pointer">
                                                 <Globe className="mr-2 h-4 w-4 text-blue-600" />
                                                 <span className="font-bold">{t('totalGamesInLine', { count: allRaffles.length })}</span>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onSelect={() => setIsPrizeImagesManagerOpen(true)}>
+                                                <ImageIcon className="mr-2 h-4 w-4" />
+                                                <span>{t('prizeImagesManager')} ({rafflesWithImages.length})</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuSeparator />
                                             <DropdownMenuItem onSelect={() => setIsAssignPackageDialogOpen(true)}>
@@ -3319,7 +3346,7 @@ const App = () => {
                                         </div>
                                     )}
                                     {raffleMode !== 'infinite' ? (
-                                       <div className="relative flex flex-col gap-6 min-h-[70vh] p-4 sm:p-6 transition-all duration-500 overflow-hidden">
+                                       <div ref={boardCaptureRef} className="relative flex flex-col gap-6 min-h-[70vh] p-4 sm:p-6 transition-all duration-500 overflow-hidden">
                                            <div className="relative z-10 space-y-6">
                                                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b pb-4 bg-white/40 backdrop-blur-xl p-5 rounded-2xl border border-white/40 shadow-xl">
                                                    <div className="flex items-center gap-4">
@@ -4041,6 +4068,34 @@ const App = () => {
                                     </div>
                                 )}
                             </div>
+                        </DialogContent>
+                    </Dialog>
+
+                    <Dialog open={isPrizeImagesManagerOpen} onOpenChange={setIsPrizeImagesManagerOpen}>
+                        <DialogContent className="max-w-3xl h-[80vh] flex flex-col">
+                            <DialogHeader>
+                                <DialogTitle>{t('prizeImagesManager')}</DialogTitle>
+                                <DialogDescription>{t('prizeImagesManagerDescription')}</DialogDescription>
+                            </DialogHeader>
+                            <ScrollArea className="flex-grow pr-4">
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 py-4">
+                                    {rafflesWithImages.length > 0 ? (
+                                        rafflesWithImages.map((raffle) => (
+                                            <div key={raffle.raffleRef} className="relative group rounded-lg overflow-hidden border bg-gray-50 aspect-square">
+                                                <Image src={raffle.prizeImageUrl} alt={raffle.raffleRef} fill className="object-cover" unoptimized />
+                                                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-2 text-center">
+                                                    <p className="text-white text-xs font-bold mb-2">{raffle.raffleRef}</p>
+                                                    <Button variant="destructive" size="sm" onClick={() => handleDeletePrizeImage(raffle.raffleRef)}>
+                                                        <Trash2 className="h-3 w-3 mr-1" /> {t('deleteLink')}
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="col-span-full py-12 text-center text-gray-500">{t('noPrizeImagesFound')}</div>
+                                    )}
+                                </div>
+                            </ScrollArea>
                         </DialogContent>
                     </Dialog>
 

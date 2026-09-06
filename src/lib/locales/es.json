@@ -1,3 +1,4 @@
+
 {
     "loading": "Cargando",
     "adminMessage": "Eres el administrador de este juego",
@@ -325,10 +326,10 @@
     "linkCopied": "Enlace copiado al portapapeles.",
     "generateToSeeRefs": "Genera un paquete para ver las referencias aquí.",
     "deleteAll": "Eliminar Todo",
-    "deleteGeneratedRefConfirmation": "¿Estás seguro de que quieres eliminar la referencia generada {ref}? Esta acción no se puede deshacer.",
+    "deleteGeneratedRefConfirmation": "¿Estás seguro de que quieres eliminar la referencia generada {ref}? Esta acción se puede deshacer.",
     "generatedRefDeletedSuccess": "Referencia {ref} eliminada con éxito.",
     "generatedRefDeletedError": "Error al eliminar la referencia generada.",
-    "deleteAllGeneratedRefsConfirmation": "¿Estás seguro de que quieres eliminar las {count} referencias generadas? Esta acción no se puede deshacer.",
+    "deleteAllGeneratedRefsConfirmation": "¿Estás seguro de que quieres eliminar las {count} referencias generadas? Esta acción se puede deshacer.",
     "allGeneratedRefsDeletedSuccess": "Todas las referencias generadas han sido eliminadas.",
     "allGeneratedRefsDeletedError": "Error al eliminar todas las referencias generadas.",
     "deleteSelected": "Eliminar Seleccionados ({count})",
@@ -440,5 +441,11 @@
     "textColor": "Texto",
     "boardColorsSaved": "Colores del tablero guardados con éxito.",
     "recentReferences": "Referencias Recientes",
-    "recoverRestore": "Entrar / Restaurar"
+    "recoverRestore": "Entrar / Restaurar",
+    "prizeImagesManager": "Imágenes de Premios",
+    "prizeImagesManagerDescription": "Visualiza y gestiona los enlaces de imágenes de premios de todas las rifas activas.",
+    "noPrizeImagesFound": "No se encontraron rifas con imágenes de premios.",
+    "deleteLink": "Borrar Link",
+    "imageLinkDeleted": "Enlace de imagen borrado con éxito.",
+    "errorDeletingImageLink": "Error al borrar el enlace de imagen."
 }

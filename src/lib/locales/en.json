@@ -1,3 +1,4 @@
+
 {
     "loading": "Loading",
     "adminMessage": "You are the administrator of this game",
@@ -436,5 +437,11 @@
     "textColor": "Text",
     "boardColorsSaved": "Board colors saved successfully.",
     "recentReferences": "Recent References",
-    "recoverRestore": "Login / Restore"
+    "recoverRestore": "Login / Restore",
+    "prizeImagesManager": "Prize Images Manager",
+    "prizeImagesManagerDescription": "Visualize and manage prize image links from all active raffles.",
+    "noPrizeImagesFound": "No raffles with prize images found.",
+    "deleteLink": "Delete Link",
+    "imageLinkDeleted": "Image link deleted successfully.",
+    "errorDeletingImageLink": "Error deleting image link."
 }
