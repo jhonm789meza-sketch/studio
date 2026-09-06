@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import jsPDF from 'jspdf';
@@ -3334,19 +3333,19 @@ const App = () => {
                                     </div>
                                 </div>
                                 <div className={activeTab === 'numbers' ? 'tab-content active relative' : 'tab-content p-6 relative'}>
-                                    {appSettings.boardHeaderImageUrl && (
-                                        <div className="absolute inset-0 z-50 pointer-events-none">
-                                            <Image 
-                                                src={appSettings.boardHeaderImageUrl} 
-                                                alt="" 
-                                                fill 
-                                                className="object-fill" 
-                                                unoptimized 
-                                            />
-                                        </div>
-                                    )}
                                     {raffleMode !== 'infinite' ? (
                                        <div ref={boardCaptureRef} className="relative flex flex-col gap-6 min-h-[70vh] p-4 sm:p-6 transition-all duration-500 overflow-hidden">
+                                           {appSettings.boardHeaderImageUrl && (
+                                               <div className="absolute inset-0 z-50 pointer-events-none">
+                                                   <Image 
+                                                       src={appSettings.boardHeaderImageUrl} 
+                                                       alt="" 
+                                                       fill 
+                                                       className="object-fill" 
+                                                       unoptimized 
+                                                   />
+                                               </div>
+                                           )}
                                            <div className="relative z-10 space-y-6">
                                                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b pb-4 bg-white/40 backdrop-blur-xl p-5 rounded-2xl border border-white/40 shadow-xl">
                                                    <div className="flex items-center gap-4">
