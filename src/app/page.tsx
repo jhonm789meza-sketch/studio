@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import jsPDF from 'jspdf';
@@ -3301,7 +3302,7 @@ const App = () => {
                                 </div>
                                 <div className={activeTab === 'numbers' ? 'tab-content active relative' : 'tab-content p-6 relative'}>
                                     {raffleMode !== 'infinite' ? (
-                                       <div ref={boardCaptureRef} className="relative flex flex-col gap-6 min-h-[70vh] p-4 sm:p-6 transition-all duration-500 overflow-hidden bg-white/10 backdrop-blur-sm">
+                                       <div ref={boardCaptureRef} className="relative flex flex-col gap-6 min-h-[70vh] p-4 sm:p-6 transition-all duration-500 overflow-hidden bg-slate-50/95 shadow-inner">
                                            {appSettings.boardHeaderImageUrl && (
                                                <div className="absolute inset-0 z-50 pointer-events-none">
                                                    <Image 
@@ -3355,7 +3356,7 @@ const App = () => {
                                                        </div>
                                                    )}
 
-                                                   <div className="bg-white/90 backdrop-blur-xl p-5 rounded-3xl border border-white/60 shadow-2xl relative overflow-hidden">
+                                                   <div className="bg-white/95 backdrop-blur-xl p-5 rounded-3xl border border-white/60 shadow-2xl relative overflow-hidden">
                                                        {appSettings.boardDesignImageUrl && (
                                                            <div className="absolute inset-0 z-0 pointer-events-none">
                                                                <Image 
@@ -4473,7 +4474,7 @@ const App = () => {
                         </DialogContent>
                     </Dialog>
 
-                     <Dialog open={isChangePasswordDialogOpen} onOpenChange={(isOpen) => { if (!isOpen) { setNewPassword(''); setConfirmNewPassword(''); setShowNewPassword(false); } setIsChangePasswordDialogOpen(isOpen); }}>
+                    <Dialog open={isChangePasswordDialogOpen} onOpenChange={(isOpen) => { if (!isOpen) { setNewPassword(''); setConfirmNewPassword(''); setShowNewPassword(false); } setIsChangePasswordDialogOpen(isOpen); }}>
                         <DialogContent>
                             <DialogHeader>
                                 <DialogTitle>{t('changePasswordTitle')}</DialogTitle>
