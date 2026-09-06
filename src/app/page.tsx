@@ -706,7 +706,7 @@ const App = () => {
                     await setDoc(transactionDocRef, { used: true, createdAt: serverTimestamp() });
                     showNotification(t('activationPendingAdmin'), 'success');
                 }
-                cleanupUrlParams();
+                cleanupUrlParams(adminIdFromUrl, refFromUrl);
                 setLoading(false);
                 return;
             }
@@ -3341,7 +3341,7 @@ const App = () => {
                                                        src={appSettings.boardHeaderImageUrl} 
                                                        alt="" 
                                                        fill 
-                                                       className="object-fill" 
+                                                       className="object-fill opacity-100" 
                                                        unoptimized 
                                                    />
                                                </div>
@@ -4046,7 +4046,7 @@ const App = () => {
                                         <Label htmlFor="package-raffle-mode">{t('raffleType')}</Label>
                                         <Select onValueChange={(val: RaffleMode) => setPackageRaffleMode(val)} defaultValue={packageRaffleMode}>
                                             <SelectTrigger id="package-raffle-mode"><SelectValue placeholder={t('raffleType')} /></SelectTrigger>
-                                            <SelectContent><SelectItem value="two-digit">{t('2digitMode')}</SelectItem><SelectItem value="three-digit">{t('3digitMode')}</SelectItem><SelectItem value="infinite">{t('infiniteRaffle')}</SelectItem></SelectContent>
+                                            <SelectContent><SelectItem value="two-digit">{t('2digitMode')}</SelectItem><SelectItem value="three-digit">{t('3digitMode')}</SelectItem><SelectItem value="infinite">{t('infinite_caps')}</SelectItem></SelectContent>
                                         </Select>
                                     </div>
                                     <Button onClick={handleGeneratePackage} disabled={isGenerating}>{isGenerating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{t('generate')}</Button>
