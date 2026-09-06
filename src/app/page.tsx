@@ -1907,23 +1907,21 @@ const App = () => {
             const file = new File([blob], 'tablero_rifa.jpg', { type: 'image/jpeg' });
 
             const raffleUrl = `${window.location.origin}/?ref=${raffleState.raffleRef}`;
-            const shareText = `¡TOCA AQUÍ PARA JUGAR YA! ⚡\n\n🎯 Rifa: ${raffleState.prize || 'Especial'}\n👉 ¡Participa con tu número favorito!`;
-
+            
             if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
                 await navigator.share({
-                    title: '¡Juega Ya!',
-                    text: `${shareText}\n${raffleUrl}`,
                     files: [file],
+                    title: '¡Juega Ya!',
+                    text: raffleUrl,
                 });
             } else {
-                const encodedMessage = encodeURIComponent(`${shareText}\n${raffleUrl}`);
+                const encodedMessage = encodeURIComponent(raffleUrl);
                 window.open(`https://wa.me/?text=${encodedMessage}`, '_blank');
             }
         } catch (error) {
             console.error("Error sharing Play Now button:", error);
             const raffleUrl = `${window.location.origin}/?ref=${raffleState.raffleRef}`;
-            const shareText = `¡TOCA AQUÍ PARA JUGAR YA! ⚡\n${raffleUrl}`;
-            window.open(`https://wa.me/?text=${encodeURIComponent(shareText)}`, '_blank');
+            window.open(`https://wa.me/?text=${encodeURIComponent(raffleUrl)}`, '_blank');
         } finally {
             setIsUploading(false);
             setIsShareDialogOpen(false);
@@ -3302,7 +3300,7 @@ const App = () => {
                                 </div>
                                 <div className={activeTab === 'numbers' ? 'tab-content active relative' : 'tab-content p-6 relative'}>
                                     {raffleMode !== 'infinite' ? (
-                                       <div ref={boardCaptureRef} className="relative flex flex-col gap-6 min-h-[70vh] p-4 sm:p-6 transition-all duration-500 overflow-hidden bg-slate-50/95 shadow-inner">
+                                       <div ref={boardCaptureRef} className="relative flex flex-col gap-6 min-h-[70vh] p-4 sm:p-6 transition-all duration-500 overflow-hidden bg-white/95 shadow-inner">
                                            {appSettings.boardHeaderImageUrl && (
                                                <div className="absolute inset-0 z-50 pointer-events-none">
                                                    <Image 
@@ -4121,7 +4119,7 @@ const App = () => {
                                 <div className="space-y-4">
                                     <h4 className="font-bold text-sm text-yellow-600 uppercase tracking-wider">{t('pendingColor')}</h4>
                                     <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-2"><Label>{t('bgColor')}</Label><div className="flex gap-2"><Input type="color" className="h-10 w-12 p-1" value={boardColors.pendingBg} onChange={(e) => setBoardColors(p => ({ ...p, pendingBg: e.target.value }))}/><Input value={boardColors.pendingBg} onChange={(e) => setBoardColors(p => ({ ...p, pendingBg: e.target.value }))} className="flex-grow font-mono text-xs"/></div></div>
+                                        <div className="space-y-2"><Label>{t('bgColor')}</Label><div className="flex gap-2"><Input type="color" className="h-10 w-12 p-1" value={boardColors.pendingBg} onChange={(e) => setBoardColors(p => ({ ...p, availableBg: e.target.value }))}/><Input value={boardColors.pendingBg} onChange={(e) => setBoardColors(p => ({ ...p, pendingBg: e.target.value }))} className="flex-grow font-mono text-xs"/></div></div>
                                         <div className="space-y-2"><Label>{t('textColor')}</Label><div className="flex gap-2"><Input type="color" className="h-10 w-12 p-1" value={boardColors.pendingText} onChange={(e) => setBoardColors(p => ({ ...p, pendingText: e.target.value }))}/><Input value={boardColors.pendingText} onChange={(e) => setBoardColors(p => ({ ...p, pendingText: e.target.value }))} className="flex-grow font-mono text-xs"/></div></div>
                                     </div>
                                 </div>
