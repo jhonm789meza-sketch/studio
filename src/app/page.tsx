@@ -566,7 +566,7 @@ const App = () => {
         }
     };
     
-    const cleanupUrlParams = () => {
+    const cleanupUrlParams = (adminId?: string | null, ref?: string | null) => {
         const url = new URL(window.location.href);
         const paramsToClean = [
             'status', 'participantId', 'pName', 'pPhone', 'pNum', 'transactionState', 
@@ -574,30 +574,18 @@ const App = () => {
             'id', 'reference', 'state', 'env', 'raffleMode'
         ];
         
-        let needsCleanup = false;
         paramsToClean.forEach(param => {
             if (url.searchParams.has(param)) {
                 url.searchParams.delete(param);
-                needsCleanup = true;
             }
         });
         
-        const currentRef = raffleState.raffleRef || new URLSearchParams(window.location.search).get('ref');
-        const currentAdminIdParam = url.searchParams.get('adminId');
-
         const finalParams = new URLSearchParams();
-        if (currentRef) {
-            finalParams.set('ref', currentRef);
-        }
-        if (currentAdminIdParam) {
-             finalParams.set('adminId', currentAdminIdParam);
-        }
+        if (ref) finalParams.set('ref', ref);
+        if (adminId) finalParams.set('adminId', adminId);
 
         const newPath = url.pathname + (finalParams.toString() ? `?${finalParams.toString()}` : '');
-
-        if (window.location.pathname + window.location.search !== newPath) {
-             window.history.replaceState({}, '', newPath);
-        }
+        window.history.replaceState({}, '', newPath);
     };
 
 
@@ -737,7 +725,7 @@ const App = () => {
 
         initialize();
 
-        const handlePopState = (event: PopStateEvent) => {
+        const handlePopState = () => {
             const iUrlParams = new URLSearchParams(window.location.search);
             const iRefFromUrl = iUrlParams.get('ref');
             if (iRefFromUrl && iRefFromUrl !== raffleState.raffleRef) {
@@ -846,7 +834,7 @@ const App = () => {
             newState[field as keyof Raffle] = numericValue;
         } else if (field === 'infiniteModeDigits') {
             const numericValue = parseInt(String(value).replace(/\D/g, ''), 10);
-            newState[field as keyof Raffle] = isNaN(numericValue) ? '' : numericValue;
+            newState[field as keyof Raffle] = isNaN(numericValue) ? 4 : numericValue;
         } else if (field === 'manualWinnerNumber' || field === 'manualWinnerNumber2' || field === 'manualWinnerNumber3') {
              const cleanValue = value.replace(/\D/g, '');
              newState[field as keyof Raffle] = cleanValue;
@@ -886,7 +874,7 @@ const App = () => {
                     valueToSave = String(value).replace(/\D/g, '');
                     if (valueToSave === '') valueToSave = 0;
                 } else if (field === 'infiniteModeDigits') {
-                    valueToSave = parseInt(String(value).replace(/\D/g, ''), 10) || 0;
+                    valueToSave = parseInt(String(value).replace(/\D/g, ''), 10) || 4;
                     if (valueToSave !== 0 && valueToSave < 4) {
                         showNotification(t('min4Digits'), 'warning');
                         if (!isUploadingField) setIsUploading(false);
@@ -1071,10 +1059,6 @@ const App = () => {
         const num = parseInt(raffleNumber, 10);
     
         if (raffleMode === 'infinite') {
-            if (infiniteDigits < 4) {
-                 showNotification(t('min4Digits'), 'warning');
-                 return null;
-            }
             if (raffleNumber.length !== infiniteDigits) {
                 showNotification(t('infiniteModeDigitsWarning', { count: infiniteDigits }), 'warning');
                 return null;
@@ -1278,8 +1262,6 @@ const App = () => {
                 } catch (error) {
                     console.error('Error deleting all past due raffles:', error);
                     showNotification(t('selectedRafflesDeletedError'), 'error');
-                } finally {
-                    setLoading(false);
                 }
             }
         );
@@ -1988,17 +1970,6 @@ const App = () => {
         showNotification(t('logoutSuccess'), 'info');
     };
 
-    const handleSaveSupportContacts = async () => {
-        try {
-            const settingsDocRef = doc(db, 'internal', 'settings');
-            await setDoc(settingsDocRef, { supportContacts: supportContacts }, { merge: true });
-            showNotification(t('secondaryContactSaved'), 'success');
-        } catch (error) {
-            console.error("Error saving support contact:", error);
-            showNotification(t('errorSavingSecondaryContact'), 'error');
-        }
-    };
-
     const handleAddSupportContact = async () => {
         if (newSupportContact && !supportContacts.includes(newSupportContact)) {
             const updatedContacts = [...supportContacts, newSupportContact.replace(/\D/g, '')];
@@ -2012,7 +1983,6 @@ const App = () => {
             } catch (error) {
                 console.error("Error saving support contact:", error);
                 showNotification(t('errorSavingSecondaryContact'), 'error');
-                setSupportContacts(supportContacts);
             }
         }
     };
@@ -2230,7 +2200,6 @@ const App = () => {
 
     const handleSavePaymentQrImage = async () => {
         if (!isSuperAdmin) return;
-        setIsUploading(true);
         try {
             await updateDoc(doc(db, 'internal', 'settings'), {
                 paymentQrImageUrl: paymentQrImageUrl,
@@ -2240,8 +2209,6 @@ const App = () => {
         } catch (error) {
             console.error("Error saving payment QR image:", error);
             showNotification(t('errorSavingPaymentQrImage'), 'error');
-        } finally {
-             setIsUploading(false);
         }
     };
 
@@ -2355,7 +2322,7 @@ const App = () => {
             {globalBackgroundImage && (
                 <div className="fixed inset-0 z-0 pointer-events-none">
                     <Image src={globalBackgroundImage} alt={t('raffleBackgroundAlt')} fill style={{objectFit: "cover"}} unoptimized />
-                    <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/40" />
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/20" />
                 </div>
             )}
             <div className="relative z-10 p-0 sm:p-4 min-h-screen sm:min-h-auto flex flex-col">
@@ -2546,7 +2513,7 @@ const App = () => {
                                 <h2 className="text-3xl font-bold text-white drop-shadow-xl mb-4">{t('boardLocked')}</h2>
                                 <div className="max-w-2xl mx-auto bg-blue-900/40 backdrop-blur-xl border-l-4 border-blue-400 text-white p-6 rounded-lg mb-10 shadow-2xl text-left">
                                     <h3 className="font-bold text-lg mb-1">{t('activationInstructionTitle')}</h3>
-                                    <p className="text-sm opacity-90 leisure-relaxed">{t('activationInstructionBody')}</p>
+                                    <p className="text-sm opacity-90 leading-relaxed">{t('activationInstructionBody')}</p>
                                 </div>
                                 <div className="grid md:grid-cols-1 gap-10 items-start max-w-lg mx-auto">
                                     <div className="flex flex-col justify-center items-center gap-10">
@@ -3334,7 +3301,7 @@ const App = () => {
                                 </div>
                                 <div className={activeTab === 'numbers' ? 'tab-content active relative' : 'tab-content p-6 relative'}>
                                     {raffleMode !== 'infinite' ? (
-                                       <div ref={boardCaptureRef} className="relative flex flex-col gap-6 min-h-[70vh] p-4 sm:p-6 transition-all duration-500 overflow-hidden">
+                                       <div ref={boardCaptureRef} className="relative flex flex-col gap-6 min-h-[70vh] p-4 sm:p-6 transition-all duration-500 overflow-hidden bg-white/10 backdrop-blur-sm">
                                            {appSettings.boardHeaderImageUrl && (
                                                <div className="absolute inset-0 z-50 pointer-events-none">
                                                    <Image 
@@ -3347,7 +3314,7 @@ const App = () => {
                                                </div>
                                            )}
                                            <div className="relative z-10 space-y-6">
-                                               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b pb-4 bg-white/40 backdrop-blur-xl p-5 rounded-2xl border border-white/40 shadow-xl">
+                                               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b pb-4 bg-white/80 backdrop-blur-md p-5 rounded-2xl border border-white/50 shadow-xl">
                                                    <div className="flex items-center gap-4">
                                                        {(raffleState.prizeImageUrl) && (
                                                            <div className="relative h-20 w-20 rounded-xl overflow-hidden border-2 border-white shadow-lg bg-white shrink-0">
@@ -3376,7 +3343,7 @@ const App = () => {
 
                                                <div className="relative w-full max-w-5xl mx-auto space-y-6">
                                                    {raffleState.prizeImageUrl && (
-                                                       <div className="rounded-2xl overflow-hidden shadow-2xl border-4 border-white/50 bg-white/40 backdrop-blur-xl w-full group transition-all hover:shadow-purple-200/50 hover:scale-[1.01]">
+                                                       <div className="rounded-2xl overflow-hidden shadow-2xl border-4 border-white/80 bg-white/60 backdrop-blur-md w-full group transition-all hover:shadow-purple-200/50 hover:scale-[1.01]">
                                                            <Image 
                                                                src={raffleState.prizeImageUrl} 
                                                                alt={raffleState.prize || t('rafflePrizeAlt')} 
@@ -3388,7 +3355,7 @@ const App = () => {
                                                        </div>
                                                    )}
 
-                                                   <div className="bg-white/40 backdrop-blur-xl p-5 rounded-3xl border border-white/50 shadow-2xl relative overflow-hidden">
+                                                   <div className="bg-white/90 backdrop-blur-xl p-5 rounded-3xl border border-white/60 shadow-2xl relative overflow-hidden">
                                                        {appSettings.boardDesignImageUrl && (
                                                            <div className="absolute inset-0 z-0 pointer-events-none">
                                                                <Image 
@@ -3425,15 +3392,15 @@ const App = () => {
                                                                            borderColor: (!isConfirmed && !isPending && raffleState.isDetailsConfirmed && !raffleState.winner) ? availText + '4D' : undefined
                                                                        }}
                                                                        className={`
-                                                                           number-cell text-center py-2.5 rounded-xl transition-all text-sm
+                                                                           number-cell text-center py-2.5 rounded-xl transition-all text-sm font-bold
                                                                            ${raffleState.isWinnerConfirmed || !raffleState.isDetailsConfirmed || !!raffleState.winner || isConfirmed || isPending ? 'cursor-not-allowed' : 'cursor-pointer'}
                                                                            ${isConfirmed
                                                                                ? 'shadow-xl scale-95 opacity-90'
                                                                                : isPending
                                                                                ? 'shadow-lg scale-100'
                                                                                : !raffleState.isDetailsConfirmed || !!raffleState.winner
-                                                                               ? 'bg-gray-200/50 text-gray-400'
-                                                                               : 'border-2 hover:opacity-80 hover:scale-110 active:scale-90'
+                                                                               ? 'bg-gray-100/80 text-gray-400'
+                                                                               : 'border-2 hover:opacity-80 hover:scale-110 active:scale-90 shadow-sm'
                                                                            }
                                                                            ${raffleState.winner?.raffleNumber === formattedNum ? 'ring-4 ring-yellow-400 animate-pulse z-20 scale-125 bg-yellow-500 text-white shadow-yellow-400' : ''}
                                                                        `}
@@ -3446,7 +3413,7 @@ const App = () => {
                                                    </div>
                                                </div>
 
-                                                <div className="flex flex-wrap gap-4 mt-4 text-xs font-black bg-white/50 backdrop-blur-md p-4 rounded-2xl w-fit shadow-xl border border-white/50">
+                                                <div className="flex flex-wrap gap-4 mt-4 text-xs font-black bg-white/80 backdrop-blur-md p-4 rounded-2xl w-fit shadow-xl border border-white/50">
                                                     <div className="flex items-center gap-2">
                                                         <div className="w-5 h-5 rounded-lg border-2" style={{ backgroundColor: appSettings.numberBgAvailable || 'rgba(34, 197, 94, 0.1)', borderColor: appSettings.numberTextAvailable || '#15803d' }}></div>
                                                         <span className="text-green-800">{t('available').toUpperCase()}</span>
