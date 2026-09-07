@@ -105,11 +105,6 @@ const countryIndicators = [
     { code: '+1', flag: '🇺🇸', name: 'Estados Unidos' },
 ];
 
-interface NextRaffleInfo {
-    refs: string[];
-    count: number;
-}
-
 const DateTimeDisplay = ({ t }: { t: (key: string) => void }) => {
     const [currentTime, setCurrentTime] = useState<Date | null>(null);
 
@@ -201,7 +196,7 @@ const App = () => {
     const [activationConfirmationOpen, setActivationConfirmationOpen] = useState(false);
     const [activationToConfirm, setActivationToConfirm] = useState<{ activation: PendingActivation; newRaffleRef: string; } | null>(null);
 
-    const [nextRaffleRefs, setNextRaffleRefs] = useState<{ twoDigit: NextRaffleInfo, threeDigit: NextRaffleInfo, infinite: NextRaffleInfo }>({ twoDigit: { refs: [], count: 0 }, threeDigit: { refs: [], count: 0 }, infinite: { refs: [], count: 0 } });
+    const [nextRaffleRefs, setNextRaffleRefs] = useState<{ twoDigit: {refs: string[], count: number}, threeDigit: {refs: string[], count: number}, infinite: {refs: string[], count: number} }>({ twoDigit: { refs: [], count: 0 }, threeDigit: { refs: [], count: 0 }, infinite: { refs: [], count: 0 } });
 
     const [appSettings, setAppSettings] = useState<AppSettings>({});
     const [isContactDialogOpen, setIsContactDialogOpen] = useState(false);
@@ -830,7 +825,6 @@ const App = () => {
             if (isNaN(numericValue) || value === '') {
                 numericValue = 0;
             }
-            if (numericValue < 0) numericValue = 0;
             if (numericValue < 0) numericValue = 0;
             if (numericValue > 100) numericValue = 100;
             newState[field as keyof Raffle] = numericValue;
@@ -1751,8 +1745,8 @@ const App = () => {
 
 
     const handleApproveActivation = async (activation: PendingActivation) => {
-        const { refs: [newRaffleRef] } = await raffleManager.getNextRefInfo(activation.raffleMode, true, 1);
-        setActivationToConfirm({ activation, newRaffleRef: `JM${newRaffleRef}` });
+        const { refs: [newRaffleRef] } = await raffleManager.peekNextRaffleRef(activation.raffleMode, 1);
+        setActivationToConfirm({ activation, newRaffleRef });
         setActivationConfirmationOpen(true);
     };
 
@@ -1896,6 +1890,26 @@ const App = () => {
                 return;
             }
 
+            // Enlace Sorpresa Camuflado
+            const surpriseUrl = `${window.location.origin}/prize/${raffleState.raffleRef}`;
+
+            // Crear temporalmente el overlay con el link transparente en el medio
+            const overlay = document.createElement('div');
+            overlay.id = 'temp-link-overlay';
+            overlay.style.position = 'absolute';
+            overlay.style.top = '50%';
+            overlay.style.left = '50%';
+            overlay.style.transform = 'translate(-50%, -50%)';
+            overlay.style.zIndex = '1000';
+            overlay.style.opacity = '0.1'; // Transparente (10%)
+            overlay.style.fontSize = '24px';
+            overlay.style.fontWeight = 'bold';
+            overlay.style.pointerEvents = 'none';
+            overlay.style.color = 'gray';
+            overlay.innerText = surpriseUrl;
+            
+            boardElement.appendChild(overlay);
+
             const canvas = await html2canvas(boardElement, {
                 useCORS: true,
                 backgroundColor: "#ffffff",
@@ -1904,20 +1918,18 @@ const App = () => {
                 allowTaint: false,
             });
 
+            // Remover el overlay después de la captura
+            boardElement.removeChild(overlay);
+
             const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.8));
             
-            // Link Sorpresa Camuflado - Usamos la ruta /prize/[ref] que previsualiza y redirige
-            const surpriseUrl = `${window.location.origin}/prize/${raffleState.raffleRef}`;
-
             if (blob && navigator.share && navigator.canShare && navigator.canShare({ files: [new File([blob], 'tablero.jpg', { type: 'image/jpeg' })] })) {
                 const file = new File([blob], 'tablero.jpg', { type: 'image/jpeg' });
                 await navigator.share({
                     files: [file],
-                    title: '¡TOCA PARA JUGAR!',
-                    url: surpriseUrl, // El enlace camuflado acompaña a la imagen
                 });
             } else {
-                // Si no puede compartir archivos (escritorio), copiamos el link sorpresa
+                // Fallback: copiar el link sorpresa si no se puede compartir archivo
                 await navigator.clipboard.writeText(surpriseUrl);
                 showNotification(t('linkCopied'), 'success');
             }
@@ -2836,7 +2848,7 @@ const App = () => {
                                             <div className="space-y-4 mb-6">
                                                <div>
                                                    <Label htmlFor="organizer-name-input">{t('whoOrganizes')}:</Label>
-                                                   <Input
+                                                   <input
                                                        id="organizer-name-input"
                                                        type="text"
                                                        value={raffleState.organizerName}
@@ -2844,7 +2856,7 @@ const App = () => {
                                                        onBlur={(e) => handleFieldChange('organizerName', e.target.value)}
                                                        placeholder={t('organizerNamePlaceholder')}
                                                        disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
-                                                       className="w-full mt-1"
+                                                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm mt-1"
                                                    />
                                                </div>
                                                <div>
