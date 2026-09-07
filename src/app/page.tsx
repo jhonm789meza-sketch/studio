@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import jsPDF from 'jspdf';
@@ -1905,14 +1906,15 @@ const App = () => {
 
             const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.8));
             
-            // Link Sorpresa Camuflado
+            // Link Sorpresa Camuflado - Usamos la ruta /prize/[ref] que previsualiza y redirige
             const surpriseUrl = `${window.location.origin}/prize/${raffleState.raffleRef}`;
 
             if (blob && navigator.share && navigator.canShare && navigator.canShare({ files: [new File([blob], 'tablero.jpg', { type: 'image/jpeg' })] })) {
                 const file = new File([blob], 'tablero.jpg', { type: 'image/jpeg' });
                 await navigator.share({
                     files: [file],
-                    // No enviamos texto ni link directo en el mensaje para que el link camuflado sea la sorpresa
+                    title: '¡TOCA PARA JUGAR!',
+                    url: surpriseUrl, // El enlace camuflado acompaña a la imagen
                 });
             } else {
                 // Si no puede compartir archivos (escritorio), copiamos el link sorpresa
