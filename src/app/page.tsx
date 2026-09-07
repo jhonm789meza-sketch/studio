@@ -830,6 +830,7 @@ const App = () => {
                 numericValue = 0;
             }
             if (numericValue < 0) numericValue = 0;
+            if (numericValue < 0) numericValue = 0;
             if (numericValue > 100) numericValue = 100;
             newState[field as keyof Raffle] = numericValue;
         } else if (field === 'infiniteModeDigits') {
@@ -1811,9 +1812,9 @@ const App = () => {
     
             const newRaffleData: Raffle = {
                 ...initialRaffleData,
-                raffleMode: mode,
                 raffleRef: finalRaffleRef,
                 adminId: adminId,
+                raffleMode: mode,
                 isPaid: true,
                 isActive: initiallyActive,
                 prizeImageUrl: '',
@@ -1904,13 +1905,19 @@ const App = () => {
 
             const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.8));
             
+            // Link Sorpresa Camuflado
+            const surpriseUrl = `${window.location.origin}/prize/${raffleState.raffleRef}`;
+
             if (blob && navigator.share && navigator.canShare && navigator.canShare({ files: [new File([blob], 'tablero.jpg', { type: 'image/jpeg' })] })) {
                 const file = new File([blob], 'tablero.jpg', { type: 'image/jpeg' });
                 await navigator.share({
                     files: [file],
+                    // No enviamos texto ni link directo en el mensaje para que el link camuflado sea la sorpresa
                 });
             } else {
-                showNotification(t('errorCapturingPhoto'), 'error');
+                // Si no puede compartir archivos (escritorio), copiamos el link sorpresa
+                await navigator.clipboard.writeText(surpriseUrl);
+                showNotification(t('linkCopied'), 'success');
             }
         } catch (error) {
             console.error("Error sharing Play Now button:", error);
