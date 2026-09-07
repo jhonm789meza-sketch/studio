@@ -1890,10 +1890,8 @@ const App = () => {
                 return;
             }
 
-            // Enlace Sorpresa Camuflado
             const surpriseUrl = `${window.location.origin}/prize/${raffleState.raffleRef}`;
 
-            // Crear temporalmente el overlay con el link transparente en el medio
             const overlay = document.createElement('div');
             overlay.id = 'temp-link-overlay';
             overlay.style.position = 'absolute';
@@ -1901,7 +1899,7 @@ const App = () => {
             overlay.style.left = '50%';
             overlay.style.transform = 'translate(-50%, -50%)';
             overlay.style.zIndex = '1000';
-            overlay.style.opacity = '0.1'; // Transparente (10%)
+            overlay.style.opacity = '0.05'; 
             overlay.style.fontSize = '24px';
             overlay.style.fontWeight = 'bold';
             overlay.style.pointerEvents = 'none';
@@ -1918,7 +1916,6 @@ const App = () => {
                 allowTaint: false,
             });
 
-            // Remover el overlay después de la captura
             boardElement.removeChild(overlay);
 
             const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.8));
@@ -1929,7 +1926,6 @@ const App = () => {
                     files: [file],
                 });
             } else {
-                // Fallback: copiar el link sorpresa si no se puede compartir archivo
                 await navigator.clipboard.writeText(surpriseUrl);
                 showNotification(t('linkCopied'), 'success');
             }
@@ -2641,7 +2637,7 @@ const App = () => {
                                             <div className='flex'>
                                                 <div className="bg-red-600 p-5 flex flex-col items-center justify-center border-r-2 border-dashed border-white/30">
                                                     <InfinityIcon className="h-12 w-12 text-white mb-2" />
-                                                    <span className="text-white font-black text-2xl">∞</span>
+                                                    <span className="text-white font-black text-2xl"></span>
                                                     <span className="text-white/80 text-xs font-bold">{t('infinite_caps')}</span>
                                                 </div>
                                                 <div className="p-8 flex-grow text-left">
@@ -2812,7 +2808,7 @@ const App = () => {
                                             )}
                                             
                                             <div className="mb-6 rounded-lg overflow-hidden relative flex items-center justify-center shadow-lg bg-gray-200 aspect-auto group">
-                                                 {(raffleState.prizeImageUrl) ? (
+                                                 {(raffleState.prizeImageUrl) && (
                                                     <button onClick={() => isCurrentUserAdmin ? handleShare() : handleTabClick('numbers')} className="w-full flex items-center justify-center cursor-pointer relative" aria-label={t('rafflePrizeAlt')}>
                                                         <Image 
                                                             src={raffleState.prizeImageUrl} 
@@ -2947,7 +2943,7 @@ const App = () => {
                                                             <div className="grid gap-4">
                                                                 <div className="grid gap-2">
                                                                     <Label htmlFor="prize-image-url-input" className="text-xs text-muted-foreground">Enlace Directo de Imagen</Label>
-                                                                    <div className="flex flex-wrap gap-2">
+                                                                    <div className="flex wrap gap-2">
                                                                         <Input
                                                                             id="prize-image-url-input"
                                                                             type="text"
@@ -3186,7 +3182,7 @@ const App = () => {
 
                                                      {raffleMode === 'infinite' && raffleState.allowPartialWinners && (
                                                          <>
-                                                             <div className="flex flex-wrap gap-3 items-end">
+                                                             <div className="flex wrap gap-3 items-end">
                                                                  <div className="flex-grow">
                                                                      <Label htmlFor="manual-winner-3-input">{t('last3DigitsNumber')}</Label>
                                                                      <div className="relative">
@@ -3231,7 +3227,7 @@ const App = () => {
                                                                      </Button>
                                                                  </div>
                                                              </div>
-                                                             <div className="flex flex-wrap gap-3 items-end">
+                                                             <div className="flex wrap gap-3 items-end">
                                                                  <div className="flex-grow">
                                                                      <Label htmlFor="manual-winner-2-input">{t('last2DigitsNumber')}</Label>
                                                                      <div className="relative">
@@ -3426,7 +3422,7 @@ const App = () => {
                                                    </div>
                                                </div>
 
-                                                <div className="flex flex-wrap gap-4 mt-4 text-xs font-black bg-white/80 backdrop-blur-md p-4 rounded-2xl w-fit shadow-xl border border-white/50">
+                                                <div className="flex wrap gap-4 mt-4 text-xs font-black bg-white/80 backdrop-blur-md p-4 rounded-2xl w-fit shadow-xl border border-white/50">
                                                     <div className="flex items-center gap-2">
                                                         <div className="w-5 h-5 rounded-lg border-2" style={{ backgroundColor: appSettings.numberBgAvailable || 'rgba(34, 197, 94, 0.1)', borderColor: appSettings.numberTextAvailable || '#15803d' }}></div>
                                                         <span className="text-green-800">{t('available').toUpperCase()}</span>
@@ -3594,7 +3590,7 @@ const App = () => {
                                                         )}
                                                     </div>
                                                 </div>
-                                                <div className="flex flex-col sm:flex-row flex-wrap gap-2">
+                                                <div className="flex flex-col sm:flex-row wrap gap-2">
                                                     {raffleState.isPaymentLinkEnabled && raffleState.paymentLink && (
                                                         <Button
                                                             className="flex-1 w-full sm:auto bg-blue-500 hover:bg-blue-600 text-white"
@@ -3722,7 +3718,7 @@ const App = () => {
                                 <div className={activeTab === 'games' ? 'tab-content active p-6' : 'tab-content p-6'}>
                                     {isSuperAdmin && (
                                          <>
-                                            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mb-4">
+                                            <div className="flex wrap items-center gap-x-6 gap-y-2 mb-4">
                                                 <div className="flex items-center gap-2">
                                                     <h2 className="text-2xl font-bold text-gray-800">{
                                                         gamesFilter === 'winners' ? t('gamesWithWinner') :
