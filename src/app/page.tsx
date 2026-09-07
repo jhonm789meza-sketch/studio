@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import jsPDF from 'jspdf';
@@ -1900,26 +1899,22 @@ const App = () => {
                 backgroundColor: "#ffffff",
                 scale: 2,
                 logging: false,
-                allowTaint: true,
+                allowTaint: false,
             });
 
             const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.8));
-            const raffleUrl = `${window.location.origin}/?ref=${raffleState.raffleRef}`;
             
             if (blob && navigator.share && navigator.canShare && navigator.canShare({ files: [new File([blob], 'tablero.jpg', { type: 'image/jpeg' })] })) {
                 const file = new File([blob], 'tablero.jpg', { type: 'image/jpeg' });
                 await navigator.share({
                     files: [file],
-                    title: '¡Juega Ya!',
-                    text: raffleUrl,
                 });
             } else {
-                window.open(`https://wa.me/?text=${encodeURIComponent(raffleUrl)}`, '_blank');
+                showNotification(t('errorCapturingPhoto'), 'error');
             }
         } catch (error) {
             console.error("Error sharing Play Now button:", error);
-            const raffleUrl = `${window.location.origin}/?ref=${raffleState.raffleRef}`;
-            window.open(`https://wa.me/?text=${encodeURIComponent(raffleUrl)}`, '_blank');
+            showNotification(t('errorCapturingPhoto'), 'error');
         } finally {
             setIsUploading(false);
             setIsShareDialogOpen(false);
@@ -4646,4 +4641,3 @@ const App = () => {
 };
 
 export default App;
-
