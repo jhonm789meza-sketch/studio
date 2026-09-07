@@ -5,15 +5,15 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { RaffleManager } from '@/lib/RaffleManager';
 import { db, storage } from '@/lib/firebase';
-import { doc, onSnapshot, setDoc, getDoc, deleteDoc, Unsubscribe, serverTimestamp, collection, query, where, getDocs, updateDoc, addDoc, orderBy, writeBatch, arrayUnion } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc, getDoc, deleteDoc, Unsubscribe, serverTimestamp, collection, query, where, updateDoc, addDoc, writeBatch } from 'firebase/firestore';
 import Image from 'next/image';
-import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useLanguage } from '@/hooks/use-language';
 import { requestNotificationPermission } from '@/lib/notification';
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House, Clock as ClockIcon, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages, Trophy, Trash2, Copy, Shield, LogOut, Eye, EyeOff, Gamepad2, Phone, TrendingUp, Globe, Landmark, RefreshCcw, LockKeyhole, Package, Camera, Check, Upload, FlipHorizontal, MousePointer2, ImageIcon, Ban, Settings2, LayoutGrid, Palette, Layout, LayoutTemplate, Rows3 } from 'lucide-react';
+import { Menu, Award, Lock, House, Clock as ClockIcon, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages, Trophy, Trash2, Copy, Shield, LogOut, Eye, EyeOff, Gamepad2, Phone, TrendingUp, Globe, Landmark, RefreshCcw, LockKeyhole, Package, Check, Rows3, Palette, ImageIcon, Settings2, LayoutGrid, MousePointer2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -24,7 +24,7 @@ import { format } from 'date-fns';
 import { es, enUS } from 'date-fns/locale';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
-import { CountrySelectionDialog, getCurrencySymbol } from '@/components/country-selection-dialog';
+import { getCurrencySymbol } from '@/components/country-selection-dialog';
 import { WhatsappIcon, FacebookIcon, TicketIcon, NequiIcon, InlineTicket, BankIcon } from '@/components/raffle-components';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -1841,7 +1841,7 @@ const App = () => {
             return { adminId, finalRaffleRef };
 
         } catch (error) {
-            console.error("Error activating board:", error);
+            console.error("Error activar tablero:", error);
             showNotification(t('errorActivatingBoard'), "error");
              return { adminId: null, finalRaffleRef: null };
         } finally {
@@ -1897,26 +1897,24 @@ const App = () => {
 
             const canvas = await html2canvas(boardElement, {
                 useCORS: true,
-                backgroundColor: null,
+                backgroundColor: "#ffffff",
                 scale: 2,
+                logging: false,
+                allowTaint: true,
             });
 
             const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.8));
-            if (!blob) throw new Error("Canvas to Blob failed");
-            
-            const file = new File([blob], 'tablero_rifa.jpg', { type: 'image/jpeg' });
-
             const raffleUrl = `${window.location.origin}/?ref=${raffleState.raffleRef}`;
             
-            if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+            if (blob && navigator.share && navigator.canShare && navigator.canShare({ files: [new File([blob], 'tablero.jpg', { type: 'image/jpeg' })] })) {
+                const file = new File([blob], 'tablero.jpg', { type: 'image/jpeg' });
                 await navigator.share({
                     files: [file],
                     title: '¡Juega Ya!',
                     text: raffleUrl,
                 });
             } else {
-                const encodedMessage = encodeURIComponent(raffleUrl);
-                window.open(`https://wa.me/?text=${encodedMessage}`, '_blank');
+                window.open(`https://wa.me/?text=${encodeURIComponent(raffleUrl)}`, '_blank');
             }
         } catch (error) {
             console.error("Error sharing Play Now button:", error);
@@ -4648,3 +4646,4 @@ const App = () => {
 };
 
 export default App;
+
