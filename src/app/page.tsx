@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import jsPDF from 'jspdf';
@@ -2426,18 +2425,6 @@ const App = () => {
                                                 <Rows3 className="mr-2 h-4 w-4" />
                                                 <span>Imagen del Renglón</span>
                                             </DropdownMenuItem>
-                                            <DropdownMenuItem onSelect={() => setIsPaymentInfoDialogOpen(true)}>
-                                                <Landmark className="mr-2 h-4 w-4" />
-                                                <span>{t('paymentInfo')}</span>
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem onSelect={() => setIsPaymentQrImageDialogOpen(true)}>
-                                                <QrCode className="mr-2 h-4 w-4" />
-                                                <span>{t('paymentQrImage')}</span>
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem onSelect={() => setIsSuperAdminChangePasswordOpen(true)}>
-                                                <KeyRound className="mr-2 h-4 w-4" />
-                                                <span>{t('changePasswordTitle')}</span>
-                                            </DropdownMenuItem>
                                             <DropdownMenuSeparator />
                                             <DropdownMenuItem onSelect={() => {
                                                 setGamesFilter('past_date');
@@ -2453,12 +2440,6 @@ const App = () => {
                                                     </span>
                                                 </div>
                                             </DropdownMenuItem>
-                                            {pastDateRaffles.length > 0 && (
-                                                <DropdownMenuItem onSelect={handleDeleteAllPastDueRaffles} className="text-red-500 focus:bg-red-100 focus:text-red-600">
-                                                    <Trash2 className="mr-2 h-4 w-4" />
-                                                    <span>{t('deleteAllPastDueGames', { count: pastDateRaffles.length })}</span>
-                                                </DropdownMenuItem>
-                                            )}
                                             <DropdownMenuItem onSelect={() => {
                                                 setGamesFilter('winners');
                                                 handleTabClick('winners');
@@ -2473,12 +2454,6 @@ const App = () => {
                                                     </span>
                                                 </div>
                                             </DropdownMenuItem>
-                                            {gamesWithWinner.length > 0 && (
-                                                <DropdownMenuItem onSelect={handleDeleteAllWinnerRaffles} className="text-red-500 focus:bg-red-100 focus:text-red-600">
-                                                    <Trash2 className="mr-2 h-4 w-4" />
-                                                    <span>{t('deleteAllWinnerGames', { count: gamesWithWinner.length })}</span>
-                                                </DropdownMenuItem>
-                                            )}
                                             <DropdownMenuSeparator />
                                             <DropdownMenuItem onSelect={handleSuperAdminLogout}>
                                                 <LogOut className="mr-2 h-4 w-4" />
@@ -2494,10 +2469,6 @@ const App = () => {
                                      <DropdownMenuItem onSelect={() => setIsQrDialogOpen(true)}>
                                         <QrCode className="mr-2 h-4 w-4" />
                                         <span>{t('showQR')}</span>
-                                    </DropdownMenuItem>
-                                     <DropdownMenuItem onSelect={handleInstallClick}>
-                                        <Download className="mr-2 h-4 w-4" />
-                                        <span>{t('installApp')}</span>
                                     </DropdownMenuItem>
                                     <DropdownMenuItem onSelect={toggleLanguage}>
                                         <Languages className="mr-2 h-4 w-4" />
@@ -4565,19 +4536,6 @@ const App = () => {
                                 )}
                                 <Button onClick={() => { navigator.clipboard.writeText(currentRaffleUrl); showNotification(t('linkCopied'), 'success'); setIsShareDialogOpen(false); }} variant="outline" className="flex items-center justify-start gap-3 h-12"><LinkIcon className="h-6 w-6" /> {t('copyUrl')}</Button>
                             </div>
-                        </DialogContent>
-                    </Dialog>
-
-                    <Dialog open={isQrDialogOpen} onOpenChange={setIsQrDialogOpen}>
-                        <DialogContent className="sm:max-w-md">
-                            <DialogHeader><DialogTitle>{t('shareWithQR')}</DialogTitle><DialogDescription>{t('shareWithQRDescription')}</DialogDescription></DialogHeader>
-                            <div className="flex flex-col items-center justify-center p-6 bg-white rounded-xl shadow-inner my-4">
-                                <div className="p-4 bg-white rounded-lg border-4 border-purple-100">
-                                    <img src={dynamicQrUrl} alt="QR funcional" className="h-48 w-48 object-contain" />
-                                </div>
-                                <p className="mt-4 font-bold text-gray-800 tracking-wider">{raffleState.raffleRef || 'RIFA⚡EXPRESS'}</p>
-                            </div>
-                            <DialogFooter><Button onClick={() => setIsQrDialogOpen(false)} className="w-full">{t('close')}</Button></DialogFooter>
                         </DialogContent>
                     </Dialog>
 
