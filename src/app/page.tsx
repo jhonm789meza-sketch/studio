@@ -1876,22 +1876,36 @@ const App = () => {
             }
 
             const surpriseUrl = `${window.location.origin}/prize/${raffleState.raffleRef}`;
+            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(surpriseUrl)}`;
 
+            // Contenedor visual del link funcional
             const overlay = document.createElement('div');
             overlay.style.position = 'absolute';
-            overlay.style.top = '50%';
-            overlay.style.left = '50%';
-            overlay.style.transform = 'translate(-50%, -50%)';
+            overlay.style.bottom = '20px';
+            overlay.style.right = '20px';
             overlay.style.zIndex = '1000';
-            overlay.style.opacity = '0.05'; 
-            overlay.style.fontSize = '24px';
-            overlay.style.fontWeight = 'bold';
-            overlay.style.pointerEvents = 'none';
-            overlay.style.color = 'gray';
-            overlay.style.textAlign = 'center';
-            overlay.innerText = surpriseUrl;
+            overlay.style.display = 'flex';
+            overlay.style.flexDirection = 'column';
+            overlay.style.alignItems = 'center';
+            overlay.style.gap = '8px';
+            overlay.style.background = 'white';
+            overlay.style.padding = '12px';
+            overlay.style.borderRadius = '15px';
+            overlay.style.boxShadow = '0 10px 30px rgba(0,0,0,0.15)';
+            overlay.style.border = '2px solid #6366f1';
+            
+            overlay.innerHTML = `
+                <img src="${qrUrl}" style="width: 100px; height: 100px; display: block;" />
+                <div style="display: flex; flex-direction: column; align-items: center;">
+                    <span style="font-size: 14px; font-weight: 900; color: #1e1b4b; font-family: sans-serif;">ESCANEA PARA JUGAR</span>
+                    <span style="font-size: 9px; font-weight: bold; color: #6366f1; font-family: monospace; margin-top: 2px;">${surpriseUrl}</span>
+                </div>
+            `;
             
             boardElement.appendChild(overlay);
+
+            // Pequeña espera para renderizado
+            await new Promise(resolve => setTimeout(resolve, 300));
 
             const canvas = await html2canvas(boardElement, {
                 useCORS: true,
@@ -1902,7 +1916,7 @@ const App = () => {
 
             boardElement.removeChild(overlay);
 
-            const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.8));
+            const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.9));
             
             if (blob && navigator.share && navigator.canShare && navigator.canShare({ files: [new File([blob], 'tablero.jpg', { type: 'image/jpeg' })] })) {
                 const file = new File([blob], 'tablero.jpg', { type: 'image/jpeg' });
@@ -2764,7 +2778,7 @@ const App = () => {
                                             )}
                                             
                                             <div className="mb-6 rounded-lg overflow-hidden relative flex items-center justify-center shadow-lg bg-gray-200 aspect-auto group">
-                                                 {(raffleState.prizeImageUrl) ? (
+                                                 {raffleState.prizeImageUrl ? (
                                                     <button onClick={() => isCurrentUserAdmin ? handleShare() : handleTabClick('numbers')} className="w-full flex items-center justify-center cursor-pointer relative" aria-label={t('rafflePrizeAlt')}>
                                                         <Image 
                                                             src={raffleState.prizeImageUrl} 
@@ -3228,7 +3242,7 @@ const App = () => {
                                                                      </Button>
                                                                  </div>
                                                              </div>
-                          </>
+                                                         </>
                                                      )}
 
                                                       <div className="flex flex-wrap gap-3 items-center">
