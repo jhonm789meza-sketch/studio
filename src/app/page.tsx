@@ -1892,7 +1892,6 @@ const App = () => {
             const surpriseUrl = `${window.location.origin}/prize/${raffleState.raffleRef}`;
 
             const overlay = document.createElement('div');
-            overlay.id = 'temp-link-overlay';
             overlay.style.position = 'absolute';
             overlay.style.top = '50%';
             overlay.style.left = '50%';
@@ -1903,6 +1902,7 @@ const App = () => {
             overlay.style.fontWeight = 'bold';
             overlay.style.pointerEvents = 'none';
             overlay.style.color = 'gray';
+            overlay.style.textAlign = 'center';
             overlay.innerText = surpriseUrl;
             
             boardElement.appendChild(overlay);
@@ -1990,7 +1990,7 @@ const App = () => {
                 showNotification(t('secondaryContactSaved'), 'success');
             } catch (error) {
                 console.error("Error saving support contact:", error);
-                showNotification(t('errorSavingSecondaryContact'), 'error');
+                showNotification(t('errorSavingSupport contact'), 'error');
             }
         }
     };
@@ -4100,15 +4100,15 @@ const App = () => {
                                 <div className="space-y-4">
                                     <h4 className="font-bold text-sm text-yellow-600 uppercase tracking-wider">{t('pendingColor')}</h4>
                                     <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-2"><Label>{t('bgColor')}</Label><div className="flex gap-2"><Input type="color" className="h-10 w-12 p-1" value={boardColors.pendingBg} onChange={(e) => setBoardColors(p => ({ ...p, pendingBg: e.target.value }))}/><Input value={boardColors.pendingBg} onChange={(e) => setBoardColors(p => ({ ...p, pendingBg: e.target.value }))} className="flex-grow font-mono text-xs"/></div></div>
-                                        <div className="space-y-2"><Label>{t('textColor')}</Label><div className="flex gap-2"><Input type="color" className="h-10 w-12 p-1" value={boardColors.pendingText} onChange={(e) => setBoardColors(p => ({ ...p, pendingText: e.target.value }))}/><Input value={boardColors.pendingText} onChange={(e) => setBoardColors(p => ({ ...p, pendingText: e.target.value }))} className="flex-grow font-mono text-xs"/></div></div>
+                                        <div className="space-y-2"><Label>{t('bgColor')}</Label><div className="flex gap-2"><Input type="color" className="h-10 w-12 p-1" value={boardColors.pendingBg} onChange={(e) => setBoardColors(p => ({ ...p, availableBg: e.target.value }))}/><Input value={boardColors.pendingBg} onChange={(e) => setBoardColors(p => ({ ...p, pendingBg: e.target.value }))} className="flex-grow font-mono text-xs"/></div></div>
+                                        <div className="space-y-2"><Label>{t('textColor')}</Label><div className="flex gap-2"><Input type="color" className="h-10 w-12 p-1" value={boardColors.pendingText} onChange={(e) => setBoardColors(p => ({ ...p, availableText: e.target.value }))}/><Input value={boardColors.pendingText} onChange={(e) => setBoardColors(p => ({ ...p, pendingText: e.target.value }))} className="flex-grow font-mono text-xs"/></div></div>
                                     </div>
                                 </div>
                                 <div className="space-y-4">
                                     <h4 className="font-bold text-sm text-red-600 uppercase tracking-wider">{t('soldColor')}</h4>
                                     <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-2"><Label>{t('bgColor')}</Label><div className="flex gap-2"><Input type="color" className="h-10 w-12 p-1" value={boardColors.soldBg} onChange={(e) => setBoardColors(p => ({ ...p, soldBg: e.target.value }))}/><Input value={boardColors.soldBg} onChange={(e) => setBoardColors(p => ({ ...p, soldBg: e.target.value }))} className="flex-grow font-mono text-xs"/></div></div>
-                                        <div className="space-y-2"><Label>{t('textColor')}</Label><div className="flex gap-2"><Input type="color" className="h-10 w-12 p-1" value={boardColors.soldText} onChange={(e) => setBoardColors(p => ({ ...p, soldText: e.target.value }))}/><Input value={boardColors.soldText} onChange={(e) => setBoardColors(p => ({ ...p, soldText: e.target.value }))} className="flex-grow font-mono text-xs"/></div></div>
+                                        <div className="space-y-2"><Label>{t('bgColor')}</Label><div className="flex gap-2"><Input type="color" className="h-10 w-12 p-1" value={boardColors.soldBg} onChange={(e) => setBoardColors(p => ({ ...p, availableBg: e.target.value }))}/><Input value={boardColors.soldBg} onChange={(e) => setBoardColors(p => ({ ...p, soldBg: e.target.value }))} className="flex-grow font-mono text-xs"/></div></div>
+                                        <div className="space-y-2"><Label>{t('textColor')}</Label><div className="flex gap-2"><Input type="color" className="h-10 w-12 p-1" value={boardColors.soldText} onChange={(e) => setBoardColors(p => ({ ...p, availableText: e.target.value }))}/><Input value={boardColors.soldText} onChange={(e) => setBoardColors(p => ({ ...p, soldText: e.target.value }))} className="flex-grow font-mono text-xs"/></div></div>
                                     </div>
                                 </div>
                             </div>
@@ -4164,7 +4164,7 @@ const App = () => {
 
                     <Dialog open={isPaymentInfoDialogOpen} onOpenChange={setIsPaymentInfoDialogOpen}>
                         <DialogContent>
-                            <DialogHeader><DialogTitle>{t('managePaymentInfo')}</DialogTitle></DialogHeader>
+                            <DialogHeader><DialogTitle>{t('managePaymentInfo')}</DialogTitle></DropdownMenuSeparator></DialogHeader>
                             <div className="grid gap-4 py-4">
                                 <div className="grid gap-2"><Label htmlFor="payment-info-line1">{t('bankInfoLine1Label')}</Label><Input id="payment-info-line1" value={paymentInfo.line1} onChange={(e) => setPaymentInfo(p => ({ ...p, line1: e.target.value }))}/></div>
                                 <div className="grid gap-2"><Label htmlFor="payment-info-line2">{t('bankInfoLine2Label')}</Label><Input id="payment-info-line2" value={paymentInfo.line2} onChange={(e) => setPaymentInfo(p => ({ ...p, line2: e.target.value }))}/></div>
