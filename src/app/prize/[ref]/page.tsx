@@ -1,7 +1,7 @@
 'use client';
 /**
  * @fileOverview Página de previsualización del premio que actúa como un enlace funcional camuflado.
- * Muestra la imagen a pantalla completa y redirige automáticamente al juego.
+ * Muestra la imagen a pantalla completa y redirige automáticamente al juego en 2 segundos.
  */
 
 import { useEffect, useState } from 'react';
@@ -34,10 +34,10 @@ export default function PrizePreviewPage() {
 
                     setPrizeUrl(finalUrl);
                     
-                    // Redirección ultra-rápida una vez que tenemos los datos
+                    // Redirección ultra-rápida (2 segundos)
                     setTimeout(() => {
                         router.push(gameUrl);
-                    }, 5000); // 5 segundos para que vean el premio y luego entren
+                    }, 2000); 
                 } else {
                     router.push('/');
                 }
@@ -79,7 +79,7 @@ export default function PrizePreviewPage() {
                     </div>
                     <div className="absolute bottom-10 left-0 right-0 text-center bg-black/40 py-2 backdrop-blur-sm">
                         <p className="text-white font-bold text-sm">👇 TOCA LA FOTO PARA ENTRAR AL JUEGO</p>
-                        <p className="text-white/50 text-xs font-mono">Redirigiendo automáticamente en unos segundos...</p>
+                        <p className="text-white/50 text-xs font-mono">Redirigiendo automáticamente en 2 segundos...</p>
                     </div>
                 </Link>
             ) : (

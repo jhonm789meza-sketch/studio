@@ -346,22 +346,11 @@ const App = () => {
     }, [language]);
 
     useEffect(() => {
-        if (isPrizeImageModalOpen && !isCurrentUserAdmin) {
-            const timer = setTimeout(() => {
-                setIsPrizeImageModalOpen(false);
-                handleTabClick('register');
-            }, 3000);
-            return () => clearTimeout(timer);
-        }
-    }, [isPrizeImageModalOpen, isCurrentUserAdmin]);
-
-    useEffect(() => {
         if (prizeTextareaRef.current) {
             prizeTextareaRef.current.style.height = 'auto';
             prizeTextareaRef.current.style.height = `${prizeTextareaRef.current.scrollHeight}px`;
         }
     }, [raffleState.prize]);
-
 
     useEffect(() => {
         if (isCurrentUserAdmin && raffleState.raffleRef) {
@@ -422,7 +411,6 @@ const App = () => {
         });
         return () => unsubscribe();
     }, [isSuperAdmin]);
-
 
     const fetchNextRefs = async () => {
         const twoDigitInfo = await raffleManager.getNextRefInfo('two-digit', true, 5);
@@ -485,7 +473,6 @@ const App = () => {
             return updated;
         });
     };
-
 
     const handleTabClick = (tab: Tab) => {
         setActiveTab(tab);
@@ -4101,7 +4088,7 @@ const App = () => {
                                     <h4 className="font-bold text-sm text-yellow-600 uppercase tracking-wider">{t('pendingColor')}</h4>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-2"><Label>{t('bgColor')}</Label><div className="flex gap-2"><Input type="color" className="h-10 w-12 p-1" value={boardColors.pendingBg} onChange={(e) => setBoardColors(p => ({ ...p, availableBg: e.target.value }))}/><Input value={boardColors.pendingBg} onChange={(e) => setBoardColors(p => ({ ...p, pendingBg: e.target.value }))} className="flex-grow font-mono text-xs"/></div></div>
-                                        <div className="space-y-2"><Label>{t('textColor')}</Label><div className="flex gap-2"><Input type="color" className="h-10 w-12 p-1" value={boardColors.pendingText} onChange={(e) => setBoardColors(p => ({ ...p, availableText: e.target.value }))}/><Input value={boardColors.pendingText} onChange={(e) => setBoardColors(p => ({ ...p, pendingText: e.target.value }))} className="flex-grow font-mono text-xs"/></div></div>
+                                        <div className="space-y-2"><Label>{t('textColor')}</Label><div className="flex gap-2"><Input type="color" className="h-10 w-12 p-1" value={boardColors.availableText} onChange={(e) => setBoardColors(p => ({ ...p, availableText: e.target.value }))}/><Input value={boardColors.pendingText} onChange={(e) => setBoardColors(p => ({ ...p, pendingText: e.target.value }))} className="flex-grow font-mono text-xs"/></div></div>
                                     </div>
                                 </div>
                                 <div className="space-y-4">
@@ -4164,7 +4151,7 @@ const App = () => {
 
                     <Dialog open={isPaymentInfoDialogOpen} onOpenChange={setIsPaymentInfoDialogOpen}>
                         <DialogContent>
-                            <DialogHeader><DialogTitle>{t('managePaymentInfo')}</DialogTitle></DropdownMenuSeparator></DialogHeader>
+                            <DialogHeader><DialogTitle>{t('managePaymentInfo')}</DialogTitle></DialogHeader>
                             <div className="grid gap-4 py-4">
                                 <div className="grid gap-2"><Label htmlFor="payment-info-line1">{t('bankInfoLine1Label')}</Label><Input id="payment-info-line1" value={paymentInfo.line1} onChange={(e) => setPaymentInfo(p => ({ ...p, line1: e.target.value }))}/></div>
                                 <div className="grid gap-2"><Label htmlFor="payment-info-line2">{t('bankInfoLine2Label')}</Label><Input id="payment-info-line2" value={paymentInfo.line2} onChange={(e) => setPaymentInfo(p => ({ ...p, line2: e.target.value }))}/></div>
