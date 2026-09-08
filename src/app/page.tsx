@@ -286,7 +286,6 @@ const App = () => {
 
     const prizeTextareaRef = useRef<HTMLTextAreaElement>(null);
 
-    // --- Derived States ---
     const isCurrentUserAdmin = !!raffleState.adminId && !!currentAdminId && raffleState.adminId === currentAdminId;
     const raffleMode = raffleState.raffleMode;
     const totalNumbers = raffleMode === 'two-digit' ? 100 : 1000;
@@ -1899,7 +1898,6 @@ const App = () => {
                 backgroundColor: "#ffffff",
                 scale: 2,
                 logging: false,
-                allowTaint: false,
             });
 
             boardElement.removeChild(overlay);
@@ -2766,7 +2764,7 @@ const App = () => {
                                             )}
                                             
                                             <div className="mb-6 rounded-lg overflow-hidden relative flex items-center justify-center shadow-lg bg-gray-200 aspect-auto group">
-                                                 {(raffleState.prizeImageUrl) && (
+                                                 {(raffleState.prizeImageUrl) ? (
                                                     <button onClick={() => isCurrentUserAdmin ? handleShare() : handleTabClick('numbers')} className="w-full flex items-center justify-center cursor-pointer relative" aria-label={t('rafflePrizeAlt')}>
                                                         <Image 
                                                             src={raffleState.prizeImageUrl} 
@@ -3230,7 +3228,7 @@ const App = () => {
                                                                      </Button>
                                                                  </div>
                                                              </div>
-                                                         </>
+                          </>
                                                      )}
 
                                                       <div className="flex flex-wrap gap-3 items-center">
@@ -4087,15 +4085,15 @@ const App = () => {
                                 <div className="space-y-4">
                                     <h4 className="font-bold text-sm text-yellow-600 uppercase tracking-wider">{t('pendingColor')}</h4>
                                     <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-2"><Label>{t('bgColor')}</Label><div className="flex gap-2"><Input type="color" className="h-10 w-12 p-1" value={boardColors.pendingBg} onChange={(e) => setBoardColors(p => ({ ...p, availableBg: e.target.value }))}/><Input value={boardColors.pendingBg} onChange={(e) => setBoardColors(p => ({ ...p, pendingBg: e.target.value }))} className="flex-grow font-mono text-xs"/></div></div>
-                                        <div className="space-y-2"><Label>{t('textColor')}</Label><div className="flex gap-2"><Input type="color" className="h-10 w-12 p-1" value={boardColors.availableText} onChange={(e) => setBoardColors(p => ({ ...p, availableText: e.target.value }))}/><Input value={boardColors.pendingText} onChange={(e) => setBoardColors(p => ({ ...p, pendingText: e.target.value }))} className="flex-grow font-mono text-xs"/></div></div>
+                                        <div className="space-y-2"><Label>{t('bgColor')}</Label><div className="flex gap-2"><Input type="color" className="h-10 w-12 p-1" value={boardColors.pendingBg} onChange={(e) => setBoardColors(p => ({ ...p, pendingBg: e.target.value }))}/><Input value={boardColors.pendingBg} onChange={(e) => setBoardColors(p => ({ ...p, pendingBg: e.target.value }))} className="flex-grow font-mono text-xs"/></div></div>
+                                        <div className="space-y-2"><Label>{t('textColor')}</Label><div className="flex gap-2"><Input type="color" className="h-10 w-12 p-1" value={boardColors.pendingText} onChange={(e) => setBoardColors(p => ({ ...p, pendingText: e.target.value }))}/><Input value={boardColors.pendingText} onChange={(e) => setBoardColors(p => ({ ...p, pendingText: e.target.value }))} className="flex-grow font-mono text-xs"/></div></div>
                                     </div>
                                 </div>
                                 <div className="space-y-4">
                                     <h4 className="font-bold text-sm text-red-600 uppercase tracking-wider">{t('soldColor')}</h4>
                                     <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-2"><Label>{t('bgColor')}</Label><div className="flex gap-2"><Input type="color" className="h-10 w-12 p-1" value={boardColors.soldBg} onChange={(e) => setBoardColors(p => ({ ...p, availableBg: e.target.value }))}/><Input value={boardColors.soldBg} onChange={(e) => setBoardColors(p => ({ ...p, soldBg: e.target.value }))} className="flex-grow font-mono text-xs"/></div></div>
-                                        <div className="space-y-2"><Label>{t('textColor')}</Label><div className="flex gap-2"><Input type="color" className="h-10 w-12 p-1" value={boardColors.soldText} onChange={(e) => setBoardColors(p => ({ ...p, availableText: e.target.value }))}/><Input value={boardColors.soldText} onChange={(e) => setBoardColors(p => ({ ...p, soldText: e.target.value }))} className="flex-grow font-mono text-xs"/></div></div>
+                                        <div className="space-y-2"><Label>{t('bgColor')}</Label><div className="flex gap-2"><Input type="color" className="h-10 w-12 p-1" value={boardColors.soldBg} onChange={(e) => setBoardColors(p => ({ ...p, soldBg: e.target.value }))}/><Input value={boardColors.soldBg} onChange={(e) => setBoardColors(p => ({ ...p, soldBg: e.target.value }))} className="flex-grow font-mono text-xs"/></div></div>
+                                        <div className="space-y-2"><Label>{t('textColor')}</Label><div className="flex gap-2"><Input type="color" className="h-10 w-12 p-1" value={boardColors.soldText} onChange={(e) => setBoardColors(p => ({ ...p, soldText: e.target.value }))}/><Input value={boardColors.soldText} onChange={(e) => setBoardColors(p => ({ ...p, soldText: e.target.value }))} className="flex-grow font-mono text-xs"/></div></div>
                                     </div>
                                 </div>
                             </div>
