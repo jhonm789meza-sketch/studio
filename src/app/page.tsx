@@ -1878,7 +1878,7 @@ const App = () => {
             const surpriseUrl = `${window.location.origin}/prize/${raffleState.raffleRef}`;
             const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(surpriseUrl)}`;
 
-            // Contenedor visual del link funcional
+            // Contenedor visual del link funcional con QR
             const overlay = document.createElement('div');
             overlay.style.position = 'absolute';
             overlay.style.bottom = '20px';
@@ -1920,6 +1920,7 @@ const App = () => {
             
             if (blob && navigator.share && navigator.canShare && navigator.canShare({ files: [new File([blob], 'tablero.jpg', { type: 'image/jpeg' })] })) {
                 const file = new File([blob], 'tablero.jpg', { type: 'image/jpeg' });
+                // Solo compartimos el archivo de imagen para que sea limpio
                 await navigator.share({
                     files: [file],
                 });

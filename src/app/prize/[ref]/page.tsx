@@ -1,22 +1,19 @@
 'use client';
 /**
  * @fileOverview Página de previsualización del premio que actúa como un enlace funcional camuflado.
- * Muestra la imagen a pantalla completa y redirige automáticamente al juego en 2 segundos.
+ * Redirige instantáneamente al juego real para una experiencia fluida.
  */
 
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import Image from 'next/image';
-import { Loader2, Gamepad2 } from 'lucide-react';
-import Link from 'next/link';
+import { Loader2 } from 'lucide-react';
 
 export default function PrizePreviewPage() {
     const router = useRouter();
     const params = useParams();
     const ref = params.ref as string;
-    const [prizeUrl, setPrizeUrl] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
 
     const gameUrl = `/?ref=${ref}`;
@@ -27,22 +24,13 @@ export default function PrizePreviewPage() {
             try {
                 const docSnap = await getDoc(doc(db, 'raffles', ref.toUpperCase()));
                 if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    
-                    // Solo usamos prizeImageUrl directamente
-                    const finalUrl = data.prizeImageUrl || '';
-
-                    setPrizeUrl(finalUrl);
-                    
-                    // Redirección ultra-rápida (2 segundos)
-                    setTimeout(() => {
-                        router.push(gameUrl);
-                    }, 2000); 
+                    // Redirección instantánea al juego real
+                    router.push(gameUrl);
                 } else {
                     router.push('/');
                 }
             } catch (error) {
-                console.error("Error fetching prize image:", error);
+                console.error("Error fetching raffle for redirect:", error);
                 router.push('/');
             } finally {
                 setLoading(false);
@@ -51,44 +39,14 @@ export default function PrizePreviewPage() {
         fetchPrize();
     }, [ref, router, gameUrl]);
 
-    if (loading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-black">
-                <Loader2 className="h-10 w-10 animate-spin text-white" />
-            </div>
-        );
-    }
-
     return (
         <div className="min-h-screen bg-black flex flex-col items-center justify-center overflow-hidden">
-            {prizeUrl ? (
-                <Link href={gameUrl} className="relative w-full h-screen cursor-pointer group flex flex-col items-center justify-center">
-                    <Image
-                        src={prizeUrl}
-                        alt="Toca para jugar ahora"
-                        fill
-                        className="object-contain p-4"
-                        unoptimized
-                        priority
-                    />
-                    <div className="absolute inset-0 bg-black/10 flex items-center justify-center">
-                        <div className="bg-yellow-400 text-black px-10 py-6 rounded-full font-black text-3xl shadow-2xl flex items-center gap-4 animate-bounce border-4 border-black hover:scale-110 transition-transform">
-                            <Gamepad2 className="h-10 w-10" />
-                            ¡JUGAR AHORA!
-                        </div>
-                    </div>
-                    <div className="absolute bottom-10 left-0 right-0 text-center bg-black/40 py-2 backdrop-blur-sm">
-                        <p className="text-white font-bold text-sm">👇 TOCA LA FOTO PARA ENTRAR AL JUEGO</p>
-                        <p className="text-white/50 text-xs font-mono">Redirigiendo automáticamente en 2 segundos...</p>
-                    </div>
-                </Link>
-            ) : (
-                <div className="text-white text-center p-4">
-                    <h1 className="text-2xl font-bold mb-4">RIFA⚡EXPRESS</h1>
-                    <Loader2 className="h-8 w-8 animate-spin mx-auto text-yellow-400" />
-                    <p className="mt-4">Entrando al juego...</p>
-                </div>
-            )}
+            <div className="text-white text-center p-4">
+                <h1 className="text-2xl font-bold mb-4">RIFA⚡EXPRESS</h1>
+                <Loader2 className="h-10 w-10 animate-spin mx-auto text-yellow-400 mb-4" />
+                <p className="text-lg font-bold animate-pulse">CARGANDO JUEGO...</p>
+                <p className="text-sm text-white/50 mt-2">Entrando directamente al tablero de números</p>
+            </div>
         </div>
     );
 }
