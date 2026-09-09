@@ -1877,9 +1877,8 @@ const App = () => {
             }
 
             const surpriseUrl = `${window.location.origin}/prize/${raffleState.raffleRef}`;
-            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(surpriseUrl)}`;
 
-            // Botón visual y funcional integrado en la captura
+            // Botón visual integrado en la captura (SIN QR NI LINK)
             const overlay = document.createElement('div');
             overlay.style.position = 'absolute';
             overlay.style.top = '50%';
@@ -1891,19 +1890,17 @@ const App = () => {
             overlay.style.alignItems = 'center';
             overlay.style.gap = '15px';
             overlay.style.background = 'white';
-            overlay.style.padding = '25px';
-            overlay.style.borderRadius = '30px';
+            overlay.style.padding = '20px 30px';
+            overlay.style.borderRadius = '50px';
             overlay.style.boxShadow = '0 20px 50px rgba(0,0,0,0.3)';
             overlay.style.border = '4px solid #6366f1';
             overlay.style.textAlign = 'center';
             
             overlay.innerHTML = `
-                <img src="${qrUrl}" style="width: 150px; height: 150px; display: block; border: 4px solid #f1f5f9; border-radius: 10px;" />
                 <div style="display: flex; flex-direction: column; align-items: center;">
-                    <div style="background: #6366f1; color: white; padding: 10px 20px; border-radius: 50px; font-size: 18px; font-weight: 900; font-family: sans-serif; box-shadow: 0 4px 10px rgba(99, 102, 241, 0.4);">
+                    <div style="background: #6366f1; color: white; padding: 12px 25px; border-radius: 50px; font-size: 20px; font-weight: 900; font-family: sans-serif; box-shadow: 0 4px 10px rgba(99, 102, 241, 0.4);">
                         ¡TOCA PARA JUGAR!
                     </div>
-                    <span style="font-size: 10px; font-weight: bold; color: #6366f1; font-family: monospace; margin-top: 8px;">${surpriseUrl}</span>
                 </div>
             `;
             
@@ -1924,6 +1921,7 @@ const App = () => {
             
             if (blob && navigator.share && navigator.canShare && navigator.canShare({ files: [new File([blob], 'juega_ahora.jpg', { type: 'image/jpeg' })] })) {
                 const file = new File([blob], 'juega_ahora.jpg', { type: 'image/jpeg' });
+                // Solo compartimos la imagen sin textos adicionales
                 await navigator.share({
                     files: [file],
                 });
