@@ -1,3 +1,4 @@
+
 'use client';
 /**
  * @fileOverview Página de previsualización del premio que actúa como un enlace funcional camuflado.

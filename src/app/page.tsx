@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import jsPDF from 'jspdf';
@@ -814,8 +815,8 @@ const App = () => {
             if (numericValue > 100) numericValue = 100;
             newState[field as keyof Raffle] = numericValue;
         } else if (field === 'infiniteModeDigits') {
-            const numericValue = parseInt(String(value).replace(/\D/g, ''), 10);
-            newState[field as keyof Raffle] = isNaN(numericValue) ? 4 : numericValue;
+            const numericValue = parseInt(String(value).replace(/\D/g, ''), 10) || 4;
+            newState[field as keyof Raffle] = numericValue;
         } else if (field === 'manualWinnerNumber' || field === 'manualWinnerNumber2' || field === 'manualWinnerNumber3') {
              const cleanValue = value.replace(/\D/g, '');
              newState[field as keyof Raffle] = cleanValue;
@@ -1878,34 +1879,37 @@ const App = () => {
             const surpriseUrl = `${window.location.origin}/prize/${raffleState.raffleRef}`;
             const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(surpriseUrl)}`;
 
-            // Contenedor visual del link funcional con QR
+            // Botón visual y funcional integrado en la captura
             const overlay = document.createElement('div');
             overlay.style.position = 'absolute';
-            overlay.style.bottom = '20px';
-            overlay.style.right = '20px';
+            overlay.style.top = '50%';
+            overlay.style.left = '50%';
+            overlay.style.transform = 'translate(-50%, -50%)';
             overlay.style.zIndex = '1000';
             overlay.style.display = 'flex';
             overlay.style.flexDirection = 'column';
             overlay.style.alignItems = 'center';
-            overlay.style.gap = '8px';
+            overlay.style.gap = '15px';
             overlay.style.background = 'white';
-            overlay.style.padding = '12px';
-            overlay.style.borderRadius = '15px';
-            overlay.style.boxShadow = '0 10px 30px rgba(0,0,0,0.15)';
-            overlay.style.border = '2px solid #6366f1';
+            overlay.style.padding = '25px';
+            overlay.style.borderRadius = '30px';
+            overlay.style.boxShadow = '0 20px 50px rgba(0,0,0,0.3)';
+            overlay.style.border = '4px solid #6366f1';
+            overlay.style.textAlign = 'center';
             
             overlay.innerHTML = `
-                <img src="${qrUrl}" style="width: 100px; height: 100px; display: block;" />
+                <img src="${qrUrl}" style="width: 150px; height: 150px; display: block; border: 4px solid #f1f5f9; border-radius: 10px;" />
                 <div style="display: flex; flex-direction: column; align-items: center;">
-                    <span style="font-size: 14px; font-weight: 900; color: #1e1b4b; font-family: sans-serif;">ESCANEA PARA JUGAR</span>
-                    <span style="font-size: 9px; font-weight: bold; color: #6366f1; font-family: monospace; margin-top: 2px;">${surpriseUrl}</span>
+                    <div style="background: #6366f1; color: white; padding: 10px 20px; border-radius: 50px; font-size: 18px; font-weight: 900; font-family: sans-serif; box-shadow: 0 4px 10px rgba(99, 102, 241, 0.4);">
+                        ¡TOCA PARA JUGAR!
+                    </div>
+                    <span style="font-size: 10px; font-weight: bold; color: #6366f1; font-family: monospace; margin-top: 8px;">${surpriseUrl}</span>
                 </div>
             `;
             
             boardElement.appendChild(overlay);
 
-            // Pequeña espera para renderizado
-            await new Promise(resolve => setTimeout(resolve, 300));
+            await new Promise(resolve => setTimeout(resolve, 500));
 
             const canvas = await html2canvas(boardElement, {
                 useCORS: true,
@@ -1918,9 +1922,8 @@ const App = () => {
 
             const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.9));
             
-            if (blob && navigator.share && navigator.canShare && navigator.canShare({ files: [new File([blob], 'tablero.jpg', { type: 'image/jpeg' })] })) {
-                const file = new File([blob], 'tablero.jpg', { type: 'image/jpeg' });
-                // Solo compartimos el archivo de imagen para que sea limpio
+            if (blob && navigator.share && navigator.canShare && navigator.canShare({ files: [new File([blob], 'juega_ahora.jpg', { type: 'image/jpeg' })] })) {
+                const file = new File([blob], 'juega_ahora.jpg', { type: 'image/jpeg' });
                 await navigator.share({
                     files: [file],
                 });
