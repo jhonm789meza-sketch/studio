@@ -2431,6 +2431,10 @@ const App = () => {
                                                 <RefreshCcw className="mr-2 h-4 w-4 text-blue-600" />
                                                 <span>{t('refreshRefs')}</span>
                                             </DropdownMenuItem>
+                                            <DropdownMenuItem onSelect={() => setIsSuperAdminChangePasswordOpen(true)}>
+                                                <LockKeyhole className="mr-2 h-4 w-4 text-blue-600" />
+                                                <span>{t('changeExecutivePasswordTitle')}</span>
+                                            </DropdownMenuItem>
                                             <DropdownMenuSeparator />
                                             <DropdownMenuItem onSelect={() => setIsAssignPackageDialogOpen(true)}>
                                                 <Package className="mr-2 h-4 w-4" />
