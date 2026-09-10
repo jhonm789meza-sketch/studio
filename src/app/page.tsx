@@ -1904,9 +1904,15 @@ const App = () => {
                 overlay.style.textAlign = 'center';
                 
                 overlay.innerHTML = `
-                    <div style="display: flex; flex-direction: column; align-items: center;">
-                        <div style="background: #6366f1; color: white; padding: 12px 25px; border-radius: 50px; font-size: 20px; font-weight: 900; font-family: sans-serif; box-shadow: 0 4px 10px rgba(99, 102, 241, 0.4);">
-                            ¡TOCA PARA JUGAR!
+                    <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                        <div style="background: #6366f1; color: white; padding: 12px 25px; border-radius: 50px; font-size: 22px; font-weight: 900; font-family: sans-serif; box-shadow: 0 4px 10px rgba(99, 102, 241, 0.4);">
+                            ¡TOCA AQUÍ PARA JUGAR YA! ⚡
+                        </div>
+                        <div style="color: #4b5563; font-size: 14px; font-weight: 700; font-family: sans-serif;">
+                            🎯 Rifa: ${raffleState.prize || 'Especial'}
+                        </div>
+                        <div style="color: #6366f1; font-size: 13px; font-weight: 600; font-family: sans-serif; text-decoration: underline;">
+                            ${surpriseUrl}
                         </div>
                     </div>
                 `;
@@ -2409,8 +2415,21 @@ const App = () => {
                                                 <span>{t('prizeImagesManager')} ({rafflesWithImages.length})</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setIsCaptureSettingsDialogOpen(true)}>
-                                                <ImageIcon className="mr-2 h-4 w-4" />
-                                                <span>Configuración de Captura</span>
+                                                <Settings2 className="mr-2 h-4 w-4 text-purple-600" />
+                                                <span className="font-bold">Configuración de Captura</span>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuSeparator />
+                                            <DropdownMenuItem onSelect={() => setIsPaymentInfoDialogOpen(true)}>
+                                                <Landmark className="mr-2 h-4 w-4 text-blue-600" />
+                                                <span>{t('managePaymentInfo')}</span>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onSelect={() => setIsPaymentQrImageDialogOpen(true)}>
+                                                <QrCode className="mr-2 h-4 w-4 text-blue-600" />
+                                                <span>{t('managePaymentQrImage')}</span>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onSelect={fetchNextRefs}>
+                                                <RefreshCcw className="mr-2 h-4 w-4 text-blue-600" />
+                                                <span>{t('refreshRefs')}</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuSeparator />
                                             <DropdownMenuItem onSelect={() => setIsAssignPackageDialogOpen(true)}>

@@ -20,7 +20,7 @@ export default function PrizePreviewPage() {
             try {
                 const docSnap = await getDoc(doc(db, 'raffles', ref.toUpperCase()));
                 if (docSnap.exists()) {
-                    // Redirección instantánea usando replace para no ensuciar el historial
+                    // Redirección instantánea
                     router.replace(`/?ref=${ref.toUpperCase()}`);
                 } else {
                     router.replace('/');
