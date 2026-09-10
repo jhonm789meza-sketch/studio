@@ -285,6 +285,9 @@ const App = () => {
 
     const [isPrizeImagesManagerOpen, setIsPrizeImagesManagerOpen] = useState(false);
 
+    const [isCaptureSettingsDialogOpen, setIsCaptureSettingsDialogOpen] = useState(false);
+    const [isHiddenLinkEnabled, setIsHiddenLinkEnabled] = useState(false);
+
     const prizeTextareaRef = useRef<HTMLTextAreaElement>(null);
 
     const isCurrentUserAdmin = !!raffleState.adminId && !!currentAdminId && raffleState.adminId === currentAdminId;
@@ -380,6 +383,7 @@ const App = () => {
                     soldBg: settings.numberBgSold || '',
                     soldText: settings.numberTextSold || '',
                 });
+                setIsHiddenLinkEnabled(!!settings.isHiddenLinkEnabled);
                 if (isSuperAdmin) {
                     setSupportContacts(Array.isArray(settings.supportContacts) ? settings.supportContacts : []);
                     setPaymentLinks({
@@ -1878,33 +1882,37 @@ const App = () => {
 
             const surpriseUrl = `${window.location.origin}/prize/${raffleState.raffleRef}`;
 
-            // Botón visual integrado en la captura (SIN QR NI LINK)
-            const overlay = document.createElement('div');
-            overlay.style.position = 'absolute';
-            overlay.style.top = '50%';
-            overlay.style.left = '50%';
-            overlay.style.transform = 'translate(-50%, -50%)';
-            overlay.style.zIndex = '1000';
-            overlay.style.display = 'flex';
-            overlay.style.flexDirection = 'column';
-            overlay.style.alignItems = 'center';
-            overlay.style.gap = '15px';
-            overlay.style.background = 'white';
-            overlay.style.padding = '20px 30px';
-            overlay.style.borderRadius = '50px';
-            overlay.style.boxShadow = '0 20px 50px rgba(0,0,0,0.3)';
-            overlay.style.border = '4px solid #6366f1';
-            overlay.style.textAlign = 'center';
-            
-            overlay.innerHTML = `
-                <div style="display: flex; flex-direction: column; align-items: center;">
-                    <div style="background: #6366f1; color: white; padding: 12px 25px; border-radius: 50px; font-size: 20px; font-weight: 900; font-family: sans-serif; box-shadow: 0 4px 10px rgba(99, 102, 241, 0.4);">
-                        ¡TOCA PARA JUGAR!
+            let overlay: HTMLDivElement | null = null;
+
+            // Solo creamos el botón visual si NO está el modo link oculto activado
+            if (!appSettings.isHiddenLinkEnabled) {
+                overlay = document.createElement('div');
+                overlay.style.position = 'absolute';
+                overlay.style.top = '50%';
+                overlay.style.left = '50%';
+                overlay.style.transform = 'translate(-50%, -50%)';
+                overlay.style.zIndex = '1000';
+                overlay.style.display = 'flex';
+                overlay.style.flexDirection = 'column';
+                overlay.style.alignItems = 'center';
+                overlay.style.gap = '15px';
+                overlay.style.background = 'white';
+                overlay.style.padding = '20px 30px';
+                overlay.style.borderRadius = '50px';
+                overlay.style.boxShadow = '0 20px 50px rgba(0,0,0,0.3)';
+                overlay.style.border = '4px solid #6366f1';
+                overlay.style.textAlign = 'center';
+                
+                overlay.innerHTML = `
+                    <div style="display: flex; flex-direction: column; align-items: center;">
+                        <div style="background: #6366f1; color: white; padding: 12px 25px; border-radius: 50px; font-size: 20px; font-weight: 900; font-family: sans-serif; box-shadow: 0 4px 10px rgba(99, 102, 241, 0.4);">
+                            ¡TOCA PARA JUGAR!
+                        </div>
                     </div>
-                </div>
-            `;
-            
-            boardElement.appendChild(overlay);
+                `;
+                
+                boardElement.appendChild(overlay);
+            }
 
             await new Promise(resolve => setTimeout(resolve, 500));
 
@@ -1915,15 +1923,15 @@ const App = () => {
                 logging: false,
             });
 
-            boardElement.removeChild(overlay);
+            if (overlay) boardElement.removeChild(overlay);
 
             const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.9));
             
             if (blob && navigator.share && navigator.canShare && navigator.canShare({ files: [new File([blob], 'juega_ahora.jpg', { type: 'image/jpeg' })] })) {
                 const file = new File([blob], 'juega_ahora.jpg', { type: 'image/jpeg' });
-                // Solo compartimos la imagen sin textos adicionales
                 await navigator.share({
                     files: [file],
+                    text: appSettings.isHiddenLinkEnabled ? surpriseUrl : undefined,
                 });
             } else {
                 await navigator.clipboard.writeText(surpriseUrl);
@@ -1965,6 +1973,7 @@ const App = () => {
                 blockedThreeDigit: !!appSettings.isBlockedThreeDigit,
                 blockedInfinite: !!appSettings.isBlockedInfinite,
             });
+            setIsHiddenLinkEnabled(!!appSettings.isHiddenLinkEnabled);
             setSuperAdminPassword('');
             showNotification('Acceso de Director Ejecutivo concedido.', 'success');
         } else {
@@ -2062,6 +2071,20 @@ const App = () => {
         } catch (error) {
             console.error("Error saving free games settings:", error);
             showNotification(t('errorSavingActivationPrices'), 'error');
+        }
+    };
+
+    const handleSaveCaptureSettings = async () => {
+        try {
+            const settingsDocRef = doc(db, 'internal', 'settings');
+            await setDoc(settingsDocRef, {
+                isHiddenLinkEnabled: isHiddenLinkEnabled,
+            }, { merge: true });
+            showNotification(t('captureSettingsSaved'), 'success');
+            setIsCaptureSettingsDialogOpen(false);
+        } catch (error) {
+            console.error("Error saving capture settings:", error);
+            showNotification(t('errorSavingCaptureSettings'), 'error');
         }
     };
 
@@ -2384,6 +2407,10 @@ const App = () => {
                                             <DropdownMenuItem onSelect={() => setIsPrizeImagesManagerOpen(true)}>
                                                 <ImageIcon className="mr-2 h-4 w-4" />
                                                 <span>{t('prizeImagesManager')} ({rafflesWithImages.length})</span>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onSelect={() => setIsCaptureSettingsDialogOpen(true)}>
+                                                <ImageIcon className="mr-2 h-4 w-4" />
+                                                <span>Configuración de Captura</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuSeparator />
                                             <DropdownMenuItem onSelect={() => setIsAssignPackageDialogOpen(true)}>
@@ -4422,6 +4449,25 @@ const App = () => {
                                 </div>
                             </div>
                             <DialogFooter><Button variant="outline" onClick={() => setIsFreeGamesDialogOpen(false)}>{t('cancel')}</Button><Button onClick={handleSaveFreeGamesSettings}>{t('save')}</Button></DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+
+                    <Dialog open={isCaptureSettingsDialogOpen} onOpenChange={setIsCaptureSettingsDialogOpen}>
+                        <DialogContent className="sm:max-w-md">
+                            <DialogHeader>
+                                <DialogTitle>Configuración de Captura</DialogTitle>
+                                <DialogDescription>Controla la visibilidad del enlace en la imagen compartida.</DialogDescription>
+                            </DialogHeader>
+                            <div className="grid gap-6 py-4">
+                                <div className="flex items-center justify-between">
+                                    <Label htmlFor="hidden-link-mode" className="flex flex-col space-y-1">
+                                        <span>Modo Link Oculto</span>
+                                        <span className="font-normal text-muted-foreground text-xs leading-snug">Oculta el botón visual y la URL sobre la imagen para una redirección invisible.</span>
+                                    </Label>
+                                    <Switch id="hidden-link-mode" checked={isHiddenLinkEnabled} onCheckedChange={setIsHiddenLinkEnabled}/>
+                                </div>
+                            </div>
+                            <DialogFooter><Button variant="outline" onClick={() => setIsCaptureSettingsDialogOpen(false)}>{t('cancel')}</Button><Button onClick={handleSaveCaptureSettings}>{t('save')}</Button></DialogFooter>
                         </DialogContent>
                     </Dialog>
 

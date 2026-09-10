@@ -1,52 +1,43 @@
 
 'use client';
 /**
- * @fileOverview Página de previsualización del premio que actúa como un enlace funcional camuflado.
- * Redirige instantáneamente al juego real para una experiencia fluida.
+ * @fileOverview Página de redirección instantánea para el enlace sorpresa.
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { Loader2 } from 'lucide-react';
 
 export default function PrizePreviewPage() {
     const router = useRouter();
     const params = useParams();
     const ref = params.ref as string;
-    const [loading, setLoading] = useState(true);
-
-    const gameUrl = `/?ref=${ref}`;
 
     useEffect(() => {
-        const fetchPrize = async () => {
+        const fetchAndRedirect = async () => {
             if (!ref) return;
             try {
                 const docSnap = await getDoc(doc(db, 'raffles', ref.toUpperCase()));
                 if (docSnap.exists()) {
-                    // Redirección instantánea al juego real
-                    router.push(gameUrl);
+                    // Redirección instantánea usando replace para no ensuciar el historial
+                    router.replace(`/?ref=${ref.toUpperCase()}`);
                 } else {
-                    router.push('/');
+                    router.replace('/');
                 }
             } catch (error) {
-                console.error("Error fetching raffle for redirect:", error);
-                router.push('/');
-            } finally {
-                setLoading(false);
+                console.error("Error redirecting:", error);
+                router.replace('/');
             }
         };
-        fetchPrize();
-    }, [ref, router, gameUrl]);
+        fetchAndRedirect();
+    }, [ref, router]);
 
     return (
-        <div className="min-h-screen bg-black flex flex-col items-center justify-center overflow-hidden">
-            <div className="text-white text-center p-4">
-                <h1 className="text-2xl font-bold mb-4">RIFA⚡EXPRESS</h1>
-                <Loader2 className="h-10 w-10 animate-spin mx-auto text-yellow-400 mb-4" />
-                <p className="text-lg font-bold animate-pulse">CARGANDO JUEGO...</p>
-                <p className="text-sm text-white/50 mt-2">Entrando directamente al tablero de números</p>
+        <div className="min-h-screen bg-black flex items-center justify-center overflow-hidden">
+            <div className="flex flex-col items-center gap-4">
+                <div className="w-12 h-12 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin"></div>
+                <p className="text-white font-black tracking-widest text-sm animate-pulse">INGRESANDO...</p>
             </div>
         </div>
     );
