@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import jsPDF from 'jspdf';
@@ -2402,6 +2401,9 @@ const App = () => {
                                      {isSuperAdmin && (
                                         <>
                                             <DropdownMenuSeparator />
+                                            <div className="px-2 py-1.5 text-xs font-black text-purple-600 uppercase tracking-widest bg-purple-50 rounded-sm mb-1 text-center">
+                                                CONTROL DE DIRECTOR: 20 HERRAMIENTAS
+                                            </div>
                                             <DropdownMenuItem onSelect={() => setIsAppNameLogoDialogOpen(true)}>
                                                 <Settings2 className="mr-2 h-4 w-4" />
                                                 <span>{t('appNameAndLogo')}</span>
@@ -4000,6 +4002,12 @@ const App = () => {
                             {notification.message}
                         </div>
                     )}
+
+                    <div className="hidden">
+                        <div ref={boardCaptureRef} className="bg-white p-8">
+                             {/* Content for capture if needed differently than numbers tab */}
+                        </div>
+                    </div>
 
                     <Dialog open={isAppNameLogoDialogOpen} onOpenChange={setIsAppNameLogoDialogOpen}>
                         <DialogContent>

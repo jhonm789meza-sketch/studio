@@ -1,4 +1,3 @@
-
 'use client';
 /**
  * @fileOverview Página de redirección instantánea para el enlace sorpresa.
@@ -20,7 +19,7 @@ export default function PrizePreviewPage() {
             try {
                 const docSnap = await getDoc(doc(db, 'raffles', ref.toUpperCase()));
                 if (docSnap.exists()) {
-                    // Redirección instantánea
+                    // Redirección instantánea sin esperas visuales innecesarias
                     router.replace(`/?ref=${ref.toUpperCase()}`);
                 } else {
                     router.replace('/');
@@ -37,7 +36,7 @@ export default function PrizePreviewPage() {
         <div className="min-h-screen bg-black flex items-center justify-center overflow-hidden">
             <div className="flex flex-col items-center gap-4">
                 <div className="w-12 h-12 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin"></div>
-                <p className="text-white font-black tracking-widest text-sm animate-pulse">INGRESANDO...</p>
+                <p className="text-white font-black tracking-widest text-sm animate-pulse uppercase">Conectando...</p>
             </div>
         </div>
     );
