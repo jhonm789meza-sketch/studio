@@ -1,6 +1,7 @@
 'use client';
 /**
  * @fileOverview Página de redirección instantánea para el enlace sorpresa.
+ * Optimizada para ser 100% invisible y ultra rápida.
  */
 
 import { useEffect } from 'react';
@@ -17,13 +18,9 @@ export default function PrizePreviewPage() {
         const fetchAndRedirect = async () => {
             if (!ref) return;
             try {
-                const docSnap = await getDoc(doc(db, 'raffles', ref.toUpperCase()));
-                if (docSnap.exists()) {
-                    // Redirección instantánea sin esperas visuales innecesarias
-                    router.replace(`/?ref=${ref.toUpperCase()}`);
-                } else {
-                    router.replace('/');
-                }
+                // Redirección inmediata: No esperamos a cargar el doc si no es estrictamente necesario para el salto
+                // Usamos replace para que el usuario no pueda volver atrás a la página de carga negra
+                router.replace(`/?ref=${ref.toUpperCase()}`);
             } catch (error) {
                 console.error("Error redirecting:", error);
                 router.replace('/');
@@ -33,11 +30,8 @@ export default function PrizePreviewPage() {
     }, [ref, router]);
 
     return (
-        <div className="min-h-screen bg-black flex items-center justify-center overflow-hidden">
-            <div className="flex flex-col items-center gap-4">
-                <div className="w-12 h-12 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin"></div>
-                <p className="text-white font-black tracking-widest text-sm animate-pulse uppercase">Conectando...</p>
-            </div>
+        <div className="min-h-screen bg-black">
+            {/* Pantalla negra absoluta para una transición imperceptible */}
         </div>
     );
 }

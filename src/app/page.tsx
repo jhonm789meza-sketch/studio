@@ -1936,7 +1936,7 @@ const App = () => {
                 const file = new File([blob], 'juega_ahora.jpg', { type: 'image/jpeg' });
                 await navigator.share({
                     files: [file],
-                    text: appSettings.isHiddenLinkEnabled ? surpriseUrl : undefined,
+                    text: surpriseUrl, // El link va como texto para que sea la acción de respaldo
                 });
             } else {
                 await navigator.clipboard.writeText(surpriseUrl);
@@ -4002,12 +4002,6 @@ const App = () => {
                             {notification.message}
                         </div>
                     )}
-
-                    <div className="hidden">
-                        <div ref={boardCaptureRef} className="bg-white p-8">
-                             {/* Content for capture if needed differently than numbers tab */}
-                        </div>
-                    </div>
 
                     <Dialog open={isAppNameLogoDialogOpen} onOpenChange={setIsAppNameLogoDialogOpen}>
                         <DialogContent>
