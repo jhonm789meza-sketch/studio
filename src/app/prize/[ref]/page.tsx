@@ -1,4 +1,3 @@
-
 'use client';
 /**
  * @fileOverview Página de redirección instantánea para el enlace sorpresa.
@@ -19,14 +18,14 @@ export default function PrizePreviewPage() {
             try {
                 // Redirección inmediata: Sin estados de carga ni esperas visuales
                 // Usamos replace para una transición limpia y que el historial no se ensucie
-                router.replace(`/?ref=${ref.toUpperCase()}`);
+                window.location.replace(`/?ref=${ref.toUpperCase()}`);
             } catch (error) {
                 console.error("Error redirecting:", error);
-                router.replace('/');
+                window.location.replace('/');
             }
         };
         fetchAndRedirect();
-    }, [ref, router]);
+    }, [ref]);
 
     return (
         <div className="min-h-screen bg-white">

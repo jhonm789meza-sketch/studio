@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import jsPDF from 'jspdf';
@@ -1383,14 +1382,8 @@ const App = () => {
                             return data; 
                         }
                     
-                        const isUploadingImage = isUploading && !prevState.prizeImageUrl && !!data.prizeImageUrl;
-                        
                         const newState = { ...prevState, ...data };
                     
-                        if (isUploadingImage) {
-                            setIsUploading(false);
-                        }
-                        
                         newState.name = prevState.name;
                         newState.phoneNumber = prevState.phoneNumber;
                         newState.raffleNumber = prevState.raffleNumber;
@@ -1921,7 +1914,7 @@ const App = () => {
                         <div style="color: #4b5563; font-size: 12px; font-weight: 600; font-family: sans-serif; opacity: 0.8;">
                             👉 ¡Participa con tu número favorito!
                         </div>
-                        <!-- Link disfrazado (invisible pero presente) -->
+                        <!-- Link camuflado (invisible pero presente) -->
                         <div style="opacity: 0; position: absolute; height: 1px; width: 1px; overflow: hidden;">${surpriseUrl}</div>
                     </div>
                 `;
