@@ -1914,8 +1914,6 @@ const App = () => {
                         <div style="color: #4b5563; font-size: 12px; font-weight: 600; font-family: sans-serif; opacity: 0.8;">
                             👉 ¡Participa con tu número favorito!
                         </div>
-                        <!-- Link camuflado (invisible pero presente) -->
-                        <div style="opacity: 0; position: absolute; height: 1px; width: 1px; overflow: hidden;">${surpriseUrl}</div>
                     </div>
                 `;
             } else {
@@ -1940,9 +1938,6 @@ const App = () => {
                         </div>
                         <div style="color: #4b5563; font-size: 14px; font-weight: 700; font-family: sans-serif;">
                             🎯 Rifa: ${raffleState.prize || 'Especial'}
-                        </div>
-                        <div style="color: #6366f1; font-size: 13px; font-weight: 600; font-family: sans-serif; text-decoration: underline;">
-                            ${surpriseUrl}
                         </div>
                     </div>
                 `;
@@ -4576,14 +4571,14 @@ const App = () => {
                                     <Label htmlFor="new-password-v2">{t('newPassword')}</Label>
                                     <div className="relative">
                                         <Input id="new-password-v2" type={showNewPassword ? 'text' : 'password'} value={newPassword} onChange={(e) => setNewPassword(e.target.value)}/>
-                                        <Button type="button" variant="ghost" size="icon" className="absolute inset-y-0 right-0 h-full px-3" onClick={() => setShowNewPassword(!showNewPassword)}>{showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button>
+                                        <Button type="button" variant="ghost" size="icon" className="absolute inset-y-0 right-0 h-full px-3" onClick={() => setShowNewPassword(!showNewPassword)}>{showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}<span className="sr-only">Toggle password visibility</span></Button>
                                     </div>
                                 </div>
                                 <div className="grid gap-2">
                                     <Label htmlFor="confirm-new-password-v2">{t('confirmNewPassword')}</Label>
                                      <div className="relative">
                                         <Input id="confirm-new-password-v2" type={showNewPassword ? 'text' : 'password'} value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)}/>
-                                         <Button type="button" variant="ghost" size="icon" className="absolute inset-y-0 right-0 h-full px-3" onClick={() => setShowNewPassword(!showNewPassword)}>{showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button>
+                                         <Button type="button" variant="ghost" size="icon" className="absolute inset-y-0 right-0 h-full px-3" onClick={() => setShowNewPassword(!showNewPassword)}>{showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}<span className="sr-only">Toggle password visibility</span></Button>
                                     </div>
                                 </div>
                             </div>
@@ -4659,7 +4654,7 @@ const App = () => {
                                     <Label htmlFor="super-admin-password">{t('password')}</Label>
                                     <div className="relative">
                                         <Input id="super-admin-password" type={showSuperAdminPassword ? 'text' : 'password'} value={superAdminPassword} onChange={(e) => setSuperAdminPassword(e.target.value)} placeholder={t('yourPassword')} />
-                                        <Button type="button" variant="ghost" size="icon" className="absolute inset-y-0 right-0 h-full px-3" onClick={() => setShowSuperAdminPassword(!showSuperAdminPassword)}>{showSuperAdminPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button>
+                                        <Button type="button" variant="ghost" size="icon" className="absolute inset-y-0 right-0 h-full px-3" onClick={() => setShowSuperAdminPassword(!showSuperAdminPassword)}>{showSuperAdminPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}<span className="sr-only">Toggle password visibility</span></Button>
                                     </div>
                                 </div>
                             </div>
