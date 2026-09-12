@@ -1,3 +1,4 @@
+
 'use client';
 /**
  * @fileOverview Página de redirección instantánea para jugadores.
@@ -6,7 +7,6 @@
 
 import { useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
 
 export default function PrizeRedirectPage() {
     const params = useParams();
@@ -20,11 +20,6 @@ export default function PrizeRedirectPage() {
     }, [ref]);
 
     return (
-        <div className="min-h-screen bg-white flex flex-col items-center justify-center">
-            <div className="flex flex-col items-center gap-4 animate-pulse">
-                <div className="h-12 w-12 border-4 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
-                <p className="text-gray-400 font-bold text-xs tracking-widest uppercase">Redirigiendo al juego...</p>
-            </div>
-        </div>
+        <div className="min-h-screen bg-white" />
     );
 }

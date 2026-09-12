@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import jsPDF from 'jspdf';
@@ -1874,7 +1875,6 @@ const App = () => {
                 return;
             }
 
-            // Enlace sorpresa que redirige instantáneamente
             const surpriseUrl = `${window.location.origin}/prize/${raffleState.raffleRef}`;
 
             const overlay = document.createElement('div');
@@ -1882,7 +1882,6 @@ const App = () => {
             overlay.style.zIndex = '1000';
 
             if (isHiddenLinkEnabled) {
-                // Modo invisible: Toda la imagen es el link
                 overlay.style.top = '0';
                 overlay.style.left = '0';
                 overlay.style.width = '100%';
@@ -1890,7 +1889,6 @@ const App = () => {
                 overlay.style.opacity = '0';
                 overlay.innerHTML = `<a href="${surpriseUrl}" style="display:block;width:100%;height:100%;">${surpriseUrl}</a>`;
             } else if (isPlayButtonEnabled) {
-                // Cubrir link con botón visual de jugar
                 overlay.style.top = '50%';
                 overlay.style.left = '50%';
                 overlay.style.transform = 'translate(-50%, -50%)';
@@ -1910,13 +1908,9 @@ const App = () => {
                         <div style="background: #6366f1; color: white; padding: 12px 25px; border-radius: 50px; font-size: 22px; font-weight: 900; font-family: sans-serif; box-shadow: 0 4px 10px rgba(99, 102, 241, 0.4);">
                             ¡TOCA AQUÍ PARA JUGAR YA! ⚡
                         </div>
-                        <div style="color: #4b5563; font-size: 14px; font-weight: 700; font-family: sans-serif;">
-                            🎯 Rifa: ${raffleState.prize || 'Especial'}
-                        </div>
                     </div>
                 `;
             } else {
-                // Overlay estándar
                 overlay.style.top = '50%';
                 overlay.style.left = '50%';
                 overlay.style.transform = 'translate(-50%, -50%)';
@@ -1945,13 +1939,11 @@ const App = () => {
             
             if (blob && navigator.share && navigator.canShare && navigator.canShare({ files: [new File([blob], 'juega_ahora.jpg', { type: 'image/jpeg' })] })) {
                 const file = new File([blob], 'juega_ahora.jpg', { type: 'image/jpeg' });
-                // Compartimos la imagen y el enlace. WhatsApp suele vincularlos visualmente.
                 await navigator.share({
                     files: [file],
                     text: surpriseUrl,
                 });
             } else {
-                // Fallback: copiar link
                 await navigator.clipboard.writeText(surpriseUrl);
                 showNotification(t('linkCopied'), 'success');
             }
@@ -4168,7 +4160,7 @@ const App = () => {
                                 <div className="space-y-4">
                                     <h4 className="font-bold text-sm text-yellow-600 uppercase tracking-wider">{t('pendingColor')}</h4>
                                     <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-2"><Label>{t('bgColor')}</Label><div className="flex gap-2"><Input type="color" className="h-10 w-12 p-1" value={boardColors.pendingBg} onChange={(e) => setBoardColors(p => ({ ...p, pendingBg: e.target.value }))}/><Input value={boardColors.pendingBg} onChange={(e) => setBoardColors(p => ({ ...p, pendingBg: e.target.value }))} className="flex-grow font-mono text-xs"/></div></div>
+                                        <div className="space-y-2"><Label>{t('bgColor')}</Label><div className="flex gap-2"><Input type="color" className="h-10 w-12 p-1" value={boardColors.pendingBg} onChange={(e) => setBoardColors(p => ({ ...p, availableBg: e.target.value }))}/><Input value={boardColors.pendingBg} onChange={(e) => setBoardColors(p => ({ ...p, pendingBg: e.target.value }))} className="flex-grow font-mono text-xs"/></div></div>
                                         <div className="space-y-2"><Label>{t('textColor')}</Label><div className="flex gap-2"><Input type="color" className="h-10 w-12 p-1" value={boardColors.pendingText} onChange={(e) => setBoardColors(p => ({ ...p, pendingText: e.target.value }))}/><Input value={boardColors.pendingText} onChange={(e) => setBoardColors(p => ({ ...p, pendingText: e.target.value }))} className="flex-grow font-mono text-xs"/></div></div>
                                     </div>
                                 </div>
@@ -4641,7 +4633,7 @@ const App = () => {
                                     <Label htmlFor="super-admin-password">{t('password')}</Label>
                                     <div className="relative">
                                         <Input id="super-admin-password" type={showSuperAdminPassword ? 'text' : 'password'} value={superAdminPassword} onChange={(e) => setSuperAdminPassword(e.target.value)} placeholder={t('yourPassword')} />
-                                        <Button type="button" variant="ghost" size="icon" className="absolute inset-y-0 right-0 h-full px-3" onClick={() => setShowSuperAdminPassword(!showSuperAdminPassword)}>{showSuperAdminPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}<span className="sr-only">Toggle password visibility</span></Button>
+                                        <Button type="button" variant="ghost" size="icon" className="absolute inset-y-0 right-0 h-full px-3" onClick={() => setShowSuperAdminPassword(!showSuperAdminPassword)}>{showSuperAdminPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button>
                                     </div>
                                 </div>
                             </div>
