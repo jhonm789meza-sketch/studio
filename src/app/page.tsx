@@ -142,6 +142,7 @@ const App = () => {
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<Tab>('board');
     const [appUrl, setAppUrl] = useState('');
+    const [isUploading, setIsUploading] = useState(false);
 
     const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
     const [ticketInfo, setTicketInfo] = useState<any>(null);
@@ -241,7 +242,6 @@ const App = () => {
     const [isPaymentQrImageDialogOpen, setIsPaymentQrImageDialogOpen] = useState(false);
     const [paymentQrImageUrl, setPaymentQrImageUrl] = useState('');
     const [isPrizeImageModalOpen, setIsPrizeImageModalOpen] = useState(false);
-    const [isUploading, setIsUploading] = useState(false);
     const [isFreeGamesDialogOpen, setIsFreeGamesDialogOpen] = useState(false);
     const [freeGamesConfig, setFreeGamesConfig] = useState({
         twoDigit: false,
@@ -1884,23 +1884,18 @@ const App = () => {
 
             const surpriseUrl = `${window.location.origin}/prize/${raffleState.raffleRef}`;
 
-            let overlay: HTMLDivElement | null = null;
-
-            // Creamos el overlay.
-            overlay = document.createElement('div');
+            const overlay = document.createElement('div');
             overlay.style.position = 'absolute';
             overlay.style.zIndex = '1000';
 
             if (appSettings.isHiddenLinkEnabled) {
-                // MODO LINK OCULTO: Overlay invisible cubriendo el 100% del área de captura
                 overlay.style.top = '0';
                 overlay.style.left = '0';
                 overlay.style.width = '100%';
                 overlay.style.height = '100%';
                 overlay.style.opacity = '0';
-                overlay.innerHTML = `<a href="${surpriseUrl}">${surpriseUrl}</a>`;
+                overlay.innerHTML = `<a href="${surpriseUrl}" style="display:block;width:100%;height:100%;text-decoration:none;">${surpriseUrl}</a>`;
             } else if (appSettings.isPlayButtonEnabled) {
-                 // Cubrir link con botón (Botón visible, sin URL de texto)
                 overlay.style.top = '50%';
                 overlay.style.left = '50%';
                 overlay.style.transform = 'translate(-50%, -50%)';
@@ -1916,7 +1911,7 @@ const App = () => {
                 overlay.style.textAlign = 'center';
                 
                 overlay.innerHTML = `
-                    <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                    <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; position: relative;">
                         <div style="background: #6366f1; color: white; padding: 12px 25px; border-radius: 50px; font-size: 22px; font-weight: 900; font-family: sans-serif; box-shadow: 0 4px 10px rgba(99, 102, 241, 0.4);">
                             ¡TOCA AQUÍ PARA JUGAR YA! ⚡
                         </div>
@@ -1926,10 +1921,11 @@ const App = () => {
                         <div style="color: #4b5563; font-size: 12px; font-weight: 600; font-family: sans-serif; opacity: 0.8;">
                             👉 ¡Participa con tu número favorito!
                         </div>
+                        <!-- Link disfrazado (invisible pero presente) -->
+                        <div style="opacity: 0; position: absolute; height: 1px; width: 1px; overflow: hidden;">${surpriseUrl}</div>
                     </div>
                 `;
             } else {
-                // Modo Normal (Botón visible + URL)
                 overlay.style.top = '50%';
                 overlay.style.left = '50%';
                 overlay.style.transform = 'translate(-50%, -50%)';

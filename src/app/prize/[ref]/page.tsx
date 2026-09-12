@@ -17,8 +17,8 @@ export default function PrizePreviewPage() {
         const fetchAndRedirect = async () => {
             if (!ref) return;
             try {
-                // Redirección inmediata: No esperamos a cargar el doc si no es estrictamente necesario para el salto
-                // Usamos replace para que el usuario no pueda volver atrás a la página de carga negra
+                // Redirección inmediata: Sin estados de carga ni esperas visuales
+                // Usamos replace para una transición limpia y que el historial no se ensucie
                 router.replace(`/?ref=${ref.toUpperCase()}`);
             } catch (error) {
                 console.error("Error redirecting:", error);
@@ -29,8 +29,8 @@ export default function PrizePreviewPage() {
     }, [ref, router]);
 
     return (
-        <div className="min-h-screen bg-black">
-            {/* Pantalla negra absoluta para una transición imperceptible */}
+        <div className="min-h-screen bg-white">
+            {/* Pantalla blanca absoluta para una transición imperceptible */}
         </div>
     );
 }
