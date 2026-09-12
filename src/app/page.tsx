@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import jsPDF from 'jspdf';
@@ -1883,14 +1884,24 @@ const App = () => {
 
             let overlay: HTMLDivElement | null = null;
 
-            // Solo creamos el botón visual si NO está el modo link oculto activado
-            if (!appSettings.isHiddenLinkEnabled) {
-                overlay = document.createElement('div');
-                overlay.style.position = 'absolute';
+            // Creamos el overlay.
+            overlay = document.createElement('div');
+            overlay.style.position = 'absolute';
+            overlay.style.zIndex = '1000';
+
+            if (appSettings.isHiddenLinkEnabled) {
+                // MODO LINK OCULTO: Overlay invisible cubriendo el 100% del área de captura
+                overlay.style.top = '0';
+                overlay.style.left = '0';
+                overlay.style.width = '100%';
+                overlay.style.height = '100%';
+                overlay.style.opacity = '0';
+                overlay.innerHTML = `<a href="${surpriseUrl}">${surpriseUrl}</a>`;
+            } else {
+                // Modo Normal (Botón visible)
                 overlay.style.top = '50%';
                 overlay.style.left = '50%';
                 overlay.style.transform = 'translate(-50%, -50%)';
-                overlay.style.zIndex = '1000';
                 overlay.style.display = 'flex';
                 overlay.style.flexDirection = 'column';
                 overlay.style.alignItems = 'center';
@@ -1915,9 +1926,9 @@ const App = () => {
                         </div>
                     </div>
                 `;
-                
-                boardElement.appendChild(overlay);
             }
+            
+            boardElement.appendChild(overlay);
 
             await new Promise(resolve => setTimeout(resolve, 500));
 
@@ -1936,7 +1947,7 @@ const App = () => {
                 const file = new File([blob], 'juega_ahora.jpg', { type: 'image/jpeg' });
                 await navigator.share({
                     files: [file],
-                    text: surpriseUrl, // El link va como texto para que sea la acción de respaldo
+                    text: surpriseUrl,
                 });
             } else {
                 await navigator.clipboard.writeText(surpriseUrl);
