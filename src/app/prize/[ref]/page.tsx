@@ -1,3 +1,4 @@
+
 'use client';
 /**
  * @fileOverview Página de redirección instantánea para el enlace sorpresa.
@@ -6,8 +7,6 @@
 
 import { useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 
 export default function PrizePreviewPage() {
     const router = useRouter();

@@ -287,6 +287,7 @@ const App = () => {
 
     const [isCaptureSettingsDialogOpen, setIsCaptureSettingsDialogOpen] = useState(false);
     const [isHiddenLinkEnabled, setIsHiddenLinkEnabled] = useState(false);
+    const [isPlayButtonEnabled, setIsPlayButtonEnabled] = useState(false);
 
     const prizeTextareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -384,6 +385,7 @@ const App = () => {
                     soldText: settings.numberTextSold || '',
                 });
                 setIsHiddenLinkEnabled(!!settings.isHiddenLinkEnabled);
+                setIsPlayButtonEnabled(!!settings.isPlayButtonEnabled);
                 if (isSuperAdmin) {
                     setSupportContacts(Array.isArray(settings.supportContacts) ? settings.supportContacts : []);
                     setPaymentLinks({
@@ -1897,8 +1899,37 @@ const App = () => {
                 overlay.style.height = '100%';
                 overlay.style.opacity = '0';
                 overlay.innerHTML = `<a href="${surpriseUrl}">${surpriseUrl}</a>`;
+            } else if (appSettings.isPlayButtonEnabled) {
+                 // Cubrir link con botón (Botón visible, sin URL de texto)
+                overlay.style.top = '50%';
+                overlay.style.left = '50%';
+                overlay.style.transform = 'translate(-50%, -50%)';
+                overlay.style.display = 'flex';
+                overlay.style.flexDirection = 'column';
+                overlay.style.alignItems = 'center';
+                overlay.style.gap = '15px';
+                overlay.style.background = 'white';
+                overlay.style.padding = '20px 30px';
+                overlay.style.borderRadius = '50px';
+                overlay.style.boxShadow = '0 20px 50px rgba(0,0,0,0.3)';
+                overlay.style.border = '4px solid #6366f1';
+                overlay.style.textAlign = 'center';
+                
+                overlay.innerHTML = `
+                    <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                        <div style="background: #6366f1; color: white; padding: 12px 25px; border-radius: 50px; font-size: 22px; font-weight: 900; font-family: sans-serif; box-shadow: 0 4px 10px rgba(99, 102, 241, 0.4);">
+                            ¡TOCA AQUÍ PARA JUGAR YA! ⚡
+                        </div>
+                        <div style="color: #4b5563; font-size: 14px; font-weight: 700; font-family: sans-serif;">
+                            🎯 Rifa: ${raffleState.prize || 'Especial'}
+                        </div>
+                        <div style="color: #4b5563; font-size: 12px; font-weight: 600; font-family: sans-serif; opacity: 0.8;">
+                            👉 ¡Participa con tu número favorito!
+                        </div>
+                    </div>
+                `;
             } else {
-                // Modo Normal (Botón visible)
+                // Modo Normal (Botón visible + URL)
                 overlay.style.top = '50%';
                 overlay.style.left = '50%';
                 overlay.style.transform = 'translate(-50%, -50%)';
@@ -1990,6 +2021,7 @@ const App = () => {
                 blockedInfinite: !!appSettings.isBlockedInfinite,
             });
             setIsHiddenLinkEnabled(!!appSettings.isHiddenLinkEnabled);
+            setIsPlayButtonEnabled(!!appSettings.isPlayButtonEnabled);
             setSuperAdminPassword('');
             showNotification('Acceso de Director Ejecutivo concedido.', 'success');
         } else {
@@ -2095,6 +2127,7 @@ const App = () => {
             const settingsDocRef = doc(db, 'internal', 'settings');
             await setDoc(settingsDocRef, {
                 isHiddenLinkEnabled: isHiddenLinkEnabled,
+                isPlayButtonEnabled: isPlayButtonEnabled,
             }, { merge: true });
             showNotification(t('captureSettingsSaved'), 'success');
             setIsCaptureSettingsDialogOpen(false);
@@ -4492,15 +4525,22 @@ const App = () => {
                         <DialogContent className="sm:max-w-md">
                             <DialogHeader>
                                 <DialogTitle>Configuración de Captura</DialogTitle>
-                                <DialogDescription>Controla la visibilidad del enlace en la imagen compartida.</DialogDescription>
+                                <DialogDescription>Personaliza la apariencia de la imagen del tablero al compartir.</DialogDescription>
                             </DialogHeader>
                             <div className="grid gap-6 py-4">
                                 <div className="flex items-center justify-between">
                                     <Label htmlFor="hidden-link-mode" className="flex flex-col space-y-1">
                                         <span>Modo Link Oculto</span>
-                                        <span className="font-normal text-muted-foreground text-xs leading-snug">Oculta el botón visual y la URL sobre la imagen para una redirección invisible.</span>
+                                        <span className="font-normal text-muted-foreground text-xs leading-snug">Capa invisible sobre la imagen para redirección.</span>
                                     </Label>
                                     <Switch id="hidden-link-mode" checked={isHiddenLinkEnabled} onCheckedChange={setIsHiddenLinkEnabled}/>
+                                </div>
+                                <div className="flex items-center justify-between border-t pt-4">
+                                    <Label htmlFor="play-button-mode" className="flex flex-col space-y-1">
+                                        <span>Cubrir con Botón de Jugar</span>
+                                        <span className="font-normal text-muted-foreground text-xs leading-snug">Muestra un botón estético pero oculta el link de texto real.</span>
+                                    </Label>
+                                    <Switch id="play-button-mode" checked={isPlayButtonEnabled} onCheckedChange={setIsPlayButtonEnabled}/>
                                 </div>
                             </div>
                             <DialogFooter><Button variant="outline" onClick={() => setIsCaptureSettingsDialogOpen(false)}>{t('cancel')}</Button><Button onClick={handleSaveCaptureSettings}>{t('save')}</Button></DialogFooter>

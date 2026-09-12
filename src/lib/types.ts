@@ -62,6 +62,7 @@ export interface AppSettings {
     numberBgSold?: string;
     numberTextSold?: string;
     isHiddenLinkEnabled?: boolean;
+    isPlayButtonEnabled?: boolean;
 }
 
 export interface Raffle {
