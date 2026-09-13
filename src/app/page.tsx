@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import jsPDF from 'jspdf';
@@ -1899,6 +1900,7 @@ const App = () => {
                     <div style="background: #6366f1; color: white; padding: 12px 25px; border-radius: 50px; font-size: 22px; font-weight: 900; font-family: sans-serif; box-shadow: 0 4px 10px rgba(99, 102, 241, 0.4);">
                         ¡TOCA AQUÍ PARA JUGAR YA! ⚡
                     </div>
+                    <div style="font-size: 11px; font-weight: bold; color: #64748b; text-transform: uppercase; letter-spacing: 0.1em;">Click para entrar</div>
                 </div>
             `;
             
@@ -1955,14 +1957,6 @@ const App = () => {
             setIsSuperAdmin(true);
             sessionStorage.setItem('isSuperAdmin', 'true');
             setIsSuperAdminLoginOpen(false);
-            setFreeGamesConfig({
-                twoDigit: !!appSettings.isFreeTwoDigit,
-                threeDigit: !!appSettings.isFreeThreeDigit,
-                infinite: !!appSettings.isFreeInfinite,
-                blockedTwoDigit: !!appSettings.isBlockedTwoDigit,
-                blockedThreeDigit: !!appSettings.isBlockedThreeDigit,
-                blockedInfinite: !!appSettings.isBlockedInfinite,
-            });
             setIsHiddenLinkEnabled(!!appSettings.isHiddenLinkEnabled);
             setIsPlayButtonEnabled(!!appSettings.isPlayButtonEnabled);
             setSuperAdminPassword('');
@@ -3172,7 +3166,7 @@ const App = () => {
                                                                      className="w-full"
                                                                  />
                                                                  {!!raffleState.winner && <LockKeyhole className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />}
-                                                             </div>
+                              </div>
                                                           </div>
                                                           <div className="flex flex-col items-end">
                                                              {raffleState.raffleMode === 'infinite' && (
@@ -4021,17 +4015,33 @@ const App = () => {
                     </Dialog>
 
                     <Dialog open={isAssignPackageDialogOpen} onOpenChange={setIsAssignPackageDialogOpen}>
-                        <DialogContent className="max-w-[320px] p-0 border-none bg-transparent shadow-none">
-                            <InlineTicket 
-                                ticketModalRef={ticketModalRef} 
-                                ticketData={ticketInfo} 
-                                setGeneratedTicketData={() => setIsTicketModalOpen(false)} 
-                                handleDownloadTicket={handleDownloadTicket} 
-                                handleShareTicket={handleShareTicket} 
-                                formatValue={formatValue} 
-                                t={t} 
-                                language={language}
-                            />
+                        <DialogContent className="max-w-md">
+                            <DialogHeader><DialogTitle>{t('assignPackage')}</DialogTitle><DialogDescription>{t('assignPackageDescription')}</DialogDescription></DialogHeader>
+                            <div className="grid gap-4 py-4">
+                                <div className="grid gap-2"><Label>{t('raffleType')}</Label><Select value={packageRaffleMode} onValueChange={(val: RaffleMode) => setPackageRaffleMode(val)}><SelectTrigger><SelectValue placeholder={t('selectMode')} /></SelectTrigger><SelectContent><SelectItem value="two-digit">{t('2digitRaffle')}</SelectItem><SelectItem value="three-digit">{t('3digitRaffle')}</SelectItem><SelectItem value="infinite">{t('infiniteRaffle')}</SelectItem></SelectContent></Select></div>
+                                <div className="grid gap-2"><Label htmlFor="package-quantity">{t('quantity')}</Label><Input id="package-quantity" type="number" min="1" max="100" value={packageQuantity} onChange={(e) => setPackageQuantity(parseInt(e.target.value, 10))}/></div>
+                                <div className="flex gap-2 pt-2"><Button onClick={handleGeneratePackage} disabled={isGenerating} className="flex-1 bg-purple-600 hover:bg-purple-700">{isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null} {t('generate')}</Button></div>
+                                {generatedPackage.length > 0 && (
+                                    <div className="mt-4 space-y-2">
+                                        <div className="flex justify-between items-center"><Label>{t('generatedReferences')}</Label><div className="flex gap-2"><Button variant="ghost" size="sm" onClick={() => { const list = generatedPackage.map(p => `${p.ref}: ${p.url}`).join('\n'); navigator.clipboard.writeText(list); showNotification(t('listCopied'), 'success'); }}><Copy className="h-4 w-4 mr-1"/> {t('copyList')}</Button><Button variant="ghost" size="sm" className="text-red-500 hover:text-red-600 hover:bg-red-50" onClick={handleDeleteAllGeneratedRefs}><Trash2 className="h-4 w-4 mr-1" /> {t('deleteAll')}</Button></div></div>
+                                        <ScrollArea className="h-48 border rounded-md p-2 bg-gray-50">
+                                            {generatedPackage.map((p, i) => (
+                                                <div key={i} className="flex items-center justify-between py-2 border-b last:border-0 group">
+                                                    <div className="flex flex-col">
+                                                        <span className="font-bold text-xs">{p.ref}</span>
+                                                        <span className="text-[10px] text-blue-600 truncate max-w-[200px]">{p.url}</span>
+                                                    </div>
+                                                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { navigator.clipboard.writeText(p.url); showNotification(t('linkCopied'), 'success'); }}><LinkIcon className="h-3 w-3"/></Button>
+                                                        <Button variant="ghost" size="icon" className="h-7 w-7 text-red-500" onClick={() => handleDeleteGeneratedRef(p.ref)}><Trash2 className="h-3 w-3"/></Button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </ScrollArea>
+                                    </div>
+                                )}
+                            </div>
+                            <DialogFooter><Button onClick={() => setIsAssignPackageDialogOpen(false)}>{t('close')}</Button></DialogFooter>
                         </DialogContent>
                     </Dialog>
 
