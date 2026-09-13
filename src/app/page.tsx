@@ -312,7 +312,7 @@ const App = () => {
     today.setHours(0, 0, 0, 0);
 
     const prizeValueForGoal = raffleState.prize ? parseFloat(String(raffleState.prize).replace(/\D/g, '')) : 0;
-    const ticketValueForGoal = raffleState.value ? parseFloat(String(raffleState.value).replace(/\D/g, '')) : 0;
+    const ticketValueForGoal = raffleState.value ? parseFloat(String(raffleState.prize).replace(/\D/g, '')) : 0;
     const ticketsToCoverPrize = ticketValueForGoal > 0 ? Math.ceil(prizeValueForGoal / ticketValueForGoal) : 0;
 
     const filteredGames = allRaffles.filter(raffle => {
@@ -1878,44 +1878,12 @@ const App = () => {
 
             const surpriseUrl = `${window.location.origin}/prize/${raffleState.raffleRef}`;
 
-            const overlay = document.createElement('div');
-            overlay.style.position = 'absolute';
-            overlay.style.zIndex = '1000';
-            overlay.style.top = '50%';
-            overlay.style.left = '50%';
-            overlay.style.transform = 'translate(-50%, -50%)';
-            overlay.style.display = 'flex';
-            overlay.style.flexDirection = 'column';
-            overlay.style.alignItems = 'center';
-            overlay.style.gap = '15px';
-            overlay.style.background = 'white';
-            overlay.style.padding = '20px 30px';
-            overlay.style.borderRadius = '50px';
-            overlay.style.boxShadow = '0 20px 50px rgba(0,0,0,0.3)';
-            overlay.style.border = '4px solid #6366f1';
-            overlay.style.textAlign = 'center';
-            
-            overlay.innerHTML = `
-                <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
-                    <div style="background: #6366f1; color: white; padding: 12px 25px; border-radius: 50px; font-size: 22px; font-weight: 900; font-family: sans-serif; box-shadow: 0 4px 10px rgba(99, 102, 241, 0.4);">
-                        ¡TOCA AQUÍ PARA JUGAR YA! ⚡
-                    </div>
-                    <div style="font-size: 11px; font-weight: bold; color: #64748b; text-transform: uppercase; letter-spacing: 0.1em;">Click para entrar</div>
-                </div>
-            `;
-            
-            boardElement.appendChild(overlay);
-
-            await new Promise(resolve => setTimeout(resolve, 500));
-
             const canvas = await html2canvas(boardElement, {
                 useCORS: true,
                 backgroundColor: "#ffffff",
                 scale: 2,
                 logging: false,
             });
-
-            boardElement.removeChild(overlay);
 
             const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.9));
             
@@ -2695,7 +2663,7 @@ const App = () => {
                                             placeholder={t('searchRaffleByRefDescription')}
                                         />
                                         <Button onClick={() => handleAdminSearch({ refToSearch: publicRefSearch, isPublicSearch: true })} className="h-12 w-12 bg-blue-600 hover:bg-blue-700 shadow-lg">
-                                            <Search className="h-6 v-6" />
+                                            <Search className="h-6 w-6" />
                                         </Button>
                                     </div>
                                 </div>
