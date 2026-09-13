@@ -1246,7 +1246,7 @@ const App = () => {
                 });
                 try {
                     await batch.commit();
-                    showNotification(t('selectedRafflesDeletedSuccess', { count: pastDateRaffles.length }), 'success');
+                    showNotification(t('selectedRafflesDeletedSuccess', { count: gamesWithWinner.length }), 'success');
                 } catch (error) {
                     console.error('Error deleting all past due raffles:', error);
                     showNotification(t('selectedRafflesDeletedError'), 'error');
@@ -1872,6 +1872,7 @@ const App = () => {
             const boardElement = boardCaptureRef.current;
             if (!boardElement) {
                 showNotification(t('errorCapturingPhoto'), 'error');
+                setIsUploading(false);
                 return;
             }
 
@@ -1880,47 +1881,27 @@ const App = () => {
             const overlay = document.createElement('div');
             overlay.style.position = 'absolute';
             overlay.style.zIndex = '1000';
-
-            if (isHiddenLinkEnabled) {
-                overlay.style.top = '0';
-                overlay.style.left = '0';
-                overlay.style.width = '100%';
-                overlay.style.height = '100%';
-                overlay.style.opacity = '0';
-                overlay.innerHTML = `<a href="${surpriseUrl}" style="display:block;width:100%;height:100%;">${surpriseUrl}</a>`;
-            } else if (isPlayButtonEnabled) {
-                overlay.style.top = '50%';
-                overlay.style.left = '50%';
-                overlay.style.transform = 'translate(-50%, -50%)';
-                overlay.style.display = 'flex';
-                overlay.style.flexDirection = 'column';
-                overlay.style.alignItems = 'center';
-                overlay.style.gap = '15px';
-                overlay.style.background = 'white';
-                overlay.style.padding = '20px 30px';
-                overlay.style.borderRadius = '50px';
-                overlay.style.boxShadow = '0 20px 50px rgba(0,0,0,0.3)';
-                overlay.style.border = '4px solid #6366f1';
-                overlay.style.textAlign = 'center';
-                
-                overlay.innerHTML = `
-                    <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
-                        <div style="background: #6366f1; color: white; padding: 12px 25px; border-radius: 50px; font-size: 22px; font-weight: 900; font-family: sans-serif; box-shadow: 0 4px 10px rgba(99, 102, 241, 0.4);">
-                            ¡TOCA AQUÍ PARA JUGAR YA! ⚡
-                        </div>
+            overlay.style.top = '50%';
+            overlay.style.left = '50%';
+            overlay.style.transform = 'translate(-50%, -50%)';
+            overlay.style.display = 'flex';
+            overlay.style.flexDirection = 'column';
+            overlay.style.alignItems = 'center';
+            overlay.style.gap = '15px';
+            overlay.style.background = 'white';
+            overlay.style.padding = '20px 30px';
+            overlay.style.borderRadius = '50px';
+            overlay.style.boxShadow = '0 20px 50px rgba(0,0,0,0.3)';
+            overlay.style.border = '4px solid #6366f1';
+            overlay.style.textAlign = 'center';
+            
+            overlay.innerHTML = `
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                    <div style="background: #6366f1; color: white; padding: 12px 25px; border-radius: 50px; font-size: 22px; font-weight: 900; font-family: sans-serif; box-shadow: 0 4px 10px rgba(99, 102, 241, 0.4);">
+                        ¡TOCA AQUÍ PARA JUGAR YA! ⚡
                     </div>
-                `;
-            } else {
-                overlay.style.top = '50%';
-                overlay.style.left = '50%';
-                overlay.style.transform = 'translate(-50%, -50%)';
-                overlay.style.background = 'rgba(255,255,255,0.95)';
-                overlay.style.padding = '20px';
-                overlay.style.borderRadius = '20px';
-                overlay.style.boxShadow = '0 10px 30px rgba(0,0,0,0.2)';
-                overlay.style.textAlign = 'center';
-                overlay.innerHTML = `<p style="font-weight: 900; color: #4f46e5; margin: 0;">¡ENTRA AHORA!</p>`;
-            }
+                </div>
+            `;
             
             boardElement.appendChild(overlay);
 
@@ -1933,15 +1914,15 @@ const App = () => {
                 logging: false,
             });
 
-            if (overlay) boardElement.removeChild(overlay);
+            boardElement.removeChild(overlay);
 
             const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.9));
             
-            if (blob && navigator.share && navigator.canShare && navigator.canShare({ files: [new File([blob], 'juega_ahora.jpg', { type: 'image/jpeg' })] })) {
-                const file = new File([blob], 'juega_ahora.jpg', { type: 'image/jpeg' });
+            if (blob && navigator.share && navigator.canShare && navigator.canShare({ files: [new File([blob], 'jugar_ahora.jpg', { type: 'image/jpeg' })] })) {
+                const file = new File([blob], 'jugar_ahora.jpg', { type: 'image/jpeg' });
                 await navigator.share({
                     files: [file],
-                    text: surpriseUrl,
+                    text: `¡Participa en mi rifa! Entra aquí: ${surpriseUrl}`,
                 });
             } else {
                 await navigator.clipboard.writeText(surpriseUrl);
