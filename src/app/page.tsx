@@ -4022,39 +4022,17 @@ const App = () => {
                     </Dialog>
 
                     <Dialog open={isAssignPackageDialogOpen} onOpenChange={setIsAssignPackageDialogOpen}>
-                        <DialogContent className="max-w-2xl">
-                            <DialogHeader>
-                                <DialogTitle>{t('assignPackage')}</DialogTitle>
-                                <DialogDescription>{t('assignPackageDescription')}</DialogDescription>
-                            </DialogHeader>
-                            <div className="grid gap-4 py-4">
-                                <div className="flex flex-col sm:flex-row gap-4 items-end">
-                                    <div className="grid gap-2 flex-1 w-full"><Label htmlFor="package-quantity">{t('quantity')}</Label><Input id="package-quantity" type="number" value={packageQuantity} onChange={(e) => setPackageQuantity(Number(e.target.value))} /></div>
-                                    <div className="grid gap-2 flex-1 w-full">
-                                        <Label htmlFor="package-raffle-mode">{t('raffleType')}</Label>
-                                        <Select onValueChange={(val: RaffleMode) => setPackageRaffleMode(val)} defaultValue={packageRaffleMode}>
-                                            <SelectTrigger id="package-raffle-mode"><SelectValue placeholder={t('raffleType')} /></SelectTrigger>
-                                            <SelectContent><SelectItem value="two-digit">{t('2digitMode')}</SelectItem><SelectItem value="three-digit">{t('3digitMode')}</SelectItem><SelectItem value="infinite">{t('infinite_caps')}</SelectItem></SelectContent>
-                                        </Select>
-                                    </div>
-                                    <Button onClick={handleGeneratePackage} disabled={isGenerating}>{isGenerating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{t('generate')}</Button>
-                                </div>
-                                {generatedPackage.length > 0 && (
-                                    <div className="mt-6 space-y-4">
-                                        <div className="flex justify-between items-center"><h4 className="font-bold">{t('generatedReferences')}</h4><div className="flex gap-2"><Button size="sm" variant="outline" onClick={() => { const text = generatedPackage.map(p => `${p.ref}: ${p.url}`).join('\n'); navigator.clipboard.writeText(text); showNotification(t('listCopied'), 'success'); }}><Copy className="h-4 w-4 mr-2" />{t('copyList')}</Button><Button size="sm" variant="destructive" onClick={handleDeleteAllGeneratedRefs} disabled={isGenerating}><Trash2 className="h-4 w-4 mr-2" />{t('deleteAll')}</Button></div></div>
-                                        <ScrollArea className="h-64 border rounded-md p-4 bg-gray-50">
-                                            <div className="space-y-2">
-                                                {generatedPackage.map((p, i) => (
-                                                    <div key={i} className="flex items-center justify-between p-2 bg-white rounded border border-gray-200 group">
-                                                        <div className="flex-grow min-w-0 mr-4"><p className="font-bold text-sm text-purple-700">{p.ref}</p><p className="text-xs text-gray-500 truncate">{p.url}</p></div>
-                                                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { navigator.clipboard.writeText(p.url); showNotification(t('linkCopied'), 'success'); }}><Copy className="h-4 w-4" /></Button><Button variant="ghost" size="icon" className="h-8 w-8 text-red-500" onClick={() => handleDeleteGeneratedRef(p.ref)}><Trash2 className="h-4 w-4" /></Button></div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </ScrollArea>
-                                    </div>
-                                )}
-                            </div>
+                        <DialogContent className="max-w-[320px] p-0 border-none bg-transparent shadow-none">
+                            <InlineTicket 
+                                ticketModalRef={ticketModalRef} 
+                                ticketData={ticketInfo} 
+                                setGeneratedTicketData={() => setIsTicketModalOpen(false)} 
+                                handleDownloadTicket={handleDownloadTicket} 
+                                handleShareTicket={handleShareTicket} 
+                                formatValue={formatValue} 
+                                t={t} 
+                                language={language}
+                            />
                         </DialogContent>
                     </Dialog>
 
@@ -4141,7 +4119,7 @@ const App = () => {
                                 <div className="space-y-4">
                                     <h4 className="font-bold text-sm text-yellow-600 uppercase tracking-wider">{t('pendingColor')}</h4>
                                     <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-2"><Label>{t('bgColor')}</Label><div className="flex gap-2"><Input type="color" className="h-10 w-12 p-1" value={boardColors.pendingBg} onChange={(e) => setBoardColors(p => ({ ...p, availableBg: e.target.value }))}/><Input value={boardColors.pendingBg} onChange={(e) => setBoardColors(p => ({ ...p, pendingBg: e.target.value }))} className="flex-grow font-mono text-xs"/></div></div>
+                                        <div className="space-y-2"><Label>{t('bgColor')}</Label><div className="flex gap-2"><Input type="color" className="h-10 w-12 p-1" value={boardColors.pendingBg} onChange={(e) => setBoardColors(p => ({ ...p, pendingBg: e.target.value }))}/><Input value={boardColors.pendingBg} onChange={(e) => setBoardColors(p => ({ ...p, pendingBg: e.target.value }))} className="flex-grow font-mono text-xs"/></div></div>
                                         <div className="space-y-2"><Label>{t('textColor')}</Label><div className="flex gap-2"><Input type="color" className="h-10 w-12 p-1" value={boardColors.pendingText} onChange={(e) => setBoardColors(p => ({ ...p, pendingText: e.target.value }))}/><Input value={boardColors.pendingText} onChange={(e) => setBoardColors(p => ({ ...p, pendingText: e.target.value }))} className="flex-grow font-mono text-xs"/></div></div>
                                     </div>
                                 </div>
