@@ -1,19 +1,20 @@
-
 'use client';
 /**
  * @fileOverview Página de entrada (Landing Page) para jugadores.
- * Muestra el diseño solicitado con el botón funcional para entrar al juego.
+ * Muestra el diseño solicitado con redirección automática a los 2 segundos.
  */
 
-import { useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Gamepad2, Loader2, Sparkles } from 'lucide-react';
 
 export default function PrizeRedirectPage() {
     const params = useParams();
+    const router = useRouter();
     const ref = params.ref as string;
     const [loading, setLoading] = useState(false);
+    const [countdown, setCountdown] = useState(2);
 
     const handleEnterGame = () => {
         setLoading(true);
@@ -21,8 +22,25 @@ export default function PrizeRedirectPage() {
         window.location.replace(`/?ref=${ref.toUpperCase()}`);
     };
 
+    useEffect(() => {
+        // Temporizador para la redirección automática a los 2 segundos
+        const redirectTimer = setTimeout(() => {
+            handleEnterGame();
+        }, 2000);
+
+        // Visual del contador (opcional, para feedback)
+        const countdownInterval = setInterval(() => {
+            setCountdown((prev) => (prev > 0 ? prev - 1 : 0));
+        }, 1000);
+
+        return () => {
+            clearTimeout(redirectTimer);
+            clearInterval(countdownInterval);
+        };
+    }, [ref]);
+
     return (
-        <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 relative overflow-hidden font-sans">
+        <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 relative overflow-hidden font-sans text-white">
             {/* Fondo con efectos de luz */}
             <div className="absolute inset-0 z-0">
                 <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-purple-600/30 rounded-full blur-[120px] animate-pulse" />
@@ -31,19 +49,19 @@ export default function PrizeRedirectPage() {
             </div>
 
             <div className="relative z-10 text-center space-y-10 max-w-md w-full">
-                <div className="bg-white/5 backdrop-blur-2xl p-10 rounded-[50px] border border-white/10 shadow-[0_0_100px_rgba(0,0,0,0.5)]">
+                <div className="bg-white/5 backdrop-blur-2xl p-10 rounded-[50px] border border-white/10 shadow-[0_0_100px_rgba(0,0,0,0.5)] transition-all duration-500 hover:border-white/20">
                     {/* Icono animado */}
                     <div className="w-24 h-24 bg-gradient-to-tr from-purple-600 to-blue-600 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-2xl transform -rotate-6 hover:rotate-0 transition-transform duration-500">
                         <Gamepad2 className="h-12 w-12 text-white" />
                     </div>
                     
                     <div className="space-y-2 mb-10">
-                        <h1 className="text-5xl font-black text-white tracking-tighter flex flex-col items-center justify-center">
+                        <h1 className="text-5xl font-black tracking-tighter flex flex-col items-center justify-center leading-tight">
                             <span>RIFA</span>
                             <span className="text-yellow-400">⚡</span>
                             <span>EXPRESS</span>
                         </h1>
-                        <p className="text-slate-400 font-bold text-lg">
+                        <p className="text-slate-400 font-bold text-lg uppercase tracking-tight">
                             TU OPORTUNIDAD DE GANAR ESTÁ AQUÍ
                         </p>
                     </div>
@@ -61,7 +79,9 @@ export default function PrizeRedirectPage() {
                                 <div className="flex items-center gap-3">
                                     ¡JUGAR AHORA! <Sparkles className="h-6 w-6 text-yellow-300" />
                                 </div>
-                                <span className="text-[10px] opacity-70 tracking-widest uppercase">Click para entrar</span>
+                                <span className="text-[10px] opacity-70 tracking-widest uppercase">
+                                    Entrando en {countdown}s...
+                                </span>
                                 <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
                             </>
                         )}
