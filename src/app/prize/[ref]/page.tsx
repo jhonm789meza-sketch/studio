@@ -2,7 +2,7 @@
 'use client';
 /**
  * @fileOverview Página de entrada (Landing Page) para jugadores.
- * Muestra un botón real y funcional para entrar al tablero de juego.
+ * Muestra el diseño solicitado con el botón funcional para entrar al juego.
  */
 
 import { useState } from 'react';
@@ -38,8 +38,10 @@ export default function PrizeRedirectPage() {
                     </div>
                     
                     <div className="space-y-2 mb-10">
-                        <h1 className="text-5xl font-black text-white tracking-tighter flex items-center justify-center gap-2">
-                            RIFA<span className="text-yellow-400">⚡</span>EXPRESS
+                        <h1 className="text-5xl font-black text-white tracking-tighter flex flex-col items-center justify-center">
+                            <span>RIFA</span>
+                            <span className="text-yellow-400">⚡</span>
+                            <span>EXPRESS</span>
                         </h1>
                         <p className="text-slate-400 font-bold text-lg">
                             TU OPORTUNIDAD DE GANAR ESTÁ AQUÍ
