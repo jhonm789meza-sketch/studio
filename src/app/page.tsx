@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import jsPDF from 'jspdf';
@@ -3407,17 +3406,17 @@ const App = () => {
                                                             </div>
                                                         </div>
                                                    ) : (
-                                                       <div className="flex flex-col gap-0 relative">
-                                                            {appSettings.boardHeaderImageUrl3 && (
-                                                                <div className="absolute top-0 left-0 right-0 h-10 z-20 pointer-events-none">
-                                                                    <Image src={appSettings.boardHeaderImageUrl3} alt="" fill className="object-cover" unoptimized />
-                                                                </div>
-                                                            )}
+                                                       <div className="flex flex-col gap-0 relative bg-transparent">
                                                            {numbersInChunks?.map((chunk, chunkIdx) => (
-                                                               <div key={chunkIdx} className="relative bg-white p-5 overflow-hidden">
-                                                                    {appSettings.boardDesignImageUrl3 && (
+                                                               <div key={chunkIdx} className="relative bg-transparent p-5 overflow-hidden border-b border-gray-100 last:border-0">
+                                                                    {appSettings.boardHeaderImageUrl3 && (
+                                                                        <div className="absolute top-0 left-0 right-0 h-10 z-20 pointer-events-none opacity-80">
+                                                                            <Image src={appSettings.boardHeaderImageUrl3} alt="" fill className="object-cover" unoptimized />
+                                                                        </div>
+                                                                    )}
+                                                                    {(appSettings.boardDesignImageUrl3 || appSettings.boardDesignImageUrl) && (
                                                                         <div className="absolute inset-0 z-0 pointer-events-none">
-                                                                            <Image src={appSettings.boardDesignImageUrl3} alt="" fill className="object-cover" unoptimized />
+                                                                            <Image src={appSettings.boardDesignImageUrl3 || appSettings.boardDesignImageUrl || ''} alt="" fill className="object-cover" unoptimized />
                                                                         </div>
                                                                     )}
                                                                     <div className="grid grid-cols-10 gap-2 relative z-10">
@@ -3439,10 +3438,10 @@ const App = () => {
                                                                                     key={num}
                                                                                     onClick={() => toggleNumber(num)}
                                                                                     style={{
-                                                                                        backgroundColor: isConfirmed ? sldBg : isPending ? pendBg : (!raffleState.isDetailsConfirmed || !!raffleState.winner ? undefined : availBg),
-                                                                                        color: isConfirmed ? sldText : isPending ? pendText : (!raffleState.isDetailsConfirmed || !!raffleState.winner ? undefined : availText),
+                                                                                        backgroundColor: isConfirmed ? sldBg : isPending ? pendBg : (availBg),
+                                                                                        color: isConfirmed ? sldText : isPending ? pendText : (availText),
                                                                                     }}
-                                                                                    className={`number-cell text-center py-2.5 rounded-xl transition-all text-sm font-bold ${raffleState.isWinnerConfirmed || !raffleState.isDetailsConfirmed || !!raffleState.winner || isConfirmed || isPending ? 'cursor-not-allowed' : 'cursor-pointer'} ${isConfirmed ? 'shadow-xl scale-95' : isPending ? 'shadow-lg' : !raffleState.isDetailsConfirmed || !!raffleState.winner ? 'bg-gray-100 text-gray-400' : 'border-2 hover:scale-110 shadow-sm'}`}
+                                                                                    className={`number-cell text-center py-2.5 rounded-full border-2 border-white transition-all text-sm font-bold ${raffleState.isWinnerConfirmed || !raffleState.isDetailsConfirmed || !!raffleState.winner || isConfirmed || isPending ? 'cursor-not-allowed' : 'cursor-pointer'} ${isConfirmed ? 'shadow-xl scale-95' : isPending ? 'shadow-lg' : 'hover:scale-110 shadow-sm'}`}
                                                                                 >
                                                                                     {formattedNum}
                                                                                 </div>
@@ -4153,7 +4152,7 @@ const App = () => {
                                     <h4 className="font-bold text-sm text-yellow-600 uppercase tracking-wider">{t('pendingColor')}</h4>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-2"><Label>{t('bgColor')}</Label><div className="flex gap-2"><Input type="color" className="h-10 w-12 p-1" value={boardColors.pendingBg} onChange={(e) => setBoardColors(p => ({ ...p, pendingBg: e.target.value }))}/><Input value={boardColors.pendingBg} onChange={(e) => setBoardColors(p => ({ ...p, pendingBg: e.target.value }))} className="flex-grow font-mono text-xs"/></div></div>
-                                        <div className="space-y-2"><Label>{t('textColor')}</Label><div className="flex gap-2"><Input type="color" className="h-10 w-12 p-1" value={boardColors.pendingText} onChange={(e) => setBoardColors(p => ({ ...p, pendingText: e.target.value }))}/><Input value={boardColors.pendingText} onChange={(e) => setBoardColors(p => ({ ...p, pendingText: e.target.value }))} className="flex-grow font-mono text-xs"/></div></div>
+                                        <div className="space-y-2"><Label>{t('textColor')}</Label><div className="flex gap-2"><Input type="color" className="h-10 w-12 p-1" value={boardColors.pendingText} onChange={(e) => setBoardColors(p => ({ ...p, availableText: e.target.value }))}/><Input value={boardColors.pendingText} onChange={(e) => setBoardColors(p => ({ ...p, pendingText: e.target.value }))} className="flex-grow font-mono text-xs"/></div></div>
                                     </div>
                                 </div>
                                 <div className="space-y-4">
