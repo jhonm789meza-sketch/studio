@@ -9,7 +9,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Gamepad2, Loader2, Sparkles, ShieldCheck } from 'lucide-react';
+import { Loader2, Sparkles, ShieldCheck } from 'lucide-react';
 
 export default function PrizeRedirectPage() {
     const params = useParams();

@@ -273,6 +273,12 @@ const App = () => {
     const [isBoardHeaderImageDialogOpen, setIsBoardHeaderImageDialogOpen] = useState(false);
     const [boardHeaderImageUrl, setBoardHeaderImageUrl] = useState('');
 
+    // Nuevos estados para modo 3 cifras
+    const [isBoardDesignDialogOpen3, setIsBoardDesignDialogOpen3] = useState(false);
+    const [boardDesignUrl3, setBoardDesignUrl3] = useState('');
+    const [isBoardHeaderImageDialogOpen3, setIsBoardHeaderImageDialogOpen3] = useState(false);
+    const [boardHeaderImageUrl3, setBoardHeaderImageUrl3] = useState('');
+
     const [isBoardColorsDialogOpen, setIsBoardColorsDialogOpen] = useState(false);
     const [boardColors, setBoardColors] = useState({
         availableBg: '',
@@ -296,6 +302,17 @@ const App = () => {
     const totalNumbers = raffleMode === 'two-digit' ? 100 : 1000;
     const numberLength = raffleMode === 'two-digit' ? 2 : 3;
     const allNumbers = useMemo(() => Array.from({ length: totalNumbers }, (_, i) => i), [totalNumbers]);
+    
+    // Agrupación para 3 cifras
+    const numbersInChunks = useMemo(() => {
+        if (raffleMode !== 'three-digit') return null;
+        const chunks = [];
+        for (let i = 0; i < allNumbers.length; i += 100) {
+            chunks.push(allNumbers.slice(i, i + 100));
+        }
+        return chunks;
+    }, [allNumbers, raffleMode]);
+
     const allAssignedNumbers = new Set(raffleState.participants?.map((p: Participant) => parseInt(p.raffleNumber, 10)) || []);
     const pendingParticipants = raffleState.participants?.filter((p: Participant) => p.paymentStatus === 'pending') || [];
     const confirmedParticipants = raffleState.participants?.filter((p: Participant) => p.paymentStatus === 'confirmed') || [];
@@ -410,6 +427,8 @@ const App = () => {
                     setLockedBoardBgUrl(settings.lockedBoardBackgroundImageUrl || '');
                     setBoardDesignUrl(settings.boardDesignImageUrl || '');
                     setBoardHeaderImageUrl(settings.boardHeaderImageUrl || '');
+                    setBoardDesignUrl3(settings.boardDesignImageUrl3 || '');
+                    setBoardHeaderImageUrl3(settings.boardHeaderImageUrl3 || '');
                     setTempAppName(settings.appName || '');
                     setTempAppLogoUrl(settings.appLogoUrl || '');
                 }
@@ -2243,6 +2262,33 @@ const App = () => {
         }
     };
 
+    // Nuevas funciones para guardar imágenes modo 3 cifras
+    const handleSaveBoardDesign3 = async () => {
+        if (!isSuperAdmin) return;
+        try {
+            const settingsDocRef = doc(db, 'internal', 'settings');
+            await setDoc(settingsDocRef, { boardDesignImageUrl3: boardDesignUrl3 }, { merge: true });
+            showNotification(t('imageUploadedSuccess'), 'success');
+            setIsBoardDesignDialogOpen3(false);
+        } catch (error) {
+            console.error("Error saving board design 3:", error);
+            showNotification(t('errorSavingPaymentInfo'), 'error');
+        }
+    };
+
+    const handleSaveBoardHeaderImage3 = async () => {
+        if (!isSuperAdmin) return;
+        try {
+            const settingsDocRef = doc(db, 'internal', 'settings');
+            await setDoc(settingsDocRef, { boardHeaderImageUrl3: boardHeaderImageUrl3 }, { merge: true });
+            showNotification(t('imageUploadedSuccess'), 'success');
+            setIsBoardHeaderImageDialogOpen3(false);
+        } catch (error) {
+            console.error("Error saving board header image 3:", error);
+            showNotification(t('errorSavingPaymentInfo'), 'error');
+        }
+    };
+
     const handleDeleteGeneratedRef = (raffleRef: string) => {
         showConfirmationDialog(
             t('deleteGeneratedRefConfirmation', { ref: raffleRef }),
@@ -2351,7 +2397,7 @@ const App = () => {
                                         <>
                                             <DropdownMenuSeparator />
                                             <div className="px-2 py-1.5 text-xs font-black text-purple-600 uppercase tracking-widest bg-purple-50 rounded-sm mb-1 text-center">
-                                                CONTROL DE DIRECTOR: 20 HERRAMIENTAS
+                                                CONTROL DE DIRECTOR: 22 HERRAMIENTAS
                                             </div>
                                             <DropdownMenuItem onSelect={() => setIsAppNameLogoDialogOpen(true)}>
                                                 <Settings2 className="mr-2 h-4 w-4" />
@@ -2417,7 +2463,11 @@ const App = () => {
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setIsBoardDesignDialogOpen(true)}>
                                                 <Palette className="mr-2 h-4 w-4" />
-                                                <span>Diseño del Tablero</span>
+                                                <span>Diseño Tablero (2 Cifras)</span>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onSelect={() => setIsBoardDesignDialogOpen3(true)}>
+                                                <Palette className="mr-2 h-4 w-4 text-orange-600" />
+                                                <span>Diseño Tablero (3 Cifras)</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setIsBoardColorsDialogOpen(true)}>
                                                 <Palette className="mr-2 h-4 w-4" />
@@ -2425,7 +2475,11 @@ const App = () => {
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setIsBoardHeaderImageDialogOpen(true)}>
                                                 <Rows3 className="mr-2 h-4 w-4" />
-                                                <span>Imagen del Renglón</span>
+                                                <span>Imagen Renglón (2 Cifras)</span>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onSelect={() => setIsBoardHeaderImageDialogOpen3(true)}>
+                                                <Rows3 className="mr-2 h-4 w-4 text-orange-600" />
+                                                <span>Imagen Renglón (3 Cifras)</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuSeparator />
                                             <DropdownMenuItem onSelect={() => {
@@ -3134,7 +3188,7 @@ const App = () => {
                                                                      className="w-full"
                                                                  />
                                                                  {!!raffleState.winner && <LockKeyhole className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />}
-                              </div>
+                                                             </div>
                                                           </div>
                                                           <div className="flex flex-col items-end">
                                                              {raffleState.raffleMode === 'infinite' && (
@@ -3283,20 +3337,10 @@ const App = () => {
                                 </div>
                                 <div className={activeTab === 'numbers' ? 'tab-content active relative' : 'tab-content p-6 relative'}>
                                     {raffleMode !== 'infinite' ? (
-                                       <div ref={boardCaptureRef} className="relative flex flex-col gap-6 min-h-[70vh] p-4 sm:p-6 transition-all duration-500 overflow-hidden bg-white/95 shadow-inner">
-                                           {appSettings.boardHeaderImageUrl && (
-                                               <div className="absolute inset-0 z-50 pointer-events-none">
-                                                   <Image 
-                                                       src={appSettings.boardHeaderImageUrl} 
-                                                       alt="" 
-                                                       fill 
-                                                       className="object-fill opacity-100" 
-                                                       unoptimized 
-                                                   />
-                                               </div>
-                                           )}
-                                           <div className="relative z-10 space-y-6">
-                                               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b pb-4 bg-white/80 backdrop-blur-md p-5 rounded-2xl border border-white/50 shadow-xl">
+                                       <div ref={boardCaptureRef} className="relative flex flex-col gap-0 min-h-[70vh] p-0 transition-all duration-500 overflow-hidden bg-white shadow-inner">
+                                           <div className="relative z-10 space-y-0">
+                                               {/* Encabezado General del Tablero */}
+                                               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b p-5 bg-white/80 backdrop-blur-md border border-white/50 shadow-xl">
                                                    <div className="flex items-center gap-4">
                                                        {(raffleState.prizeImageUrl) && (
                                                            <div className="relative h-20 w-20 rounded-xl overflow-hidden border-2 border-white shadow-lg bg-white shrink-0">
@@ -3323,106 +3367,101 @@ const App = () => {
                                                    )}
                                                </div>
 
-                                               <div className="relative w-full max-w-5xl mx-auto space-y-6">
-                                                   {raffleState.prizeImageUrl && (
-                                                       <div className="rounded-2xl overflow-hidden shadow-2xl border-4 border-white/80 bg-white/60 backdrop-blur-md w-full group transition-all hover:shadow-purple-200/50 hover:scale-[1.01]">
-                                                           <Image 
-                                                               src={raffleState.prizeImageUrl} 
-                                                               alt={raffleState.prize || t('rafflePrizeAlt')} 
-                                                               width={800}
-                                                               height={450}
-                                                               className="w-full h-auto object-contain max-h-[400px] transition-transform duration-700 group-hover:scale-105"
-                                                               unoptimized 
-                                                           />
+                                               {/* Área de Números */}
+                                               <div className="relative w-full max-w-5xl mx-auto space-y-0">
+                                                   {raffleMode === 'two-digit' ? (
+                                                        <div className="bg-white p-5 relative overflow-hidden">
+                                                            {appSettings.boardHeaderImageUrl && (
+                                                                <div className="absolute top-0 left-0 right-0 h-10 z-20 pointer-events-none">
+                                                                    <Image src={appSettings.boardHeaderImageUrl} alt="" fill className="object-cover" unoptimized />
+                                                                </div>
+                                                            )}
+                                                            {appSettings.boardDesignImageUrl && (
+                                                                <div className="absolute inset-0 z-0 pointer-events-none">
+                                                                    <Image src={appSettings.boardDesignImageUrl} alt="" fill className="object-cover" unoptimized />
+                                                                </div>
+                                                            )}
+                                                            <div className="grid grid-cols-10 gap-2 relative z-10">
+                                                                {allNumbers.map((num) => {
+                                                                    const formattedNum = String(num).padStart(2, '0');
+                                                                    const participant = raffleState.participants.find((p: Participant) => p.raffleNumber === formattedNum);
+                                                                    const isConfirmed = participant && participant.paymentStatus === 'confirmed';
+                                                                    const isPending = participant && participant.paymentStatus === 'pending';
+
+                                                                    const availBg = appSettings.numberBgAvailable || 'rgba(34, 197, 94, 0.1)';
+                                                                    const availText = appSettings.numberTextAvailable || '#15803d';
+                                                                    const pendBg = appSettings.numberBgPending || '#facc15';
+                                                                    const pendText = appSettings.numberTextPending || '#422006';
+                                                                    const sldBg = appSettings.numberBgSold || '#dc2626';
+                                                                    const sldText = appSettings.numberTextSold || '#ffffff';
+
+                                                                    return (
+                                                                        <div
+                                                                            key={num}
+                                                                            onClick={() => toggleNumber(num)}
+                                                                            style={{
+                                                                                backgroundColor: isConfirmed ? sldBg : isPending ? pendBg : (!raffleState.isDetailsConfirmed || !!raffleState.winner ? undefined : availBg),
+                                                                                color: isConfirmed ? sldText : isPending ? pendText : (!raffleState.isDetailsConfirmed || !!raffleState.winner ? undefined : availText),
+                                                                            }}
+                                                                            className={`number-cell text-center py-2.5 rounded-xl transition-all text-sm font-bold ${raffleState.isWinnerConfirmed || !raffleState.isDetailsConfirmed || !!raffleState.winner || isConfirmed || isPending ? 'cursor-not-allowed' : 'cursor-pointer'} ${isConfirmed ? 'shadow-xl scale-95' : isPending ? 'shadow-lg' : !raffleState.isDetailsConfirmed || !!raffleState.winner ? 'bg-gray-100 text-gray-400' : 'border-2 hover:scale-110 shadow-sm'}`}
+                                                                        >
+                                                                            {formattedNum}
+                                                                        </div>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        </div>
+                                                   ) : (
+                                                       /* Tablero de 3 Cifras por centenas repetitivas */
+                                                       <div className="flex flex-col gap-0">
+                                                           {numbersInChunks?.map((chunk, chunkIdx) => (
+                                                               <div key={chunkIdx} className="relative bg-white p-5 overflow-hidden border-b border-gray-100 last:border-b-0">
+                                                                   {appSettings.boardHeaderImageUrl3 && (
+                                                                        <div className="absolute top-0 left-0 right-0 h-8 z-20 pointer-events-none opacity-50">
+                                                                            <Image src={appSettings.boardHeaderImageUrl3} alt="" fill className="object-cover" unoptimized />
+                                                                        </div>
+                                                                    )}
+                                                                    {appSettings.boardDesignImageUrl3 && (
+                                                                        <div className="absolute inset-0 z-0 pointer-events-none">
+                                                                            <Image src={appSettings.boardDesignImageUrl3} alt="" fill className="object-cover" unoptimized />
+                                                                        </div>
+                                                                    )}
+                                                                    <div className="grid grid-cols-10 gap-2 relative z-10">
+                                                                        {chunk.map((num) => {
+                                                                            const formattedNum = String(num).padStart(3, '0');
+                                                                            const participant = raffleState.participants.find((p: Participant) => p.raffleNumber === formattedNum);
+                                                                            const isConfirmed = participant && participant.paymentStatus === 'confirmed';
+                                                                            const isPending = participant && participant.paymentStatus === 'pending';
+
+                                                                            const availBg = appSettings.numberBgAvailable || 'rgba(34, 197, 94, 0.1)';
+                                                                            const availText = appSettings.numberTextAvailable || '#15803d';
+                                                                            const pendBg = appSettings.numberBgPending || '#facc15';
+                                                                            const pendText = appSettings.numberTextPending || '#422006';
+                                                                            const sldBg = appSettings.numberBgSold || '#dc2626';
+                                                                            const sldText = appSettings.numberTextSold || '#ffffff';
+
+                                                                            return (
+                                                                                <div
+                                                                                    key={num}
+                                                                                    onClick={() => toggleNumber(num)}
+                                                                                    style={{
+                                                                                        backgroundColor: isConfirmed ? sldBg : isPending ? pendBg : (!raffleState.isDetailsConfirmed || !!raffleState.winner ? undefined : availBg),
+                                                                                        color: isConfirmed ? sldText : isPending ? pendText : (!raffleState.isDetailsConfirmed || !!raffleState.winner ? undefined : availText),
+                                                                                    }}
+                                                                                    className={`number-cell text-center py-2.5 rounded-xl transition-all text-sm font-bold ${raffleState.isWinnerConfirmed || !raffleState.isDetailsConfirmed || !!raffleState.winner || isConfirmed || isPending ? 'cursor-not-allowed' : 'cursor-pointer'} ${isConfirmed ? 'shadow-xl scale-95' : isPending ? 'shadow-lg' : !raffleState.isDetailsConfirmed || !!raffleState.winner ? 'bg-gray-100 text-gray-400' : 'border-2 hover:scale-110 shadow-sm'}`}
+                                                                                >
+                                                                                    {formattedNum}
+                                                                                </div>
+                                                                            );
+                                                                        })}
+                                                                    </div>
+                                                               </div>
+                                                           ))}
                                                        </div>
                                                    )}
-
-                                                   <div className="bg-white/95 backdrop-blur-xl p-5 rounded-3xl border border-white/60 shadow-2xl relative overflow-hidden">
-                                                       {appSettings.boardDesignImageUrl && (
-                                                           <div className="absolute inset-0 z-0 pointer-events-none">
-                                                               <Image 
-                                                                   src={appSettings.boardDesignImageUrl} 
-                                                                   alt="" 
-                                                                   fill 
-                                                                   className="object-cover" 
-                                                                   unoptimized 
-                                                               />
-                                                           </div>
-                                                       )}
-
-                                                       <div className={`grid gap-2 relative z-10 ${raffleMode === 'two-digit' ? 'grid-cols-10' : 'grid-cols-10 md:grid-cols-20 lg:grid-cols-25'}`}>
-                                                           {allNumbers.map((num) => {
-                                                               const formattedNum = String(num).padStart(numberLength, '0');
-                                                               const participant = raffleState.participants.find((p: Participant) => p.raffleNumber === formattedNum);
-                                                               const isConfirmed = participant && participant.paymentStatus === 'confirmed';
-                                                               const isPending = participant && participant.paymentStatus === 'pending';
-
-                                                               const availBg = appSettings.numberBgAvailable || 'rgba(34, 197, 94, 0.1)';
-                                                               const availText = appSettings.numberTextAvailable || '#15803d';
-                                                               const pendBg = appSettings.numberBgPending || '#facc15';
-                                                               const pendText = appSettings.numberTextPending || '#422006';
-                                                               const sldBg = appSettings.numberBgSold || '#dc2626';
-                                                               const sldText = appSettings.numberTextSold || '#ffffff';
-
-                                                               return (
-                                                                   <div
-                                                                       key={num}
-                                                                       onClick={() => toggleNumber(num)}
-                                                                       style={{
-                                                                           backgroundColor: isConfirmed ? sldBg : isPending ? pendBg : (!raffleState.isDetailsConfirmed || !!raffleState.winner ? undefined : availBg),
-                                                                           color: isConfirmed ? sldText : isPending ? pendText : (!raffleState.isDetailsConfirmed || !!raffleState.winner ? undefined : availText),
-                                                                           borderColor: (!isConfirmed && !isPending && raffleState.isDetailsConfirmed && !raffleState.winner) ? availText + '4D' : undefined
-                                                                       }}
-                                                                       className={`
-                                                                           number-cell text-center py-2.5 rounded-xl transition-all text-sm font-bold
-                                                                           ${raffleState.isWinnerConfirmed || !raffleState.isDetailsConfirmed || !!raffleState.winner || isConfirmed || isPending ? 'cursor-not-allowed' : 'cursor-pointer'}
-                                                                           ${isConfirmed
-                                                                               ? 'shadow-xl scale-95 opacity-90'
-                                                                               : isPending
-                                                                               ? 'shadow-lg scale-100'
-                                                                               : !raffleState.isDetailsConfirmed || !!raffleState.winner
-                                                                               ? 'bg-gray-100/80 text-gray-400'
-                                                                               : 'border-2 hover:opacity-80 hover:scale-110 active:scale-90 shadow-sm'
-                                                                           }
-                                                                           ${raffleState.winner?.raffleNumber === formattedNum ? 'ring-4 ring-yellow-400 animate-pulse z-20 scale-125 bg-yellow-500 text-white shadow-yellow-400' : ''}
-                                                                       `}
-                                                                   >
-                                                                       {formattedNum}
-                                                                   </div>
-                                                               );
-                                                           })}
-                                                       </div>
-                                                   </div>
                                                </div>
-
-                                                <div className="flex wrap gap-4 mt-4 text-xs font-black bg-white/80 backdrop-blur-md p-4 rounded-2xl w-fit shadow-xl border border-white/50">
-                                                    <div className="flex items-center gap-2">
-                                                        <div className="w-5 h-5 rounded-lg border-2" style={{ backgroundColor: appSettings.numberBgAvailable || 'rgba(34, 197, 94, 0.1)', borderColor: appSettings.numberTextAvailable || '#15803d' }}></div>
-                                                        <span className="text-green-800">{t('available').toUpperCase()}</span>
-                                                    </div>
-                                                    <div className="flex items-center gap-2">
-                                                        <div className="w-5 h-5 rounded-lg border-2 shadow-sm" style={{ backgroundColor: appSettings.numberBgPending || '#facc15', borderColor: appSettings.numberTextPending || '#422006' }}></div>
-                                                        <span className="text-yellow-900">{t('pending').toUpperCase()}</span>
-                                                    </div>
-                                                    <div className="flex items-center gap-2">
-                                                        <div className="w-5 h-5 rounded-lg border-2 shadow-inner" style={{ backgroundColor: appSettings.numberBgSold || '#dc2626', borderColor: appSettings.numberTextSold || '#ffffff' }}></div>
-                                                        <span className="text-red-700">{t('sold').toUpperCase()}</span>
-                                                    </div>
-                                                </div>
-                                               {!!raffleState.winner && !raffleState.isWinnerConfirmed && (
-                                                    <div className="mt-4 bg-yellow-500/90 backdrop-blur-xl border-l-8 border-yellow-700 text-yellow-950 p-6 rounded-2xl shadow-2xl animate-in slide-in-from-bottom-5" role="alert">
-                                                        <p className="font-black text-xl mb-1 flex items-center gap-2"><Lock className="h-6 w-6"/> {t('boardLocked').toUpperCase()}</p>
-                                                        <p className="font-bold opacity-80">{t('boardLockedWinnerFound')}</p>
-                                                    </div>
-                                                )}
-                                               {!raffleState.isDetailsConfirmed && (
-                                                    <div className="mt-4 bg-blue-600/90 backdrop-blur-xl border-l-8 border-blue-800 text-white p-6 rounded-2xl shadow-2xl" role="alert">
-                                                        <p className="font-black text-xl mb-1 flex items-center gap-2"><MessageCircle className="h-6 w-6"/> {t('notice').toUpperCase()}</p>
-                                                        <p className="font-bold opacity-90">{t('boardLockedConfirmDetails')}</p>
-                                                    </div>
-                                               )}
                                            </div>
-                                       </div>
+                                        </div>
                                     ) : (
                                         <div className="text-center p-12 bg-gray-50 rounded-xl border border-dashed border-gray-300">
                                              <h2 className="text-2xl font-bold text-gray-800 flex items-center justify-center gap-2">
@@ -4058,7 +4097,7 @@ const App = () => {
 
                     <Dialog open={isBoardDesignDialogOpen} onOpenChange={setIsBoardDesignDialogOpen}>
                         <DialogContent>
-                            <DialogHeader><DialogTitle>Diseño del Tablero</DialogTitle></DialogHeader>
+                            <DialogHeader><DialogTitle>Diseño del Tablero (2 Cifras)</DialogTitle></DialogHeader>
                             <div className="grid gap-4 py-4">
                                 <div className="grid gap-2">
                                     <Label htmlFor="board-design-url">Link de la Imagen</Label>
@@ -4076,6 +4115,30 @@ const App = () => {
                                 </div>
                             </div>
                             <DialogFooter><Button onClick={handleSaveBoardDesign}>Guardar Diseño</Button></DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+
+                    {/* Nuevo Diálogo Diseño 3 Cifras */}
+                    <Dialog open={isBoardDesignDialogOpen3} onOpenChange={setIsBoardDesignDialogOpen3}>
+                        <DialogContent>
+                            <DialogHeader><DialogTitle>Diseño del Tablero (3 Cifras)</DialogTitle></DialogHeader>
+                            <div className="grid gap-4 py-4">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="board-design-url-3">Link de la Imagen (Repetible por centena)</Label>
+                                    <div className="flex gap-2">
+                                        <Input id="board-design-url-3" value={boardDesignUrl3} onChange={(e) => setBoardDesignUrl3(e.target.value)} className="flex-grow" />
+                                        <a href="https://www.google.com/imghp" target="_blank" rel="noopener noreferrer">
+                                            <Button type="button" variant="outline" size="icon"><Search className="h-4 w-4" /></Button>
+                                        </a>
+                                    </div>
+                                    {boardDesignUrl3 && (
+                                        <div className="mt-2 border rounded-md overflow-hidden bg-gray-50 flex items-center justify-center p-2 h-40">
+                                            <img src={boardDesignUrl3} alt="Vista previa diseño 3" className="max-h-full object-contain" />
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                            <DialogFooter><Button onClick={handleSaveBoardDesign3}>Guardar Diseño</Button></DialogFooter>
                         </DialogContent>
                     </Dialog>
 
@@ -4114,7 +4177,7 @@ const App = () => {
 
                     <Dialog open={isBoardHeaderImageDialogOpen} onOpenChange={setIsBoardHeaderImageDialogOpen}>
                         <DialogContent>
-                            <DialogHeader><DialogTitle>Imagen del Renglón</DialogTitle></DialogHeader>
+                            <DialogHeader><DialogTitle>Imagen del Renglón (2 Cifras)</DialogTitle></DialogHeader>
                             <div className="grid gap-4 py-4">
                                 <div className="grid gap-2">
                                     <Label htmlFor="board-header-image-url">Link de la Imagen</Label>
@@ -4132,6 +4195,30 @@ const App = () => {
                                 </div>
                             </div>
                             <DialogFooter><Button onClick={handleSaveBoardHeaderImage}>Guardar Imagen</Button></DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+
+                    {/* Nuevo Diálogo Renglón 3 Cifras */}
+                    <Dialog open={isBoardHeaderImageDialogOpen3} onOpenChange={setIsBoardHeaderImageDialogOpen3}>
+                        <DialogContent>
+                            <DialogHeader><DialogTitle>Imagen del Renglón (3 Cifras)</DialogTitle></DialogHeader>
+                            <div className="grid gap-4 py-4">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="board-header-image-url-3">Link de la Imagen</Label>
+                                    <div className="flex gap-2">
+                                        <Input id="board-header-image-url-3" value={boardHeaderImageUrl3} onChange={(e) => setBoardHeaderImageUrl3(e.target.value)} className="flex-grow" />
+                                        <a href="https://www.google.com/imghp" target="_blank" rel="noopener noreferrer">
+                                            <Button type="button" variant="outline" size="icon"><Search className="h-4 w-4" /></Button>
+                                        </a>
+                                    </div>
+                                    {boardHeaderImageUrl3 && (
+                                        <div className="mt-2 border rounded-md overflow-hidden bg-gray-50 flex items-center justify-center p-2 h-40">
+                                            <img src={boardHeaderImageUrl3} alt="Vista previa renglón 3" className="max-h-full object-contain" />
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                            <DialogFooter><Button onClick={handleSaveBoardHeaderImage3}>Guardar Imagen</Button></DialogFooter>
                         </DialogContent>
                     </Dialog>
 
