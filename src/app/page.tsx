@@ -273,7 +273,6 @@ const App = () => {
     const [isBoardHeaderImageDialogOpen, setIsBoardHeaderImageDialogOpen] = useState(false);
     const [boardHeaderImageUrl, setBoardHeaderImageUrl] = useState('');
 
-    // Nuevos estados para modo 3 cifras
     const [isBoardDesignDialogOpen3, setIsBoardDesignDialogOpen3] = useState(false);
     const [boardDesignUrl3, setBoardDesignUrl3] = useState('');
     const [isBoardHeaderImageDialogOpen3, setIsBoardHeaderImageDialogOpen3] = useState(false);
@@ -303,7 +302,6 @@ const App = () => {
     const numberLength = raffleMode === 'two-digit' ? 2 : 3;
     const allNumbers = useMemo(() => Array.from({ length: totalNumbers }, (_, i) => i), [totalNumbers]);
     
-    // Agrupación para 3 cifras
     const numbersInChunks = useMemo(() => {
         if (raffleMode !== 'three-digit') return null;
         const chunks = [];
@@ -837,7 +835,7 @@ const App = () => {
                 numericValue = 0;
             }
             if (numericValue < 0) numericValue = 0;
-            if (numericValue > 100) numericValue = 100;
+            if (numericValue < 100) numericValue = numericValue; else numericValue = 100;
             newState[field as keyof Raffle] = numericValue;
         } else if (field === 'infiniteModeDigits') {
             const numericValue = parseInt(String(value).replace(/\D/g, ''), 10) || 4;
@@ -2262,7 +2260,6 @@ const App = () => {
         }
     };
 
-    // Nuevas funciones para guardar imágenes modo 3 cifras
     const handleSaveBoardDesign3 = async () => {
         if (!isSuperAdmin) return;
         try {
@@ -3339,7 +3336,6 @@ const App = () => {
                                     {raffleMode !== 'infinite' ? (
                                        <div ref={boardCaptureRef} className="relative flex flex-col gap-0 min-h-[70vh] p-0 transition-all duration-500 overflow-hidden bg-white shadow-inner">
                                            <div className="relative z-10 space-y-0">
-                                               {/* Encabezado General del Tablero */}
                                                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b p-5 bg-white/80 backdrop-blur-md border border-white/50 shadow-xl">
                                                    <div className="flex items-center gap-4">
                                                        {(raffleState.prizeImageUrl) && (
@@ -3367,7 +3363,6 @@ const App = () => {
                                                    )}
                                                </div>
 
-                                               {/* Área de Números */}
                                                <div className="relative w-full max-w-5xl mx-auto space-y-0">
                                                    {raffleMode === 'two-digit' ? (
                                                         <div className="bg-white p-5 relative overflow-hidden">
@@ -3412,15 +3407,14 @@ const App = () => {
                                                             </div>
                                                         </div>
                                                    ) : (
-                                                       /* Tablero de 3 Cifras por centenas repetitivas */
-                                                       <div className="flex flex-col gap-0">
+                                                       <div className="flex flex-col gap-0 relative">
+                                                            {appSettings.boardHeaderImageUrl3 && (
+                                                                <div className="absolute top-0 left-0 right-0 h-10 z-20 pointer-events-none">
+                                                                    <Image src={appSettings.boardHeaderImageUrl3} alt="" fill className="object-cover" unoptimized />
+                                                                </div>
+                                                            )}
                                                            {numbersInChunks?.map((chunk, chunkIdx) => (
-                                                               <div key={chunkIdx} className="relative bg-white p-5 overflow-hidden border-b border-gray-100 last:border-b-0">
-                                                                   {appSettings.boardHeaderImageUrl3 && (
-                                                                        <div className="absolute top-0 left-0 right-0 h-8 z-20 pointer-events-none opacity-50">
-                                                                            <Image src={appSettings.boardHeaderImageUrl3} alt="" fill className="object-cover" unoptimized />
-                                                                        </div>
-                                                                    )}
+                                                               <div key={chunkIdx} className="relative bg-white p-5 overflow-hidden">
                                                                     {appSettings.boardDesignImageUrl3 && (
                                                                         <div className="absolute inset-0 z-0 pointer-events-none">
                                                                             <Image src={appSettings.boardDesignImageUrl3} alt="" fill className="object-cover" unoptimized />
@@ -4118,7 +4112,6 @@ const App = () => {
                         </DialogContent>
                     </Dialog>
 
-                    {/* Nuevo Diálogo Diseño 3 Cifras */}
                     <Dialog open={isBoardDesignDialogOpen3} onOpenChange={setIsBoardDesignDialogOpen3}>
                         <DialogContent>
                             <DialogHeader><DialogTitle>Diseño del Tablero (3 Cifras)</DialogTitle></DialogHeader>
@@ -4159,7 +4152,7 @@ const App = () => {
                                 <div className="space-y-4">
                                     <h4 className="font-bold text-sm text-yellow-600 uppercase tracking-wider">{t('pendingColor')}</h4>
                                     <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-2"><Label>{t('bgColor')}</Label><div className="flex gap-2"><Input type="color" className="h-10 w-12 p-1" value={boardColors.pendingBg} onChange={(e) => setBoardColors(p => ({ ...p, availableBg: e.target.value }))}/><Input value={boardColors.pendingBg} onChange={(e) => setBoardColors(p => ({ ...p, pendingBg: e.target.value }))} className="flex-grow font-mono text-xs"/></div></div>
+                                        <div className="space-y-2"><Label>{t('bgColor')}</Label><div className="flex gap-2"><Input type="color" className="h-10 w-12 p-1" value={boardColors.pendingBg} onChange={(e) => setBoardColors(p => ({ ...p, pendingBg: e.target.value }))}/><Input value={boardColors.pendingBg} onChange={(e) => setBoardColors(p => ({ ...p, pendingBg: e.target.value }))} className="flex-grow font-mono text-xs"/></div></div>
                                         <div className="space-y-2"><Label>{t('textColor')}</Label><div className="flex gap-2"><Input type="color" className="h-10 w-12 p-1" value={boardColors.pendingText} onChange={(e) => setBoardColors(p => ({ ...p, pendingText: e.target.value }))}/><Input value={boardColors.pendingText} onChange={(e) => setBoardColors(p => ({ ...p, pendingText: e.target.value }))} className="flex-grow font-mono text-xs"/></div></div>
                                     </div>
                                 </div>
@@ -4198,7 +4191,6 @@ const App = () => {
                         </DialogContent>
                     </Dialog>
 
-                    {/* Nuevo Diálogo Renglón 3 Cifras */}
                     <Dialog open={isBoardHeaderImageDialogOpen3} onOpenChange={setIsBoardHeaderImageDialogOpen3}>
                         <DialogContent>
                             <DialogHeader><DialogTitle>Imagen del Renglón (3 Cifras)</DialogTitle></DialogHeader>
