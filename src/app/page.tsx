@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import jsPDF from 'jspdf';
@@ -3454,6 +3453,21 @@ const App = () => {
                                                        </div>
                                                    )}
                                                </div>
+                                               
+                                               <div className="p-4 bg-white/90 backdrop-blur-md flex justify-center gap-6 border-t border-gray-100">
+                                                   <div className="flex items-center gap-2">
+                                                       <div className="w-4 h-4 rounded shadow-sm border border-gray-200" style={{ backgroundColor: appSettings.numberBgAvailable || 'rgba(34, 197, 94, 0.1)' }} />
+                                                       <span className="text-xs font-bold text-gray-600 uppercase tracking-wider">{t('available')}</span>
+                                                   </div>
+                                                   <div className="flex items-center gap-2">
+                                                       <div className="w-4 h-4 rounded shadow-sm" style={{ backgroundColor: appSettings.numberBgPending || '#facc15' }} />
+                                                       <span className="text-xs font-bold text-gray-600 uppercase tracking-wider">{t('pending')}</span>
+                                                   </div>
+                                                   <div className="flex items-center gap-2">
+                                                       <div className="w-4 h-4 rounded shadow-sm" style={{ backgroundColor: appSettings.numberBgSold || '#dc2626' }} />
+                                                       <span className="text-xs font-bold text-gray-600 uppercase tracking-wider">{t('sold')}</span>
+                                                   </div>
+                                               </div>
                                            </div>
                                         </div>
                                     ) : (
@@ -4565,14 +4579,14 @@ const App = () => {
                                     <Label htmlFor="new-password-v2">{t('newPassword')}</Label>
                                     <div className="relative">
                                         <Input id="new-password-v2" type={showNewPassword ? 'text' : 'password'} value={newPassword} onChange={(e) => setNewPassword(e.target.value)}/>
-                                        <Button type="button" variant="ghost" size="icon" className="absolute inset-y-0 right-0 h-full px-3" onClick={() => setShowNewPassword(!showNewPassword)}>{showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}<span className="sr-only">Toggle password visibility</span></Button>
+                                        <Button type="button" variant="ghost" size="icon" className="absolute inset-y-0 right-0 h-full px-3" onClick={() => setShowNewPassword(!showNewPassword)}>{showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button>
                                     </div>
                                 </div>
                                 <div className="grid gap-2">
                                     <Label htmlFor="confirm-new-password-v2">{t('confirmNewPassword')}</Label>
                                      <div className="relative">
                                         <Input id="confirm-new-password-v2" type={showNewPassword ? 'text' : 'password'} value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)}/>
-                                         <Button type="button" variant="ghost" size="icon" className="absolute inset-y-0 right-0 h-full px-3" onClick={() => setShowNewPassword(!showNewPassword)}>{showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}<span className="sr-only">Toggle password visibility</span></Button>
+                                         <Button type="button" variant="ghost" size="icon" className="absolute inset-y-0 right-0 h-full px-3" onClick={() => setShowNewPassword(!showNewPassword)}>{showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button>
                                     </div>
                                 </div>
                             </div>
