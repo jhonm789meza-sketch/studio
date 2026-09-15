@@ -1559,7 +1559,7 @@ const App = () => {
             }
             
             if (allFoundPartialWinners.length > 0) {
-                setPartialWinners(allFoundPartialWinners);
+                setPartialWinners(allFoundFoundPartialWinners);
             }
         }
     
@@ -2817,15 +2817,6 @@ const App = () => {
                                                     <p className="text-sm text-gray-500">{t('gameReference')}</p>
                                                     <div className="flex items-center gap-2">
                                                         <p className="text-2xl font-bold text-gray-800 tracking-wider">{raffleState.raffleRef}</p>
-                                                        <button 
-                                                            onClick={() => {
-                                                                const cleanCode = (raffleState.organizerCountryCode || '+57').replace('+', '');
-                                                                window.open(`https://wa.me/${cleanCode}${raffleState.organizerPhoneNumber}`, '_blank');
-                                                            }} 
-                                                            className="p-2 rounded-full hover:bg-gray-100"
-                                                        >
-                                                            <WhatsappIcon />
-                                                        </button>
                                                     </div>
                                                 </div>
                                             )}
@@ -3381,6 +3372,18 @@ const App = () => {
                                                                 <Trophy className="h-4 w-4 text-purple-600" />
                                                                 <span>{t('lottery')}: <span className="text-purple-800">{raffleState.lottery === 'Otro' ? raffleState.customLottery : raffleState.lottery}</span></span>
                                                             </div>
+                                                        )}
+                                                        {raffleState.organizerPhoneNumber && (
+                                                            <button 
+                                                                onClick={() => {
+                                                                    const cleanCode = (raffleState.organizerCountryCode || '+57').replace('+', '');
+                                                                    window.open(`https://wa.me/${cleanCode}${raffleState.organizerPhoneNumber}`, '_blank');
+                                                                }}
+                                                                className="flex items-center gap-1.5 bg-green-50 px-3 py-1.5 rounded-full border border-green-100 hover:bg-green-100 transition-colors"
+                                                            >
+                                                                <WhatsappIcon className="h-4 w-4 text-green-600" />
+                                                                <span>{t('contact')}: <span className="text-green-800">{raffleState.organizerPhoneNumber}</span></span>
+                                                            </button>
                                                         )}
                                                    </div>
                                                </div>
