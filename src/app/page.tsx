@@ -4121,9 +4121,9 @@ const App = () => {
                                 <DialogDescription>Configura links de PayPal o Stripe independientes para cada modalidad.</DialogDescription>
                             </DialogHeader>
                             <div className="grid gap-4 py-4">
-                                <div className="grid gap-2"><Label htmlFor="usd-two-digit">Link USD (2 Cifras)</Label><Input id="usd-two-digit" value={paymentLinks.usdTwoDigit} onChange={(e) => setPaymentLinks(p => ({ ...p, usdTwoDigit: e.target.value }))}/></div>
-                                <div className="grid gap-2"><Label htmlFor="usd-three-digit">Link USD (3 Cifras)</Label><Input id="usd-three-digit" value={paymentLinks.usdThreeDigit} onChange={(e) => setPaymentLinks(p => ({ ...p, usdThreeDigit: e.target.value }))}/></div>
-                                <div className="grid gap-2"><Label htmlFor="usd-infinite">Link USD (Infinita)</Label><Input id="usd-infinite" value={paymentLinks.usdInfinite} onChange={(e) => setPaymentLinks(p => ({ ...p, usdInfinite: e.target.value }))}/></div>
+                                <div className="grid gap-2"><Label htmlFor="usd-two-digit">Link USD (2 Cifras)</Label><Input id="usd-two-digit" value={paymentLinks.usdTwoDigit} onChange={(e) => setLinks(p => ({ ...p, usdTwoDigit: e.target.value }))}/></div>
+                                <div className="grid gap-2"><Label htmlFor="usd-three-digit">Link USD (3 Cifras)</Label><Input id="usd-three-digit" value={paymentLinks.usdThreeDigit} onChange={(e) => setLinks(p => ({ ...p, usdThreeDigit: e.target.value }))}/></div>
+                                <div className="grid gap-2"><Label htmlFor="usd-infinite">Link USD (Infinita)</Label><Input id="usd-infinite" value={paymentLinks.usdInfinite} onChange={(e) => setLinks(p => ({ ...p, usdInfinite: e.target.value }))}/></div>
                             </div>
                             <DialogFooter><Button variant="outline" onClick={() => setIsUsdPaymentConfigDialogOpen(false)}>Cancelar</Button><Button onClick={handleSavePaymentLinks}>Guardar Todo</Button></DialogFooter>
                         </DialogContent>
@@ -4748,6 +4748,24 @@ const App = () => {
                         <DialogContent>
                             <DialogHeader><DialogTitle>{t('confirmAction')}</DialogTitle><DialogDescription>{confirmationMessage}</DialogDescription></DialogHeader>
                             <DialogFooter className="gap-2 sm:gap-0"><Button variant="outline" onClick={() => setShowConfirmation(false)}>{t('cancel')}</Button><Button className="bg-red-600 hover:bg-red-700" onClick={() => { if (confirmationAction) confirmationAction(); setShowConfirmation(false); }}>{t('confirm')}</Button></DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+                    
+                    {/* Nuevo Diálogo para Mostrar QR */}
+                    <Dialog open={isQrDialogOpen} onOpenChange={setIsQrDialogOpen}>
+                        <DialogContent className="max-w-xs">
+                            <DialogHeader>
+                                <DialogTitle className="text-center">{t('shareWithQR')}</DialogTitle>
+                                <DialogDescription className="text-center">{t('shareWithQRDescription')}</DialogDescription>
+                            </DialogHeader>
+                            <div className="flex justify-center items-center p-4">
+                                <div className="p-4 bg-white rounded-xl shadow-2xl border-4 border-purple-100">
+                                    <img src={dynamicQrUrl} alt={t('appQRCodeAlt')} className="h-48 w-48 object-contain" />
+                                </div>
+                            </div>
+                            <DialogFooter>
+                                <Button variant="outline" onClick={() => setIsQrDialogOpen(false)} className="w-full">{t('close')}</Button>
+                            </DialogFooter>
                         </DialogContent>
                     </Dialog>
                 </div>
