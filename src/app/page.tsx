@@ -3335,31 +3335,54 @@ const App = () => {
                                     {raffleMode !== 'infinite' ? (
                                        <div ref={boardCaptureRef} className="relative flex flex-col gap-0 min-h-[70vh] p-0 transition-all duration-500 overflow-hidden bg-white shadow-inner">
                                            <div className="relative z-10 space-y-0">
-                                               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b p-5 bg-white/80 backdrop-blur-md border border-white/50 shadow-xl">
-                                                   <div className="flex items-center gap-4">
-                                                       {(raffleState.prizeImageUrl) && (
-                                                           <div className="relative h-20 w-20 rounded-xl overflow-hidden border-2 border-white shadow-lg bg-white shrink-0">
-                                                               <Image 
-                                                                   src={raffleState.prizeImageUrl} 
-                                                                   alt={t('rafflePrizeAlt')} 
-                                                                   fill 
-                                                                   className="object-cover" 
-                                                                   unoptimized 
-                                                               />
+                                               <div className="flex flex-col justify-between items-start border-b p-5 bg-white/80 backdrop-blur-md border border-white/50 shadow-xl">
+                                                   <div className="flex flex-col sm:flex-row justify-between w-full items-start sm:items-center gap-4">
+                                                       <div className="flex items-center gap-4">
+                                                           {(raffleState.prizeImageUrl) && (
+                                                               <div className="relative h-20 w-20 rounded-xl overflow-hidden border-2 border-white shadow-lg bg-white shrink-0">
+                                                                   <Image 
+                                                                       src={raffleState.prizeImageUrl} 
+                                                                       alt={t('rafflePrizeAlt')} 
+                                                                       fill 
+                                                                       className="object-cover" 
+                                                                       unoptimized 
+                                                                   />
+                                                               </div>
+                                                           )}
+                                                           <div>
+                                                               <h2 className="text-3xl font-black text-gray-900 tracking-tight flex items-center">
+                                                                   {t('numberBoard')}
+                                                               </h2>
+                                                               <p className="text-base text-gray-600 font-bold line-clamp-1">{raffleState.prize}</p>
                                                            </div>
-                                                       )}
-                                                       <div>
-                                                           <h2 className="text-3xl font-black text-gray-900 tracking-tight flex items-center">
-                                                               {t('numberBoard')}
-                                                           </h2>
-                                                           <p className="text-base text-gray-600 font-bold line-clamp-1">{raffleState.prize}</p>
                                                        </div>
+                                                       {raffleState.raffleRef && (
+                                                            <div className="bg-purple-600 text-white px-4 py-2 rounded-xl text-sm font-black shadow-lg border border-purple-500">
+                                                                {t('mode').toUpperCase()}: {raffleMode === 'two-digit' ? t('2digitMode') : t('3digitMode')}
+                                                            </div>
+                                                       )}
                                                    </div>
-                                                   {raffleState.raffleRef && (
-                                                        <div className="bg-purple-600 text-white px-4 py-2 rounded-xl text-sm font-black shadow-lg border border-purple-500">
-                                                            {t('mode').toUpperCase()}: {raffleMode === 'two-digit' ? t('2digitMode') : t('3digitMode')}
-                                                        </div>
-                                                   )}
+                                                   
+                                                   <div className="flex flex-wrap gap-x-6 gap-y-2 mt-4 text-xs font-bold text-gray-700 w-full">
+                                                        {raffleState.organizerName && (
+                                                            <div className="flex items-center gap-1.5 bg-blue-50 px-3 py-1.5 rounded-full border border-blue-100">
+                                                                <Users className="h-4 w-4 text-blue-600" />
+                                                                <span>{t('whoOrganizes')}: <span className="text-blue-800">{raffleState.organizerName}</span></span>
+                                                            </div>
+                                                        )}
+                                                        {raffleState.value && (
+                                                            <div className="flex items-center gap-1.5 bg-green-50 px-3 py-1.5 rounded-full border border-green-100">
+                                                                <DollarSign className="h-4 w-4 text-green-600" />
+                                                                <span>{t('ticketValue')}: <span className="text-green-800">{formatValue(raffleState.value)}</span></span>
+                                                            </div>
+                                                        )}
+                                                        {(raffleState.lottery || (raffleState.lottery === 'Otro' && raffleState.customLottery)) && (
+                                                            <div className="flex items-center gap-1.5 bg-purple-50 px-3 py-1.5 rounded-full border border-purple-100">
+                                                                <Trophy className="h-4 w-4 text-purple-600" />
+                                                                <span>{t('lottery')}: <span className="text-purple-800">{raffleState.lottery === 'Otro' ? raffleState.customLottery : raffleState.lottery}</span></span>
+                                                            </div>
+                                                        )}
+                                                   </div>
                                                </div>
 
                                                <div className="relative w-full max-w-5xl mx-auto space-y-0">
