@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import jsPDF from 'jspdf';
@@ -3366,7 +3367,7 @@ const App = () => {
                                                    {raffleMode === 'two-digit' ? (
                                                         <div className="bg-white p-5 relative overflow-hidden">
                                                             {appSettings.boardHeaderImageUrl && (
-                                                                <div className="absolute top-0 left-0 right-0 h-10 z-20 pointer-events-none">
+                                                                <div className="absolute inset-0 z-20 pointer-events-none">
                                                                     <Image src={appSettings.boardHeaderImageUrl} alt="" fill className="object-cover" unoptimized />
                                                                 </div>
                                                             )}
@@ -3410,7 +3411,7 @@ const App = () => {
                                                            {numbersInChunks?.map((chunk, chunkIdx) => (
                                                                <div key={chunkIdx} className="relative bg-transparent p-5 overflow-hidden border-b border-gray-100 last:border-0">
                                                                     {appSettings.boardHeaderImageUrl3 && (
-                                                                        <div className="absolute top-0 left-0 right-0 h-10 z-20 pointer-events-none opacity-80">
+                                                                        <div className="absolute inset-0 z-20 pointer-events-none opacity-80">
                                                                             <Image src={appSettings.boardHeaderImageUrl3} alt="" fill className="object-cover" unoptimized />
                                                                         </div>
                                                                     )}
@@ -4152,7 +4153,7 @@ const App = () => {
                                     <h4 className="font-bold text-sm text-yellow-600 uppercase tracking-wider">{t('pendingColor')}</h4>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-2"><Label>{t('bgColor')}</Label><div className="flex gap-2"><Input type="color" className="h-10 w-12 p-1" value={boardColors.pendingBg} onChange={(e) => setBoardColors(p => ({ ...p, pendingBg: e.target.value }))}/><Input value={boardColors.pendingBg} onChange={(e) => setBoardColors(p => ({ ...p, pendingBg: e.target.value }))} className="flex-grow font-mono text-xs"/></div></div>
-                                        <div className="space-y-2"><Label>{t('textColor')}</Label><div className="flex gap-2"><Input type="color" className="h-10 w-12 p-1" value={boardColors.pendingText} onChange={(e) => setBoardColors(p => ({ ...p, availableText: e.target.value }))}/><Input value={boardColors.pendingText} onChange={(e) => setBoardColors(p => ({ ...p, pendingText: e.target.value }))} className="flex-grow font-mono text-xs"/></div></div>
+                                        <div className="space-y-2"><Label>{t('textColor')}</Label><div className="flex gap-2"><Input type="color" className="h-10 w-12 p-1" value={boardColors.pendingText} onChange={(e) => setBoardColors(p => ({ ...p, pendingText: e.target.value }))}/><Input value={boardColors.pendingText} onChange={(e) => setBoardColors(p => ({ ...p, pendingText: e.target.value }))} className="flex-grow font-mono text-xs"/></div></div>
                                     </div>
                                 </div>
                                 <div className="space-y-4">
