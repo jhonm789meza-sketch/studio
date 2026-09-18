@@ -293,6 +293,8 @@ const App = () => {
     const [isHiddenLinkEnabled, setIsHiddenLinkEnabled] = useState(false);
     const [isPlayButtonEnabled, setIsPlayButtonEnabled] = useState(false);
 
+    const [isCleanupDialogOpen, setIsCleanupDialogOpen] = useState(false);
+
     const prizeTextareaRef = useRef<HTMLTextAreaElement>(null);
 
     const isCurrentUserAdmin = !!raffleState.adminId && !!currentAdminId && raffleState.adminId === currentAdminId;
@@ -328,6 +330,10 @@ const App = () => {
     const prizeValueForGoal = raffleState.prize ? parseFloat(String(raffleState.prize).replace(/\D/g, '')) : 0;
     const ticketValueForGoal = raffleState.value ? parseFloat(String(raffleState.prize).replace(/\D/g, '')) : 0;
     const ticketsToCoverPrize = ticketValueForGoal > 0 ? Math.ceil(prizeValueForGoal / ticketValueForGoal) : 0;
+
+    const abandonedRaffles = useMemo(() => {
+        return allRaffles.filter(r => !r.isActive && (r.participants || []).length === 0);
+    }, [allRaffles]);
 
     const filteredGames = allRaffles.filter(raffle => {
         const matchesSearch = (raffle.raffleRef || '').toLowerCase().includes(gameSearchQuery.toLowerCase()) ||
@@ -1271,6 +1277,28 @@ const App = () => {
         );
     };
 
+    const handleDeleteAbandonedRaffles = async () => {
+        showConfirmationDialog(
+            t('deleteAbandonedRafflesConfirmation', { count: abandonedRaffles.length }),
+            async () => {
+                setLoading(true);
+                try {
+                    const batch = writeBatch(db);
+                    abandonedRaffles.forEach((raffle) => {
+                        batch.delete(doc(db, 'raffles', raffle.raffleRef));
+                    });
+                    await batch.commit();
+                    showNotification(t('abandonedRafflesDeletedSuccess', { count: abandonedRaffles.length }), 'success');
+                    setIsCleanupDialogOpen(false);
+                } catch (error) {
+                    console.error("Error deleting abandoned raffles:", error);
+                    showNotification(t('abandonedRafflesDeletedError'), 'error');
+                } finally {
+                    setLoading(false);
+                }
+            }
+        );
+    };
 
     const handleDownloadTicket = async () => {
         const ticketElement = ticketModalRef.current;
@@ -1559,7 +1587,7 @@ const App = () => {
             }
             
             if (allFoundPartialWinners.length > 0) {
-                setPartialWinners(allFoundFoundPartialWinners);
+                setPartialWinners(allFoundPartialWinners);
             }
         }
     
@@ -2393,8 +2421,12 @@ const App = () => {
                                         <>
                                             <DropdownMenuSeparator />
                                             <div className="px-2 py-1.5 text-xs font-black text-purple-600 uppercase tracking-widest bg-purple-50 rounded-sm mb-1 text-center">
-                                                CONTROL DE DIRECTOR: 22 HERRAMIENTAS
+                                                CONTROL DE DIRECTOR: 23 HERRAMIENTAS
                                             </div>
+                                            <DropdownMenuItem onSelect={() => setIsCleanupDialogOpen(true)} className="bg-red-50 focus:bg-red-100 text-red-600 font-bold">
+                                                <Trash2 className="mr-2 h-4 w-4" />
+                                                <span>Eliminar Referencias Abandonadas</span>
+                                            </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setIsAppNameLogoDialogOpen(true)}>
                                                 <Settings2 className="mr-2 h-4 w-4" />
                                                 <span>{t('appNameAndLogo')}</span>
@@ -3325,6 +3357,12 @@ const App = () => {
                                 <div className={activeTab === 'numbers' ? 'tab-content active relative' : 'tab-content p-6 relative'}>
                                     {raffleMode !== 'infinite' ? (
                                        <div ref={boardCaptureRef} className="relative flex flex-col gap-0 min-h-[70vh] p-0 transition-all duration-500 overflow-hidden bg-white shadow-inner">
+                                           {/* Botón Overlay HAZ CLICK */}
+                                            <div className="absolute inset-0 z-30 pointer-events-none flex items-center justify-center">
+                                                <div className="bg-gradient-to-br from-purple-600 to-blue-700 text-white px-8 py-4 rounded-3xl border-[8px] border-white shadow-[0_20px_50px_rgba(0,0,0,0.5)] transform -rotate-12 animate-bounce">
+                                                    <span className="text-4xl font-black italic tracking-tighter uppercase">¡HAZ CLICK!</span>
+                                                </div>
+                                            </div>
                                            <div className="relative z-10 space-y-0">
                                                <div className="flex flex-col justify-between items-start border-b p-5 bg-white/80 backdrop-blur-md border border-white/50 shadow-xl">
                                                    <div className="flex flex-col sm:flex-row justify-between w-full items-start sm:items-center gap-4">
@@ -3354,7 +3392,7 @@ const App = () => {
                                                        )}
                                                    </div>
                                                    
-                                                   <div className="flex flex-wrap gap-x-6 gap-y-2 mt-4 text-xs font-bold text-gray-700 w-full">
+                                                   <div className="flex flex-wrap gap-x-4 gap-y-2 mt-4 text-xs font-bold text-gray-700 w-full">
                                                         {raffleState.organizerName && (
                                                             <div className="flex items-center gap-1.5 bg-blue-50 px-3 py-1.5 rounded-full border border-blue-100">
                                                                 <Users className="h-4 w-4 text-blue-600" />
@@ -3408,8 +3446,8 @@ const App = () => {
                                                                     const isConfirmed = participant && participant.paymentStatus === 'confirmed';
                                                                     const isPending = participant && participant.paymentStatus === 'pending';
 
-                                                                    const availBg = appSettings.numberBgAvailable || 'rgba(34, 197, 94, 0.1)';
-                                                                    const availText = appSettings.numberTextAvailable || '#15803d';
+                                                                    const availBg = 'rgba(34, 197, 94, 0.1)';
+                                                                    const availText = '#15803d';
                                                                     const pendBg = appSettings.numberBgPending || '#facc15';
                                                                     const pendText = appSettings.numberTextPending || '#422006';
                                                                     const sldBg = appSettings.numberBgSold || '#dc2626';
@@ -3420,10 +3458,10 @@ const App = () => {
                                                                             key={num}
                                                                             onClick={() => toggleNumber(num)}
                                                                             style={{
-                                                                                backgroundColor: isConfirmed ? sldBg : isPending ? pendBg : (!raffleState.isDetailsConfirmed || !!raffleState.winner ? undefined : availBg),
-                                                                                color: isConfirmed ? sldText : isPending ? pendText : (!raffleState.isDetailsConfirmed || !!raffleState.winner ? undefined : availText),
+                                                                                backgroundColor: isConfirmed ? sldBg : isPending ? pendBg : (availBg),
+                                                                                color: isConfirmed ? sldText : isPending ? pendText : (availText),
                                                                             }}
-                                                                            className={`number-cell text-center py-2.5 rounded-xl transition-all text-sm font-bold ${raffleState.isWinnerConfirmed || !raffleState.isDetailsConfirmed || !!raffleState.winner || isConfirmed || isPending ? 'cursor-not-allowed' : 'cursor-pointer'} ${isConfirmed ? 'shadow-xl scale-95' : isPending ? 'shadow-lg' : !raffleState.isDetailsConfirmed || !!raffleState.winner ? 'bg-gray-100 text-gray-400' : 'border-2 hover:scale-110 shadow-sm'}`}
+                                                                            className={`number-cell text-center py-2.5 rounded-xl transition-all text-sm font-bold ${raffleState.isWinnerConfirmed || !raffleState.isDetailsConfirmed || !!raffleState.winner || isConfirmed || isPending ? 'cursor-not-allowed' : 'cursor-pointer'} ${isConfirmed ? 'shadow-xl scale-95' : isPending ? 'shadow-lg' : 'border-2 hover:scale-110 shadow-sm'}`}
                                                                         >
                                                                             {formattedNum}
                                                                         </div>
@@ -3452,8 +3490,8 @@ const App = () => {
                                                                             const isConfirmed = participant && participant.paymentStatus === 'confirmed';
                                                                             const isPending = participant && participant.paymentStatus === 'pending';
 
-                                                                            const availBg = appSettings.numberBgAvailable || 'rgba(34, 197, 94, 0.1)';
-                                                                            const availText = appSettings.numberTextAvailable || '#15803d';
+                                                                            const availBg = 'rgba(34, 197, 94, 0.1)';
+                                                                            const availText = '#15803d';
                                                                             const pendBg = appSettings.numberBgPending || '#facc15';
                                                                             const pendText = appSettings.numberTextPending || '#422006';
                                                                             const sldBg = appSettings.numberBgSold || '#dc2626';
@@ -3482,7 +3520,7 @@ const App = () => {
                                                
                                                <div className="p-4 bg-white/90 backdrop-blur-md flex justify-center gap-6 border-t border-gray-100">
                                                    <div className="flex items-center gap-2">
-                                                       <div className="w-4 h-4 rounded shadow-sm border border-gray-200" style={{ backgroundColor: appSettings.numberBgAvailable || 'rgba(34, 197, 94, 0.1)' }} />
+                                                       <div className="w-4 h-4 rounded shadow-sm border border-gray-200" style={{ backgroundColor: 'rgba(34, 197, 94, 0.1)' }} />
                                                        <span className="text-xs font-bold text-gray-600 uppercase tracking-wider">{t('available')}</span>
                                                    </div>
                                                    <div className="flex items-center gap-2">
@@ -4111,6 +4149,37 @@ const App = () => {
                                     )}
                                 </div>
                             </ScrollArea>
+                        </DialogContent>
+                    </Dialog>
+
+                    <Dialog open={isCleanupDialogOpen} onOpenChange={setIsCleanupDialogOpen}>
+                        <DialogContent className="sm:max-w-md">
+                            <DialogHeader>
+                                <DialogTitle>Limpiar Referencias Abandonadas</DialogTitle>
+                                <DialogDescription>
+                                    Esta herramienta elimina todas las rifas que no han sido activadas y no tienen participantes registrados.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <div className="py-6 space-y-4">
+                                <div className="flex justify-between items-center bg-red-50 p-4 rounded-lg border border-red-100">
+                                    <div>
+                                        <p className="text-sm text-red-600 font-medium">Referencias Huérfanas</p>
+                                        <p className="text-3xl font-bold text-red-700">{abandonedRaffles.length}</p>
+                                    </div>
+                                    <div className="h-12 w-12 bg-red-100 rounded-full flex items-center justify-center">
+                                        <Trash2 className="h-6 w-6 text-red-600" />
+                                    </div>
+                                </div>
+                                <p className="text-xs text-slate-500 italic">
+                                    * Se consideran abandonadas las referencias que están desactivadas y con 0 participantes (típico de usuarios que no envían el mensaje de WhatsApp).
+                                </p>
+                            </div>
+                            <DialogFooter>
+                                <Button variant="outline" onClick={() => setIsCleanupDialogOpen(false)}>{t('cancel')}</Button>
+                                <Button variant="destructive" onClick={handleDeleteAbandonedRaffles} disabled={abandonedRaffles.length === 0}>
+                                    Eliminar Todo
+                                </Button>
+                            </DialogFooter>
                         </DialogContent>
                     </Dialog>
 

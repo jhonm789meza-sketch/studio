@@ -131,7 +131,7 @@
     "ticketValue_caps": "VALOR BOLETA",
     "drawDate_caps": "FECHA SORTEO",
     "playedWith_caps": "JUEGA CON",
-    "organizedBy_caps": "QUIEN ORGANIZA",
+    "organizedBy_caps": "ORGANIZADO POR",
     "assignedNumber_caps": "NÚMERO ASIGNADO",
     "thanksForParticipating": "¡Gracias por participar!",
     "downloadTicket": "Descargar Tiquete",
@@ -433,8 +433,8 @@
     "invalidQrContent": "El código QR no contiene un enlace válido.",
     "boardColors": "Colores del Tablero",
     "boardColorsDescription": "Personaliza los colores de los números según su estado.",
-    "availableColor": "Disponible",
-    "pendingColor": "Pendiente",
+    "availableColor": "Libres",
+    "pendingColor": "Separados",
     "soldColor": "Vendido",
     "bgColor": "Fondo",
     "textColor": "Texto",
@@ -446,5 +446,9 @@
     "noPrizeImagesFound": "No se encontraron rifas con imágenes de premios.",
     "deleteLink": "Borrar Link",
     "imageLinkDeleted": "Enlace de imagen borrado con éxito.",
-    "errorDeletingImageLink": "Error al borrar el enlace de imagen."
+    "errorDeletingImageLink": "Error al borrar el enlace de imagen.",
+    "deleteAbandonedRaffles": "Eliminar Referencias Abandonadas",
+    "deleteAbandonedRafflesConfirmation": "¿Estás seguro de que deseas eliminar las {count} referencias abandonadas? Estos son juegos que no están activos y tienen 0 participantes.",
+    "abandonedRafflesDeletedSuccess": "{count} referencias abandonadas eliminadas con éxito.",
+    "abandonedRafflesDeletedError": "Error al eliminar las referencias abandonadas."
 }

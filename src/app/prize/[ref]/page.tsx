@@ -1,4 +1,3 @@
-
 'use client';
 /**
  * @fileOverview Pantalla de Bienvenida (Landing Page) interactiva.
@@ -76,11 +75,11 @@ export default function PrizeRedirectPage() {
                                 <Loader2 className="h-12 w-12 animate-spin" />
                             ) : (
                                 <>
-                                    <div className="flex items-center gap-3 text-3xl font-black italic tracking-tighter">
-                                        ¡JUGAR AHORA! <Sparkles className="h-6 w-6 text-yellow-300 animate-bounce" />
+                                    <div className="flex items-center gap-3 text-3xl font-black italic tracking-tighter uppercase">
+                                        ¡HAZ CLICK! <Sparkles className="h-6 w-6 text-yellow-300 animate-bounce" />
                                     </div>
                                     <span className="text-[11px] font-bold opacity-90 tracking-widest uppercase mt-1">
-                                        Click para entrar
+                                        Entrada garantizada
                                     </span>
                                     {/* Reflejo de luz en el botón */}
                                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
