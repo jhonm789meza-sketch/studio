@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import jsPDF from 'jspdf';
@@ -3357,12 +3358,6 @@ const App = () => {
                                 <div className={activeTab === 'numbers' ? 'tab-content active relative' : 'tab-content p-6 relative'}>
                                     {raffleMode !== 'infinite' ? (
                                        <div ref={boardCaptureRef} className="relative flex flex-col gap-0 min-h-[70vh] p-0 transition-all duration-500 overflow-hidden bg-white shadow-inner">
-                                           {/* Botón Overlay HAZ CLICK */}
-                                            <div className="absolute inset-0 z-30 pointer-events-none flex items-center justify-center">
-                                                <div className="bg-gradient-to-br from-purple-600 to-blue-700 text-white px-8 py-4 rounded-3xl border-[8px] border-white shadow-[0_20px_50px_rgba(0,0,0,0.5)] transform -rotate-12 animate-bounce">
-                                                    <span className="text-4xl font-black italic tracking-tighter uppercase">¡HAZ CLICK!</span>
-                                                </div>
-                                            </div>
                                            <div className="relative z-10 space-y-0">
                                                <div className="flex flex-col justify-between items-start border-b p-5 bg-white/80 backdrop-blur-md border border-white/50 shadow-xl">
                                                    <div className="flex flex-col sm:flex-row justify-between w-full items-start sm:items-center gap-4">
