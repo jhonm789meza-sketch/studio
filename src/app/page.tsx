@@ -336,6 +336,15 @@ const App = () => {
         return allRaffles.filter(r => !r.isActive && (r.participants || []).length === 0);
     }, [allRaffles]);
 
+    const getCreationDateFromAdminId = (adminId: string | null) => {
+        if (!adminId || !adminId.startsWith('admin_')) return null;
+        const parts = adminId.split('_');
+        if (parts.length < 2) return null;
+        const timestamp = parseInt(parts[1], 10);
+        if (isNaN(timestamp)) return null;
+        return new Date(timestamp);
+    };
+
     const filteredGames = allRaffles.filter(raffle => {
         const matchesSearch = (raffle.raffleRef || '').toLowerCase().includes(gameSearchQuery.toLowerCase()) ||
                             (raffle.organizerName || '').toLowerCase().includes(gameSearchQuery.toLowerCase());
@@ -2426,7 +2435,7 @@ const App = () => {
                                             </div>
                                             <DropdownMenuItem onSelect={() => setIsCleanupDialogOpen(true)} className="bg-red-50 focus:bg-red-100 text-red-600 font-bold">
                                                 <Trash2 className="mr-2 h-4 w-4" />
-                                                <span>Eliminar Referencias Abandonadas</span>
+                                                <span>{t('deleteAbandonedRaffles')}</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setIsAppNameLogoDialogOpen(true)}>
                                                 <Settings2 className="mr-2 h-4 w-4" />
@@ -4150,12 +4159,12 @@ const App = () => {
                     <Dialog open={isCleanupDialogOpen} onOpenChange={setIsCleanupDialogOpen}>
                         <DialogContent className="sm:max-w-md">
                             <DialogHeader>
-                                <DialogTitle>Limpiar Referencias Abandonadas</DialogTitle>
+                                <DialogTitle>{t('deleteAbandonedRaffles')}</DialogTitle>
                                 <DialogDescription>
                                     Esta herramienta elimina todas las rifas que no han sido activadas y no tienen participantes registrados.
                                 </DialogDescription>
                             </DialogHeader>
-                            <div className="py-6 space-y-4">
+                            <div className="py-4 space-y-4">
                                 <div className="flex justify-between items-center bg-red-50 p-4 rounded-lg border border-red-100">
                                     <div>
                                         <p className="text-sm text-red-600 font-medium">Referencias Huérfanas</p>
@@ -4165,6 +4174,30 @@ const App = () => {
                                         <Trash2 className="h-6 w-6 text-red-600" />
                                     </div>
                                 </div>
+                                
+                                {abandonedRaffles.length > 0 && (
+                                    <div className="space-y-2">
+                                        <p className="text-sm font-bold text-slate-700">Detalle de Referencias:</p>
+                                        <ScrollArea className="h-60 border rounded-md p-2 bg-slate-50">
+                                            {abandonedRaffles.sort((a, b) => {
+                                                const dateA = getCreationDateFromAdminId(a.adminId)?.getTime() || 0;
+                                                const dateB = getCreationDateFromAdminId(b.adminId)?.getTime() || 0;
+                                                return dateB - dateA;
+                                            }).map((raffle) => {
+                                                const date = getCreationDateFromAdminId(raffle.adminId);
+                                                return (
+                                                    <div key={raffle.raffleRef} className="flex justify-between items-center py-2 border-b last:border-0 text-xs">
+                                                        <span className="font-bold">{raffle.raffleRef}</span>
+                                                        <span className="text-slate-500">
+                                                            {date ? format(date, 'Pp', { locale: language === 'es' ? es : enUS }) : 'Fecha desconocida'}
+                                                        </span>
+                                                    </div>
+                                                );
+                                            })}
+                                        </ScrollArea>
+                                    </div>
+                                )}
+                                
                                 <p className="text-xs text-slate-500 italic">
                                     * Se consideran abandonadas las referencias que están desactivadas y con 0 participantes (típico de usuarios que no envían el mensaje de WhatsApp).
                                 </p>
