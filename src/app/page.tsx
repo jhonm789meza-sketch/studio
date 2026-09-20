@@ -359,11 +359,7 @@ const App = () => {
         return matchesSearch;
     });
 
-    const deletableRaffles = filteredGames.filter(raffle => {
-        const gameDateObj = raffle.gameDate ? new Date(raffle.gameDate + 'T00:00:00') : null;
-        const isPastDue = gameDateObj ? gameDateObj < today && !raffle.winner : false;
-        return (raffle.participants || []).length === 0 || !!raffle.winner || isPastDue;
-    });
+    const deletableRaffles = filteredGames; // El SuperAdmin ahora puede borrar cualquier juego de la lista filtrada
 
     const gamesWithWinner = allRaffles.filter(raffle => !!raffle.winner);
     const pastDateRaffles = allRaffles.filter(raffle => {
@@ -1224,12 +1220,16 @@ const App = () => {
         });
     };
 
-    const handleDeleteRaffle = async (raffleRef: string) => {
-        showConfirmationDialog(t('deleteSingleGameConfirmation', { ref: raffleRef }), async () => {
+    const handleDeleteRaffle = async (raffle: Raffle) => {
+        const raffleRef = raffle.raffleRef || 'Sin Referencia';
+        const hasParticipants = (raffle.participants || []).length > 0;
+        const msg = hasParticipants ? `ATENCIÓN: Este juego tiene participantes registrados. ¿Estás SEGURO de que deseas eliminar permanentemente el juego ${raffleRef}?` : t('deleteSingleGameConfirmation', { ref: raffleRef });
+
+        showConfirmationDialog(msg, async () => {
             try {
-                await deleteDoc(doc(db, 'raffles', raffleRef));
+                await deleteDoc(doc(db, 'raffles', raffle.raffleRef || raffle.id));
                 showNotification(t('gameDeletedSuccess'), 'success');
-                setSelectedRafflesForDeletion(prev => prev.filter(ref => ref !== raffleRef));
+                setSelectedRafflesForDeletion(prev => prev.filter(ref => ref !== raffle.raffleRef));
             } catch (error) {
                 console.error('Error deleting raffle:', error);
                 showNotification(t('gameDeletedError'), 'error');
@@ -3870,7 +3870,6 @@ const App = () => {
                                                                                 setSelectedRafflesForDeletion([]);
                                                                             }
                                                                         }}
-                                                                        disabled={deletableRaffles.length === 0}
                                                                     />
                                                                 </th>
                                                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('reference')}</th>
@@ -3887,22 +3886,27 @@ const App = () => {
                                                                 const gameCollected = ((raffle.participants || []).filter(p => p.paymentStatus === 'confirmed').length * parseFloat(String(raffle.value).replace(/\D/g, ''))) || 0;
                                                                 const gameDateObj = raffle.gameDate ? new Date(raffle.gameDate + 'T00:00:00') : null;
                                                                 const isPastDue = gameDateObj ? gameDateObj < today && !raffle.winner : false;
-                                                                const canDelete = (raffle.participants || []).length === 0 || !!raffle.winner || isPastDue;
+                                                                
+                                                                // Como SuperAdmin, canDelete siempre es true para corregir juegos dañados
+                                                                const canDelete = isSuperAdmin || (raffle.participants || []).length === 0 || !!raffle.winner || isPastDue;
+                                                                
+                                                                const prizeLabel = raffle.prize || (raffle.isPaid ? 'Sin Premio Definido' : 'Juego Dañado/Incompleto');
+                                                                const organizerLabel = raffle.organizerName || 'Sin Organizador';
+
                                                                 return (
-                                                                    <tr key={`${raffle.raffleRef}-${raffle.adminId}`}>
+                                                                    <tr key={`${raffle.raffleRef || raffle.id}-${raffle.adminId || Math.random()}`}>
                                                                         <td className="p-4">
                                                                             <Checkbox
                                                                                 checked={selectedRafflesForDeletion.includes(raffle.raffleRef)}
                                                                                 onCheckedChange={(checked) => {
                                                                                     setSelectedRafflesForDeletion(prev => checked ? [...prev, raffle.raffleRef] : prev.filter(ref => ref !== raffle.raffleRef));
                                                                                 }}
-                                                                                disabled={!canDelete}
                                                                             />
                                                                         </td>
-                                                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{raffle.raffleRef}</td>
-                                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{raffle.raffleMode === 'infinite' ? formatValue(raffle.prize) : raffle.prize}</td>
-                                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{raffle.organizerName}</td>
-                                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{raffle.gameDate}</td>
+                                                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-black text-purple-700">{raffle.raffleRef || 'REF-CORRUPTA'}</td>
+                                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{raffle.raffleMode === 'infinite' ? formatValue(raffle.prize) : prizeLabel}</td>
+                                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{organizerLabel}</td>
+                                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{raffle.gameDate || 'Sin Fecha'}</td>
                                                                         <td className="px-6 py-4 whitespace-nowrap text-sm">
                                                                             <div className="flex items-center gap-2">
                                                                                 <span className="font-mono bg-slate-100 text-slate-700 px-2 py-1 rounded border border-slate-200 font-black text-xs">
@@ -3921,8 +3925,10 @@ const App = () => {
                                                                         </td>
                                                                         <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-600">{formatValue(gameCollected)}</td>
                                                                         <td className="px-6 py-4 whitespace-nowrap text-sm space-x-2">
-                                                                            <Button onClick={() => handleAdminSearch({ refToSearch: raffle.raffleRef, isPublicSearch: true })} size="sm" variant="outline">{t('manage')}</Button>
-                                                                            <Button onClick={() => handleDeleteRaffle(raffle.raffleRef)} size="sm" variant="destructive" disabled={!canDelete}><Trash2 className="h-4 w-4"/></Button>
+                                                                            {raffle.raffleRef && (
+                                                                                <Button onClick={() => handleAdminSearch({ refToSearch: raffle.raffleRef, isPublicSearch: true })} size="sm" variant="outline">{t('manage')}</Button>
+                                                                            )}
+                                                                            <Button onClick={() => handleDeleteRaffle(raffle)} size="sm" variant="destructive"><Trash2 className="h-4 w-4"/></Button>
                                                                         </td>
                                                                     </tr>
                                                                 )
