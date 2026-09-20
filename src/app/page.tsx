@@ -46,6 +46,7 @@ const initialRaffleData: Raffle = {
     phoneNumber: '',
     raffleNumber: '',
     nequiAccountNumber: '',
+    brebKey: '',
     isNequiEnabled: true,
     isPaymentLinkEnabled: true,
     isSeparateNumberEnabled: true,
@@ -672,6 +673,19 @@ const App = () => {
             setIsCopyOptionsDialogOpen(false);
         } else {
             showNotification(t('paymentLinkNotConfigured'), 'warning');
+        }
+    };
+
+    const handleContactSupport = () => {
+        if (appSettings.supportContacts && appSettings.supportContacts.length > 1 && !raffleState.raffleRef) {
+            setIsContactDialogOpen(true);
+        } else if (appSettings.supportContacts && appSettings.supportContacts.length > 0) {
+            const primaryContact = appSettings.supportContacts[0];
+            const whatsappUrl = `https://wa.me/57${primaryContact}`;
+            window.open(whatsappUrl, '_blank');
+        } else {
+            const whatsappUrl = `https://wa.me/573145696687`;
+            window.open(whatsappUrl, '_blank');
         }
     };
 
@@ -1892,19 +1906,6 @@ const App = () => {
         }
     };
 
-    const handleContactSupport = () => {
-        if (appSettings.supportContacts && appSettings.supportContacts.length > 1 && !raffleState.raffleRef) {
-            setIsContactDialogOpen(true);
-        } else if (appSettings.supportContacts && appSettings.supportContacts.length > 0) {
-            const primaryContact = appSettings.supportContacts[0];
-            const whatsappUrl = `https://wa.me/57${primaryContact}`;
-            window.open(whatsappUrl, '_blank');
-        } else {
-            const whatsappUrl = `https://wa.me/573145696687`;
-            window.open(whatsappUrl, '_blank');
-        }
-    };
-    
     const handleShareToWhatsApp = () => {
         const urlToShare = new URL(window.location.origin);
         if (raffleState.raffleRef) {
@@ -3187,6 +3188,21 @@ const App = () => {
                                                         />
                                                     </div>
                                                 </div>
+                                                {raffleState.organizerCountryCode === '+57' && (
+                                                    <div>
+                                                        <Label htmlFor="breb-key-input">{t('brebKey')}:</Label>
+                                                        <Input
+                                                            id="breb-key-input"
+                                                            type="text"
+                                                            value={raffleState.brebKey || ''}
+                                                            onChange={(e) => handleLocalFieldChange('brebKey', e.target.value)}
+                                                            onBlur={(e) => handleFieldChange('brebKey', e.target.value)}
+                                                            placeholder="Ej: @amigo123 o correo"
+                                                            disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
+                                                            className="w-full mt-1"
+                                                        />
+                                                    </div>
+                                                )}
                                                 <div>
                                                    <Label htmlFor="payment-link-input">{t('paymentLink')}:</Label>
                                                    <Input
@@ -3719,7 +3735,7 @@ const App = () => {
                                                             <span>{t('payWithLink')}</span>
                                                         </Button>
                                                     )}
-                                                    {raffleState.organizerCountryCode === '+57' && raffleState.isNequiEnabled && raffleState.nequiAccountNumber && (
+                                                    {raffleState.organizerCountryCode === '+57' && raffleState.isNequiEnabled && (raffleState.nequiAccountNumber || raffleState.brebKey) && (
                                                         <Button
                                                             className="flex-1 w-full sm:auto bg-purple-500 hover:bg-purple-600 text-white flex items-center justify-center gap-2"
                                                             disabled={!isRegisterFormValidForSubmit}
@@ -3729,21 +3745,37 @@ const App = () => {
                                                             <span>{t('payWithNequi')}</span>
                                                         </Button>
                                                     )}
-                                                    <Button
-                                                        variant="outline"
-                                                        type="button"
-                                                        className="flex-1 w-full sm:auto"
-                                                        disabled={!raffleState.nequiAccountNumber}
-                                                        onClick={() => {
-                                                            if (raffleState.nequiAccountNumber) {
-                                                                navigator.clipboard.writeText(raffleState.nequiAccountNumber);
-                                                                showNotification(t('accountNumberCopied'), 'success');
-                                                            }
-                                                        }}
-                                                    >
-                                                        <Copy className="mr-2 h-4 w-4" />
-                                                        {t('copyAccountNumber')}
-                                                    </Button>
+                                                    <div className="flex flex-col sm:flex-row gap-2 flex-1">
+                                                        <Button
+                                                            variant="outline"
+                                                            type="button"
+                                                            className="flex-1 w-full sm:auto"
+                                                            disabled={!raffleState.nequiAccountNumber}
+                                                            onClick={() => {
+                                                                if (raffleState.nequiAccountNumber) {
+                                                                    navigator.clipboard.writeText(raffleState.nequiAccountNumber);
+                                                                    showNotification(t('accountNumberCopied'), 'success');
+                                                                }
+                                                            }}
+                                                        >
+                                                            <Copy className="mr-2 h-4 w-4" />
+                                                            {t('copyAccountNumber')}
+                                                        </Button>
+                                                        {raffleState.brebKey && (
+                                                            <Button
+                                                                variant="outline"
+                                                                type="button"
+                                                                className="flex-1 w-full sm:auto"
+                                                                onClick={() => {
+                                                                    navigator.clipboard.writeText(raffleState.brebKey);
+                                                                    showNotification(t('brebKeyCopied'), 'success');
+                                                                }}
+                                                            >
+                                                                <Copy className="mr-2 h-4 w-4" />
+                                                                {t('copyBrebKey')}
+                                                            </Button>
+                                                        )}
+                                                    </div>
                                                      {raffleState.isSeparateNumberEnabled && (
                                                          <Button
                                                             onClick={() => handleRegisterParticipant(false, 'separated')}

@@ -78,6 +78,7 @@ export interface Raffle {
     phoneNumber: string;
     raffleNumber: string;
     nequiAccountNumber: string;
+    brebKey: string;
     isNequiEnabled: boolean;
     isPaymentLinkEnabled: boolean;
     isSeparateNumberEnabled?: boolean;

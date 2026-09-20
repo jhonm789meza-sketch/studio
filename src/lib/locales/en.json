@@ -1,3 +1,4 @@
+
 {
     "loading": "Loading",
     "adminMessage": "You are the administrator of this game",
@@ -38,6 +39,7 @@
     "specifyLottery": "Specify Lottery",
     "lotteryNamePlaceholder": "Name of the lottery",
     "nequiAccount": "Nequi Account",
+    "brebKey": "Bre-B Key",
     "paymentLink": "Payment Link",
     "confirmPrizeDetails": "Confirm Prize Details",
     "draw": "Draw",
