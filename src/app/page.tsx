@@ -13,7 +13,7 @@ import { requestNotificationPermission } from '@/lib/notification';
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House, Clock as ClockIcon, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages, Trophy, Trash2, Copy, Shield, LogOut, Eye, EyeOff, Gamepad2, Phone, TrendingUp, Globe, Landmark, RefreshCcw, LockKeyhole, Package, Check, Rows3, Palette, ImageIcon, Settings2, LayoutGrid, MousePointer2 } from 'lucide-react';
+import { Menu, Award, Lock, House, Clock as ClockIcon, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages, Trophy, Trash2, Copy, Shield, LogOut, Eye, EyeOff, Gamepad2, Phone, TrendingUp, Globe, Landmark, RefreshCcw, LockKeyhole, Package, Check, Rows3, Palette, ImageIcon, Settings2, LayoutGrid, MousePointer2, AlertTriangle } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -295,6 +295,7 @@ const App = () => {
     const [isPlayButtonEnabled, setIsPlayButtonEnabled] = useState(false);
 
     const [isCleanupDialogOpen, setIsCleanupDialogOpen] = useState(false);
+    const lastAbandonedCountRef = useRef(0);
 
     const prizeTextareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -391,6 +392,13 @@ const App = () => {
             requestNotificationPermission(raffleState.raffleRef);
         }
     }, [isCurrentUserAdmin, raffleState.raffleRef]);
+
+    useEffect(() => {
+        if (isSuperAdmin && abandonedRaffles.length > 0 && abandonedRaffles.length !== lastAbandonedCountRef.current) {
+            showNotification(t('abandonedRafflesNotification', { count: abandonedRaffles.length }), 'warning');
+            lastAbandonedCountRef.current = abandonedRaffles.length;
+        }
+    }, [isSuperAdmin, abandonedRaffles.length]);
 
     useEffect(() => {
         const settingsDocRef = doc(db, 'internal', 'settings');
@@ -1300,6 +1308,7 @@ const App = () => {
                     await batch.commit();
                     showNotification(t('abandonedRafflesDeletedSuccess', { count: abandonedRaffles.length }), 'success');
                     setIsCleanupDialogOpen(false);
+                    lastAbandonedCountRef.current = 0;
                 } catch (error) {
                     console.error("Error deleting abandoned raffles:", error);
                     showNotification(t('abandonedRafflesDeletedError'), 'error');
@@ -2433,9 +2442,16 @@ const App = () => {
                                             <div className="px-2 py-1.5 text-xs font-black text-purple-600 uppercase tracking-widest bg-purple-50 rounded-sm mb-1 text-center">
                                                 CONTROL DE DIRECTOR: 23 HERRAMIENTAS
                                             </div>
-                                            <DropdownMenuItem onSelect={() => setIsCleanupDialogOpen(true)} className="bg-red-50 focus:bg-red-100 text-red-600 font-bold">
-                                                <Trash2 className="mr-2 h-4 w-4" />
-                                                <span>{t('deleteAbandonedRaffles')}</span>
+                                            <DropdownMenuItem onSelect={() => setIsCleanupDialogOpen(true)} className="bg-red-50 focus:bg-red-100 text-red-600 font-bold flex items-center justify-between">
+                                                <div className="flex items-center">
+                                                    <Trash2 className="mr-2 h-4 w-4" />
+                                                    <span>{t('deleteAbandonedRaffles')}</span>
+                                                </div>
+                                                {abandonedRaffles.length > 0 && (
+                                                    <span className="bg-red-600 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full animate-pulse">
+                                                        {abandonedRaffles.length}
+                                                    </span>
+                                                )}
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setIsAppNameLogoDialogOpen(true)}>
                                                 <Settings2 className="mr-2 h-4 w-4" />
@@ -4063,7 +4079,10 @@ const App = () => {
                             notification.type === 'warning' ? 'bg-yellow-100 text-yellow-700 border border-yellow-300' :
                             'bg-blue-100 text-blue-700 border border-blue-300'
                         }`}>
-                            {notification.message}
+                            <div className="flex items-center gap-2">
+                                {notification.type === 'warning' && <AlertTriangle className="h-5 w-5 shrink-0" />}
+                                <span>{notification.message}</span>
+                            </div>
                         </div>
                     )}
 

@@ -1,3 +1,4 @@
+
 {
     "loading": "Cargando",
     "adminMessage": "Eres el administrador de este juego",
@@ -450,5 +451,6 @@
     "deleteAbandonedRaffles": "Eliminar Referencias Abandonadas",
     "deleteAbandonedRafflesConfirmation": "¿Estás seguro de que deseas eliminar las {count} referencias abandonadas? Estos son juegos que no están activos y tienen 0 participantes.",
     "abandonedRafflesDeletedSuccess": "{count} referencias abandonadas eliminadas con éxito.",
-    "abandonedRafflesDeletedError": "Error al eliminar las referencias abandonadas."
+    "abandonedRafflesDeletedError": "Error al eliminar las referencias abandonadas.",
+    "abandonedRafflesNotification": "¡Atención! Hay {count} referencias abandonadas pendientes de limpieza."
 }
