@@ -3745,11 +3745,11 @@ const App = () => {
                                                             <span>{t('payWithNequi')}</span>
                                                         </Button>
                                                     )}
-                                                    <div className="flex flex-col sm:flex-row gap-2 flex-1">
+                                                    <div className="flex flex-col gap-2 flex-1">
                                                         <Button
                                                             variant="outline"
                                                             type="button"
-                                                            className="flex-1 w-full sm:auto"
+                                                            className="w-full"
                                                             disabled={!raffleState.nequiAccountNumber}
                                                             onClick={() => {
                                                                 if (raffleState.nequiAccountNumber) {
@@ -3765,7 +3765,7 @@ const App = () => {
                                                             <Button
                                                                 variant="outline"
                                                                 type="button"
-                                                                className="flex-1 w-full sm:auto"
+                                                                className="w-full"
                                                                 onClick={() => {
                                                                     navigator.clipboard.writeText(raffleState.brebKey);
                                                                     showNotification(t('brebKeyCopied'), 'success');
@@ -4275,9 +4275,9 @@ const App = () => {
                                 <DialogDescription>Configura links de PayPal o Stripe independientes para cada modalidad.</DialogDescription>
                             </DialogHeader>
                             <div className="grid gap-4 py-4">
-                                <div className="grid gap-2"><Label htmlFor="usd-two-digit">Link USD (2 Cifras)</Label><Input id="usd-two-digit" value={paymentLinks.usdTwoDigit} onChange={(e) => setLinks(p => ({ ...p, usdTwoDigit: e.target.value }))}/></div>
-                                <div className="grid gap-2"><Label htmlFor="usd-three-digit">Link USD (3 Cifras)</Label><Input id="usd-three-digit" value={paymentLinks.usdThreeDigit} onChange={(e) => setLinks(p => ({ ...p, usdThreeDigit: e.target.value }))}/></div>
-                                <div className="grid gap-2"><Label htmlFor="usd-infinite">Link USD (Infinita)</Label><Input id="usd-infinite" value={paymentLinks.usdInfinite} onChange={(e) => setLinks(p => ({ ...p, usdInfinite: e.target.value }))}/></div>
+                                <div className="grid gap-2"><Label htmlFor="usd-two-digit">Link USD (2 Cifras)</Label><Input id="usd-two-digit" value={paymentLinks.usdTwoDigit} onChange={(e) => setPaymentLinks(p => ({ ...p, usdTwoDigit: e.target.value }))}/></div>
+                                <div className="grid gap-2"><Label htmlFor="usd-three-digit">Link USD (3 Cifras)</Label><Input id="usd-three-digit" value={paymentLinks.usdThreeDigit} onChange={(e) => setPaymentLinks(p => ({ ...p, usdThreeDigit: e.target.value }))}/></div>
+                                <div className="grid gap-2"><Label htmlFor="usd-infinite">Link USD (Infinita)</Label><Input id="usd-infinite" value={paymentLinks.usdInfinite} onChange={(e) => setPaymentLinks(p => ({ ...p, usdInfinite: e.target.value }))}/></div>
                             </div>
                             <DialogFooter><Button variant="outline" onClick={() => setIsUsdPaymentConfigDialogOpen(false)}>Cancelar</Button><Button onClick={handleSavePaymentLinks}>Guardar Todo</Button></DialogFooter>
                         </DialogContent>
@@ -4347,7 +4347,7 @@ const App = () => {
                                     <h4 className="font-bold text-sm text-yellow-600 uppercase tracking-wider">{t('pendingColor')}</h4>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-2"><Label>{t('bgColor')}</Label><div className="flex gap-2"><Input type="color" className="h-10 w-12 p-1" value={boardColors.pendingBg} onChange={(e) => setBoardColors(p => ({ ...p, pendingBg: e.target.value }))}/><Input value={boardColors.pendingBg} onChange={(e) => setBoardColors(p => ({ ...p, pendingBg: e.target.value }))} className="flex-grow font-mono text-xs"/></div></div>
-                                        <div className="space-y-2"><Label>{t('textColor')}</Label><div className="flex gap-2"><Input type="color" className="h-10 w-12 p-1" value={boardColors.pendingText} onChange={(e) => setBoardColors(p => ({ ...p, pendingText: e.target.value }))}/><Input value={boardColors.pendingText} onChange={(e) => setBoardColors(p => ({ ...p, pendingText: e.target.value }))} className="flex-grow font-mono text-xs"/></div></div>
+                                        <div className="space-y-2"><Label>{t('textColor')}</Label><div className="flex gap-2"><Input type="color" className="h-10 w-12 p-1" value={boardColors.availableText} onChange={(e) => setBoardColors(p => ({ ...p, availableText: e.target.value }))}/><Input value={boardColors.availableText} onChange={(e) => setBoardColors(p => ({ ...p, availableText: e.target.value }))} className="flex-grow font-mono text-xs"/></div></div>
                                     </div>
                                 </div>
                                 <div className="space-y-4">
