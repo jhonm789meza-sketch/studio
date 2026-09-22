@@ -155,6 +155,7 @@ const App = () => {
     
     const ticketModalRef = useRef<HTMLDivElement>(null);
     const boardCaptureRef = useRef<HTMLDivElement>(null);
+    const prizeImageCaptureRef = useRef<HTMLDivElement>(null);
     const raffleSubscription = useRef<Unsubscribe | null>(null);
     const loadedRaffleIdRef = useRef<string | null>(null);
     
@@ -1933,8 +1934,11 @@ const App = () => {
         
         setIsUploading(true);
         try {
-            const boardElement = boardCaptureRef.current;
-            if (!boardElement) {
+            const targetElement = (raffleState.raffleMode === 'three-digit' && prizeImageCaptureRef.current) 
+                ? prizeImageCaptureRef.current 
+                : boardCaptureRef.current;
+
+            if (!targetElement) {
                 showNotification(t('errorCapturingPhoto'), 'error');
                 setIsUploading(false);
                 return;
@@ -1942,7 +1946,7 @@ const App = () => {
 
             const surpriseUrl = `${window.location.origin}/prize/${raffleState.raffleRef}`;
 
-            const canvas = await html2canvas(boardElement, {
+            const canvas = await html2canvas(targetElement, {
                 useCORS: true,
                 backgroundColor: "#ffffff",
                 scale: 2,
@@ -2880,7 +2884,7 @@ const App = () => {
                                                 </div>
                                             )}
                                             
-                                            <div className="mb-6 rounded-lg overflow-hidden relative flex items-center justify-center shadow-lg bg-gray-200 aspect-auto group">
+                                            <div ref={prizeImageCaptureRef} className="mb-6 rounded-lg overflow-hidden relative flex items-center justify-center shadow-lg bg-gray-200 aspect-auto group">
                                                  {raffleState.prizeImageUrl ? (
                                                     <button onClick={() => isCurrentUserAdmin ? handleShare() : handleTabClick('numbers')} className="w-full flex items-center justify-center cursor-pointer relative" aria-label={t('rafflePrizeAlt')}>
                                                         <Image 
@@ -4123,6 +4127,10 @@ const App = () => {
                             </div>
                         </div>
                     )}
+
+                    <div className="hidden">
+                        {/* Hidden refs for capture targeting */}
+                    </div>
 
                     <Dialog open={isAppNameLogoDialogOpen} onOpenChange={setIsAppNameLogoDialogOpen}>
                         <DialogContent>
