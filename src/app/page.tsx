@@ -13,7 +13,7 @@ import { requestNotificationPermission } from '@/lib/notification';
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House, Clock as ClockIcon, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages, Trophy, Trash2, Copy, Shield, LogOut, Eye, EyeOff, Gamepad2, Phone, TrendingUp, Globe, Landmark, RefreshCcw, LockKeyhole, Package, Check, Rows3, Palette, ImageIcon, Settings2, LayoutGrid, MousePointer2, AlertTriangle, Card } from 'lucide-react';
+import { Menu, Award, Lock, House, Clock as ClockIcon, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages, Trophy, Trash2, Copy, Shield, LogOut, Eye, EyeOff, Gamepad2, Phone, TrendingUp, Globe, Landmark, RefreshCcw, LockKeyhole, Package, Check, Rows3, Palette, ImageIcon, Settings2, LayoutGrid, MousePointer2, AlertTriangle } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -1970,10 +1970,7 @@ const App = () => {
         
         setIsUploading(true);
         try {
-            const isThreeDigit = raffleState.raffleMode === 'three-digit';
-            const targetElement = (isThreeDigit && prizeImageCaptureRef.current) 
-                ? prizeImageCaptureRef.current 
-                : boardCaptureRef.current;
+            const targetElement = boardCaptureRef.current;
 
             if (!targetElement) {
                 showNotification(t('errorCapturingPhoto'), 'error');
@@ -2930,16 +2927,7 @@ const App = () => {
                                                 <div className="mb-4">
                                                     <p className="text-sm text-gray-500">{t('gameReference')}</p>
                                                     <div className="flex items-center gap-2">
-                                                        {raffleState.raffleMode === 'three-digit' ? (
-                                                            <button 
-                                                                onClick={handleSharePlayNow}
-                                                                className="text-2xl font-bold text-purple-700 tracking-wider hover:underline hover:text-purple-900 transition-colors"
-                                                            >
-                                                                {raffleState.raffleRef}
-                                                            </button>
-                                                        ) : (
-                                                            <p className="text-2xl font-bold text-gray-800 tracking-wider">{raffleState.raffleRef}</p>
-                                                        )}
+                                                        <p className="text-2xl font-bold text-gray-800 tracking-wider">{raffleState.raffleRef}</p>
                                                     </div>
                                                 </div>
                                             )}
@@ -3638,7 +3626,7 @@ const App = () => {
                                         <div className="text-center p-12 bg-gray-50 rounded-xl border border-dashed border-gray-300">
                                              <h2 className="text-2xl font-bold text-gray-800 flex items-center justify-center gap-2">
                                                 <InfinityIcon className="h-8 w-8 text-purple-600"/>
-                                                {t('infiniteRaffle')}
+                                                {t('infinite_caps')}
                                              </h2>
                                             <p className="text-gray-600 mt-4 max-w-md mx-auto">
                                                 {t('infiniteRaffleDescription')}
@@ -4175,7 +4163,7 @@ const App = () => {
                         <div className={`fixed top-4 right-4 z-[100] px-4 py-3 rounded-lg shadow-lg transition-opacity duration-300 ${
                             notification.type === 'error' ? 'bg-red-100 text-red-700 border border-red-300' :
                             notification.type === 'success' ? 'bg-green-100 text-green-700 border border-green-300' :
-                            notification.type === 'warning' ? 'bg-yellow-100 text-yellow-700 border border-yellow-300' :
+                            notification.type === 'warning' ? 'bg-yellow-100 text-yellow-700 border border-teal-300' :
                             'bg-blue-100 text-blue-700 border border-blue-300'
                         }`}>
                             <div className="flex items-center gap-2">
