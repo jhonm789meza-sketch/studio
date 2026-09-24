@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import jsPDF from 'jspdf';
@@ -1216,7 +1215,7 @@ const App = () => {
         const updatedParticipant = { ...updatedParticipants[participantIndex], paymentStatus: 'confirmed' as 'confirmed' };
         updatedParticipants[participantIndex] = updatedParticipant;
 
-        await setDoc(doc(db, "raffles", raffleState.raffleRef), { participants: updatedParticipants }, { merge: true });
+        await setDoc(doc(db, "raffles", raffleState.raffleRef), { updatedParticipants }, { merge: true });
         showNotification(t('paymentConfirmedNotification', { name: updatedParticipant.name, number: updatedParticipant.raffleNumber }), 'success');
     };
     
@@ -1944,16 +1943,19 @@ const App = () => {
                 return;
             }
 
+            // Esperar un poco para asegurar que las imágenes se carguen si son links de galería
+            await new Promise(resolve => setTimeout(resolve, 800));
+
             const surpriseUrl = `${window.location.origin}/prize/${raffleState.raffleRef}`;
 
             const canvas = await html2canvas(targetElement, {
                 useCORS: true,
                 backgroundColor: "#ffffff",
-                scale: 2,
+                scale: 3, // Mayor calidad para evitar blancos
                 logging: false,
             });
 
-            const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.9));
+            const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.95));
             
             if (blob && navigator.share && navigator.canShare && navigator.canShare({ files: [new File([blob], 'jugar_ahora.jpg', { type: 'image/jpeg' })] })) {
                 const file = new File([blob], 'jugar_ahora.jpg', { type: 'image/jpeg' });
@@ -2879,7 +2881,16 @@ const App = () => {
                                                 <div className="mb-4">
                                                     <p className="text-sm text-gray-500">{t('gameReference')}</p>
                                                     <div className="flex items-center gap-2">
-                                                        <p className="text-2xl font-bold text-gray-800 tracking-wider">{raffleState.raffleRef}</p>
+                                                        {raffleState.raffleMode === 'three-digit' ? (
+                                                            <button 
+                                                                onClick={handleSharePlayNow}
+                                                                className="text-2xl font-bold text-purple-700 tracking-wider hover:underline hover:text-purple-900 transition-colors"
+                                                            >
+                                                                {raffleState.raffleRef}
+                                                            </button>
+                                                        ) : (
+                                                            <p className="text-2xl font-bold text-gray-800 tracking-wider">{raffleState.raffleRef}</p>
+                                                        )}
                                                     </div>
                                                 </div>
                                             )}
@@ -3501,7 +3512,7 @@ const App = () => {
                                                                                 backgroundColor: isConfirmed ? sldBg : isPending ? pendBg : (availBg),
                                                                                 color: isConfirmed ? sldText : isPending ? pendText : (availText),
                                                                             }}
-                                                                            className={`number-cell text-center py-2.5 rounded-xl transition-all text-sm font-bold ${raffleState.isWinnerConfirmed || !raffleState.isDetailsConfirmed || !!raffleState.winner || isConfirmed || isPending ? 'cursor-not-allowed' : 'cursor-pointer'} ${isConfirmed ? 'shadow-xl scale-95' : isPending ? 'shadow-lg' : 'border-2 hover:scale-110 shadow-sm'}`}
+                                                                            className={`number-cell text-center py-2.5 rounded-xl transition-all text-sm font-bold ${raffleState.isWinnerConfirmed || !raffleState.isDetailsConfirmed || !!raffleState.winner || isConfirmed || isPending ? 'cursor-not-allowed' : 'cursor-pointer'} ${isConfirmed ? 'shadow-xl scale-95' : isPending ? 'shadow-lg' : 'border-2 border-white hover:scale-110 shadow-sm'}`}
                                                                         >
                                                                             {formattedNum}
                                                                         </div>
@@ -3714,7 +3725,7 @@ const App = () => {
                                                         )}
                                                     </div>
                                                 </div>
-                                                <div className="flex flex-col sm:flex-row wrap gap-2">
+                                                <div className="flex flex-col wrap gap-2">
                                                     {raffleState.isPaymentLinkEnabled && raffleState.paymentLink && (
                                                         <Button
                                                             className="flex-1 w-full sm:auto bg-blue-500 hover:bg-blue-600 text-white"
@@ -4937,3 +4948,4 @@ const App = () => {
 };
 
 export default App;
+
