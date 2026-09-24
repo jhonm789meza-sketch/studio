@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import jsPDF from 'jspdf';
@@ -296,7 +297,9 @@ const App = () => {
     const [isPlayButtonEnabled, setIsPlayButtonEnabled] = useState(false);
 
     const [isCleanupDialogOpen, setIsCleanupDialogOpen] = useState(false);
+    const [isDamagedCleanupDialogOpen, setIsDamagedCleanupDialogOpen] = useState(false);
     const lastAbandonedCountRef = useRef(0);
+    const lastDamagedCountRef = useRef(0);
 
     const prizeTextareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -338,6 +341,10 @@ const App = () => {
         return allRaffles.filter(r => !r.isActive && (r.participants || []).length === 0);
     }, [allRaffles]);
 
+    const damagedRaffles = useMemo(() => {
+        return allRaffles.filter(r => (r.isActive || r.isPaid) && (!r.prize || !r.organizerName));
+    }, [allRaffles]);
+
     const getCreationDateFromAdminId = (adminId: string | null) => {
         if (!adminId || !adminId.startsWith('admin_')) return null;
         const parts = adminId.split('_');
@@ -360,7 +367,7 @@ const App = () => {
         return matchesSearch;
     });
 
-    const deletableRaffles = filteredGames; // El SuperAdmin ahora puede borrar cualquier juego de la lista filtrada
+    const deletableRaffles = filteredGames;
 
     const gamesWithWinner = allRaffles.filter(raffle => !!raffle.winner);
     const pastDateRaffles = allRaffles.filter(raffle => {
@@ -391,11 +398,17 @@ const App = () => {
     }, [isCurrentUserAdmin, raffleState.raffleRef]);
 
     useEffect(() => {
-        if (isSuperAdmin && abandonedRaffles.length > 0 && abandonedRaffles.length !== lastAbandonedCountRef.current) {
-            showNotification(t('abandonedRafflesNotification', { count: abandonedRaffles.length }), 'warning');
-            lastAbandonedCountRef.current = abandonedRaffles.length;
+        if (isSuperAdmin) {
+            if (abandonedRaffles.length > 0 && abandonedRaffles.length !== lastAbandonedCountRef.current) {
+                showNotification(t('abandonedRafflesNotification', { count: abandonedRaffles.length }), 'warning');
+                lastAbandonedCountRef.current = abandonedRaffles.length;
+            }
+            if (damagedRaffles.length > 0 && damagedRaffles.length !== lastDamagedCountRef.current) {
+                showNotification(`¡Atención! Hay ${damagedRaffles.length} juegos dañados o incompletos detectados.`, 'warning');
+                lastDamagedCountRef.current = damagedRaffles.length;
+            }
         }
-    }, [isSuperAdmin, abandonedRaffles.length]);
+    }, [isSuperAdmin, abandonedRaffles.length, damagedRaffles.length]);
 
     useEffect(() => {
         const settingsDocRef = doc(db, 'internal', 'settings');
@@ -1333,6 +1346,30 @@ const App = () => {
         );
     };
 
+    const handleDeleteDamagedRaffles = async () => {
+        showConfirmationDialog(
+            `¿Estás seguro de que deseas eliminar los ${damagedRaffles.length} juegos dañados o incompletos?`,
+            async () => {
+                setLoading(true);
+                try {
+                    const batch = writeBatch(db);
+                    damagedRaffles.forEach((raffle) => {
+                        batch.delete(doc(db, 'raffles', raffle.raffleRef));
+                    });
+                    await batch.commit();
+                    showNotification(`${damagedRaffles.length} juegos eliminados con éxito.`, 'success');
+                    setIsDamagedCleanupDialogOpen(false);
+                    lastDamagedCountRef.current = 0;
+                } catch (error) {
+                    console.error("Error deleting damaged raffles:", error);
+                    showNotification("Error al eliminar los juegos dañados.", 'error');
+                } finally {
+                    setLoading(false);
+                }
+            }
+        );
+    };
+
     const handleDownloadTicket = async () => {
         const ticketElement = ticketModalRef.current;
         if (!ticketElement) {
@@ -1933,7 +1970,8 @@ const App = () => {
         
         setIsUploading(true);
         try {
-            const targetElement = (raffleState.raffleMode === 'three-digit' && prizeImageCaptureRef.current) 
+            const isThreeDigit = raffleState.raffleMode === 'three-digit';
+            const targetElement = (isThreeDigit && prizeImageCaptureRef.current) 
                 ? prizeImageCaptureRef.current 
                 : boardCaptureRef.current;
 
@@ -1943,7 +1981,7 @@ const App = () => {
                 return;
             }
 
-            // Esperar un poco para asegurar que las imágenes se carguen si son links de galería
+            // Esperar un poco para asegurar que las imágenes se carguen si son links de galería (evita blancos)
             await new Promise(resolve => setTimeout(resolve, 800));
 
             const surpriseUrl = `${window.location.origin}/prize/${raffleState.raffleRef}`;
@@ -1951,7 +1989,7 @@ const App = () => {
             const canvas = await html2canvas(targetElement, {
                 useCORS: true,
                 backgroundColor: "#ffffff",
-                scale: 3, // Mayor calidad para evitar blancos
+                scale: 3, // Mayor calidad
                 logging: false,
             });
 
@@ -2447,8 +2485,19 @@ const App = () => {
                                         <>
                                             <DropdownMenuSeparator />
                                             <div className="px-2 py-1.5 text-xs font-black text-purple-600 uppercase tracking-widest bg-purple-50 rounded-sm mb-1 text-center">
-                                                CONTROL DE DIRECTOR: 23 HERRAMIENTAS
+                                                CONTROL DE DIRECTOR
                                             </div>
+                                            <DropdownMenuItem onSelect={() => setIsDamagedCleanupDialogOpen(true)} className="bg-orange-50 focus:bg-orange-100 text-orange-600 font-bold flex items-center justify-between">
+                                                <div className="flex items-center">
+                                                    <AlertTriangle className="mr-2 h-4 w-4" />
+                                                    <span>Eliminar Juegos Dañados</span>
+                                                </div>
+                                                {damagedRaffles.length > 0 && (
+                                                    <span className="bg-orange-600 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full animate-pulse">
+                                                        {damagedRaffles.length}
+                                                    </span>
+                                                )}
+                                            </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setIsCleanupDialogOpen(true)} className="bg-red-50 focus:bg-red-100 text-red-600 font-bold flex items-center justify-between">
                                                 <div className="flex items-center">
                                                     <Trash2 className="mr-2 h-4 w-4" />
@@ -3934,8 +3983,7 @@ const App = () => {
                                                                 const gameDateObj = raffle.gameDate ? new Date(raffle.gameDate + 'T00:00:00') : null;
                                                                 const isPastDue = gameDateObj ? gameDateObj < today && !raffle.winner : false;
                                                                 
-                                                                // Como SuperAdmin, canDelete siempre es true para corregir juegos dañados
-                                                                const canDelete = isSuperAdmin || (raffle.participants || []).length === 0 || !!raffle.winner || isPastDue;
+                                                                const canDelete = true; 
                                                                 
                                                                 const prizeLabel = raffle.prize || (raffle.isPaid ? 'Sin Premio Definido' : 'Juego Dañado/Incompleto');
                                                                 const organizerLabel = raffle.organizerName || 'Sin Organizador';
@@ -4139,10 +4187,6 @@ const App = () => {
                         </div>
                     )}
 
-                    <div className="hidden">
-                        {/* Hidden refs for capture targeting */}
-                    </div>
-
                     <Dialog open={isAppNameLogoDialogOpen} onOpenChange={setIsAppNameLogoDialogOpen}>
                         <DialogContent>
                             <DialogHeader>
@@ -4273,15 +4317,49 @@ const App = () => {
                                         </ScrollArea>
                                     </div>
                                 )}
-                                
-                                <p className="text-xs text-slate-500 italic">
-                                    * Se consideran abandonadas las referencias que están desactivadas y con 0 participantes (típico de usuarios que no envían el mensaje de WhatsApp).
-                                </p>
                             </div>
                             <DialogFooter>
                                 <Button variant="outline" onClick={() => setIsCleanupDialogOpen(false)}>{t('cancel')}</Button>
                                 <Button variant="destructive" onClick={handleDeleteAbandonedRaffles} disabled={abandonedRaffles.length === 0}>
                                     Eliminar Todo
+                                </Button>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+
+                    <Dialog open={isDamagedCleanupDialogOpen} onOpenChange={setIsDamagedCleanupDialogOpen}>
+                        <DialogContent className="sm:max-w-md">
+                            <DialogHeader>
+                                <DialogTitle>Eliminar Juegos Dañados</DialogTitle>
+                                <DialogDescription>
+                                    Esta herramienta purga rifas activas que no tienen premio o nombre del organizador.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <div className="py-4 space-y-4">
+                                <div className="flex justify-between items-center bg-orange-50 p-4 rounded-lg border border-orange-100">
+                                    <div>
+                                        <p className="text-sm text-orange-600 font-medium">Juegos con Datos Corruptos</p>
+                                        <p className="text-3xl font-bold text-orange-700">{damagedRaffles.length}</p>
+                                    </div>
+                                    <div className="h-12 w-12 bg-orange-100 rounded-full flex items-center justify-center">
+                                        <AlertTriangle className="h-6 w-6 text-orange-600" />
+                                    </div>
+                                </div>
+                                {damagedRaffles.length > 0 && (
+                                    <ScrollArea className="h-60 border rounded-md p-2 bg-slate-50">
+                                        {damagedRaffles.map((raffle) => (
+                                            <div key={raffle.raffleRef} className="flex justify-between items-center py-2 border-b last:border-0 text-xs">
+                                                <span className="font-bold text-orange-800">{raffle.raffleRef}</span>
+                                                <span className="text-slate-500 italic">Incompleto / Dañado</span>
+                                            </div>
+                                        ))}
+                                    </ScrollArea>
+                                )}
+                            </div>
+                            <DialogFooter>
+                                <Button variant="outline" onClick={() => setIsDamagedCleanupDialogOpen(false)}>{t('cancel')}</Button>
+                                <Button className="bg-orange-600 hover:bg-orange-700 text-white" onClick={handleDeleteDamagedRaffles} disabled={damagedRaffles.length === 0}>
+                                    Limpiar Juegos Dañados
                                 </Button>
                             </DialogFooter>
                         </DialogContent>
@@ -4924,7 +5002,6 @@ const App = () => {
                         </DialogContent>
                     </Dialog>
                     
-                    {/* Nuevo Diálogo para Mostrar QR */}
                     <Dialog open={isQrDialogOpen} onOpenChange={setIsQrDialogOpen}>
                         <DialogContent className="max-w-xs">
                             <DialogHeader>
@@ -4948,4 +5025,3 @@ const App = () => {
 };
 
 export default App;
-
