@@ -377,10 +377,10 @@
     "copyUrl": "Copy URL",
     "uploadFromFile": "Upload from File",
     "uploadingImage": "Uploading image...",
-    "errorGeneratingTicketImage": "Error al generar la imagen del tiquete. Por favor, intenta de nuevo.",
+    "errorGeneratingTicketImage": "Error generating ticket image. Please try again.",
     "preview": "Preview",
     "separate": "Separate",
-    "separated": "Separado",
+    "separated": "Separated",
     "numberSeparatedSuccess": "Number {number} separated successfully.",
     "numberSeparatedError": "Error separating number.",
     "enableSeparateNumber": "Enable Separate Number Button",
@@ -448,5 +448,11 @@
     "deleteAbandonedRaffles": "Delete Abandoned References",
     "deleteAbandonedRafflesConfirmation": "Are you sure you want to delete the {count} abandoned references? These are games that are not active and have 0 participants.",
     "abandonedRafflesDeletedSuccess": "{count} abandoned references deleted successfully.",
-    "abandonedRafflesDeletedError": "Error deleting abandoned references."
+    "abandonedRafflesDeletedError": "Error deleting abandoned references.",
+    "deleteDamagedRaffles": "Delete Damaged Games",
+    "damagedGamesFound": "Games with Corrupted Data",
+    "damagedCleanupDescription": "This tool purges active raffles that do not have a prize or organizer name.",
+    "cleanupDamagedSuccess": "{count} games successfully deleted.",
+    "cleanupDamagedError": "Error deleting damaged games.",
+    "brebKeyCopied": "Bre-B key copied to clipboard."
 }

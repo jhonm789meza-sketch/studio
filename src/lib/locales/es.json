@@ -453,5 +453,11 @@
     "deleteAbandonedRafflesConfirmation": "¿Estás seguro de que deseas eliminar las {count} referencias abandonadas? Estos son juegos que no están activos y tienen 0 participantes.",
     "abandonedRafflesDeletedSuccess": "{count} referencias abandonadas eliminadas con éxito.",
     "abandonedRafflesDeletedError": "Error al eliminar las referencias abandonadas.",
-    "abandonedRafflesNotification": "¡Atención! Hay {count} referencias abandonadas pendientes de limpieza."
+    "abandonedRafflesNotification": "¡Atención! Hay {count} referencias abandonadas pendientes de limpieza.",
+    "deleteDamagedRaffles": "Eliminar Juegos Dañados",
+    "damagedGamesFound": "Juegos con Datos Corruptos",
+    "damagedCleanupDescription": "Esta herramienta purga rifas activas que no tienen premio o nombre del organizador.",
+    "cleanupDamagedSuccess": "{count} juegos eliminados con éxito.",
+    "cleanupDamagedError": "Error al eliminar los juegos dañados.",
+    "brebKeyCopied": "Llave Bre-B copiada al portapapeles."
 }

@@ -13,7 +13,7 @@ import { requestNotificationPermission } from '@/lib/notification';
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House, Clock as ClockIcon, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages, Trophy, Trash2, Copy, Shield, LogOut, Eye, EyeOff, Gamepad2, Phone, TrendingUp, Globe, Landmark, RefreshCcw, LockKeyhole, Package, Check, Rows3, Palette, ImageIcon, Settings2, LayoutGrid, MousePointer2, AlertTriangle } from 'lucide-react';
+import { Menu, Award, Lock, House, Clock as ClockIcon, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages, Trophy, Trash2, Copy, Shield, LogOut, Eye, EyeOff, Gamepad2, Phone, TrendingUp, Globe, Landmark, RefreshCcw, LockKeyhole, Package, Check, Rows3, Palette, ImageIcon, Settings2, LayoutGrid, MousePointer2, AlertTriangle, Card } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -404,11 +404,11 @@ const App = () => {
                 lastAbandonedCountRef.current = abandonedRaffles.length;
             }
             if (damagedRaffles.length > 0 && damagedRaffles.length !== lastDamagedCountRef.current) {
-                showNotification(`¡Atención! Hay ${damagedRaffles.length} juegos dañados o incompletos detectados.`, 'warning');
+                showNotification(t('damagedGamesFound', { count: damagedRaffles.length }), 'warning');
                 lastDamagedCountRef.current = damagedRaffles.length;
             }
         }
-    }, [isSuperAdmin, abandonedRaffles.length, damagedRaffles.length]);
+    }, [isSuperAdmin, abandonedRaffles.length, damagedRaffles.length, t]);
 
     useEffect(() => {
         const settingsDocRef = doc(db, 'internal', 'settings');
@@ -1348,7 +1348,7 @@ const App = () => {
 
     const handleDeleteDamagedRaffles = async () => {
         showConfirmationDialog(
-            `¿Estás seguro de que deseas eliminar los ${damagedRaffles.length} juegos dañados o incompletos?`,
+            t('deleteSingleGameConfirmation', { ref: `${damagedRaffles.length} juegos` }),
             async () => {
                 setLoading(true);
                 try {
@@ -1357,12 +1357,12 @@ const App = () => {
                         batch.delete(doc(db, 'raffles', raffle.raffleRef));
                     });
                     await batch.commit();
-                    showNotification(`${damagedRaffles.length} juegos eliminados con éxito.`, 'success');
+                    showNotification(t('cleanupDamagedSuccess', { count: damagedRaffles.length }), 'success');
                     setIsDamagedCleanupDialogOpen(false);
                     lastDamagedCountRef.current = 0;
                 } catch (error) {
                     console.error("Error deleting damaged raffles:", error);
-                    showNotification("Error al eliminar los juegos dañados.", 'error');
+                    showNotification(t('cleanupDamagedError'), 'error');
                 } finally {
                     setLoading(false);
                 }
@@ -1981,15 +1981,15 @@ const App = () => {
                 return;
             }
 
-            // Esperar un poco para asegurar que las imágenes se carguen si son links de galería (evita blancos)
-            await new Promise(resolve => setTimeout(resolve, 800));
+            // Esperar un segundo para asegurar renderizado completo (evita blancos)
+            await new Promise(resolve => setTimeout(resolve, 1000));
 
             const surpriseUrl = `${window.location.origin}/prize/${raffleState.raffleRef}`;
 
             const canvas = await html2canvas(targetElement, {
                 useCORS: true,
                 backgroundColor: "#ffffff",
-                scale: 3, // Mayor calidad
+                scale: 3,
                 logging: false,
             });
 
@@ -2061,7 +2061,7 @@ const App = () => {
                 showNotification(t('secondaryContactSaved'), 'success');
             } catch (error) {
                 console.error("Error saving support contact:", error);
-                showNotification(t('errorSavingSupport contact'), 'error');
+                showNotification(t('errorSavingSecondaryContact'), 'error');
             }
         }
     };
@@ -2490,7 +2490,7 @@ const App = () => {
                                             <DropdownMenuItem onSelect={() => setIsDamagedCleanupDialogOpen(true)} className="bg-orange-50 focus:bg-orange-100 text-orange-600 font-bold flex items-center justify-between">
                                                 <div className="flex items-center">
                                                     <AlertTriangle className="mr-2 h-4 w-4" />
-                                                    <span>Eliminar Juegos Dañados</span>
+                                                    <span>{t('deleteDamagedRaffles')}</span>
                                                 </div>
                                                 {damagedRaffles.length > 0 && (
                                                     <span className="bg-orange-600 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full animate-pulse">
@@ -3983,8 +3983,6 @@ const App = () => {
                                                                 const gameDateObj = raffle.gameDate ? new Date(raffle.gameDate + 'T00:00:00') : null;
                                                                 const isPastDue = gameDateObj ? gameDateObj < today && !raffle.winner : false;
                                                                 
-                                                                const canDelete = true; 
-                                                                
                                                                 const prizeLabel = raffle.prize || (raffle.isPaid ? 'Sin Premio Definido' : 'Juego Dañado/Incompleto');
                                                                 const organizerLabel = raffle.organizerName || 'Sin Organizador';
 
@@ -4281,7 +4279,7 @@ const App = () => {
                             <DialogHeader>
                                 <DialogTitle>{t('deleteAbandonedRaffles')}</DialogTitle>
                                 <DialogDescription>
-                                    Esta herramienta elimina todas las rifas que no han sido activadas y no tienen participantes registrados.
+                                    {t('deleteAbandonedRafflesConfirmation', { count: abandonedRaffles.length })}
                                 </DialogDescription>
                             </DialogHeader>
                             <div className="py-4 space-y-4">
@@ -4330,9 +4328,9 @@ const App = () => {
                     <Dialog open={isDamagedCleanupDialogOpen} onOpenChange={setIsDamagedCleanupDialogOpen}>
                         <DialogContent className="sm:max-w-md">
                             <DialogHeader>
-                                <DialogTitle>Eliminar Juegos Dañados</DialogTitle>
+                                <DialogTitle>{t('deleteDamagedRaffles')}</DialogTitle>
                                 <DialogDescription>
-                                    Esta herramienta purga rifas activas que no tienen premio o nombre del organizador.
+                                    {t('damagedCleanupDescription')}
                                 </DialogDescription>
                             </DialogHeader>
                             <div className="py-4 space-y-4">
