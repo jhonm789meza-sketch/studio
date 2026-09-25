@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import jsPDF from 'jspdf';
@@ -2487,7 +2486,7 @@ const App = () => {
                                             <DropdownMenuItem onSelect={() => setIsDamagedCleanupDialogOpen(true)} className="bg-orange-50 focus:bg-orange-100 text-orange-600 font-bold flex items-center justify-between">
                                                 <div className="flex items-center">
                                                     <AlertTriangle className="mr-2 h-4 w-4" />
-                                                    <span>{t('deleteDamagedRaffles')}</span>
+                                                    <span>1. {t('deleteDamagedRaffles')}</span>
                                                 </div>
                                                 {damagedRaffles.length > 0 && (
                                                     <span className="bg-orange-600 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full animate-pulse">
@@ -2498,7 +2497,7 @@ const App = () => {
                                             <DropdownMenuItem onSelect={() => setIsCleanupDialogOpen(true)} className="bg-red-50 focus:bg-red-100 text-red-600 font-bold flex items-center justify-between">
                                                 <div className="flex items-center">
                                                     <Trash2 className="mr-2 h-4 w-4" />
-                                                    <span>{t('deleteAbandonedRaffles')}</span>
+                                                    <span>2. {t('deleteAbandonedRaffles')}</span>
                                                 </div>
                                                 {abandonedRaffles.length > 0 && (
                                                     <span className="bg-red-600 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full animate-pulse">
@@ -2508,85 +2507,85 @@ const App = () => {
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setIsAppNameLogoDialogOpen(true)}>
                                                 <Settings2 className="mr-2 h-4 w-4" />
-                                                <span>{t('appNameAndLogo')}</span>
+                                                <span>3. {t('appNameAndLogo')}</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setIsGamesSummaryDialogOpen(true)} className="bg-blue-50 focus:bg-blue-100 cursor-pointer">
                                                 <Globe className="mr-2 h-4 w-4 text-blue-600" />
-                                                <span className="font-bold">{t('totalGamesInLine', { count: allRaffles.length })}</span>
+                                                <span className="font-bold">4. {t('totalGamesInLine', { count: allRaffles.length })}</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setIsPrizeImagesManagerOpen(true)}>
                                                 <ImageIcon className="mr-2 h-4 w-4" />
-                                                <span>{t('prizeImagesManager')} ({rafflesWithImages.length})</span>
+                                                <span>5. {t('prizeImagesManager')} ({rafflesWithImages.length})</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setIsCaptureSettingsDialogOpen(true)}>
                                                 <Settings2 className="mr-2 h-4 w-4 text-purple-600" />
-                                                <span className="font-bold">Configuración de Captura</span>
+                                                <span className="font-bold">6. Configuración de Captura</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuSeparator />
                                             <DropdownMenuItem onSelect={() => setIsPaymentInfoDialogOpen(true)}>
                                                 <Landmark className="mr-2 h-4 w-4 text-blue-600" />
-                                                <span>{t('managePaymentInfo')}</span>
+                                                <span>7. {t('managePaymentInfo')}</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setIsPaymentQrImageDialogOpen(true)}>
                                                 <QrCode className="mr-2 h-4 w-4 text-blue-600" />
-                                                <span>{t('managePaymentQrImage')}</span>
+                                                <span>8. {t('managePaymentQrImage')}</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={fetchNextRefs}>
                                                 <RefreshCcw className="mr-2 h-4 w-4 text-blue-600" />
-                                                <span>{t('refreshRefs')}</span>
+                                                <span>9. {t('refreshRefs')}</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setIsSuperAdminChangePasswordOpen(true)}>
                                                 <LockKeyhole className="mr-2 h-4 w-4 text-blue-600" />
-                                                <span>{t('changeExecutivePasswordTitle')}</span>
+                                                <span>10. {t('changeExecutivePasswordTitle')}</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuSeparator />
                                             <DropdownMenuItem onSelect={() => setIsAssignPackageDialogOpen(true)}>
                                                 <Package className="mr-2 h-4 w-4" />
-                                                <span>{t('assignPackage')}</span>
+                                                <span>11. {t('assignPackage')}</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setIsSupportContactDialogOpen(true)}>
                                                 <Phone className="mr-2 h-4 w-4" />
-                                                <span>{t('secondaryContact')}</span>
+                                                <span>12. {t('secondaryContact')}</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setIsPaymentLinksDialogOpen(true)}>
                                                 <LinkIcon className="mr-2 h-4 w-4" />
-                                                <span>{t('paymentLinks')}</span>
+                                                <span>13. {t('paymentLinks')}</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setIsUsdPaymentConfigDialogOpen(true)}>
                                                 <DollarSign className="mr-2 h-4 w-4" />
-                                                <span>Link de Pago USD</span>
+                                                <span>14. Link de Pago USD</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setIsActivationPricesDialogOpen(true)}>
                                                 <DollarSign className="mr-2 h-4 w-4" />
-                                                <span>{t('activationPrices')}</span>
+                                                <span>15. {t('activationPrices')}</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setIsFreeGamesDialogOpen(true)}>
                                                 <RefreshCcw className="mr-2 h-4 w-4" />
-                                                <span>{t('freeGames')}</span>
+                                                <span>16. {t('freeGames')}</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setIsLockedBoardBgDialogOpen(true)}>
                                                 <ImageIcon className="mr-2 h-4 w-4" />
-                                                <span>{t('manageLockedBoardBg')}</span>
+                                                <span>17. {t('manageLockedBoardBg')}</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setIsBoardDesignDialogOpen(true)}>
                                                 <Palette className="mr-2 h-4 w-4" />
-                                                <span>Diseño Tablero (2 Cifras)</span>
+                                                <span>18. Diseño Tablero (2 Cifras)</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setIsBoardDesignDialogOpen3(true)}>
                                                 <Palette className="mr-2 h-4 w-4 text-orange-600" />
-                                                <span>Diseño Tablero (3 Cifras)</span>
+                                                <span>19. Diseño Tablero (3 Cifras)</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setIsBoardColorsDialogOpen(true)}>
                                                 <Palette className="mr-2 h-4 w-4" />
-                                                <span>{t('boardColors')}</span>
+                                                <span>20. {t('boardColors')}</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setIsBoardHeaderImageDialogOpen(true)}>
                                                 <Rows3 className="mr-2 h-4 w-4" />
-                                                <span>Imagen Renglón (2 Cifras)</span>
+                                                <span>21. Imagen Renglón (2 Cifras)</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setIsBoardHeaderImageDialogOpen3(true)}>
                                                 <Rows3 className="mr-2 h-4 w-4 text-orange-600" />
-                                                <span>Imagen Renglón (3 Cifras)</span>
+                                                <span>22. Imagen Renglón (3 Cifras)</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuSeparator />
                                             <DropdownMenuItem onSelect={() => {
