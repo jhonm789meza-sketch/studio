@@ -4569,36 +4569,58 @@ const App = () => {
                     <Dialog open={isPaymentQrImageDialogOpen} onOpenChange={setIsPaymentQrImageDialogOpen}>
                         <DialogContent className="sm:max-w-md">
                             <DialogHeader><DialogTitle>{t('managePaymentQrImage')}</DialogTitle></DialogHeader>
-                            <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto pr-2">
-                                <div className="grid gap-2">
-                                    <Label htmlFor="payment-qr-url">Link General o Texto QR</Label>
+                            <div className="grid gap-6 py-4 max-h-[75vh] overflow-y-auto pr-2">
+                                <div className="space-y-2 border-b pb-4">
+                                    <Label htmlFor="payment-qr-url">QR General (Link o Texto)</Label>
                                     <div className="flex gap-2">
                                         <Input id="payment-qr-url" value={paymentQrImageUrl} onChange={(e) => setPaymentQrImageUrl(e.target.value)} className="flex-grow" />
                                         <a href="https://www.google.com/imghp" target="_blank" rel="noopener noreferrer">
                                             <Button type="button" variant="outline" size="icon"><Search className="h-4 w-4" /></Button>
                                         </a>
                                     </div>
+                                    {paymentQrImageUrl && (
+                                        <div className="flex justify-center mt-2 p-2 bg-slate-50 border rounded-md">
+                                            <img 
+                                                src={paymentQrImageUrl.startsWith('http') && !paymentQrImageUrl.includes(' ') ? paymentQrImageUrl : `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(paymentQrImageUrl)}`} 
+                                                alt="General" className="h-24 w-24 object-contain" 
+                                            />
+                                        </div>
+                                    )}
                                 </div>
-                                <div className="grid gap-2 border-t pt-4">
+                                <div className="space-y-2 border-b pb-4">
                                     <Label htmlFor="payment-qr-url-2">{t('paymentQrImageUrlTwoDigit')}</Label>
                                     <Input id="payment-qr-url-2" value={paymentQrImageUrlTwoDigit} onChange={(e) => setPaymentQrImageUrlTwoDigit(e.target.value)} />
+                                    {paymentQrImageUrlTwoDigit && (
+                                        <div className="flex justify-center mt-2 p-2 bg-slate-50 border rounded-md">
+                                            <img 
+                                                src={paymentQrImageUrlTwoDigit.startsWith('http') && !paymentQrImageUrlTwoDigit.includes(' ') ? paymentQrImageUrlTwoDigit : `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(paymentQrImageUrlTwoDigit)}`} 
+                                                alt="2 Cifras" className="h-24 w-24 object-contain" 
+                                            />
+                                        </div>
+                                    )}
                                 </div>
-                                <div className="grid gap-2 border-t pt-4">
+                                <div className="space-y-2 border-b pb-4">
                                     <Label htmlFor="payment-qr-url-3">{t('paymentQrImageUrlThreeDigit')}</Label>
                                     <Input id="payment-qr-url-3" value={paymentQrImageUrlThreeDigit} onChange={(e) => setPaymentQrImageUrlThreeDigit(e.target.value)} />
+                                    {paymentQrImageUrlThreeDigit && (
+                                        <div className="flex justify-center mt-2 p-2 bg-slate-50 border rounded-md">
+                                            <img 
+                                                src={paymentQrImageUrlThreeDigit.startsWith('http') && !paymentQrImageUrlThreeDigit.includes(' ') ? paymentQrImageUrlThreeDigit : `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(paymentQrImageUrlThreeDigit)}`} 
+                                                alt="3 Cifras" className="h-24 w-24 object-contain" 
+                                            />
+                                        </div>
+                                    )}
                                 </div>
-                                <div className="grid gap-2 border-t pt-4">
+                                <div className="space-y-2">
                                     <Label htmlFor="payment-qr-url-inf">{t('paymentQrImageUrlInfinite')}</Label>
                                     <Input id="payment-qr-url-inf" value={paymentQrImageUrlInfinite} onChange={(e) => setPaymentQrImageUrlInfinite(e.target.value)} />
-                                </div>
-                                <div className="mt-4 p-4 border rounded-md bg-gray-50 flex flex-col items-center">
-                                    <p className="text-xs font-bold text-gray-500 mb-2">VISTA PREVIA (GENERAL)</p>
-                                    {paymentQrImageUrl && (
-                                        <img 
-                                            src={paymentQrImageUrl.startsWith('http') && !paymentQrImageUrl.includes(' ') ? paymentQrImageUrl : `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(paymentQrImageUrl)}`} 
-                                            alt="Vista previa QR" 
-                                            className="max-h-40 object-contain" 
-                                        />
+                                    {paymentQrImageUrlInfinite && (
+                                        <div className="flex justify-center mt-2 p-2 bg-slate-50 border rounded-md">
+                                            <img 
+                                                src={paymentQrImageUrlInfinite.startsWith('http') && !paymentQrImageUrlInfinite.includes(' ') ? paymentQrImageUrlInfinite : `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(paymentQrImageUrlInfinite)}`} 
+                                                alt="Infinita" className="h-24 w-24 object-contain" 
+                                            />
+                                        </div>
                                     )}
                                 </div>
                             </div>
