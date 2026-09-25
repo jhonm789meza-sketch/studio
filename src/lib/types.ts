@@ -42,6 +42,9 @@ export interface AppSettings {
     bankInfoLine1?: string;
     bankInfoLine2?: string;
     paymentQrImageUrl?: string;
+    paymentQrImageUrlTwoDigit?: string;
+    paymentQrImageUrlThreeDigit?: string;
+    paymentQrImageUrlInfinite?: string;
     isFreeTwoDigit?: boolean;
     isFreeThreeDigit?: boolean;
     isFreeInfinite?: boolean;

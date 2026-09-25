@@ -1,4 +1,5 @@
 
+
 {
     "loading": "Cargando",
     "adminMessage": "Eres el administrador de este juego",
@@ -225,7 +226,7 @@
     "date": "Fecha",
     "activateBoard": "Activar Tablero",
     "boardActivatedSuccessfullyWithRef": "Tablero {ref} activado con éxito.",
-    "boardActivatedAndCopied": "Tablero {ref} activado. Enlace de admin con referencia copiado al portapapeles.",
+    "boardActivatedAndCopied": "Tablero {ref} activado. Enlace de administrador con referencia copiado al portapapeles.",
     "activationPendingAdmin": "Pago exitoso. El administrador activará tu tablero en breve.",
     "logout": "Cerrar Sesión",
     "logoutSuccess": "Sesión cerrada exitosamente.",
@@ -464,5 +465,8 @@
     "shareSessionTitle": "Gestionar Sesión Ejecutiva",
     "shareSessionDescription": "Envía una notificación de sesión abierta por WhatsApp o finaliza la sesión del Director.",
     "sendSessionWhatsApp": "Enviar por WhatsApp",
-    "closeSession": "Finalizar Sesión"
+    "closeSession": "Finalizar Sesión",
+    "paymentQrImageUrlTwoDigit": "URL QR (2 Cifras)",
+    "paymentQrImageUrlThreeDigit": "URL QR (3 Cifras)",
+    "paymentQrImageUrlInfinite": "URL QR (Infinita)"
 }

@@ -244,6 +244,9 @@ const App = () => {
     const [isPaymentQrDialogOpen, setIsPaymentQrDialogOpen] = useState(false);
     const [isPaymentQrImageDialogOpen, setIsPaymentQrImageDialogOpen] = useState(false);
     const [paymentQrImageUrl, setPaymentQrImageUrl] = useState('');
+    const [paymentQrImageUrlTwoDigit, setPaymentQrImageUrlTwoDigit] = useState('');
+    const [paymentQrImageUrlThreeDigit, setPaymentQrImageUrlThreeDigit] = useState('');
+    const [paymentQrImageUrlInfinite, setPaymentQrImageUrlInfinite] = useState('');
     const [isPrizeImageModalOpen, setIsPrizeImageModalOpen] = useState(false);
     const [isFreeGamesDialogOpen, setIsFreeGamesDialogOpen] = useState(false);
     const [freeGamesConfig, setFreeGamesConfig] = useState({
@@ -456,6 +459,9 @@ const App = () => {
                         line2: settings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054',
                     });
                     setPaymentQrImageUrl(settings.paymentQrImageUrl || '');
+                    setPaymentQrImageUrlTwoDigit(settings.paymentQrImageUrlTwoDigit || '');
+                    setPaymentQrImageUrlThreeDigit(settings.paymentQrImageUrlThreeDigit || '');
+                    setPaymentQrImageUrlInfinite(settings.paymentQrImageUrlInfinite || '');
                     setLockedBoardBgUrl(settings.lockedBoardBackgroundImageUrl || '');
                     setBoardDesignUrl(settings.boardDesignImageUrl || '');
                     setBoardHeaderImageUrl(settings.boardHeaderImageUrl || '');
@@ -2300,11 +2306,14 @@ const App = () => {
         try {
             await updateDoc(doc(db, 'internal', 'settings'), {
                 paymentQrImageUrl: paymentQrImageUrl,
+                paymentQrImageUrlTwoDigit: paymentQrImageUrlTwoDigit,
+                paymentQrImageUrlThreeDigit: paymentQrImageUrlThreeDigit,
+                paymentQrImageUrlInfinite: paymentQrImageUrlInfinite,
             });
             showNotification(t('paymentQrImageSaved'), 'success');
             setIsPaymentQrImageDialogOpen(false);
         } catch (error) {
-            console.error("Error saving payment QR image:", error);
+            console.error("Error saving payment QR images:", error);
             showNotification(t('errorSavingPaymentQrImage'), 'error');
         }
     };
@@ -2438,12 +2447,22 @@ const App = () => {
     };
 
     const paymentQrDisplayUrl = useMemo(() => {
-        if (!appSettings.paymentQrImageUrl) return '';
-        if (appSettings.paymentQrImageUrl.startsWith('http') && !appSettings.paymentQrImageUrl.includes(' ')) {
-            return appSettings.paymentQrImageUrl;
+        let qrData = appSettings.paymentQrImageUrl || '';
+        
+        if (selectedRaffleMode === 'two-digit' && appSettings.paymentQrImageUrlTwoDigit) {
+            qrData = appSettings.paymentQrImageUrlTwoDigit;
+        } else if (selectedRaffleMode === 'three-digit' && appSettings.paymentQrImageUrlThreeDigit) {
+            qrData = appSettings.paymentQrImageUrlThreeDigit;
+        } else if (selectedRaffleMode === 'infinite' && appSettings.paymentQrImageUrlInfinite) {
+            qrData = appSettings.paymentQrImageUrlInfinite;
         }
-        return `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(appSettings.paymentQrImageUrl)}`;
-    }, [appSettings.paymentQrImageUrl]);
+
+        if (!qrData) return '';
+        if (qrData.startsWith('http') && !qrData.includes(' ')) {
+            return qrData;
+        }
+        return `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qrData)}`;
+    }, [appSettings, selectedRaffleMode]);
 
     return (
         <div className="min-h-screen bg-background font-sans relative">
@@ -2598,10 +2617,6 @@ const App = () => {
                                             <DropdownMenuItem onSelect={() => setIsBoardHeaderImageDialogOpen3(true)}>
                                                 <Rows3 className="mr-2 h-4 w-4 text-orange-600" />
                                                 <span>22. Imagen Renglón (3 Cifras)</span>
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem onSelect={() => setIsShareSessionDialogOpen(true)}>
-                                                <MessageCircle className="mr-2 h-4 w-4 text-green-600" />
-                                                <span className="font-bold">23. {t('shareAndCloseSession')}</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuSeparator />
                                             <DropdownMenuItem onSelect={() => {
@@ -4552,29 +4567,42 @@ const App = () => {
                     </Dialog>
 
                     <Dialog open={isPaymentQrImageDialogOpen} onOpenChange={setIsPaymentQrImageDialogOpen}>
-                        <DialogContent>
+                        <DialogContent className="sm:max-w-md">
                             <DialogHeader><DialogTitle>{t('managePaymentQrImage')}</DialogTitle></DialogHeader>
-                            <div className="grid gap-4 py-4">
+                            <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto pr-2">
                                 <div className="grid gap-2">
-                                    <Label htmlFor="payment-qr-url">Link de la Imagen o Datos del QR (Link/Texto)</Label>
+                                    <Label htmlFor="payment-qr-url">Link General o Texto QR</Label>
                                     <div className="flex gap-2">
                                         <Input id="payment-qr-url" value={paymentQrImageUrl} onChange={(e) => setPaymentQrImageUrl(e.target.value)} className="flex-grow" />
                                         <a href="https://www.google.com/imghp" target="_blank" rel="noopener noreferrer">
                                             <Button type="button" variant="outline" size="icon"><Search className="h-4 w-4" /></Button>
                                         </a>
                                     </div>
+                                </div>
+                                <div className="grid gap-2 border-t pt-4">
+                                    <Label htmlFor="payment-qr-url-2">{t('paymentQrImageUrlTwoDigit')}</Label>
+                                    <Input id="payment-qr-url-2" value={paymentQrImageUrlTwoDigit} onChange={(e) => setPaymentQrImageUrlTwoDigit(e.target.value)} />
+                                </div>
+                                <div className="grid gap-2 border-t pt-4">
+                                    <Label htmlFor="payment-qr-url-3">{t('paymentQrImageUrlThreeDigit')}</Label>
+                                    <Input id="payment-qr-url-3" value={paymentQrImageUrlThreeDigit} onChange={(e) => setPaymentQrImageUrlThreeDigit(e.target.value)} />
+                                </div>
+                                <div className="grid gap-2 border-t pt-4">
+                                    <Label htmlFor="payment-qr-url-inf">{t('paymentQrImageUrlInfinite')}</Label>
+                                    <Input id="payment-qr-url-inf" value={paymentQrImageUrlInfinite} onChange={(e) => setPaymentQrImageUrlInfinite(e.target.value)} />
+                                </div>
+                                <div className="mt-4 p-4 border rounded-md bg-gray-50 flex flex-col items-center">
+                                    <p className="text-xs font-bold text-gray-500 mb-2">VISTA PREVIA (GENERAL)</p>
                                     {paymentQrImageUrl && (
-                                        <div className="mt-2 border rounded-md overflow-hidden bg-gray-50 flex items-center justify-center p-2 h-40">
-                                            <img 
-                                                src={paymentQrImageUrl.startsWith('http') && !paymentQrImageUrl.includes(' ') ? paymentQrImageUrl : `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(paymentQrImageUrl)}`} 
-                                                alt="Vista previa QR" 
-                                                className="max-h-full object-contain" 
-                                            />
-                                        </div>
+                                        <img 
+                                            src={paymentQrImageUrl.startsWith('http') && !paymentQrImageUrl.includes(' ') ? paymentQrImageUrl : `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(paymentQrImageUrl)}`} 
+                                            alt="Vista previa QR" 
+                                            className="max-h-40 object-contain" 
+                                        />
                                     )}
                                 </div>
                             </div>
-                            <DialogFooter><Button onClick={handleSavePaymentQrImage}>{t('save')}</Button></DialogFooter>
+                            <DialogFooter><Button variant="outline" onClick={() => setIsPaymentQrImageDialogOpen(false)}>{t('cancel')}</Button><Button onClick={handleSavePaymentQrImage}>{t('save')}</Button></DialogFooter>
                         </DialogContent>
                     </Dialog>
 
@@ -4821,7 +4849,7 @@ const App = () => {
                                         <span>Cubrir con Botón de Jugar</span>
                                         <span className="font-normal text-muted-foreground text-xs leading-snug">Muestra un botón estético pero oculta el link de texto real.</span>
                                     </Label>
-                                    <Switch id="play-button-mode" checked={isPlayButtonEnabled} onCheckedChange={setIsPlayButtonEnabled}/>
+                                    <Switch id="play-button-mode" checked={isPlayButtonEnabled} onCheckedChange={isPlayButtonEnabled}/>
                                 </div>
                             </div>
                             <DialogFooter><Button variant="outline" onClick={() => setIsCaptureSettingsDialogOpen(false)}>{t('cancel')}</Button><Button onClick={handleSaveCaptureSettings}>{t('save')}</Button></DialogFooter>
