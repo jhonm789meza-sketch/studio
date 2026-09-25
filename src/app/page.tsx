@@ -1969,7 +1969,8 @@ const App = () => {
         
         setIsUploading(true);
         try {
-            const targetElement = boardCaptureRef.current;
+            // Si es 3 cifras, capturamos el premio. Si es 2 cifras o infinito, el tablero.
+            const targetElement = raffleState.raffleMode === 'three-digit' ? prizeImageCaptureRef.current : boardCaptureRef.current;
 
             if (!targetElement) {
                 showNotification(t('errorCapturingPhoto'), 'error');
@@ -2926,7 +2927,18 @@ const App = () => {
                                                 <div className="mb-4">
                                                     <p className="text-sm text-gray-500">{t('gameReference')}</p>
                                                     <div className="flex items-center gap-2">
-                                                        <p className="text-2xl font-bold text-gray-800 tracking-wider">{raffleState.raffleRef}</p>
+                                                        {raffleState.raffleMode === 'three-digit' ? (
+                                                            <button 
+                                                                onClick={handleSharePlayNow} 
+                                                                className="text-2xl font-bold text-purple-700 tracking-wider hover:underline cursor-pointer flex items-center gap-2"
+                                                                title="Toca para compartir premio"
+                                                            >
+                                                                {raffleState.raffleRef}
+                                                                <Share2 className="h-4 w-4" />
+                                                            </button>
+                                                        ) : (
+                                                            <p className="text-2xl font-bold text-gray-800 tracking-wider">{raffleState.raffleRef}</p>
+                                                        )}
                                                     </div>
                                                 </div>
                                             )}
