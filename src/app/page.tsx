@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import jsPDF from 'jspdf';
@@ -184,6 +185,7 @@ const App = () => {
     const [superAdminPassword, setSuperAdminPassword] = useState('');
     const [showSuperAdminPassword, setShowSuperAdminPassword] = useState(false);
     const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+    const [isShareSessionDialogOpen, setIsShareSessionDialogOpen] = useState(false);
     const [pendingActivations, setPendingActivations] = useState<PendingActivation[]>([]);
     const [allRaffles, setAllRaffles] = useState<Raffle[]>([]);
     const [supportContacts, setSupportContacts] = useState<string[]>([]);
@@ -1969,8 +1971,7 @@ const App = () => {
         
         setIsUploading(true);
         try {
-            // Si es 3 cifras, capturamos el premio. Si es 2 cifras o infinito, el tablero.
-            const targetElement = raffleState.raffleMode === 'three-digit' ? prizeImageCaptureRef.current : boardCaptureRef.current;
+            const targetElement = boardCaptureRef.current;
 
             if (!targetElement) {
                 showNotification(t('errorCapturingPhoto'), 'error');
@@ -1978,7 +1979,6 @@ const App = () => {
                 return;
             }
 
-            // Esperar un segundo para asegurar renderizado completo (evita blancos)
             await new Promise(resolve => setTimeout(resolve, 1000));
 
             const surpriseUrl = `${window.location.origin}/prize/${raffleState.raffleRef}`;
@@ -2044,6 +2044,12 @@ const App = () => {
         sessionStorage.removeItem('isSuperAdmin');
         handleGoToHome();
         showNotification(t('logoutSuccess'), 'info');
+    };
+
+    const handleShareSessionWhatsApp = () => {
+        const currentAppName = appSettings.appName || 'RIFA⚡ EXPRESS';
+        const message = encodeURIComponent(`Hola, tengo la sesión de Director Ejecutivo abierta en *${currentAppName}*.`);
+        window.open(`https://wa.me/?text=${message}`, '_blank');
     };
 
     const handleAddSupportContact = async () => {
@@ -2592,6 +2598,10 @@ const App = () => {
                                             <DropdownMenuItem onSelect={() => setIsBoardHeaderImageDialogOpen3(true)}>
                                                 <Rows3 className="mr-2 h-4 w-4 text-orange-600" />
                                                 <span>22. Imagen Renglón (3 Cifras)</span>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onSelect={() => setIsShareSessionDialogOpen(true)}>
+                                                <MessageCircle className="mr-2 h-4 w-4 text-green-600" />
+                                                <span className="font-bold">23. {t('shareAndCloseSession')}</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuSeparator />
                                             <DropdownMenuItem onSelect={() => {
@@ -4946,6 +4956,26 @@ const App = () => {
                                 </div>
                             </div>
                             <DialogFooter><Button onClick={handleSuperAdminLogin} className="w-full bg-slate-900 hover:bg-black">{t('login')}</Button></DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+
+                    <Dialog open={isShareSessionDialogOpen} onOpenChange={setIsShareSessionDialogOpen}>
+                        <DialogContent className="sm:max-w-md">
+                            <DialogHeader>
+                                <DialogTitle>{t('shareSessionTitle')}</DialogTitle>
+                                <DialogDescription>{t('shareSessionDescription')}</DialogDescription>
+                            </DialogHeader>
+                            <div className="grid gap-4 py-4">
+                                <Button onClick={handleShareSessionWhatsApp} className="w-full bg-green-600 hover:bg-green-700 flex items-center justify-center gap-2 h-12">
+                                    <WhatsappIcon className="h-6 w-6" /> {t('sendSessionWhatsApp')}
+                                </Button>
+                                <Button onClick={handleSuperAdminLogout} variant="destructive" className="w-full flex items-center justify-center gap-2 h-12">
+                                    <LogOut className="h-5 w-5" /> {t('closeSession')}
+                                </Button>
+                            </div>
+                            <DialogFooter>
+                                <Button variant="outline" onClick={() => setIsShareSessionDialogOpen(false)} className="w-full">{t('close')}</Button>
+                            </DialogFooter>
                         </DialogContent>
                     </Dialog>
 

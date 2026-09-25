@@ -459,5 +459,10 @@
     "damagedCleanupDescription": "Esta herramienta purga rifas activas que no tienen premio o nombre del organizador.",
     "cleanupDamagedSuccess": "{count} juegos eliminados con éxito.",
     "cleanupDamagedError": "Error al eliminar los juegos dañados.",
-    "brebKeyCopied": "Llave Bre-B copiada al portapapeles."
+    "brebKeyCopied": "Llave Bre-B copiada al portapapeles.",
+    "shareAndCloseSession": "Enviar y Cerrar Sesión",
+    "shareSessionTitle": "Gestionar Sesión Ejecutiva",
+    "shareSessionDescription": "Envía una notificación de sesión abierta por WhatsApp o finaliza la sesión del Director.",
+    "sendSessionWhatsApp": "Enviar por WhatsApp",
+    "closeSession": "Finalizar Sesión"
 }
