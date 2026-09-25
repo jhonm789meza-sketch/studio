@@ -2402,6 +2402,11 @@ const App = () => {
                         batch.delete(docRef);
                     });
                     await batch.commit();
+                    generatedPackage.forEach((p) => {
+                        const docRef = doc(db, 'raffles', p.ref);
+                        batch.delete(docRef);
+                    });
+                    await batch.commit();
                     setGeneratedPackage([]);
                     showNotification(t('allGeneratedRefsDeletedSuccess'), 'success');
                 } catch (error) {
@@ -2970,7 +2975,7 @@ const App = () => {
                                                     </div>
                                                 )}
                                                  {isUploading && (
-                                                    <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center rounded-md p-4">
+                                                    <div data-html2canvas-ignore="true" className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center rounded-md p-4">
                                                         <Loader2 className="h-8 w-8 animate-spin text-white mb-2" />
                                                         <p className="text-white mt-2 text-sm">{t('uploadingImage')}</p>
                                                     </div>
