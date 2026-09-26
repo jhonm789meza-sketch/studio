@@ -5,7 +5,7 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { RaffleManager } from '@/lib/RaffleManager';
 import { db, storage } from '@/lib/firebase';
-import { doc, onSnapshot, setDoc, getDoc, deleteDoc, Unsubscribe, serverTimestamp, collection, query, where, updateDoc, addDoc, writeBatch } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc, getDoc, deleteDoc, Unsubscribe, serverTimestamp, collection, query, where, updateDoc, addDoc, writeBatch, getDocs } from 'firebase/firestore';
 import Image from 'next/image';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useLanguage } from '@/hooks/use-language';
@@ -13,7 +13,7 @@ import { requestNotificationPermission } from '@/lib/notification';
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Award, Lock, House, Clock as ClockIcon, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages, Trophy, Trash2, Copy, Shield, LogOut, Eye, EyeOff, Gamepad2, Phone, TrendingUp, Globe, Landmark, RefreshCcw, LockKeyhole, Package, Check, Rows3, Palette, ImageIcon, Settings2, LayoutGrid, MousePointer2, AlertTriangle } from 'lucide-react';
+import { Menu, Award, Lock, House, Clock as ClockIcon, Users, MessageCircle, DollarSign, Share2, Link as LinkIcon, Loader2, QrCode, X, Wand2, Search, Download, Infinity as InfinityIcon, KeyRound, Languages, Trophy, Trash2, Copy, Shield, LogOut, Eye, EyeOff, Gamepad2, Phone, TrendingUp, Globe, Landmark, RefreshCcw, LockKeyhole, Package, Check, Rows3, Palette, ImageIcon, Settings2, LayoutGrid, MousePointer2, AlertTriangle, Key } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -185,6 +185,17 @@ const App = () => {
     const [superAdminPassword, setSuperAdminPassword] = useState('');
     const [showSuperAdminPassword, setShowSuperAdminPassword] = useState(false);
     const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+    
+    // Security items protection
+    const [isSecurityDialogOpen, setIsSecurityDialogOpen] = useState(false);
+    const [pendingSecurityAction, setPendingSecurityAction] = useState<(() => void) | null>(null);
+    const [securityPassword, setSecurityPassword] = useState('');
+    const [showSecurityPassword, setShowSecurityPassword] = useState(false);
+
+    // Master Link (Session) management
+    const [activeMasterTokensCount, setActiveMasterTokensCount] = useState(0);
+    const [isMasterAccessDialogOpen, setIsMasterAccessDialogOpen] = useState(false);
+
     const [isShareSessionDialogOpen, setIsShareSessionDialogOpen] = useState(false);
     const [pendingActivations, setPendingActivations] = useState<PendingActivation[]>([]);
     const [allRaffles, setAllRaffles] = useState<Raffle[]>([]);
@@ -330,7 +341,11 @@ const App = () => {
     const currentPartialWinners = (raffleState.partialWinners && raffleState.partialWinners.length > 0) ? raffleState.partialWinners : partialWinners;
     const currentAppName = appSettings.appName || 'RIFA⚡ EXPRESS';
     
-    const globalBackgroundImage = raffleState.raffleRef ? raffleState.prizeImageUrl : (appSettings.lockedBoardBackgroundImageUrl || '');
+    // Robust background logic: fallback to locked board bg if prize image is missing or empty
+    const globalBackgroundImage = (raffleState.raffleRef && raffleState.prizeImageUrl) 
+        ? raffleState.prizeImageUrl 
+        : (appSettings.lockedBoardBackgroundImageUrl || '');
+
     const currentRaffleUrl = typeof window !== 'undefined' ? `${window.location.origin}${raffleState.raffleRef ? '?ref=' + raffleState.raffleRef : ''}` : '';
     const dynamicQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(currentRaffleUrl)}`;
 
@@ -513,10 +528,16 @@ const App = () => {
                 });
                 setAllRaffles(raffles);
             });
+
+            const tokensQuery = query(collection(db, "masterTokens"), where("used", "==", false));
+            const unsubscribeTokens = onSnapshot(tokensQuery, (snap) => {
+                setActiveMasterTokensCount(snap.size);
+            });
     
             return () => {
                 unsubscribeActivations();
                 unsubscribeRaffles();
+                unsubscribeTokens();
             }
         }
     }, [isSuperAdmin]);
@@ -535,6 +556,100 @@ const App = () => {
             localStorage.setItem('recentRaffleRefs', JSON.stringify(updated));
             return updated;
         });
+    };
+
+    // Master Link Access Logic
+    useEffect(() => {
+        const checkMasterToken = async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const accessKey = urlParams.get('access');
+            if (accessKey) {
+                try {
+                    const tokenDocRef = doc(db, 'masterTokens', accessKey);
+                    const tokenDoc = await getDoc(tokenDocRef);
+                    if (tokenDoc.exists()) {
+                        const data = tokenDoc.data();
+                        if (!data.used) {
+                            setIsSuperAdmin(true);
+                            sessionStorage.setItem('isSuperAdmin', 'true');
+                            await updateDoc(tokenDocRef, { used: true, usedAt: serverTimestamp() });
+                            showNotification('Acceso Maestro Concedido. Bienvenido Director.', 'success');
+                            // Clean URL
+                            urlParams.delete('access');
+                            const newUrl = window.location.pathname + (urlParams.toString() ? `?${urlParams.toString()}` : '');
+                            window.history.replaceState({}, '', newUrl);
+                        } else {
+                            showNotification('Este enlace ya ha sido utilizado.', 'error');
+                        }
+                    }
+                } catch (e) {
+                    console.error("Error validando token maestro:", e);
+                }
+            }
+        };
+        checkMasterToken();
+    }, []);
+
+    const handleProtectedItemClick = (action: () => void) => {
+        setPendingSecurityAction(() => action);
+        setSecurityPassword('');
+        setIsSecurityDialogOpen(true);
+    };
+
+    const verifySecurityPassword = () => {
+        const executivePassword = appSettings.superAdminPassword || '32184257361045715054';
+        if (securityPassword === executivePassword) {
+            setIsSecurityDialogOpen(false);
+            if (pendingSecurityAction) pendingSecurityAction();
+            setPendingSecurityAction(null);
+            setSecurityPassword('');
+        } else {
+            showNotification('Contraseña incorrecta.', 'error');
+        }
+    };
+
+    const handleMasterLinkGenerate = async () => {
+        setLoading(true);
+        try {
+            const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+            await setDoc(doc(db, 'masterTokens', token), {
+                used: false,
+                createdAt: serverTimestamp()
+            });
+            const accessUrl = `${window.location.origin}?access=${token}`;
+            const message = encodeURIComponent(`Hola, aquí tienes el Enlace Maestro de un solo uso para acceder como Director Ejecutivo:\n\n${accessUrl}`);
+            window.open(`https://wa.me/?text=${message}`, '_blank');
+            showNotification('Enlace Maestro generado y enviado.', 'success');
+            setIsMasterAccessDialogOpen(false);
+        } catch (e) {
+            console.error(e);
+            showNotification('Error al generar enlace.', 'error');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleCloseAllMasterSessions = async () => {
+        showConfirmationDialog(
+            '¿Deseas invalidar TODOS los enlaces de acceso maestro enviados previamente? Esto cerrará el acceso a cualquiera que los tenga.',
+            async () => {
+                setLoading(true);
+                try {
+                    const q = query(collection(db, "masterTokens"), where("used", "==", false));
+                    const snap = await getDocs(q);
+                    const batch = writeBatch(db);
+                    snap.forEach(d => batch.delete(d.ref));
+                    await batch.commit();
+                    showNotification('Todas las sesiones maestras han sido cerradas.', 'success');
+                    setIsMasterAccessDialogOpen(false);
+                } catch (e) {
+                    console.error(e);
+                    showNotification('Error al cerrar sesiones.', 'error');
+                } finally {
+                    setLoading(false);
+                }
+            }
+        );
     };
 
     const handleTabClick = (tab: Tab) => {
@@ -2417,11 +2532,6 @@ const App = () => {
                         batch.delete(docRef);
                     });
                     await batch.commit();
-                    generatedPackage.forEach((p) => {
-                        const docRef = doc(db, 'raffles', p.ref);
-                        batch.delete(docRef);
-                    });
-                    await batch.commit();
                     setGeneratedPackage([]);
                     showNotification(t('allGeneratedRefsDeletedSuccess'), 'success');
                 } catch (error) {
@@ -2468,7 +2578,12 @@ const App = () => {
         <div className="min-h-screen bg-background font-sans relative">
             {globalBackgroundImage && (
                 <div className="fixed inset-0 z-0 pointer-events-none">
-                    <Image src={globalBackgroundImage} alt={t('raffleBackgroundAlt')} fill style={{objectFit: "cover"}} unoptimized />
+                    <img 
+                        src={globalBackgroundImage} 
+                        alt="" 
+                        className="absolute inset-0 w-full h-full object-cover" 
+                        referrerPolicy="no-referrer"
+                    />
                     <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/20" />
                 </div>
             )}
@@ -2553,21 +2668,21 @@ const App = () => {
                                                 <span className="font-bold">6. Configuración de Captura</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuSeparator />
-                                            <DropdownMenuItem onSelect={() => setIsPaymentInfoDialogOpen(true)}>
+                                            <DropdownMenuItem onSelect={() => handleProtectedItemClick(() => setIsPaymentInfoDialogOpen(true))}>
                                                 <Landmark className="mr-2 h-4 w-4 text-blue-600" />
-                                                <span>7. {t('managePaymentInfo')}</span>
+                                                <span>7. {t('managePaymentInfo')} 🔒</span>
                                             </DropdownMenuItem>
-                                            <DropdownMenuItem onSelect={() => setIsPaymentQrImageDialogOpen(true)}>
+                                            <DropdownMenuItem onSelect={() => handleProtectedItemClick(() => setIsPaymentQrImageDialogOpen(true))}>
                                                 <QrCode className="mr-2 h-4 w-4 text-blue-600" />
-                                                <span>8. {t('managePaymentQrImage')}</span>
+                                                <span>8. {t('managePaymentQrImage')} 🔒</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={fetchNextRefs}>
                                                 <RefreshCcw className="mr-2 h-4 w-4 text-blue-600" />
                                                 <span>9. {t('refreshRefs')}</span>
                                             </DropdownMenuItem>
-                                            <DropdownMenuItem onSelect={() => setIsSuperAdminChangePasswordOpen(true)}>
+                                            <DropdownMenuItem onSelect={() => handleProtectedItemClick(() => setIsSuperAdminChangePasswordOpen(true))}>
                                                 <LockKeyhole className="mr-2 h-4 w-4 text-blue-600" />
-                                                <span>10. {t('changeExecutivePasswordTitle')}</span>
+                                                <span>10. {t('changeExecutivePasswordTitle')} 🔒</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuSeparator />
                                             <DropdownMenuItem onSelect={() => setIsAssignPackageDialogOpen(true)}>
@@ -2578,13 +2693,13 @@ const App = () => {
                                                 <Phone className="mr-2 h-4 w-4" />
                                                 <span>12. {t('secondaryContact')}</span>
                                             </DropdownMenuItem>
-                                            <DropdownMenuItem onSelect={() => setIsPaymentLinksDialogOpen(true)}>
+                                            <DropdownMenuItem onSelect={() => handleProtectedItemClick(() => setIsPaymentLinksDialogOpen(true))}>
                                                 <LinkIcon className="mr-2 h-4 w-4" />
-                                                <span>13. {t('paymentLinks')}</span>
+                                                <span>13. {t('paymentLinks')} 🔒</span>
                                             </DropdownMenuItem>
-                                            <DropdownMenuItem onSelect={() => setIsUsdPaymentConfigDialogOpen(true)}>
+                                            <DropdownMenuItem onSelect={() => handleProtectedItemClick(() => setIsUsdPaymentConfigDialogOpen(true))}>
                                                 <DollarSign className="mr-2 h-4 w-4" />
-                                                <span>14. Link de Pago USD</span>
+                                                <span>14. Link de Pago USD 🔒</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setIsActivationPricesDialogOpen(true)}>
                                                 <DollarSign className="mr-2 h-4 w-4" />
@@ -2617,6 +2732,10 @@ const App = () => {
                                             <DropdownMenuItem onSelect={() => setIsBoardHeaderImageDialogOpen3(true)}>
                                                 <Rows3 className="mr-2 h-4 w-4 text-orange-600" />
                                                 <span>22. Imagen Renglón (3 Cifras)</span>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onSelect={() => handleProtectedItemClick(() => setIsMasterAccessDialogOpen(true))} className="bg-purple-600 text-white focus:bg-purple-700 focus:text-white">
+                                                <Key className="mr-2 h-4 w-4" />
+                                                <span>23. Enviar Acceso Maestro ({activeMasterTokensCount}) 🔒</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuSeparator />
                                             <DropdownMenuItem onSelect={() => {
@@ -2976,13 +3095,11 @@ const App = () => {
                                             <div ref={prizeImageCaptureRef} className="mb-6 rounded-lg overflow-hidden relative flex items-center justify-center shadow-lg bg-gray-200 aspect-auto group">
                                                  {raffleState.prizeImageUrl ? (
                                                     <button onClick={() => isCurrentUserAdmin ? handleShare() : handleTabClick('numbers')} className="w-full flex items-center justify-center cursor-pointer relative" aria-label={t('rafflePrizeAlt')}>
-                                                        <Image 
+                                                        <img 
                                                             src={raffleState.prizeImageUrl} 
                                                             alt={t('rafflePrizeAlt')} 
-                                                            width={1200}
-                                                            height={1200}
                                                             className="w-full h-auto object-contain max-h-[60vh] transition-transform duration-500 group-hover:scale-105"
-                                                            unoptimized 
+                                                            referrerPolicy="no-referrer"
                                                             key={raffleState.prizeImageUrl}
                                                         />
                                                         {!isCurrentUserAdmin && (
@@ -3498,12 +3615,11 @@ const App = () => {
                                                        <div className="flex items-center gap-4">
                                                            {(raffleState.prizeImageUrl) && (
                                                                <div className="relative h-20 w-20 rounded-xl overflow-hidden border-2 border-white shadow-lg bg-white shrink-0">
-                                                                   <Image 
+                                                                   <img 
                                                                        src={raffleState.prizeImageUrl} 
                                                                        alt={t('rafflePrizeAlt')} 
-                                                                       fill 
-                                                                       className="object-cover" 
-                                                                       unoptimized 
+                                                                       className="w-full h-full object-cover" 
+                                                                       referrerPolicy="no-referrer"
                                                                    />
                                                                </div>
                                                            )}
@@ -3560,12 +3676,12 @@ const App = () => {
                                                         <div className="bg-white p-5 relative overflow-hidden">
                                                             {appSettings.boardHeaderImageUrl && (
                                                                 <div className="absolute inset-0 z-20 pointer-events-none">
-                                                                    <Image src={appSettings.boardHeaderImageUrl} alt="" fill className="object-cover" unoptimized />
+                                                                    <img src={appSettings.boardHeaderImageUrl} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                                                                 </div>
                                                             )}
                                                             {appSettings.boardDesignImageUrl && (
                                                                 <div className="absolute inset-0 z-0 pointer-events-none">
-                                                                    <Image src={appSettings.boardDesignImageUrl} alt="" fill className="object-cover" unoptimized />
+                                                                    <img src={appSettings.boardDesignImageUrl} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                                                                 </div>
                                                             )}
                                                             <div className="grid grid-cols-10 gap-2 relative z-10">
@@ -3604,12 +3720,12 @@ const App = () => {
                                                                <div key={chunkIdx} className="relative bg-transparent p-5 overflow-hidden border-b border-gray-100 last:border-0">
                                                                     {appSettings.boardHeaderImageUrl3 && (
                                                                         <div className="absolute inset-0 z-20 pointer-events-none opacity-80">
-                                                                            <Image src={appSettings.boardHeaderImageUrl3} alt="" fill className="object-cover" unoptimized />
+                                                                            <img src={appSettings.boardHeaderImageUrl3} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                                                                         </div>
                                                                     )}
                                                                     {(appSettings.boardDesignImageUrl3 || appSettings.boardDesignImageUrl) && (
                                                                         <div className="absolute inset-0 z-0 pointer-events-none">
-                                                                            <Image src={appSettings.boardDesignImageUrl3 || appSettings.boardDesignImageUrl || ''} alt="" fill className="object-cover" unoptimized />
+                                                                            <img src={appSettings.boardDesignImageUrl3 || appSettings.boardDesignImageUrl || ''} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                                                                         </div>
                                                                     )}
                                                                     <div className="grid grid-cols-10 gap-2 relative z-10">
@@ -4214,6 +4330,82 @@ const App = () => {
                         </div>
                     )}
 
+                    {/* Security Verification Dialog */}
+                    <Dialog open={isSecurityDialogOpen} onOpenChange={setIsSecurityDialogOpen}>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Verificar Identidad 🔒</DialogTitle>
+                                <DialogDescription>Ingresa la contraseña del Director Ejecutivo para acceder a esta función.</DialogDescription>
+                            </DialogHeader>
+                            <div className="grid gap-4 py-4">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="security-password">Contraseña</Label>
+                                    <div className="relative">
+                                        <Input 
+                                            id="security-password" 
+                                            type={showSecurityPassword ? 'text' : 'password'} 
+                                            value={securityPassword} 
+                                            onChange={(e) => setSecurityPassword(e.target.value)} 
+                                            placeholder="Tu contraseña" 
+                                        />
+                                        <Button 
+                                            type="button" 
+                                            variant="ghost" 
+                                            size="icon" 
+                                            className="absolute inset-y-0 right-0 h-full px-3" 
+                                            onClick={() => setShowSecurityPassword(!showSecurityPassword)}
+                                        >
+                                            {showSecurityPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
+                            <DialogFooter>
+                                <Button onClick={verifySecurityPassword} className="w-full bg-slate-900 hover:bg-black">Validar y Entrar</Button>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+
+                    {/* Master Access Management Dialog */}
+                    <Dialog open={isMasterAccessDialogOpen} onOpenChange={setIsMasterAccessDialogOpen}>
+                        <DialogContent className="sm:max-w-md">
+                            <DialogHeader>
+                                <DialogTitle>Gestión de Acceso Maestro</DialogTitle>
+                                <DialogDescription>Genera un enlace de un solo uso para entrar como Director o invalida los existentes.</DialogDescription>
+                            </DialogHeader>
+                            <div className="grid gap-6 py-4">
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between bg-purple-50 p-4 rounded-lg border border-purple-100">
+                                        <div>
+                                            <p className="text-xs font-bold text-purple-600 uppercase">Enlaces Activos</p>
+                                            <p className="text-3xl font-black text-purple-900">{activeMasterTokensCount}</p>
+                                        </div>
+                                        <Key className="h-10 w-10 text-purple-600/30" />
+                                    </div>
+                                    
+                                    <Button 
+                                        onClick={handleMasterLinkGenerate} 
+                                        className="w-full h-12 bg-green-600 hover:bg-green-700 flex items-center justify-center gap-2"
+                                    >
+                                        <WhatsappIcon className="h-6 w-6" /> Enviar Link de Un Solo Uso
+                                    </Button>
+
+                                    <Button 
+                                        variant="destructive" 
+                                        onClick={handleCloseAllMasterSessions} 
+                                        className="w-full h-12"
+                                        disabled={activeMasterTokensCount === 0}
+                                    >
+                                        <Trash2 className="mr-2 h-4 w-4" /> Cerrar Todas las Sesiones
+                                    </Button>
+                                </div>
+                            </div>
+                            <DialogFooter>
+                                <Button variant="outline" onClick={() => setIsMasterAccessDialogOpen(false)} className="w-full">Cerrar</Button>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+
                     <Dialog open={isAppNameLogoDialogOpen} onOpenChange={setIsAppNameLogoDialogOpen}>
                         <DialogContent>
                             <DialogHeader>
@@ -4286,7 +4478,7 @@ const App = () => {
                                     {rafflesWithImages.length > 0 ? (
                                         rafflesWithImages.map((raffle) => (
                                             <div key={raffle.raffleRef} className="relative group rounded-lg overflow-hidden border bg-gray-50 aspect-square">
-                                                <Image src={raffle.prizeImageUrl} alt={raffle.raffleRef} fill className="object-cover" unoptimized />
+                                                <img src={raffle.prizeImageUrl} alt={raffle.raffleRef} className="absolute inset-0 w-full h-full object-cover" referrerPolicy="no-referrer" />
                                                 <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-2 text-center">
                                                     <p className="text-white text-xs font-bold mb-2">{raffle.raffleRef}</p>
                                                     <Button variant="destructive" size="sm" onClick={() => handleDeletePrizeImage(raffle.raffleRef)}>
@@ -4582,7 +4774,7 @@ const App = () => {
                                         <div className="flex justify-center mt-2 p-2 bg-slate-50 border rounded-md">
                                             <img 
                                                 src={paymentQrImageUrl.startsWith('http') && !paymentQrImageUrl.includes(' ') ? paymentQrImageUrl : `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(paymentQrImageUrl)}`} 
-                                                alt="General" className="h-24 w-24 object-contain" 
+                                                alt="General" className="h-24 w-24 object-contain" referrerPolicy="no-referrer"
                                             />
                                         </div>
                                     )}
@@ -4594,7 +4786,7 @@ const App = () => {
                                         <div className="flex justify-center mt-2 p-2 bg-slate-50 border rounded-md">
                                             <img 
                                                 src={paymentQrImageUrlTwoDigit.startsWith('http') && !paymentQrImageUrlTwoDigit.includes(' ') ? paymentQrImageUrlTwoDigit : `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(paymentQrImageUrlTwoDigit)}`} 
-                                                alt="2 Cifras" className="h-24 w-24 object-contain" 
+                                                alt="2 Cifras" className="h-24 w-24 object-contain" referrerPolicy="no-referrer"
                                             />
                                         </div>
                                     )}
@@ -4606,7 +4798,7 @@ const App = () => {
                                         <div className="flex justify-center mt-2 p-2 bg-slate-50 border rounded-md">
                                             <img 
                                                 src={paymentQrImageUrlThreeDigit.startsWith('http') && !paymentQrImageUrlThreeDigit.includes(' ') ? paymentQrImageUrlThreeDigit : `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(paymentQrImageUrlThreeDigit)}`} 
-                                                alt="3 Cifras" className="h-24 w-24 object-contain" 
+                                                alt="3 Cifras" className="h-24 w-24 object-contain" referrerPolicy="no-referrer"
                                             />
                                         </div>
                                     )}
@@ -4618,7 +4810,7 @@ const App = () => {
                                         <div className="flex justify-center mt-2 p-2 bg-slate-50 border rounded-md">
                                             <img 
                                                 src={paymentQrImageUrlInfinite.startsWith('http') && !paymentQrImageUrlInfinite.includes(' ') ? paymentQrImageUrlInfinite : `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(paymentQrImageUrlInfinite)}`} 
-                                                alt="Infinita" className="h-24 w-24 object-contain" 
+                                                alt="Infinita" className="h-24 w-24 object-contain" referrerPolicy="no-referrer"
                                             />
                                         </div>
                                     )}
@@ -4731,6 +4923,7 @@ const App = () => {
                                             src={paymentQrDisplayUrl} 
                                             alt="QR de Pago" 
                                             className="max-w-full max-h-[300px] object-contain" 
+                                            referrerPolicy="no-referrer"
                                         />
                                      ) : (
                                         <div className="h-48 w-48 flex items-center justify-center bg-gray-50 rounded text-gray-400 text-xs text-center p-4">
@@ -4980,7 +5173,7 @@ const App = () => {
                             <div className="grid grid-cols-1 gap-4 py-4">
                                 <div className="flex justify-center mb-4">
                                     <div className="p-4 bg-white rounded-lg border-4 border-purple-100 shadow-md">
-                                        <img src={dynamicQrUrl} alt="QR de la rifa" className="h-40 w-40 object-contain" />
+                                        <img src={dynamicQrUrl} alt="QR de la rifa" className="h-40 w-40 object-contain" referrerPolicy="no-referrer" />
                                     </div>
                                 </div>
                                 <Button onClick={handleShareToWhatsApp} variant="outline" className="flex items-center justify-start gap-3 h-12 text-green-600 border-green-200 hover:bg-green-50"><WhatsappIcon className="h-6 w-6" /> {t('shareOnWhatsApp')}</Button>
@@ -5092,7 +5285,7 @@ const App = () => {
                             </DialogHeader>
                             <div className="flex justify-center items-center p-4">
                                 <div className="p-4 bg-white rounded-xl shadow-2xl border-4 border-purple-100">
-                                    <img src={dynamicQrUrl} alt={t('appQRCodeAlt')} className="h-48 w-48 object-contain" />
+                                    <img src={dynamicQrUrl} alt={t('appQRCodeAlt')} className="h-48 w-48 object-contain" referrerPolicy="no-referrer" />
                                 </div>
                             </div>
                             <DialogFooter>
