@@ -341,7 +341,7 @@ const App = () => {
     const currentPartialWinners = (raffleState.partialWinners && raffleState.partialWinners.length > 0) ? raffleState.partialWinners : partialWinners;
     const currentAppName = appSettings.appName || 'RIFA⚡ EXPRESS';
     
-    // Robust background logic: fallback to locked board bg if prize image is missing or empty
+    // Improved background logic with referrerPolicy for Google Photos
     const globalBackgroundImage = (raffleState.raffleRef && raffleState.prizeImageUrl) 
         ? raffleState.prizeImageUrl 
         : (appSettings.lockedBoardBackgroundImageUrl || '');
@@ -353,7 +353,7 @@ const App = () => {
     today.setHours(0, 0, 0, 0);
 
     const prizeValueForGoal = raffleState.prize ? parseFloat(String(raffleState.prize).replace(/\D/g, '')) : 0;
-    const ticketValueForGoal = raffleState.value ? parseFloat(String(raffleState.prize).replace(/\D/g, '')) : 0;
+    const ticketValueForGoal = raffleState.value ? parseFloat(String(raffleState.value).replace(/\D/g, '')) : 0;
     const ticketsToCoverPrize = ticketValueForGoal > 0 ? Math.ceil(prizeValueForGoal / ticketValueForGoal) : 0;
 
     const abandonedRaffles = useMemo(() => {
@@ -529,6 +529,7 @@ const App = () => {
                 setAllRaffles(raffles);
             });
 
+            // Monitor master tokens count
             const tokensQuery = query(collection(db, "masterTokens"), where("used", "==", false));
             const unsubscribeTokens = onSnapshot(tokensQuery, (snap) => {
                 setActiveMasterTokensCount(snap.size);
@@ -1003,7 +1004,7 @@ const App = () => {
                 numericValue = 0;
             }
             if (numericValue < 0) numericValue = 0;
-            if (numericValue < 100) numericValue = numericValue; else numericValue = 100;
+            if (numericValue > 100) numericValue = 100;
             newState[field as keyof Raffle] = numericValue;
         } else if (field === 'infiniteModeDigits') {
             const numericValue = parseInt(String(value).replace(/\D/g, ''), 10) || 4;
@@ -1350,7 +1351,7 @@ const App = () => {
         const updatedParticipant = { ...updatedParticipants[participantIndex], paymentStatus: 'confirmed' as 'confirmed' };
         updatedParticipants[participantIndex] = updatedParticipant;
 
-        await setDoc(doc(db, "raffles", raffleState.raffleRef), { updatedParticipants }, { merge: true });
+        await setDoc(doc(db, "raffles", raffleState.raffleRef), { participants: updatedParticipants }, { merge: true });
         showNotification(t('paymentConfirmedNotification', { name: updatedParticipant.name, number: updatedParticipant.raffleNumber }), 'success');
     };
     
@@ -3695,7 +3696,7 @@ const App = () => {
                                                                     const availText = '#15803d';
                                                                     const pendBg = appSettings.numberBgPending || '#facc15';
                                                                     const pendText = appSettings.numberTextPending || '#422006';
-                                                                    const sldBg = appSettings.numberBgSold || '#dc2626';
+                                                                    const sldBg = appSettings.numberBgSold || '#dc2626'; // RED COLOR
                                                                     const sldText = appSettings.numberTextSold || '#ffffff';
 
                                                                     return (
@@ -3739,7 +3740,7 @@ const App = () => {
                                                                             const availText = '#15803d';
                                                                             const pendBg = appSettings.numberBgPending || '#facc15';
                                                                             const pendText = appSettings.numberTextPending || '#422006';
-                                                                            const sldBg = appSettings.numberBgSold || '#dc2626';
+                                                                            const sldBg = appSettings.numberBgSold || '#dc2626'; // RED COLOR
                                                                             const sldText = appSettings.numberTextSold || '#ffffff';
 
                                                                             return (
@@ -4125,8 +4126,6 @@ const App = () => {
                                                         <tbody className="bg-white divide-y divide-gray-200">
                                                             {filteredGames.sort((a, b) => (b.raffleRef || '').localeCompare(a.raffleRef || '')).map((raffle) => {
                                                                 const gameCollected = ((raffle.participants || []).filter(p => p.paymentStatus === 'confirmed').length * parseFloat(String(raffle.value).replace(/\D/g, ''))) || 0;
-                                                                const gameDateObj = raffle.gameDate ? new Date(raffle.gameDate + 'T00:00:00') : null;
-                                                                const isPastDue = gameDateObj ? gameDateObj < today && !raffle.winner : false;
                                                                 
                                                                 const prizeLabel = raffle.prize || (raffle.isPaid ? 'Sin Premio Definido' : 'Juego Dañado/Incompleto');
                                                                 const organizerLabel = raffle.organizerName || 'Sin Organizador';
@@ -4341,11 +4340,12 @@ const App = () => {
                                 <div className="grid gap-2">
                                     <Label htmlFor="security-password">Contraseña</Label>
                                     <div className="relative">
-                                        <Input 
+                                        <input 
                                             id="security-password" 
                                             type={showSecurityPassword ? 'text' : 'password'} 
                                             value={securityPassword} 
                                             onChange={(e) => setSecurityPassword(e.target.value)} 
+                                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                                             placeholder="Tu contraseña" 
                                         />
                                         <Button 
@@ -4427,7 +4427,7 @@ const App = () => {
                                     </div>
                                     {tempAppLogoUrl && (
                                         <div className="mt-2 border rounded-md overflow-hidden bg-gray-50 flex items-center justify-center p-2 h-40">
-                                            <img src={tempAppLogoUrl} alt="Vista previa logo" className="max-h-full object-contain" />
+                                            <img src={tempAppLogoUrl} alt="Vista previa logo" className="max-h-full object-contain" referrerPolicy="no-referrer" />
                                         </div>
                                     )}
                                 </div>
@@ -4613,7 +4613,7 @@ const App = () => {
                                     </div>
                                     {boardDesignUrl && (
                                         <div className="mt-2 border rounded-md overflow-hidden bg-gray-50 flex items-center justify-center p-2 h-40">
-                                            <img src={boardDesignUrl} alt="Vista previa diseño" className="max-h-full object-contain" />
+                                            <img src={boardDesignUrl} alt="Vista previa diseño" className="max-h-full object-contain" referrerPolicy="no-referrer" />
                                         </div>
                                     )}
                                 </div>
@@ -4636,7 +4636,7 @@ const App = () => {
                                     </div>
                                     {boardDesignUrl3 && (
                                         <div className="mt-2 border rounded-md overflow-hidden bg-gray-50 flex items-center justify-center p-2 h-40">
-                                            <img src={boardDesignUrl3} alt="Vista previa diseño 3" className="max-h-full object-contain" />
+                                            <img src={boardDesignUrl3} alt="Vista previa diseño 3" className="max-h-full object-contain" referrerPolicy="no-referrer" />
                                         </div>
                                     )}
                                 </div>
@@ -4692,7 +4692,7 @@ const App = () => {
                                     </div>
                                     {boardHeaderImageUrl && (
                                         <div className="mt-2 border rounded-md overflow-hidden bg-gray-50 flex items-center justify-center p-2 h-40">
-                                            <img src={boardHeaderImageUrl} alt="Vista previa renglón" className="max-h-full object-contain" />
+                                            <img src={boardHeaderImageUrl} alt="Vista previa renglón" className="max-h-full object-contain" referrerPolicy="no-referrer" />
                                         </div>
                                     )}
                                 </div>
@@ -4715,7 +4715,7 @@ const App = () => {
                                     </div>
                                     {boardHeaderImageUrl3 && (
                                         <div className="mt-2 border rounded-md overflow-hidden bg-gray-50 flex items-center justify-center p-2 h-40">
-                                            <img src={boardHeaderImageUrl3} alt="Vista previa renglón 3" className="max-h-full object-contain" />
+                                            <img src={boardHeaderImageUrl3} alt="Vista previa renglón 3" className="max-h-full object-contain" referrerPolicy="no-referrer" />
                                         </div>
                                     )}
                                 </div>
@@ -4738,7 +4738,7 @@ const App = () => {
                                     </div>
                                     {lockedBoardBgUrl && (
                                         <div className="mt-2 border rounded-md overflow-hidden bg-gray-50 flex items-center justify-center p-2 h-40">
-                                            <img src={lockedBoardBgUrl} alt="Vista previa fondo" className="max-h-full object-contain" />
+                                            <img src={lockedBoardBgUrl} alt="Vista previa fondo" className="max-h-full object-contain" referrerPolicy="no-referrer" />
                                         </div>
                                     )}
                                 </div>
@@ -4948,14 +4948,14 @@ const App = () => {
                                 <div className="grid gap-2">
                                     <Label htmlFor="new-super-admin-password-v2">{t('newPassword')}</Label>
                                     <div className="relative">
-                                        <Input id="new-super-admin-password-v2" type={showNewPassword ? 'text' : 'password'} value={newPassword} onChange={(e) => setNewPassword(e.target.value)}/>
+                                        <input id="new-super-admin-password-v2" type={showNewPassword ? 'text' : 'password'} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
                                         <Button type="button" variant="ghost" size="icon" className="absolute inset-y-0 right-0 h-full px-3" onClick={() => setShowNewPassword(!showNewPassword)}>{showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button>
                                     </div>
                                 </div>
                                 <div className="grid gap-2">
                                     <Label htmlFor="confirm-new-super-admin-password-v2">{t('confirmNewPassword')}</Label>
                                      <div className="relative">
-                                        <Input id="confirm-new-super-admin-password-v2" type={showNewPassword ? 'text' : 'password'} value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)}/>
+                                        <input id="confirm-new-super-admin-password-v2" type={showNewPassword ? 'text' : 'password'} value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
                                          <Button type="button" variant="ghost" size="icon" className="absolute inset-y-0 right-0 h-full px-3" onClick={() => setShowNewPassword(!showNewPassword)}>{showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button>
                                     </div>
                                 </div>
@@ -5110,14 +5110,14 @@ const App = () => {
                                 <div className="grid gap-2">
                                     <Label htmlFor="new-password-v2">{t('newPassword')}</Label>
                                     <div className="relative">
-                                        <Input id="new-password-v2" type={showNewPassword ? 'text' : 'password'} value={newPassword} onChange={(e) => setNewPassword(e.target.value)}/>
+                                        <input id="new-password-v2" type={showNewPassword ? 'text' : 'password'} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
                                         <Button type="button" variant="ghost" size="icon" className="absolute inset-y-0 right-0 h-full px-3" onClick={() => setShowNewPassword(!showNewPassword)}>{showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button>
                                     </div>
                                 </div>
                                 <div className="grid gap-2">
                                     <Label htmlFor="confirm-new-password-v2">{t('confirmNewPassword')}</Label>
                                      <div className="relative">
-                                        <Input id="confirm-new-password-v2" type={showNewPassword ? 'text' : 'password'} value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)}/>
+                                        <input id="confirm-new-password-v2" type={showNewPassword ? 'text' : 'password'} value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
                                          <Button type="button" variant="ghost" size="icon" className="absolute inset-y-0 right-0 h-full px-3" onClick={() => setShowNewPassword(!showNewPassword)}>{showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button>
                                     </div>
                                 </div>
@@ -5140,9 +5140,9 @@ const App = () => {
                                         </div>
                                     </div>
                                 )}
-                                <div className="grid gap-2"><Label htmlFor="admin-ref-search">{t('gameReference')}</Label><Input id="admin-ref-search" value={adminRefSearch} onChange={(e) => setAdminRefSearch(e.target.value)} placeholder="JM1234567" /></div>
-                                <div className="grid gap-2"><Label htmlFor="admin-phone-search">{t('organizerPhone')}</Label><Input id="admin-phone-search" value={adminPhoneSearch} onChange={(e) => setAdminPhoneSearch(e.target.value)} placeholder="3001234567" /></div>
-                                <div className="grid gap-2"><Label htmlFor="admin-password-search">{t('password')}</Label><Input id="admin-password-search" type="password" value={adminPasswordSearch} onChange={(e) => setAdminPasswordSearch(e.target.value)} placeholder={t('yourPassword')} /></div>
+                                <div className="grid gap-2"><Label htmlFor="admin-ref-search">{t('gameReference')}</Label><input id="admin-ref-search" value={adminRefSearch} onChange={(e) => setAdminRefSearch(e.target.value)} placeholder="JM1234567" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" /></div>
+                                <div className="grid gap-2"><Label htmlFor="admin-phone-search">{t('organizerPhone')}</Label><input id="admin-phone-search" value={adminPhoneSearch} onChange={(e) => setAdminPhoneSearch(e.target.value)} placeholder="3001234567" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" /></div>
+                                <div className="grid gap-2"><Label htmlFor="admin-password-search">{t('password')}</Label><input id="admin-password-search" type="password" value={adminPasswordSearch} onChange={(e) => setAdminPasswordSearch(e.target.value)} placeholder={t('yourPassword')} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" /></div>
                             </div>
                             <DialogFooter><Button onClick={() => handleAdminSearch({ refToSearch: adminRefSearch, phoneToSearch: adminPhoneSearch, passwordToSearch: adminPasswordSearch })} className="w-full bg-purple-600 hover:bg-purple-700">{t('recoverRestore')}</Button></DialogFooter>
                         </DialogContent>
@@ -5151,7 +5151,7 @@ const App = () => {
                     <Dialog open={isPublicSearchOpen} onOpenChange={setIsPublicSearchOpen}>
                         <DialogContent>
                             <DialogHeader><DialogTitle>{t('searchRaffleByRef')}</DialogTitle><DialogDescription>{t('searchRaffleByRefDescription')}</DialogDescription></DialogHeader>
-                            <div className="grid gap-4 py-4"><div className="grid gap-2"><Label htmlFor="public-ref-search">{t('reference')}</Label><Input id="public-ref-search" value={publicRefSearch} onChange={(e) => setPublicRefSearch(e.target.value)} placeholder="JM1234567" /></div></div>
+                            <div className="grid gap-4 py-4"><div className="grid gap-2"><Label htmlFor="public-ref-search">{t('reference')}</Label><input id="public-ref-search" value={publicRefSearch} onChange={(e) => setPublicRefSearch(e.target.value)} placeholder="JM1234567" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" /></div></div>
                             <DialogFooter><Button onClick={() => handleAdminSearch({ refToSearch: publicRefSearch, isPublicSearch: true })} className="w-full bg-blue-600 hover:bg-blue-700">{t('search')}</Button></DialogFooter>
                         </DialogContent>
                     </Dialog>
@@ -5193,7 +5193,7 @@ const App = () => {
                                 <div className="grid gap-2">
                                     <Label htmlFor="super-admin-password">{t('password')}</Label>
                                     <div className="relative">
-                                        <Input id="super-admin-password" type={showSuperAdminPassword ? 'text' : 'password'} value={superAdminPassword} onChange={(e) => setSuperAdminPassword(e.target.value)} placeholder={t('yourPassword')} />
+                                        <input id="super-admin-password" type={showSuperAdminPassword ? 'text' : 'password'} value={superAdminPassword} onChange={(e) => setSuperAdminPassword(e.target.value)} placeholder={t('yourPassword')} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
                                         <Button type="button" variant="ghost" size="icon" className="absolute inset-y-0 right-0 h-full px-3" onClick={() => setShowSuperAdminPassword(!showSuperAdminPassword)}>{showSuperAdminPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button>
                                     </div>
                                 </div>
