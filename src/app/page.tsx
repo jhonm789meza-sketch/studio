@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import jsPDF from 'jspdf';
@@ -316,6 +315,9 @@ const App = () => {
     const lastAbandonedCountRef = useRef(0);
     const lastDamagedCountRef = useRef(0);
 
+    const [isApiConfigDialogOpen, setIsApiConfigDialogOpen] = useState(false);
+    const [apiConfig, setApiConfig] = useState({ key: '', endpoint: '' });
+
     const prizeTextareaRef = useRef<HTMLTextAreaElement>(null);
 
     const isCurrentUserAdmin = !!raffleState.adminId && !!currentAdminId && raffleState.adminId === currentAdminId;
@@ -484,6 +486,10 @@ const App = () => {
                     setBoardHeaderImageUrl3(settings.boardHeaderImageUrl3 || '');
                     setTempAppName(settings.appName || '');
                     setTempAppLogoUrl(settings.appLogoUrl || '');
+                    setApiConfig({
+                        key: (settings as any).apiConfigKey || '',
+                        endpoint: (settings as any).apiConfigEndpoint || '',
+                    });
                 }
             }
         });
@@ -2505,6 +2511,22 @@ const App = () => {
         }
     };
 
+    const handleSaveApiConfig = async () => {
+        if (!isSuperAdmin) return;
+        try {
+            const settingsDocRef = doc(db, 'internal', 'settings');
+            await updateDoc(settingsDocRef, {
+                apiConfigKey: apiConfig.key,
+                apiConfigEndpoint: apiConfig.endpoint,
+            });
+            showNotification('Configuración de API guardada.', 'success');
+            setIsApiConfigDialogOpen(false);
+        } catch (error) {
+            console.error("Error saving API config:", error);
+            showNotification('Error al guardar configuración de API.', 'error');
+        }
+    };
+
     const handleDeleteGeneratedRef = (raffleRef: string) => {
         showConfirmationDialog(
             t('deleteGeneratedRefConfirmation', { ref: raffleRef }),
@@ -2737,6 +2759,10 @@ const App = () => {
                                             <DropdownMenuItem onSelect={() => handleProtectedItemClick(() => setIsMasterAccessDialogOpen(true))} className="bg-purple-600 text-white focus:bg-purple-700 focus:text-white">
                                                 <Key className="mr-2 h-4 w-4" />
                                                 <span>23. Enviar Acceso Maestro ({activeMasterTokensCount}) 🔒</span>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onSelect={() => handleProtectedItemClick(() => setIsApiConfigDialogOpen(true))}>
+                                                <Settings2 className="mr-2 h-4 w-4 text-blue-600" />
+                                                <span>24. Configurar API 🔒</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuSeparator />
                                             <DropdownMenuItem onSelect={() => {
@@ -5251,6 +5277,29 @@ const App = () => {
                             </div>
                             <DialogFooter>
                                 <Button onClick={() => setIsContactDialogOpen(false)} variant="outline" className="w-full">{t('close')}</Button>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+
+                    <Dialog open={isApiConfigDialogOpen} onOpenChange={setIsApiConfigDialogOpen}>
+                        <DialogContent className="sm:max-w-md">
+                            <DialogHeader>
+                                <DialogTitle>Configurar API 🔒</DialogTitle>
+                                <DialogDescription>Configura los parámetros de conexión para servicios externos.</DialogDescription>
+                            </DialogHeader>
+                            <div className="grid gap-4 py-4">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="api-key">API Key</Label>
+                                    <Input id="api-key" value={apiConfig.key} onChange={(e) => setApiConfig(p => ({ ...p, key: e.target.value }))} placeholder="Ingresa la llave de API" />
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="api-endpoint">API Endpoint</Label>
+                                    <Input id="api-endpoint" value={apiConfig.endpoint} onChange={(e) => setApiConfig(p => ({ ...p, endpoint: e.target.value }))} placeholder="https://api.ejemplo.com/v1" />
+                                </div>
+                            </div>
+                            <DialogFooter>
+                                <Button variant="outline" onClick={() => setIsApiConfigDialogOpen(false)}>Cancelar</Button>
+                                <Button onClick={handleSaveApiConfig}>Guardar Configuración</Button>
                             </DialogFooter>
                         </DialogContent>
                     </Dialog>

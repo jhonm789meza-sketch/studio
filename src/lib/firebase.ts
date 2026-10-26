@@ -28,7 +28,15 @@ if (getApps().length === 0) {
   });
 } else {
   app = getApp();
-  db = getFirestore(app);
+  // Incluso si la app ya existe, intentamos asegurar que firestore use la configuración experimental
+  try {
+      db = initializeFirestore(app, {
+        experimentalForceLongPolling: true,
+      });
+  } catch (e) {
+      // Si ya está inicializado, obtenemos la instancia normal
+      db = getFirestore(app);
+  }
 }
 
 storage = getStorage(app);
