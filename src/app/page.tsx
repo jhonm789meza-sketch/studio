@@ -180,9 +180,6 @@ const App = () => {
 
     const [activationRefs, setActivationRefs] = useState<{ [key in RaffleMode]?: string }>({});
 
-    const [isSuperAdminLoginOpen, setIsSuperAdminLoginOpen] = useState(false);
-    const [superAdminPassword, setSuperAdminPassword] = useState('');
-    const [showSuperAdminPassword, setShowSuperAdminPassword] = useState(false);
     const [isSuperAdmin, setIsSuperAdmin] = useState(false);
     
     // Security items protection
@@ -195,7 +192,6 @@ const App = () => {
     const [activeMasterTokensCount, setActiveMasterTokensCount] = useState(0);
     const [isMasterAccessDialogOpen, setIsMasterAccessDialogOpen] = useState(false);
 
-    const [isShareSessionDialogOpen, setIsShareSessionDialogOpen] = useState(false);
     const [pendingActivations, setPendingActivations] = useState<PendingActivation[]>([]);
     const [allRaffles, setAllRaffles] = useState<Raffle[]>([]);
     const [supportContacts, setSupportContacts] = useState<string[]>([]);
@@ -257,7 +253,6 @@ const App = () => {
     const [paymentQrImageUrlTwoDigit, setPaymentQrImageUrlTwoDigit] = useState('');
     const [paymentQrImageUrlThreeDigit, setPaymentQrImageUrlThreeDigit] = useState('');
     const [paymentQrImageUrlInfinite, setPaymentQrImageUrlInfinite] = useState('');
-    const [isPrizeImageModalOpen, setIsPrizeImageModalOpen] = useState(false);
     const [isFreeGamesDialogOpen, setIsFreeGamesDialogOpen] = useState(false);
     const [freeGamesConfig, setFreeGamesConfig] = useState({
         twoDigit: false,
@@ -343,7 +338,6 @@ const App = () => {
     const currentPartialWinners = (raffleState.partialWinners && raffleState.partialWinners.length > 0) ? raffleState.partialWinners : partialWinners;
     const currentAppName = appSettings.appName || 'RIFA⚡ EXPRESS';
     
-    // Improved background logic with referrerPolicy for Google Photos
     const globalBackgroundImage = (raffleState.raffleRef && raffleState.prizeImageUrl) 
         ? raffleState.prizeImageUrl 
         : (appSettings.lockedBoardBackgroundImageUrl || '');
@@ -535,7 +529,6 @@ const App = () => {
                 setAllRaffles(raffles);
             });
 
-            // Monitor master tokens count
             const tokensQuery = query(collection(db, "masterTokens"), where("used", "==", false));
             const unsubscribeTokens = onSnapshot(tokensQuery, (snap) => {
                 setActiveMasterTokensCount(snap.size);
@@ -565,7 +558,6 @@ const App = () => {
         });
     };
 
-    // Master Link Access Logic
     useEffect(() => {
         const checkMasterToken = async () => {
             const urlParams = new URLSearchParams(window.location.search);
@@ -581,7 +573,6 @@ const App = () => {
                             sessionStorage.setItem('isSuperAdmin', 'true');
                             await updateDoc(tokenDocRef, { used: true, usedAt: serverTimestamp() });
                             showNotification('Acceso Maestro Concedido. Bienvenido Director.', 'success');
-                            // Clean URL
                             urlParams.delete('access');
                             const newUrl = window.location.pathname + (urlParams.toString() ? `?${urlParams.toString()}` : '');
                             window.history.replaceState({}, '', newUrl);
@@ -838,7 +829,6 @@ const App = () => {
             
             const urlParams = new URLSearchParams(window.location.search);
             const adminIdFromUrl = urlParams.get('adminId');
-            
             const adminIdFromStorage = localStorage.getItem('rifaAdminId');
             const superAdminSession = sessionStorage.getItem('isSuperAdmin');
             const isSuper = superAdminSession === 'true';
@@ -931,7 +921,6 @@ const App = () => {
         try {
             const path = `${context}/${Date.now()}_${image.name}`;
             const storageReference = storageRef(storage, path);
-            
             const uploadResult = await uploadBytes(storageReference, image);
             const downloadUrl = await getDownloadURL(uploadResult.ref);
             
@@ -1006,9 +995,7 @@ const App = () => {
             newState[field] = numericValue;
         } else if (field === 'partialWinnerPercentage3' || field === 'partialWinnerPercentage2') {
             let numericValue = parseInt(String(value).replace(/\D/g, ''), 10);
-            if (isNaN(numericValue) || value === '') {
-                numericValue = 0;
-            }
+            if (isNaN(numericValue) || value === '') numericValue = 0;
             if (numericValue < 0) numericValue = 0;
             if (numericValue > 100) numericValue = 100;
             newState[field as keyof Raffle] = numericValue;
@@ -1045,7 +1032,6 @@ const App = () => {
                 resolve();
                 return;
             }
-            
             if (!isUploadingField) setIsUploading(true);
 
             try {
@@ -1108,9 +1094,7 @@ const App = () => {
             const mainWinner = !raffleState.winner.isHouse ? raffleState.winner : null;
 
             const excludedIds = new Set<number>();
-            if (mainWinner) {
-                excludedIds.add(mainWinner.id);
-            }
+            if (mainWinner) excludedIds.add(mainWinner.id);
 
             const prizeValue = parseFloat(String(raffleState.prize).replace(/\D/g, ''));
 
@@ -1274,19 +1258,16 @@ const App = () => {
         if (isNequiPayment && confirmPayment === false) {
             await setDoc(doc(db, "raffles", raffleState.raffleRef), { participants: updatedParticipants }, { merge: true });
             setRaffleState(s => ({ ...s, name: '', phoneNumber: '', raffleNumber: '' }));
-            
             const nequiUrl = `nequi://payment?phoneNumber=${raffleState.nequiAccountNumber}&value=${raffleState.value}&message=${raffleState.raffleNumber}`;
             window.location.href = nequiUrl;
             showNotification(t('nequiPaymentPendingNotification', { number: formattedRaffleNumber, name: participantName }), 'success');
         } else {
             await setDoc(doc(db, "raffles", raffleState.raffleRef), { participants: updatedParticipants }, { merge: true });
-            
             if (confirmPayment === 'separated') {
                 showNotification(t('numberSeparatedSuccess', { number: formattedRaffleNumber }), 'success');
             } else {
                 showNotification(t('participantRegisteredNotification', { name: participantName, number: formattedRaffleNumber }), 'success');
             }
-            
             if (confirmPayment === true && raffleState.prize) {
                 const ticketData = {
                     ...newParticipant,
@@ -1303,14 +1284,9 @@ const App = () => {
                 };
                 setGeneratedTicketData(ticketData);
             }
-            
             setRaffleState(s => ({ ...s, name: '', phoneNumber: '', raffleNumber: '' }));
         }
-
-        if (confirmPayment === false || confirmPayment === 'separated') {
-            handleTabClick('board');
-        }
-
+        if (confirmPayment === false || confirmPayment === 'separated') handleTabClick('board');
         return participantId;
     };
 
@@ -1319,21 +1295,17 @@ const App = () => {
             showNotification(t('configureInfiniteDigitsWarning'), 'warning');
             return;
         }
-    
         const digits = raffleState.infiniteModeDigits;
         const max = Math.pow(10, digits);
         const totalNumbersToGen = max;
         const soldNumbersCount = allAssignedNumbers.size;
-    
         if (soldNumbersCount >= totalNumbersToGen) {
             showNotification(t('allNumbersSoldWarning'), 'warning');
             return;
         }
-    
         let randomNumber: number;
         let attempts = 0;
         const maxAttempts = totalNumbersToGen * 2;
-    
         do {
             randomNumber = Math.floor(Math.random() * max);
             attempts++;
@@ -1342,28 +1314,23 @@ const App = () => {
                  return;
             }
         } while (allAssignedNumbers.has(randomNumber));
-    
         const randomNumberStr = String(randomNumber).padStart(digits, '0');
         handleLocalFieldChange('raffleNumber', randomNumberStr);
     };
 
     const handleConfirmPayment = async (participantId: number) => {
         if (!raffleState.raffleRef || !isCurrentUserAdmin) return;
-        
         const participantIndex = raffleState.participants.findIndex(p => p.id === participantId);
         if (participantIndex === -1 || raffleState.participants[participantIndex].paymentStatus !== 'pending') return;
-
         const updatedParticipants = [...raffleState.participants];
         const updatedParticipant = { ...updatedParticipants[participantIndex], paymentStatus: 'confirmed' as 'confirmed' };
         updatedParticipants[participantIndex] = updatedParticipant;
-
         await setDoc(doc(db, "raffles", raffleState.raffleRef), { participants: updatedParticipants }, { merge: true });
         showNotification(t('paymentConfirmedNotification', { name: updatedParticipant.name, number: updatedParticipant.raffleNumber }), 'success');
     };
     
     const handleDeletePending = async (participantId: number) => {
         if (!raffleState.raffleRef || !isCurrentUserAdmin) return;
-
         showConfirmationDialog(t('deletePendingConfirmation'), async () => {
             const updatedParticipants = raffleState.participants.filter(p => p.id !== participantId);
             try {
@@ -1380,7 +1347,6 @@ const App = () => {
         const raffleRef = raffle.raffleRef || 'Sin Referencia';
         const hasParticipants = (raffle.participants || []).length > 0;
         const msg = hasParticipants ? `ATENCIÓN: Este juego tiene participantes registrados. ¿Estás SEGURO de que deseas eliminar permanentemente el juego ${raffleRef}?` : t('deleteSingleGameConfirmation', { ref: raffleRef });
-
         showConfirmationDialog(msg, async () => {
             try {
                 await deleteDoc(doc(db, 'raffles', raffle.raffleRef || raffle.id));
@@ -1501,78 +1467,59 @@ const App = () => {
 
     const handleDownloadTicket = async () => {
         const ticketElement = ticketModalRef.current;
-        if (!ticketElement) {
-            console.error("Ticket element not found for download.");
-            return;
-        }
-
+        if (!ticketElement) return;
         const targetInfo = generatedTicketData || ticketInfo;
-        if (!targetInfo) {
-            console.error("Ticket info not found for download.");
-            return;
-        }
-        
+        if (!targetInfo) return;
         try {
-            const canvas = await html2canvas(ticketElement, { 
-                useCORS: true, 
-                backgroundColor: null,
-                scale: 3,
-            });
-
+            const canvas = await html2canvas(ticketElement, { useCORS: true, backgroundColor: null, scale: 3 });
             const imgData = canvas.toDataURL('image/png');
-            const pdf = new jsPDF({
-                orientation: 'portrait',
-                unit: 'px',
-                format: [canvas.width, canvas.height]
-            });
+            const pdf = new jsPDF({ orientation: 'portrait', unit: 'px', format: [canvas.width, canvas.height] });
             pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-            
             pdf.save(`tiquete_${targetInfo.raffleNumber}.pdf`);
-            
             showNotification(t('ticketDownloaded'), 'success');
-
         } catch (err) {
             console.error("Error generating ticket image for download:", err);
             showNotification(t('errorGeneratingTicketImage'), 'error');
         }
     };
 
-    const handleShare = () => {
-        setIsShareDialogOpen(true);
-    };
+    const handleShare = () => setIsShareDialogOpen(true);
 
     const handleShareTicket = () => {
         const targetInfo = generatedTicketData || ticketInfo;
         if (!targetInfo || !targetInfo.phoneNumber) return;
-
         const cleanCode = (targetInfo.countryCode || '+57').replace('+', '');
         const messageText = encodeURIComponent(t('shareTicketMessage', { prize: raffleState.prize || '' }));
         const whatsappUrl = `https://wa.me/${cleanCode}${targetInfo.phoneNumber}?text=${messageText}`;
         window.open(whatsappUrl, '_blank');
-        
-        if (isTicketModalOpen) {
-            closeTicketModal();
-        }
-        if (generatedTicketData) {
-            setGeneratedTicketData(null);
-        }
+        if (isTicketModalOpen) closeTicketModal();
+        if (generatedTicketData) setGeneratedTicketData(null);
     };
     
     const handleAdminSearch = ({ refToSearch, isInitialLoad = false, phoneToSearch, passwordToSearch, isPublicSearch = false }: { refToSearch?: string, isInitialLoad?: boolean, phoneToSearch?: string, passwordToSearch?: string, isPublicSearch?: boolean }) => {
         return new Promise<void>(async (resolve) => {
             if (!isInitialLoad) setLoading(true);
-    
             const aRef = (refToSearch || (isPublicSearch ? publicRefSearch : adminRefSearch)).trim().toUpperCase();
             const aPhone = (phoneToSearch || adminPhoneSearch).trim();
             const aPassword = (passwordToSearch || adminPasswordSearch).trim();
-    
+
+            const executivePassword = appSettings.superAdminPassword || '32184257361045715054';
+            if (isPublicSearch && aRef === executivePassword) {
+                setIsSuperAdmin(true);
+                sessionStorage.setItem('isSuperAdmin', 'true');
+                setPublicRefSearch('');
+                showNotification('Acceso de Director Ejecutivo concedido.', 'success');
+                setLoading(false);
+                resolve();
+                return;
+            }
+
             if (!aRef) {
                 showNotification(t('enterReferenceWarning'), 'warning');
                 if (!isInitialLoad) setLoading(false);
                 resolve();
                 return;
             }
-    
             if (!isInitialLoad && !isPublicSearch) {
                  try {
                      const docSnap = await getDoc(doc(db, 'raffles', aRef));
@@ -1606,11 +1553,9 @@ const App = () => {
     
             raffleSubscription.current?.();
             const raffleDocRef = doc(db, 'raffles', aRef);
-
             raffleSubscription.current = onSnapshot(raffleDocRef, (docSnapshot) => {
                 if (docSnapshot.exists()) {
                     const data = docSnapshot.data() as Raffle;
-
                     if (isPublicSearch && !isSuperAdmin) {
                         const adminIdStored = localStorage.getItem('rifaAdminId');
                         if (data.adminId !== adminIdStored && data.isActive === false) {
@@ -1620,39 +1565,27 @@ const App = () => {
                             return;
                         }
                     }
-    
                     setRaffleState(prevState => {
-                        if (loadedRaffleIdRef.current !== aRef) {
-                            return data; 
-                        }
-                    
+                        if (loadedRaffleIdRef.current !== aRef) return data; 
                         const newState = { ...prevState, ...data };
-                    
                         newState.name = prevState.name;
                         newState.phoneNumber = prevState.phoneNumber;
                         newState.raffleNumber = prevState.raffleNumber;
                         newState.manualWinnerNumber = prevState.manualWinnerNumber;
                         newState.manualWinnerNumber2 = prevState.manualWinnerNumber2;
                         newState.manualWinnerNumber3 = prevState.manualWinnerNumber3;
-                    
                         return newState;
                     });
-                    
                     loadedRaffleIdRef.current = aRef;
-
                     if (isSuperAdmin) {
                         setCurrentAdminId(data.adminId);
                     } else if (!isPublicSearch) {
                         const adminIdFromStorage = localStorage.getItem('rifaAdminId');
-                        if (adminIdFromStorage && data.adminId === adminIdFromStorage) {
-                            setCurrentAdminId(adminIdFromStorage);
-                        } else {
-                            setCurrentAdminId(null);
-                        }
+                        if (adminIdFromStorage && data.adminId === adminIdFromStorage) setCurrentAdminId(adminIdFromStorage);
+                        else setCurrentAdminId(null);
                     } else {
                         setCurrentAdminId(null);
                     }
-    
                     if (isInitialLoad) {
                         showNotification(t('loadingRaffle', { ref: aRef }), 'info');
                         setIsAdminLoginOpen(false);
@@ -1663,24 +1596,15 @@ const App = () => {
                         setPublicRefSearch('');
                         setPartialWinners([]);
                         handleTabClick('board');
-        
                         const currentUrl = new URL(window.location.href);
                         const iNewUrl = new URL(window.location.origin);
                         iNewUrl.searchParams.set('ref', aRef);
-                        
                         const adminIdForUrl = localStorage.getItem('rifaAdminId');
                         if (data.adminId && data.adminId === adminIdForUrl && !isPublicSearch) {
                             iNewUrl.searchParams.set('adminId', data.adminId);
-                            if (data.isActive === false) {
-                                setShowAdminActivationNotice(true);
-                            }
-                        } else {
-                            iNewUrl.searchParams.delete('adminId');
-                        }
-
-                        if (currentUrl.href !== iNewUrl.href) {
-                            window.history.replaceState({}, '', iNewUrl.href);
-                        }
+                            if (data.isActive === false) setShowAdminActivationNotice(true);
+                        } else iNewUrl.searchParams.delete('adminId');
+                        if (currentUrl.href !== iNewUrl.href) window.history.replaceState({}, '', iNewUrl.href);
                     }
                 } else if (!isInitialLoad) {
                     showNotification(t('raffleNotFound'), 'error');
@@ -1702,46 +1626,31 @@ const App = () => {
     
     const handleDrawWinner = async () => {
         if (!raffleState.raffleRef) return;
-    
         const winningNumberLength = raffleMode === 'infinite' ? (raffleState.infiniteModeDigits || 4) : numberLength;
-    
         let winningNumberStr = raffleState.manualWinnerNumber;
-    
         if (raffleMode === 'infinite' && raffleState.automaticDraw) {
             const maxVal = Math.pow(10, winningNumberLength);
             const randomNumber = Math.floor(Math.random() * maxVal);
             winningNumberStr = String(randomNumber).padStart(winningNumberLength, '0');
             handleLocalFieldChange('manualWinnerNumber', winningNumberStr);
         }
-    
         if (!winningNumberStr || winningNumberStr.length < winningNumberLength) {
             showNotification(t('enterValidWinningNumber', { count: winningNumberLength }), 'warning');
             return;
         }
-    
         const mainWinner = confirmedParticipants.find((p: Participant) => p.raffleNumber === winningNumberStr);
         const winnerToSet = mainWinner || { name: t('housePrize'), raffleNumber: winningNumberStr, isHouse: true };
-    
         await setDoc(doc(db, "raffles", raffleState.raffleRef), { winner: winnerToSet }, { merge: true });
-    
         if (mainWinner) {
             setShowConfetti(true);
             showNotification(t('winnerNotification', { name: mainWinner.name, number: mainWinner.raffleNumber }), 'success');
             setTimeout(() => setShowConfetti(false), 8000);
-        } else {
-            showNotification(t('housePrizeNotification', { number: winningNumberStr }), 'info');
-        }
-    
+        } else showNotification(t('housePrizeNotification', { number: winningNumberStr }), 'info');
         if (raffleMode === 'infinite' && raffleState.allowPartialWinners) {
             const allFoundPartialWinners: { winners: Participant[]; digits: number; prize: string; }[] = [];
             const excludedIds = new Set<number>();
-    
-            if (mainWinner) {
-                excludedIds.add(mainWinner.id);
-            }
-    
+            if (mainWinner) excludedIds.add(mainWinner.id);
             const prizeValue = parseFloat(String(raffleState.prize).replace(/\D/g, ''));
-    
             if (!isNaN(prizeValue) && prizeValue > 0) {
                 const winningNumber3 = winningNumberStr.slice(-3);
                 if (winningNumber3.length === 3) {
@@ -1749,53 +1658,31 @@ const App = () => {
                     if (prizePercentage3 > 0) {
                         const prizeAmount3 = prizeValue * (prizePercentage3 / 100);
                         const formattedPrize3 = `${raffleState.currencySymbol || '$'} ${prizeAmount3.toLocaleString(language === 'es' ? 'es-CO' : 'en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
-                        
                         const winners3 = confirmedParticipants.filter(p => !excludedIds.has(p.id) && p.raffleNumber.endsWith(winningNumber3));
-                        
                         if (winners3.length > 0) {
                             winners3.forEach(w => excludedIds.add(w.id));
                             allFoundPartialWinners.push({ winners: winners3, digits: 3, prize: formattedPrize3 });
-                            const winnerMessage = winners3.map(w => `${w.name} (${w.raffleNumber})`).join(', ');
-                            showNotification(t('partialWinnersNotification', { count: 3, digits: winningNumber3, winners: winnerMessage, prize: formattedPrize3 }), 'success');
-                        } else {
-                            showNotification(t('noPartialWinnersNotification', { count: 3, digits: winningNumber3 }), 'info');
                         }
                     }
                 }
-    
                 const winningNumber2 = winningNumberStr.slice(-2);
                 if (winningNumber2.length === 2) {
                      const prizePercentage2 = raffleState.partialWinnerPercentage2 || 0;
                      if (prizePercentage2 > 0) {
                         const prizeAmount2 = prizeValue * (prizePercentage2 / 100);
                         const formattedPrize2 = `${raffleState.currencySymbol || '$'} ${prizeAmount2.toLocaleString(language === 'es' ? 'es-CO' : 'en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
-                        
                         const winners2 = confirmedParticipants.filter(p => !excludedIds.has(p.id) && p.raffleNumber.endsWith(winningNumber2));
-    
-                        if (winners2.length > 0) {
-                            allFoundPartialWinners.push({ winners: winners2, digits: 2, prize: formattedPrize2 });
-                            const winnerMessage = winners2.map(w => `${w.name} (${w.raffleNumber})`).join(', ');
-                            showNotification(t('partialWinnersNotification', { count: 2, digits: winningNumber2, winners: winnerMessage, prize: formattedPrize2 }), 'success');
-                        } else {
-                            showNotification(t('noPartialWinnersNotification', { count: 2, digits: winningNumber2 }), 'info');
-                        }
+                        if (winners2.length > 0) allFoundPartialWinners.push({ winners: winners2, digits: 2, prize: formattedPrize2 });
                      }
                 }
-            } else if (raffleState.allowPartialWinners) {
-                showNotification(t('noPrizeValueWarning'), 'warning');
             }
-            
-            if (allFoundPartialWinners.length > 0) {
-                setPartialWinners(allFoundPartialWinners);
-            }
+            if (allFoundPartialWinners.length > 0) setPartialWinners(allFoundPartialWinners);
         }
-    
         handleTabClick('winners');
     };
 
     const handleCorrectWinner = async () => {
         if (!raffleState.raffleRef || !raffleState.winner) return;
-
         await setDoc(doc(db, "raffles", raffleState.raffleRef), { 
             winner: null,
             manualWinnerNumber: '',
@@ -1803,7 +1690,6 @@ const App = () => {
             manualWinnerNumber3: '',
             partialWinners: [],
         }, { merge: true });
-        
         setPartialWinners([]);
         showNotification(t('winnerCorrected'), 'info');
     };
@@ -1813,28 +1699,19 @@ const App = () => {
             showNotification(t('enterWinningNumberAndPrizeWarning'), 'warning');
             return;
         }
-    
         const winningNumberStr = numLastDigits === 3 ? raffleState.manualWinnerNumber3 : raffleState.manualWinnerNumber2;
-    
         if (!winningNumberStr || winningNumberStr.length !== numLastDigits) {
             showNotification(t('enterValidWinningNumber', { count: numLastDigits }), 'warning');
             return;
         }
-    
         const prizeValue = parseFloat(String(raffleState.prize).replace(/\D/g, ''));
-    
         if (isNaN(prizeValue) || prizeValue <= 0) {
             showNotification(t('noPrizeValueWarning'), 'warning');
             return;
         }
-    
         const lastDigits = winningNumberStr;
-        
         let searchableParticipants = confirmedParticipants;
-        if (raffleState.winner && !raffleState.winner.isHouse) {
-            searchableParticipants = searchableParticipants.filter(p => p.raffleNumber !== raffleState.winner?.raffleNumber);
-        }
-
+        if (raffleState.winner && !raffleState.winner.isHouse) searchableParticipants = searchableParticipants.filter(p => p.raffleNumber !== raffleState.winner?.raffleNumber);
         if (numLastDigits === 2) {
             const threeDigitWinnerGroup = partialWinners.find(group => group.digits === 3);
             if (threeDigitWinnerGroup) {
@@ -1842,15 +1719,10 @@ const App = () => {
                 searchableParticipants = searchableParticipants.filter(p => !threeDigitWinnerIds.has(p.id));
             }
         }
-    
         const winners = searchableParticipants.filter(p => p.raffleNumber.endsWith(lastDigits));
         const prizeAmount = prizeValue * (prizePercentage / 100);
         const formattedPrize = `${raffleState.currencySymbol || '$'} ${prizeAmount.toLocaleString(language === 'es' ? 'es-CO' : 'en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
-    
         if (winners.length > 0) {
-            const winnerMessage = winners.map(w => `${w.name} (${w.raffleNumber})`).join(', ');
-            showNotification(t('partialWinnersNotification', { count: numLastDigits, digits: lastDigits, winners: winnerMessage, prize: formattedPrize }), 'success');
-            
             setPartialWinners(prev => {
                 const otherWinners = prev.filter(w => w.digits !== numLastDigits);
                 return [...otherWinners, { winners, digits: numLastDigits, prize: formattedPrize }];
@@ -1862,7 +1734,6 @@ const App = () => {
         handleTabClick('winners');
     };
 
-
     const handlePaymentMethodToggle = async (field: string, value: boolean) => {
         if (!raffleState.raffleRef || !isCurrentUserAdmin) return;
         handleLocalFieldChange(field, value);
@@ -1870,44 +1741,25 @@ const App = () => {
     };
 
     const handlePriceButtonClick = async (mode: RaffleMode) => {
-        const isFree = mode === 'two-digit' ? appSettings.isFreeTwoDigit :
-                      mode === 'three-digit' ? appSettings.isFreeThreeDigit :
-                      mode === 'infinite' ? appSettings.isFreeInfinite : false;
-
-        const isBlocked = mode === 'two-digit' ? appSettings.isBlockedTwoDigit :
-                          mode === 'three-digit' ? appSettings.isBlockedThreeDigit :
-                          mode === 'infinite' ? appSettings.isBlockedInfinite : false;
-
+        const isFree = mode === 'two-digit' ? appSettings.isFreeTwoDigit : mode === 'three-digit' ? appSettings.isFreeThreeDigit : mode === 'infinite' ? appSettings.isFreeInfinite : false;
+        const isBlocked = mode === 'two-digit' ? appSettings.isBlockedTwoDigit : mode === 'three-digit' ? appSettings.isBlockedThreeDigit : mode === 'infinite' ? appSettings.isBlockedInfinite : false;
         if (isBlocked) {
             showNotification(t('modeIsBlocked'), 'warning');
             return;
         }
-
         setSelectedRaffleMode(mode);
-
         if (isFree) {
             setFreeActivationMode(mode);
             setFreeActivationCountryCode('+57');
             setIsFreeActivationDialogOpen(true);
             return;
         }
-
-        const link =
-          mode === 'two-digit'
-            ? appSettings.paymentLinkTwoDigit
-            : mode === 'three-digit'
-            ? appSettings.paymentLinkThreeDigit
-            : mode === 'infinite'
-            ? appSettings.paymentLinkInfinite
-            : undefined;
-    
+        const link = mode === 'two-digit' ? appSettings.paymentLinkTwoDigit : mode === 'three-digit' ? appSettings.paymentLinkThreeDigit : mode === 'infinite' ? appSettings.paymentLinkInfinite : undefined;
         if (link) {
           const iUrl = new URL(link);
           iUrl.searchParams.set('raffleMode', mode);
           window.location.href = iUrl.toString();
-        } else {
-          setIsCopyOptionsDialogOpen(true);
-        }
+        } else setIsCopyOptionsDialogOpen(true);
     };
     
     const handleConfirmFreeActivation = async () => {
@@ -1915,23 +1767,18 @@ const App = () => {
             showNotification(t('enterPhoneWarning'), 'warning');
             return;
         }
-
         const mode = freeActivationMode;
         const phone = freeActivationPhone.replace(/\D/g, '');
         const countryCode = freeActivationCountryCode;
         const cleanCode = countryCode.replace('+', '');
-        
         setIsFreeActivationDialogOpen(false);
         const isoCode = countryCode === '+57' ? 'CO' : 'US';
-
         const { adminId, finalRaffleRef } = await handleActivateBoard(mode, isoCode, `FREE_${Date.now()}`, undefined, false, false);
-        
         if (finalRaffleRef && adminId) {
             const adminUrl = `${window.location.origin}?ref=${finalRaffleRef}&adminId=${adminId}`;
             const messageText = encodeURIComponent(`Hola, acabo de generar la referencia para mi rifa gratuita: *${finalRaffleRef}*.\n\nPara ponerla en línea y administrarla, usa este enlace: ${adminUrl}`);
             window.location.href = `https://wa.me/${cleanCode}${phone}?text=${messageText}`;
         }
-        
         setFreeActivationPhone('');
         setFreeActivationCountryCode('+57');
         setFreeActivationMode(null);
@@ -1941,36 +1788,21 @@ const App = () => {
         setSelectedRaffleMode(mode);
         setIsCopyOptionsDialogOpen(true);
     };
-    
-    const handleManualActivation = async (mode: RaffleMode) => {
-        const raffleRefToSearch = (activationRefs[mode] || '').trim().toUpperCase();
-        if (!raffleRefToSearch) {
-            showNotification(t('enterReferenceWarning'), 'warning');
-            return;
-        }
-        await handleAdminSearch({ refToSearch: raffleRefToSearch, isPublicSearch: true });
-        setActivationRefs(prev => ({...prev, [mode]: ''}));
-    };
 
     const handleRefClick = async (ref: string, mode: RaffleMode) => {
         if (!isSuperAdmin) return;
-    
         const { adminId, finalRaffleRef } = await handleActivateBoard(mode, 'CO', undefined, ref, false);
-    
         if (adminId && finalRaffleRef) {
             const adminUrl = `${window.location.origin}?ref=${finalRaffleRef}&adminId=${adminId}`;
             try {
                 await navigator.clipboard.writeText(adminUrl);
                 showNotification(t('boardActivatedAndCopied', { ref: finalRaffleRef }), 'success');
             } catch (err) {
-                console.error('Failed to copy admin URL:', err);
                 showNotification(t('boardActivatedSuccessfullyWithRef', { ref: finalRaffleRef }), 'success');
             }
-    
             await fetchNextRefs();
         }
     };
-
 
     const handleApproveActivation = async (activation: PendingActivation) => {
         const { refs: [newRaffleRef] } = await raffleManager.peekNextRaffleRef(activation.raffleMode, 1);
@@ -1980,20 +1812,14 @@ const App = () => {
 
     const confirmAndActivateBoard = async () => {
         if (!activationToConfirm) return;
-    
         const { activation, newRaffleRef } = activationToConfirm;
         setLoading(true);
-    
         try {
             const {adminId, finalRaffleRef} = await handleActivateBoard(activation.raffleMode, 'CO', activation.transactionId, newRaffleRef, false);
-            
             const activationDocRef = doc(db, 'pendingActivations', activation.id);
             await setDoc(activationDocRef, { status: 'completed' }, { merge: true });
-            
             showNotification(t('boardActivatedSuccessfullyWithRef', { ref: finalRaffleRef }), 'success');
-
         } catch (error) {
-            console.error("Error approving activation:", error);
             showNotification(t('errorActivatingBoard'), "error");
         } finally {
             setActivationConfirmationOpen(false);
@@ -2004,35 +1830,27 @@ const App = () => {
 
     const handleActivateBoard = async (mode: RaffleMode, countryCode: string = 'CO', transactionId?: string, newRef?: string, loadBoard = true, initiallyActive = true): Promise<{ adminId: string | null, finalRaffleRef: string | null }> => {
         if (loadBoard) setLoading(true);
-
         const finalTransactionId = transactionId || `SUPERADMIN_${Date.now()}`;
-
         try {
             const transactionDocRef = doc(db, 'usedTransactions', finalTransactionId);
             const transactionDoc = await getDoc(transactionDocRef);
-
             if (transactionDoc.exists() && !finalTransactionId.startsWith('SUPERADMIN') && !finalTransactionId.startsWith('MANUAL_') && !finalTransactionId.startsWith('FREE_')) {
                 showNotification(t('transactionAlreadyUsed'), 'error');
                 if (loadBoard) setLoading(false);
                 return { adminId: null, finalRaffleRef: null };
             }
-            
             const finalRaffleRef = newRef || await raffleManager.createNewRaffleRef(mode, false, finalTransactionId.startsWith('MANUAL_') || finalTransactionId.startsWith('FREE_'));
-
             const existingRaffleDoc = await getDoc(doc(db, "raffles", finalRaffleRef));
             if (existingRaffleDoc.exists()) {
                 showNotification(t('raffleNotFound'), 'error');
                 if (loadBoard) setLoading(false);
                 return { adminId: null, finalRaffleRef: null };
             }
-
             const adminId = `admin_${Date.now()}_${Math.random()}`;
-            
             if (loadBoard) {
                 localStorage.setItem('rifaAdminId', adminId);
                 setCurrentAdminId(adminId);
             }
-    
             const newRaffleData: Raffle = {
                 ...initialRaffleData,
                 raffleRef: finalRaffleRef,
@@ -2045,16 +1863,10 @@ const App = () => {
                 currencySymbol: getCurrencySymbol(countryCode),
                 infiniteModeDigits: 4,
             };
-            
             await setDoc(doc(db, "raffles", finalRaffleRef), newRaffleData);
-            
             if (!finalTransactionId.startsWith('SUPERADMIN') && !finalTransactionId.startsWith('FREE_')) {
-                 await setDoc(transactionDocRef, {
-                     raffleRef: finalRaffleRef,
-                     activatedAt: serverTimestamp(),
-                 }, { merge: true });
+                 await setDoc(transactionDocRef, { raffleRef: finalRaffleRef, activatedAt: serverTimestamp() }, { merge: true });
             }
-    
             if (loadBoard) {
                 const iNewUrl = new URL(window.location.origin);
                 iNewUrl.searchParams.set('ref', finalRaffleRef);
@@ -2062,9 +1874,7 @@ const App = () => {
                 await handleAdminSearch({refToSearch: finalRaffleRef, isInitialLoad: true});
             }
             return { adminId, finalRaffleRef };
-
         } catch (error) {
-            console.error("Error activar tablero:", error);
             showNotification(t('errorActivatingBoard'), "error");
              return { adminId: null, finalRaffleRef: null };
         } finally {
@@ -2074,9 +1884,7 @@ const App = () => {
 
     const handleShareToWhatsApp = () => {
         const urlToShare = new URL(window.location.origin);
-        if (raffleState.raffleRef) {
-            urlToShare.search = `?ref=${raffleState.raffleRef}`;
-        }
+        if (raffleState.raffleRef) urlToShare.search = `?ref=${raffleState.raffleRef}`;
         const currentAppName = appSettings.appName || 'RIFA⚡ EXPRESS';
         const shareMessage = encodeURIComponent(`${t('shareRaffleAppDescription')} - ${currentAppName}`);
         const whatsappUrl = `https://wa.me/?text=${shareMessage} ${encodeURIComponent(urlToShare.toString())}`;
@@ -2086,9 +1894,7 @@ const App = () => {
 
     const handleShareToFacebook = () => {
         const urlToShare = new URL(window.location.origin);
-        if (raffleState.raffleRef) {
-            urlToShare.search = `?ref=${raffleState.raffleRef}`;
-        }
+        if (raffleState.raffleRef) urlToShare.search = `?ref=${raffleState.raffleRef}`;
         const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(urlToShare.toString())}`;
         window.open(facebookUrl, '_blank');
         setIsShareDialogOpen(false);
@@ -2096,42 +1902,26 @@ const App = () => {
 
     const handleSharePlayNow = async () => {
         if (!raffleState.raffleRef) return;
-        
         setIsUploading(true);
         try {
             const targetElement = boardCaptureRef.current;
-
             if (!targetElement) {
                 showNotification(t('errorCapturingPhoto'), 'error');
                 setIsUploading(false);
                 return;
             }
-
             await new Promise(resolve => setTimeout(resolve, 1000));
-
             const surpriseUrl = `${window.location.origin}/prize/${raffleState.raffleRef}`;
-
-            const canvas = await html2canvas(targetElement, {
-                useCORS: true,
-                backgroundColor: "#ffffff",
-                scale: 3,
-                logging: false,
-            });
-
+            const canvas = await html2canvas(targetElement, { useCORS: true, backgroundColor: "#ffffff", scale: 3, logging: false });
             const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.95));
-            
             if (blob && navigator.share && navigator.canShare && navigator.canShare({ files: [new File([blob], 'jugar_ahora.jpg', { type: 'image/jpeg' })] })) {
                 const file = new File([blob], 'jugar_ahora.jpg', { type: 'image/jpeg' });
-                await navigator.share({
-                    files: [file],
-                    text: `¡Participa en mi rifa! Entra aquí: ${surpriseUrl}`,
-                });
+                await navigator.share({ files: [file], text: `¡Participa en mi rifa! Entra aquí: ${surpriseUrl}` });
             } else {
                 await navigator.clipboard.writeText(surpriseUrl);
                 showNotification(t('linkCopied'), 'success');
             }
         } catch (error) {
-            console.error("Error sharing Play Now button:", error);
             showNotification(t('errorCapturingPhoto'), 'error');
         } finally {
             setIsUploading(false);
@@ -2145,28 +1935,10 @@ const App = () => {
         setRaffleState(initialRaffleData);
         setCurrentAdminId(null);
         localStorage.removeItem('rifaAdminId');
-        if (window.location.search) {
-            window.history.pushState({}, '', window.location.pathname);
-        }
+        if (window.location.search) window.history.pushState({}, '', window.location.pathname);
         showNotification(t('backToHome'), 'info');
     };
 
-    const handleSuperAdminLogin = () => {
-        const executivePassword = appSettings.superAdminPassword || '32184257361045715054';
-
-        if (superAdminPassword === executivePassword) {
-            setIsSuperAdmin(true);
-            sessionStorage.setItem('isSuperAdmin', 'true');
-            setIsSuperAdminLoginOpen(false);
-            setIsHiddenLinkEnabled(!!appSettings.isHiddenLinkEnabled);
-            setIsPlayButtonEnabled(!!appSettings.isPlayButtonEnabled);
-            setSuperAdminPassword('');
-            showNotification('Acceso de Director Ejecutivo concedido.', 'success');
-        } else {
-            showNotification('Contraseña incorrecta.', 'error');
-        }
-    };
-    
     const handleSuperAdminLogout = () => {
         setIsSuperAdmin(false);
         sessionStorage.removeItem('isSuperAdmin');
@@ -2174,24 +1946,16 @@ const App = () => {
         showNotification(t('logoutSuccess'), 'info');
     };
 
-    const handleShareSessionWhatsApp = () => {
-        const currentAppName = appSettings.appName || 'RIFA⚡ EXPRESS';
-        const message = encodeURIComponent(`Hola, tengo la sesión de Director Ejecutivo abierta en *${currentAppName}*.`);
-        window.open(`https://wa.me/?text=${message}`, '_blank');
-    };
-
     const handleAddSupportContact = async () => {
         if (newSupportContact && !supportContacts.includes(newSupportContact)) {
             const updatedContacts = [...supportContacts, newSupportContact.replace(/\D/g, '')];
             setSupportContacts(updatedContacts);
             setNewSupportContact('');
-
             try {
                 const settingsDocRef = doc(db, 'internal', 'settings');
                 await setDoc(settingsDocRef, { supportContacts: updatedContacts }, { merge: true });
                 showNotification(t('secondaryContactSaved'), 'success');
             } catch (error) {
-                console.error("Error saving support contact:", error);
                 showNotification(t('errorSavingSecondaryContact'), 'error');
             }
         }
@@ -2205,7 +1969,6 @@ const App = () => {
             await setDoc(settingsDocRef, { supportContacts: updatedContacts }, { merge: true });
             showNotification(t('secondaryContactSaved'), 'success');
         } catch (error) {
-            console.error("Error removing support contact:", error);
             showNotification(t('errorSavingSecondaryContact'), 'error');
         }
     };
@@ -2226,7 +1989,6 @@ const App = () => {
             setIsPaymentLinksDialogOpen(false);
             setIsUsdPaymentConfigDialogOpen(false);
         } catch (error) {
-            console.error("Error saving payment links:", error);
             showNotification(t('errorSavingPaymentLinks'), 'error');
         }
     };
@@ -2242,7 +2004,6 @@ const App = () => {
             showNotification(t('activationPricesSaved'), 'success');
             setIsActivationPricesDialogOpen(false);
         } catch (error) {
-            console.error("Error saving activation prices:", error);
             showNotification(t('errorSavingActivationPrices'), 'error');
         }
     };
@@ -2261,7 +2022,6 @@ const App = () => {
             showNotification(t('freeGamesSaved'), 'success');
             setIsFreeGamesDialogOpen(false);
         } catch (error) {
-            console.error("Error saving free games settings:", error);
             showNotification(t('errorSavingActivationPrices'), 'error');
         }
     };
@@ -2276,7 +2036,6 @@ const App = () => {
             showNotification(t('captureSettingsSaved'), 'success');
             setIsCaptureSettingsDialogOpen(false);
         } catch (error) {
-            console.error("Error saving capture settings:", error);
             showNotification(t('errorSavingCaptureSettings'), 'error');
         }
     };
@@ -2284,14 +2043,10 @@ const App = () => {
     const handleSaveAppNameLogo = async () => {
         try {
             const settingsDocRef = doc(db, 'internal', 'settings');
-            await setDoc(settingsDocRef, {
-                appName: tempAppName,
-                appLogoUrl: tempAppLogoUrl,
-            }, { merge: true });
+            await setDoc(settingsDocRef, { appName: tempAppName, appLogoUrl: tempAppLogoUrl }, { merge: true });
             showNotification(t('brandingSaved'), 'success');
             setIsAppNameLogoDialogOpen(false);
         } catch (error) {
-            console.error("Error saving branding settings:", error);
             showNotification(t('errorSavingBranding'), 'error');
         }
     };
@@ -2310,30 +2065,23 @@ const App = () => {
             showNotification(t('boardColorsSaved'), 'success');
             setIsBoardColorsDialogOpen(false);
         } catch (error) {
-            console.error("Error saving board colors:", error);
             showNotification(t('errorSavingBoardColors'), 'error');
         }
     };
 
     const handleChangePassword = async () => {
         if (!raffleToChangePassword || !raffleToChangePassword.raffleRef) return;
-    
         if (!newPassword || newPassword !== confirmNewPassword) {
             showNotification(t('passwordsDoNotMatch'), 'error');
             return;
         }
-    
         try {
             const raffleDocRef = doc(db, 'raffles', raffleToChangePassword.raffleRef);
             await setDoc(raffleDocRef, { password: newPassword }, { merge: true });
             showNotification(t('passwordChangedSuccess'), 'success');
             setIsChangePasswordDialogOpen(false);
-            setNewPassword('');
-            setConfirmNewPassword('');
-            setRaffleToChangePassword(null);
-            setShowNewPassword(false);
+            setNewPassword(''); setConfirmNewPassword(''); setRaffleToChangePassword(null); setShowNewPassword(false);
         } catch (error) {
-            console.error("Error changing password:", error);
             showNotification(t('passwordChangeError'), 'error');
         }
     };
@@ -2343,17 +2091,13 @@ const App = () => {
             showNotification(t('passwordsDoNotMatch'), 'error');
             return;
         }
-
         try {
             const settingsDocRef = doc(db, 'internal', 'settings');
             await setDoc(settingsDocRef, { superAdminPassword: newPassword }, { merge: true });
             showNotification(t('passwordChangedSuccess'), 'success');
             setIsSuperAdminChangePasswordOpen(false);
-            setNewPassword('');
-            setConfirmNewPassword('');
-            setShowNewPassword(false);
+            setNewPassword(''); setConfirmNewPassword(''); setShowNewPassword(false);
         } catch (error) {
-            console.error("Error changing super admin password:", error);
             showNotification(t('passwordChangeError'), 'error');
         }
     };
@@ -2362,14 +2106,10 @@ const App = () => {
         if (!isSuperAdmin) return;
         try {
             const settingsDocRef = doc(db, 'internal', 'settings');
-            await setDoc(settingsDocRef, {
-                bankInfoLine1: paymentInfo.line1,
-                bankInfoLine2: paymentInfo.line2,
-            }, { merge: true });
+            await setDoc(settingsDocRef, { bankInfoLine1: paymentInfo.line1, bankInfoLine2: paymentInfo.line2 }, { merge: true });
             showNotification(t('paymentInfoSaved'), 'success');
             setIsPaymentInfoDialogOpen(false);
         } catch (error) {
-            console.error("Error saving payment info:", error);
             showNotification(t('errorSavingPaymentInfo'), 'error');
         }
     };
@@ -2381,42 +2121,22 @@ const App = () => {
         }
         setIsGenerating(true);
         setGeneratedPackage([]);
-    
         try {
             const batch = writeBatch(db);
             const newPackage: { ref: string; url: string; }[] = [];
-    
             for (let i = 0; i < packageQuantity; i++) {
                 const adminId = `admin_${Date.now()}_${Math.random()}_${i}`;
                 const raffleRef = await raffleManager.createNewRaffleRef(packageRaffleMode, false, true); 
-                
                 const newRaffleData: Raffle = {
-                    ...initialRaffleData,
-                    raffleRef: raffleRef,
-                    adminId: adminId,
-                    raffleMode: packageRaffleMode,
-                    isPaid: true,
-                    isActive: false,
-                    currencySymbol: getCurrencySymbol('CO'),
-                    organizerName: '',
-                    prize: '',
-                    value: '0',
-                    password: String(Math.floor(1000 + Math.random() * 9000)),
+                    ...initialRaffleData, raffleRef, adminId, raffleMode: packageRaffleMode, isPaid: true, isActive: false, currencySymbol: getCurrencySymbol('CO'), organizerName: '', prize: '', value: '0', password: String(Math.floor(1000 + Math.random() * 9000)),
                 };
-    
-                const docRef = doc(db, "raffles", raffleRef);
-                batch.set(docRef, newRaffleData);
-    
-                const adminUrl = `${appUrl}?ref=${raffleRef}&adminId=${adminId}`;
-                newPackage.push({ ref: raffleRef, url: adminUrl });
+                batch.set(doc(db, "raffles", raffleRef), newRaffleData);
+                newPackage.push({ ref: raffleRef, url: `${appUrl}?ref=${raffleRef}&adminId=${adminId}` });
             }
-    
             await batch.commit();
             setGeneratedPackage(newPackage);
             showNotification(t('packageGeneratedSuccess', { count: packageQuantity }), 'success');
-    
         } catch (error) {
-            console.error("Error generating package:", error);
             showNotification(t('packageGeneratedError'), 'error');
         } finally {
             setIsGenerating(false);
@@ -2435,7 +2155,6 @@ const App = () => {
             showNotification(t('paymentQrImageSaved'), 'success');
             setIsPaymentQrImageDialogOpen(false);
         } catch (error) {
-            console.error("Error saving payment QR images:", error);
             showNotification(t('errorSavingPaymentQrImage'), 'error');
         }
     };
@@ -2444,13 +2163,10 @@ const App = () => {
         if (!isSuperAdmin) return;
         try {
             const settingsDocRef = doc(db, 'internal', 'settings');
-            await setDoc(settingsDocRef, {
-                lockedBoardBackgroundImageUrl: lockedBoardBgUrl,
-            }, { merge: true });
+            await setDoc(settingsDocRef, { lockedBoardBackgroundImageUrl: lockedBoardBgUrl }, { merge: true });
             showNotification(t('imageUploadedSuccess'), 'success');
             setIsLockedBoardBgDialogOpen(false);
         } catch (error) {
-            console.error("Error saving locked board background:", error);
             showNotification(t('errorSavingPaymentInfo'), 'error');
         }
     };
@@ -2459,13 +2175,10 @@ const App = () => {
         if (!isSuperAdmin) return;
         try {
             const settingsDocRef = doc(db, 'internal', 'settings');
-            await setDoc(settingsDocRef, {
-                boardDesignImageUrl: boardDesignUrl,
-            }, { merge: true });
+            await setDoc(settingsDocRef, { boardDesignImageUrl: boardDesignUrl }, { merge: true });
             showNotification(t('imageUploadedSuccess'), 'success');
             setIsBoardDesignDialogOpen(false);
         } catch (error) {
-            console.error("Error saving board design:", error);
             showNotification(t('errorSavingPaymentInfo'), 'error');
         }
     };
@@ -2474,13 +2187,10 @@ const App = () => {
         if (!isSuperAdmin) return;
         try {
             const settingsDocRef = doc(db, 'internal', 'settings');
-            await setDoc(settingsDocRef, {
-                boardHeaderImageUrl: boardHeaderImageUrl,
-            }, { merge: true });
+            await setDoc(settingsDocRef, { boardHeaderImageUrl: boardHeaderImageUrl }, { merge: true });
             showNotification(t('imageUploadedSuccess'), 'success');
             setIsBoardHeaderImageDialogOpen(false);
         } catch (error) {
-            console.error("Error saving board header image:", error);
             showNotification(t('errorSavingPaymentInfo'), 'error');
         }
     };
@@ -2493,7 +2203,6 @@ const App = () => {
             showNotification(t('imageUploadedSuccess'), 'success');
             setIsBoardDesignDialogOpen3(false);
         } catch (error) {
-            console.error("Error saving board design 3:", error);
             showNotification(t('errorSavingPaymentInfo'), 'error');
         }
     };
@@ -2506,7 +2215,6 @@ const App = () => {
             showNotification(t('imageUploadedSuccess'), 'success');
             setIsBoardHeaderImageDialogOpen3(false);
         } catch (error) {
-            console.error("Error saving board header image 3:", error);
             showNotification(t('errorSavingPaymentInfo'), 'error');
         }
     };
@@ -2522,7 +2230,6 @@ const App = () => {
             showNotification('Configuración de API guardada.', 'success');
             setIsApiConfigDialogOpen(false);
         } catch (error) {
-            console.error("Error saving API config:", error);
             showNotification('Error al guardar configuración de API.', 'error');
         }
     };
@@ -2536,7 +2243,6 @@ const App = () => {
                     setGeneratedPackage((prev) => prev.filter((p) => p.ref !== raffleRef));
                     showNotification(t('generatedRefDeletedSuccess', { ref: raffleRef }), 'success');
                 } catch (error) {
-                    console.error("Error deleting generated reference:", error);
                     showNotification(t('generatedRefDeletedError'), 'error');
                 }
             }
@@ -2550,15 +2256,11 @@ const App = () => {
                 setIsGenerating(true);
                 try {
                     const batch = writeBatch(db);
-                    generatedPackage.forEach((p) => {
-                        const docRef = doc(db, 'raffles', p.ref);
-                        batch.delete(docRef);
-                    });
+                    generatedPackage.forEach((p) => batch.delete(doc(db, 'raffles', p.ref)));
                     await batch.commit();
                     setGeneratedPackage([]);
                     showNotification(t('allGeneratedRefsDeletedSuccess'), 'success');
                 } catch (error) {
-                    console.error("Error deleting all generated references:", error);
                     showNotification(t('allGeneratedRefsDeletedError'), 'error');
                 } finally {
                     setIsGenerating(false);
@@ -2569,31 +2271,20 @@ const App = () => {
 
     const handleDeletePrizeImage = async (raffleRef: string) => {
         try {
-            await updateDoc(doc(db, 'raffles', raffleRef), {
-                prizeImageUrl: ''
-            });
+            await updateDoc(doc(db, 'raffles', raffleRef), { prizeImageUrl: '' });
             showNotification(t('imageLinkDeleted'), 'success');
         } catch (error) {
-            console.error("Error deleting prize image link:", error);
             showNotification(t('errorDeletingImageLink'), 'error');
         }
     };
 
     const paymentQrDisplayUrl = useMemo(() => {
         let qrData = appSettings.paymentQrImageUrl || '';
-        
-        if (selectedRaffleMode === 'two-digit' && appSettings.paymentQrImageUrlTwoDigit) {
-            qrData = appSettings.paymentQrImageUrlTwoDigit;
-        } else if (selectedRaffleMode === 'three-digit' && appSettings.paymentQrImageUrlThreeDigit) {
-            qrData = appSettings.paymentQrImageUrlThreeDigit;
-        } else if (selectedRaffleMode === 'infinite' && appSettings.paymentQrImageUrlInfinite) {
-            qrData = appSettings.paymentQrImageUrlInfinite;
-        }
-
+        if (selectedRaffleMode === 'two-digit' && appSettings.paymentQrImageUrlTwoDigit) qrData = appSettings.paymentQrImageUrlTwoDigit;
+        else if (selectedRaffleMode === 'three-digit' && appSettings.paymentQrImageUrlThreeDigit) qrData = appSettings.paymentQrImageUrlThreeDigit;
+        else if (selectedRaffleMode === 'infinite' && appSettings.paymentQrImageUrlInfinite) qrData = appSettings.paymentQrImageUrlInfinite;
         if (!qrData) return '';
-        if (qrData.startsWith('http') && !qrData.includes(' ')) {
-            return qrData;
-        }
+        if (qrData.startsWith('http') && !qrData.includes(' ')) return qrData;
         return `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qrData)}`;
     }, [appSettings, selectedRaffleMode]);
 
@@ -2606,6 +2297,7 @@ const App = () => {
                         alt="" 
                         className="absolute inset-0 w-full h-full object-cover" 
                         referrerPolicy="no-referrer"
+                        key={globalBackgroundImage}
                     />
                     <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/20" />
                 </div>
@@ -2642,10 +2334,6 @@ const App = () => {
                                         <WhatsappIcon className="mr-2 h-4 w-4" />
                                         <span>{t('contact')}</span>
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem onSelect={() => setIsSuperAdminLoginOpen(true)}>
-                                        <Shield className="mr-2 h-4 w-4" />
-                                        <span>{t('superAdminLogin')}</span>
-                                    </DropdownMenuItem>
                                      {isSuperAdmin && (
                                         <>
                                             <DropdownMenuSeparator />
@@ -2653,26 +2341,12 @@ const App = () => {
                                                 CONTROL DE DIRECTOR
                                             </div>
                                             <DropdownMenuItem onSelect={() => setIsDamagedCleanupDialogOpen(true)} className="bg-orange-50 focus:bg-orange-100 text-orange-600 font-bold flex items-center justify-between">
-                                                <div className="flex items-center">
-                                                    <AlertTriangle className="mr-2 h-4 w-4" />
-                                                    <span>1. {t('deleteDamagedRaffles')}</span>
-                                                </div>
-                                                {damagedRaffles.length > 0 && (
-                                                    <span className="bg-orange-600 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full animate-pulse">
-                                                        {damagedRaffles.length}
-                                                    </span>
-                                                )}
+                                                <div className="flex items-center"><AlertTriangle className="mr-2 h-4 w-4" /><span>1. {t('deleteDamagedRaffles')}</span></div>
+                                                {damagedRaffles.length > 0 && <span className="bg-orange-600 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full animate-pulse">{damagedRaffles.length}</span>}
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setIsCleanupDialogOpen(true)} className="bg-red-50 focus:bg-red-100 text-red-600 font-bold flex items-center justify-between">
-                                                <div className="flex items-center">
-                                                    <Trash2 className="mr-2 h-4 w-4" />
-                                                    <span>2. {t('deleteAbandonedRaffles')}</span>
-                                                </div>
-                                                {abandonedRaffles.length > 0 && (
-                                                    <span className="bg-red-600 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full animate-pulse">
-                                                        {abandonedRaffles.length}
-                                                    </span>
-                                                )}
+                                                <div className="flex items-center"><Trash2 className="mr-2 h-4 w-4" /><span>2. {t('deleteAbandonedRaffles')}</span></div>
+                                                {abandonedRaffles.length > 0 && <span className="bg-red-600 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full animate-pulse">{abandonedRaffles.length}</span>}
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setIsAppNameLogoDialogOpen(true)}>
                                                 <Settings2 className="mr-2 h-4 w-4" />
@@ -2690,7 +2364,6 @@ const App = () => {
                                                 <Settings2 className="mr-2 h-4 w-4 text-purple-600" />
                                                 <span className="font-bold">6. Configuración de Captura</span>
                                             </DropdownMenuItem>
-                                            <DropdownMenuSeparator />
                                             <DropdownMenuItem onSelect={() => handleProtectedItemClick(() => setIsPaymentInfoDialogOpen(true))}>
                                                 <Landmark className="mr-2 h-4 w-4 text-blue-600" />
                                                 <span>7. {t('managePaymentInfo')} 🔒</span>
@@ -2765,54 +2438,26 @@ const App = () => {
                                                 <span>24. Configurar API 🔒</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuSeparator />
-                                            <DropdownMenuItem onSelect={() => {
-                                                setGamesFilter('past_date');
-                                                handleTabClick('games');
-                                            }}>
+                                            <DropdownMenuItem onSelect={() => { setGamesFilter('past_date'); handleTabClick('games'); }}>
                                                 <div className="flex items-center justify-between w-full">
-                                                    <div className="flex items-center">
-                                                        <ClockIcon className="mr-2 h-4 w-4 text-orange-500" />
-                                                        <span>{t('pastDateGames')}</span>
-                                                    </div>
-                                                    <span className="bg-orange-100 text-orange-800 text-xs font-semibold px-2 py-0.5 rounded-full ml-4">
-                                                        {pastDateRaffles.length}
-                                                    </span>
+                                                    <div className="flex items-center"><ClockIcon className="mr-2 h-4 w-4 text-orange-500" /><span>{t('pastDateGames')}</span></div>
+                                                    <span className="bg-orange-100 text-orange-800 text-xs font-semibold px-2 py-0.5 rounded-full ml-4">{pastDateRaffles.length}</span>
                                                 </div>
                                             </DropdownMenuItem>
-                                            <DropdownMenuItem onSelect={() => {
-                                                setGamesFilter('winners');
-                                                handleTabClick('winners');
-                                            }}>
+                                            <DropdownMenuItem onSelect={() => { setGamesFilter('winners'); handleTabClick('winners'); }}>
                                                 <div className="flex items-center justify-between w-full">
-                                                    <div className="flex items-center">
-                                                        <Trophy className="mr-2 h-4 w-4 text-green-500" />
-                                                        <span>{t('gamesWithWinner')}</span>
-                                                    </div>
-                                                    <span className="bg-green-100 text-green-800 text-xs font-semibold px-2 py-0.5 rounded-full ml-4">
-                                                        {gamesWithWinner.length}
-                                                    </span>
+                                                    <div className="flex items-center"><Trophy className="mr-2 h-4 w-4 text-green-500" /><span>{t('gamesWithWinner')}</span></div>
+                                                    <span className="bg-green-100 text-green-800 text-xs font-semibold px-2 py-0.5 rounded-full ml-4">{gamesWithWinner.length}</span>
                                                 </div>
                                             </DropdownMenuItem>
                                             <DropdownMenuSeparator />
-                                            <DropdownMenuItem onSelect={handleSuperAdminLogout}>
-                                                <LogOut className="mr-2 h-4 w-4" />
-                                                <span>{t('logout')}</span>
-                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onSelect={handleSuperAdminLogout}><LogOut className="mr-2 h-4 w-4" /><span>{t('logout')}</span></DropdownMenuItem>
                                         </>
                                      )}
                                     <DropdownMenuSeparator />
-                                    <DropdownMenuItem onSelect={handleShare}>
-                                        <Share2 className="mr-2 h-4 w-4" />
-                                        <span>{t('share')}</span>
-                                    </DropdownMenuItem>
-                                     <DropdownMenuItem onSelect={() => setIsQrDialogOpen(true)}>
-                                        <QrCode className="mr-2 h-4 w-4" />
-                                        <span>{t('showQR')}</span>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onSelect={toggleLanguage}>
-                                        <Languages className="mr-2 h-4 w-4" />
-                                        <span>{t('languages')}</span>
-                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onSelect={handleShare}><Share2 className="mr-2 h-4 w-4" /><span>{t('share')}</span></DropdownMenuItem>
+                                     <DropdownMenuItem onSelect={() => setIsQrDialogOpen(true)}><QrCode className="mr-2 h-4 w-4" /><span>{t('showQR')}</span></DropdownMenuItem>
+                                    <DropdownMenuItem onSelect={toggleLanguage}><Languages className="mr-2 h-4 w-4" /><span>{t('languages')}</span></DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         </div>
@@ -2826,9 +2471,7 @@ const App = () => {
                         <div className="p-8 relative z-10 flex-grow">
                             <div className="text-center">
                                 <DateTimeDisplay t={t} />
-                                <div className="bg-white/10 backdrop-blur-md inline-block p-4 rounded-full mb-4 shadow-xl border border-white/20">
-                                    <Lock className="h-10 w-10 text-white" />
-                                </div>
+                                <div className="bg-white/10 backdrop-blur-md inline-block p-4 rounded-full mb-4 shadow-xl border border-white/20"><Lock className="h-10 w-10 text-white" /></div>
                                 <h2 className="text-3xl font-bold text-white drop-shadow-xl mb-4">{t('boardLocked')}</h2>
                                 <div className="max-w-2xl mx-auto bg-blue-900/40 backdrop-blur-xl border-l-4 border-blue-400 text-white p-6 rounded-lg mb-10 shadow-2xl text-left">
                                     <h3 className="font-bold text-lg mb-1">{t('activationInstructionTitle')}</h3>
@@ -2837,154 +2480,61 @@ const App = () => {
                                 <div className="grid md:grid-cols-1 gap-10 items-start max-w-lg mx-auto">
                                     <div className="flex flex-col justify-center items-center gap-10">
                                         <div className="bg-slate-50/90 backdrop-blur-2xl rounded-2xl shadow-2xl flex flex-col w-full border border-white/40 overflow-hidden transform hover:scale-[1.02] transition-transform duration-300 relative">
-                                            {(appSettings.paymentLinkUsd || appSettings.paymentLinkUsdTwoDigit) && (
-                                                <div className="absolute top-4 right-4 bg-blue-600 text-white text-xs font-black px-2 py-1 rounded-md shadow-lg flex items-center gap-1 z-20">
-                                                    <DollarSign className="h-3 w-3" /> USD
-                                                </div>
-                                            )}
+                                            {(appSettings.paymentLinkUsd || appSettings.paymentLinkUsdTwoDigit) && <div className="absolute top-4 right-4 bg-blue-600 text-white text-xs font-black px-2 py-1 rounded-md shadow-lg flex items-center gap-1 z-20"><DollarSign className="h-3 w-3" /> USD</div>}
                                             <div className='flex'>
-                                                <div className="bg-purple-600 p-5 flex flex-col items-center justify-center border-r-2 border-dashed border-white/30">
-                                                    <TicketIcon className="h-12 w-12 text-white mb-2" />
-                                                    <span className="text-white font-black text-2xl">2</span>
-                                                    <span className="text-white/80 text-xs font-bold">{t('digits')}</span>
-                                                </div>
-                                                <div className="p-8 flex-grow text-left">
-                                                    <h5 className="mb-2 text-2xl font-black tracking-tight text-slate-900">{t('2digitRaffle')}</h5>
-                                                    <p className="font-medium text-slate-600 text-sm leading-snug">{t('2digitRaffleDescription')}</p>
-                                                </div>
+                                                <div className="bg-purple-600 p-5 flex flex-col items-center justify-center border-r-2 border-dashed border-white/30"><TicketIcon className="h-12 w-12 text-white mb-2" /><span className="text-white font-black text-2xl">2</span><span className="text-white/80 text-xs font-bold">{t('digits')}</span></div>
+                                                <div className="p-8 flex-grow text-left"><h5 className="mb-2 text-2xl font-black tracking-tight text-slate-900">{t('2digitRaffle')}</h5><p className="font-medium text-slate-600 text-sm leading-snug">{t('2digitRaffleDescription')}</p></div>
                                             </div>
                                             <div className="p-8 pt-0 space-y-5">
-                                                <Button 
-                                                    onClick={() => !appSettings.isBlockedTwoDigit && handlePriceButtonClick('two-digit')} 
-                                                    size="lg" 
-                                                    className={`w-full h-14 text-xl ${appSettings.isBlockedTwoDigit ? 'bg-gray-400 cursor-not-allowed' : appSettings.isFreeTwoDigit ? 'bg-orange-600 hover:bg-orange-700' : 'bg-green-600 hover:bg-green-700'} text-white font-black shadow-lg`}
-                                                    disabled={appSettings.isBlockedTwoDigit}
-                                                >
-                                                    {appSettings.isBlockedTwoDigit ? t('blockedLabel') : (appSettings.isFreeTwoDigit ? t('freeLabel') : (t('price') + (appSettings.activationPriceTwoDigit ? ` (${appSettings.activationPriceTwoDigit})` : '')))}
-                                                </Button>
+                                                <Button onClick={() => !appSettings.isBlockedTwoDigit && handlePriceButtonClick('two-digit')} size="lg" className={`w-full h-14 text-xl ${appSettings.isBlockedTwoDigit ? 'bg-gray-400 cursor-not-allowed' : appSettings.isFreeTwoDigit ? 'bg-orange-600 hover:bg-orange-700' : 'bg-green-600 hover:bg-green-700'} text-white font-black shadow-lg`} disabled={appSettings.isBlockedTwoDigit}>{appSettings.isBlockedTwoDigit ? t('blockedLabel') : (appSettings.isFreeTwoDigit ? t('freeLabel') : (t('price') + (appSettings.activationPriceTwoDigit ? ` (${appSettings.activationPriceTwoDigit})` : '')))}</Button>
                                                 {((!appSettings.isFreeTwoDigit && !appSettings.isBlockedTwoDigit) || isSuperAdmin) && (
                                                     <div className="text-center space-y-4">
-                                                        <Button onClick={() => handleActivationClick('two-digit')} size="lg" className="w-full bg-slate-900 hover:bg-black text-white font-bold flex items-center gap-3 justify-center h-12">
-                                                            <BankIcon className="h-5 w-5" />
-                                                            {t('activate')}
-                                                        </Button>
-                                                        <div className="bg-white/50 p-3 rounded-lg border border-slate-200">
-                                                            <p className="text-xs text-slate-800 whitespace-pre-wrap font-bold">{appSettings.bankInfoLine1 || 'Banco Caja Social: 24096711314'}{'\n'}{appSettings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054'}</p>
-                                                        </div>
+                                                        <Button onClick={() => handleActivationClick('two-digit')} size="lg" className="w-full bg-slate-900 hover:bg-black text-white font-bold flex items-center gap-3 justify-center h-12"><BankIcon className="h-5 w-5" />{t('activate')}</Button>
+                                                        <div className="bg-white/50 p-3 rounded-lg border border-slate-200"><p className="text-xs text-slate-800 whitespace-pre-wrap font-bold">{appSettings.bankInfoLine1 || 'Banco Caja Social: 24096711314'}{'\n'}{appSettings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054'}</p></div>
                                                     </div>
                                                 )}
                                                 {isSuperAdmin && nextRaffleRefs.twoDigit.refs.length > 0 && (
-                                                    <div className="text-xs text-center text-slate-700 font-black p-2 bg-yellow-100 rounded-md">
-                                                        {t('nextRefs2Digit')}{' '}
-                                                        {nextRaffleRefs.twoDigit.refs.map((ref, index) => (
-                                                            <span key={`ref-2-digit-${index}`}>
-                                                                <button className="cursor-pointer hover:underline text-purple-700" onClick={() => handleRefClick(ref, 'two-digit')}>{ref}</button>
-                                                                {index < nextRaffleRefs.twoDigit.refs.length - 1 ? ', ' : ''}
-                                                            </span>
-                                                        ))}
-                                                    </div>
+                                                    <div className="text-xs text-center text-slate-700 font-black p-2 bg-yellow-100 rounded-md">{t('nextRefs2Digit')}{' '}{nextRaffleRefs.twoDigit.refs.map((ref, index) => (<span key={`ref-2-digit-${index}`}><button className="cursor-pointer hover:underline text-purple-700" onClick={() => handleRefClick(ref, 'two-digit')}>{ref}</button>{index < nextRaffleRefs.twoDigit.refs.length - 1 ? ', ' : ''}</span>))}</div>
                                                 )}
                                             </div>
                                         </div>
 
                                         <div className="bg-slate-50/90 backdrop-blur-2xl rounded-2xl shadow-2xl flex flex-col w-full border border-white/40 overflow-hidden transform hover:scale-[1.02] transition-transform duration-300 relative">
-                                            {(appSettings.paymentLinkUsd || appSettings.paymentLinkUsdThreeDigit) && (
-                                                <div className="absolute top-4 right-4 bg-blue-600 text-white text-xs font-black px-2 py-1 rounded-md shadow-lg flex items-center gap-1 z-20">
-                                                    <DollarSign className="h-3 w-3" /> USD
-                                                </div>
-                                            )}
+                                            {(appSettings.paymentLinkUsd || appSettings.paymentLinkUsdThreeDigit) && <div className="absolute top-4 right-4 bg-blue-600 text-white text-xs font-black px-2 py-1 rounded-md shadow-lg flex items-center gap-1 z-20"><DollarSign className="h-3 w-3" /> USD</div>}
                                             <div className='flex'>
-                                                <div className="bg-blue-600 p-5 flex flex-col items-center justify-center border-r-2 border-dashed border-white/30">
-                                                    <TicketIcon className="h-12 w-12 text-white mb-2" />
-                                                    <span className="text-white font-black text-2xl">3</span>
-                                                    <span className="text-white/80 text-xs font-bold">{t('digits')}</span>
-                                                </div>
-                                                <div className="p-8 flex-grow text-left">
-                                                    <h5 className="mb-2 text-2xl font-black tracking-tight text-slate-900">{t('3digitRaffle')}</h5>
-                                                    <p className="font-medium text-slate-600 text-sm leading-snug">{t('3digitRaffleDescription')}</p>
-                                                </div>
+                                                <div className="bg-blue-600 p-5 flex flex-col items-center justify-center border-r-2 border-dashed border-white/30"><TicketIcon className="h-12 w-12 text-white mb-2" /><span className="text-white font-black text-2xl">3</span><span className="text-white/80 text-xs font-bold">{t('digits')}</span></div>
+                                                <div className="p-8 flex-grow text-left"><h5 className="mb-2 text-2xl font-black tracking-tight text-slate-900">{t('3digitRaffle')}</h5><p className="font-medium text-slate-600 text-sm leading-snug">{t('3digitRaffleDescription')}</p></div>
                                             </div>
                                             <div className="p-8 pt-0 space-y-5">
-                                                <Button 
-                                                    onClick={() => !appSettings.isBlockedThreeDigit && handlePriceButtonClick('three-digit')} 
-                                                    size="lg" 
-                                                    className={`w-full h-14 text-xl ${appSettings.isBlockedThreeDigit ? 'bg-gray-400 cursor-not-allowed' : appSettings.isFreeThreeDigit ? 'bg-orange-600 hover:bg-orange-700' : 'bg-blue-600 hover:bg-blue-700'} text-white font-black shadow-lg`}
-                                                    disabled={appSettings.isBlockedThreeDigit}
-                                                >
-                                                    {appSettings.isBlockedThreeDigit ? t('blockedLabel') : (appSettings.isFreeThreeDigit ? t('freeLabel') : (t('price') + (appSettings.activationPriceThreeDigit ? ` (${appSettings.activationPriceThreeDigit})` : '')))}
-                                                </Button>
+                                                <Button onClick={() => !appSettings.isBlockedThreeDigit && handlePriceButtonClick('three-digit')} size="lg" className={`w-full h-14 text-xl ${appSettings.isBlockedThreeDigit ? 'bg-gray-400 cursor-not-allowed' : appSettings.isFreeThreeDigit ? 'bg-orange-600 hover:bg-orange-700' : 'bg-blue-600 hover:bg-blue-700'} text-white font-black shadow-lg`} disabled={appSettings.isBlockedThreeDigit}>{appSettings.isBlockedThreeDigit ? t('blockedLabel') : (appSettings.isFreeThreeDigit ? t('freeLabel') : (t('price') + (appSettings.activationPriceThreeDigit ? ` (${appSettings.activationPriceThreeDigit})` : '')))}</Button>
                                                 {((!appSettings.isFreeThreeDigit && !appSettings.isBlockedThreeDigit) || isSuperAdmin) && (
                                                     <div className="text-center space-y-4">
-                                                        <Button onClick={() => handleActivationClick('three-digit')} size="lg" className="w-full bg-slate-900 hover:bg-black text-white font-bold flex items-center gap-3 justify-center h-12">
-                                                            <BankIcon className="h-5 w-5" />
-                                                            {t('activate')}
-                                                        </Button>
-                                                        <div className="bg-white/50 p-3 rounded-lg border border-slate-200">
-                                                            <p className="text-xs text-slate-800 whitespace-pre-wrap font-bold">{appSettings.bankInfoLine1 || 'Banco Caja Social: 24096711314'}{'\n'}{appSettings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054'}</p>
-                                                        </div>
+                                                        <Button onClick={() => handleActivationClick('three-digit')} size="lg" className="w-full bg-slate-900 hover:bg-black text-white font-bold flex items-center gap-3 justify-center h-12"><BankIcon className="h-5 w-5" />{t('activate')}</Button>
+                                                        <div className="bg-white/50 p-3 rounded-lg border border-slate-200"><p className="text-xs text-slate-800 whitespace-pre-wrap font-bold">{appSettings.bankInfoLine1 || 'Banco Caja Social: 24096711314'}{'\n'}{appSettings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054'}</p></div>
                                                     </div>
                                                 )}
                                                 {isSuperAdmin && nextRaffleRefs.threeDigit.refs.length > 0 && (
-                                                    <div className="text-xs text-center text-slate-700 font-black p-2 bg-blue-100 rounded-md">
-                                                        {t('nextRefs3Digit')}{' '}
-                                                        {nextRaffleRefs.threeDigit.refs.map((ref, index) => (
-                                                             <span key={`ref-3-digit-${index}`}>
-                                                                <button className="cursor-pointer hover:underline text-blue-700" onClick={() => handleRefClick(ref, 'three-digit')}>{ref}</button>
-                                                                {index < nextRaffleRefs.threeDigit.refs.length - 1 ? ', ' : ''}
-                                                            </span>
-                                                        ))}
-                                                    </div>
+                                                    <div className="text-xs text-center text-slate-700 font-black p-2 bg-blue-100 rounded-md">{t('nextRefs3Digit')}{' '}{nextRaffleRefs.threeDigit.refs.map((ref, index) => (<span key={`ref-3-digit-${index}`}><button className="cursor-pointer hover:underline text-blue-700" onClick={() => handleRefClick(ref, 'three-digit')}>{ref}</button>{index < nextRaffleRefs.threeDigit.refs.length - 1 ? ', ' : ''}</span>))}</div>
                                                 )}
                                             </div>
                                         </div>
 
                                          <div className="bg-slate-50/90 backdrop-blur-2xl rounded-2xl shadow-2xl flex flex-col w-full border border-white/40 overflow-hidden transform hover:scale-[1.02] transition-transform duration-300 relative">
-                                            {(appSettings.paymentLinkUsd || appSettings.paymentLinkUsdInfinite) && (
-                                                <div className="absolute top-4 right-4 bg-blue-600 text-white text-xs font-black px-2 py-1 rounded-md shadow-lg flex items-center gap-1 z-20">
-                                                    <DollarSign className="h-3 w-3" /> USD
-                                                </div>
-                                            )}
+                                            {(appSettings.paymentLinkUsd || appSettings.paymentLinkUsdInfinite) && <div className="absolute top-4 right-4 bg-blue-600 text-white text-xs font-black px-2 py-1 rounded-md shadow-lg flex items-center gap-1 z-20"><DollarSign className="h-3 w-3" /> USD</div>}
                                             <div className='flex'>
-                                                <div className="bg-red-600 p-5 flex flex-col items-center justify-center border-r-2 border-dashed border-white/30">
-                                                    <InfinityIcon className="h-12 w-12 text-white mb-2" />
-                                                    <span className="text-white font-black text-2xl"></span>
-                                                    <span className="text-white/80 text-xs font-bold">{t('infinite_caps')}</span>
-                                                </div>
-                                                <div className="p-8 flex-grow text-left">
-                                                    <h5 className="mb-2 text-2xl font-black tracking-tight text-slate-900">{t('infiniteRaffle')}</h5>
-                                                    <p className="font-medium text-slate-600 text-sm leading-snug">{t('infiniteRaffleHomeDescription')}</p>
-                                                </div>
+                                                <div className="bg-red-600 p-5 flex flex-col items-center justify-center border-r-2 border-dashed border-white/30"><InfinityIcon className="h-12 w-12 text-white mb-2" /><span className="text-white font-black text-2xl"></span><span className="text-white/80 text-xs font-bold">{t('infinite_caps')}</span></div>
+                                                <div className="p-8 flex-grow text-left"><h5 className="mb-2 text-2xl font-black tracking-tight text-slate-900">{t('infiniteRaffle')}</h5><p className="font-medium text-slate-600 text-sm leading-snug">{t('infiniteRaffleHomeDescription')}</p></div>
                                             </div>
                                             <div className="p-8 pt-0 space-y-5">
-                                                <Button 
-                                                    onClick={() => !appSettings.isBlockedInfinite && handlePriceButtonClick('infinite')} 
-                                                    size="lg" 
-                                                    className={`w-full h-14 text-xl ${appSettings.isBlockedInfinite ? 'bg-gray-400 cursor-not-allowed' : appSettings.isFreeInfinite ? 'bg-orange-600 hover:bg-orange-700' : 'bg-red-600 hover:bg-red-700'} text-white font-black shadow-lg`}
-                                                    disabled={appSettings.isBlockedInfinite}
-                                                >
-                                                    {appSettings.isBlockedInfinite ? t('blockedLabel') : (appSettings.isFreeInfinite ? t('freeLabel') : (t('price') + (appSettings.activationPriceInfinite ? ` (${appSettings.activationPriceInfinite})` : '')))}
-                                                </Button>
+                                                <Button onClick={() => !appSettings.isBlockedInfinite && handlePriceButtonClick('infinite')} size="lg" className={`w-full h-14 text-xl ${appSettings.isBlockedInfinite ? 'bg-gray-400 cursor-not-allowed' : appSettings.isFreeInfinite ? 'bg-orange-600 hover:bg-orange-700' : 'bg-red-600 hover:bg-red-700'} text-white font-black shadow-lg`} disabled={appSettings.isBlockedInfinite}>{appSettings.isBlockedInfinite ? t('blockedLabel') : (appSettings.isFreeInfinite ? t('freeLabel') : (t('price') + (appSettings.activationPriceInfinite ? ` (${appSettings.activationPriceInfinite})` : '')))}</Button>
                                                 {((!appSettings.isFreeInfinite && !appSettings.isBlockedInfinite) || isSuperAdmin) && (
                                                     <div className="text-center space-y-4">
-                                                        <Button onClick={() => handleActivationClick('infinite')} size="lg" className="w-full bg-slate-900 hover:bg-black text-white font-bold flex items-center gap-3 justify-center h-12">
-                                                            <BankIcon className="h-5 w-5" />
-                                                            {t('activate')}
-                                                        </Button>
-                                                        <div className="bg-white/50 p-3 rounded-lg border border-slate-200">
-                                                            <p className="text-xs text-slate-800 whitespace-pre-wrap font-bold">{appSettings.bankInfoLine1 || 'Banco Caja Social: 24096711314'}{'\n'}{appSettings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054'}</p>
-                                                        </div>
+                                                        <Button onClick={() => handleActivationClick('infinite')} size="lg" className="w-full bg-slate-900 hover:bg-black text-white font-bold flex items-center gap-3 justify-center h-12"><BankIcon className="h-5 w-5" />{t('activate')}</Button>
+                                                        <div className="bg-white/50 p-3 rounded-lg border border-slate-200"><p className="text-xs text-slate-800 whitespace-pre-wrap font-bold">{appSettings.bankInfoLine1 || 'Banco Caja Social: 24096711314'}{'\n'}{appSettings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054'}</p></div>
                                                     </div>
                                                 )}
                                                 {isSuperAdmin && nextRaffleRefs.infinite.refs.length > 0 && (
-                                                    <div className="text-xs text-center text-slate-700 font-black p-2 bg-yellow-100 rounded-md">
-                                                        {t('nextRefsInfinite')}{' '}
-                                                        {nextRaffleRefs.infinite.refs.map((ref, index) => (
-                                                            <span key={`ref-infinite-${index}`}>
-                                                                <button className="cursor-pointer hover:underline text-red-700" onClick={() => handleRefClick(ref, 'infinite')}>{ref}</button>
-                                                                {index < nextRaffleRefs.infinite.refs.length - 1 ? ', ' : ''}
-                                                            </span>
-                                                        ))}
-                                                    </div>
+                                                    <div className="text-xs text-center text-slate-700 font-black p-2 bg-yellow-100 rounded-md">{t('nextRefsInfinite')}{' '}{nextRaffleRefs.infinite.refs.map((ref, index) => (<span key={`ref-infinite-${index}`}><button className="cursor-pointer hover:underline text-red-700" onClick={() => handleRefClick(ref, 'infinite')}>{ref}</button>{index < nextRaffleRefs.infinite.refs.length - 1 ? ', ' : ''}</span>))}</div>
                                                 )}
                                             </div>
                                         </div>
@@ -2999,7 +2549,20 @@ const App = () => {
                                             className="max-w-xs h-12 bg-white border-slate-300 text-slate-900 placeholder:text-slate-500 font-bold"
                                             placeholder={t('searchRaffleByRefDescription')}
                                         />
-                                        <Button onClick={() => handleAdminSearch({ refToSearch: publicRefSearch, isPublicSearch: true })} className="h-12 w-12 bg-blue-600 hover:bg-blue-700 shadow-lg">
+                                        <Button 
+                                            onClick={async () => {
+                                                const executivePassword = appSettings.superAdminPassword || '32184257361045715054';
+                                                if (publicRefSearch.trim() === executivePassword) {
+                                                    setIsSuperAdmin(true);
+                                                    sessionStorage.setItem('isSuperAdmin', 'true');
+                                                    setPublicRefSearch('');
+                                                    showNotification('Acceso de Director Ejecutivo concedido.', 'success');
+                                                } else {
+                                                    await handleAdminSearch({ refToSearch: publicRefSearch, isPublicSearch: true });
+                                                }
+                                            }}
+                                            className="h-12 w-12 bg-blue-600 hover:bg-blue-700 shadow-lg"
+                                        >
                                             <Search className="h-6 w-6" />
                                         </Button>
                                     </div>
@@ -3010,242 +2573,65 @@ const App = () => {
                         <>
                             <div className="border-b border-gray-200 z-10 relative">
                                 <div className="relative flex overflow-x-auto">
-                                    <button 
-                                        className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'board' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
-                                        onClick={() => handleTabClick('board')}
-                                    >
-                                        <Settings2 className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">{t('prizeSettings')}</span>
-                                    </button>
-                                    <button 
-                                        className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'numbers' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
-                                        onClick={() => handleTabClick('numbers')}
-                                    >
-                                        <LayoutGrid className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">{t('numberBoard')}</span>
-                                    </button>
+                                    <button className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'board' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`} onClick={() => handleTabClick('board')}><Settings2 className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">{t('prizeSettings')}</span></button>
+                                    <button className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'numbers' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`} onClick={() => handleTabClick('numbers')}><LayoutGrid className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">{t('numberBoard')}</span></button>
                                     {isSuperAdmin && (
                                     <>
-                                        <button 
-                                            className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'activations' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
-                                            onClick={() => handleTabClick('activations')}
-                                        >
-                                           <KeyRound className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">{t('activationsTab', { count: pendingActivations.length })}</span>
-                                        </button>
-                                        <button 
-                                            className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'games' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
-                                            onClick={() => {
-                                                setGamesFilter('all');
-                                                handleTabClick('games');
-                                            }}
-                                        >
-                                           <Gamepad2 className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">{t('gamesTab')}</span>
-                                        </button>
+                                        <button className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'activations' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`} onClick={() => handleTabClick('activations')}><KeyRound className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">{t('activationsTab', { count: pendingActivations.length })}</span></button>
+                                        <button className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'games' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`} onClick={() => { setGamesFilter('all'); handleTabClick('games'); }}><Gamepad2 className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">{t('gamesTab')}</span></button>
                                     </>
                                     )}
-                                    <button 
-                                        className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'register' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
-                                        onClick={() => handleTabClick('register')}
-                                        disabled={!raffleState.raffleRef}
-                                    >
-                                        <span className="md:hidden">✏️</span> <span className="hidden md:inline">{t('register')}</span>
-                                    </button>
-                                    {isCurrentUserAdmin && (
-                                    <button 
-                                        className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'pending' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
-                                        onClick={() => handleTabClick('pending')}
-                                    >
-                                        <ClockIcon className="h-5 w-5 hidden sm:inline"/><span className="md:hidden">⏳</span> <span className="hidden md:inline">{t('pendingTab', { count: pendingParticipants.length })}</span>
-                                    </button>
-                                    )}
-                                    <button 
-                                        className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'participants' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
-                                        onClick={() => handleTabClick('participants')}
-                                        disabled={!raffleState.raffleRef}
-                                    >
-                                        <Users className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">{t('participants')}</span>
-                                    </button>
-                                    {(raffleState.winner || currentPartialWinners.length > 0) && (
-                                    <button 
-                                        className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'winners' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
-                                        onClick={() => handleTabClick('winners')}
-                                    >
-                                        <Trophy className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">{t('winnersTab')}</span>
-                                    </button>
-                                    )}
-                                    {isCurrentUserAdmin && (
-                                    <button 
-                                        className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'recaudado' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
-                                        onClick={() => setIsSalesModalOpen(true)}
-                                    >
-                                        <DollarSign className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">{t('collected')}</span>
-                                    </button>
-                                    )}
-                                    {isCurrentUserAdmin && raffleState.raffleMode === 'infinite' && (
-                                        <button 
-                                            className="flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap text-gray-500 hover:text-gray-700"
-                                            onClick={() => setIsGoalModalOpen(true)}
-                                        >
-                                            <TrendingUp className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">{t('goal')}</span>
-                                        </button>
-                                    )}
+                                    <button className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'register' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`} onClick={() => handleTabClick('register')} disabled={!raffleState.raffleRef}><span className="md:hidden">✏️</span> <span className="hidden md:inline">{t('register')}</span></button>
+                                    {isCurrentUserAdmin && <button className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'pending' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`} onClick={() => handleTabClick('pending')}><ClockIcon className="h-5 w-5 hidden sm:inline"/><span className="md:hidden">⏳</span> <span className="hidden md:inline">{t('pendingTab', { count: pendingParticipants.length })}</span></button>}
+                                    <button className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'participants' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`} onClick={() => handleTabClick('participants')} disabled={!raffleState.raffleRef}><Users className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">{t('participants')}</span></button>
+                                    {(raffleState.winner || currentPartialWinners.length > 0) && <button className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'winners' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`} onClick={() => handleTabClick('winners')}><Trophy className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">{t('winnersTab')}</span></button>}
+                                    {isCurrentUserAdmin && <button className={`flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap ${activeTab === 'recaudado' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`} onClick={() => setIsSalesModalOpen(true)}><DollarSign className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">{t('collected')}</span></button>}
+                                    {isCurrentUserAdmin && raffleState.raffleMode === 'infinite' && <button className="flex items-center gap-2 px-3 md:px-6 py-3 font-medium text-sm md:text-lg whitespace-nowrap text-gray-500 hover:text-gray-700" onClick={() => setIsGoalModalOpen(true)}><TrendingUp className="h-5 w-5 md:hidden"/> <span className="hidden md:inline">{t('goal')}</span></button>}
                                 </div>
                             </div>
                             <div className="relative z-10">
                                 <div className={activeTab === 'board' ? 'tab-content active p-6' : 'tab-content p-6'}>
                                     <div className="flex flex-col lg:flex-row gap-8">
                                         <div className="lg:w-2/5 flex-shrink-0">
-                                            {isCurrentUserAdmin && (
-                                                <div className="mb-4 p-3 bg-green-100 border border-green-300 text-green-800 rounded-lg text-center font-semibold">
-                                                    {t('adminMessage')}
-                                                </div>
-                                            )}
+                                            {isCurrentUserAdmin && <div className="mb-4 p-3 bg-green-100 border border-green-300 text-green-800 rounded-lg text-center font-semibold">{t('adminMessage')}</div>}
                                             <h2 className="text-2xl font-bold text-gray-800 mb-4">{t('prizeSettings')}</h2>
                                             {raffleState.raffleRef && (
                                                 <div className="mb-4">
                                                     <p className="text-sm text-gray-500">{t('gameReference')}</p>
                                                     <div className="flex items-center gap-2">
                                                         {raffleState.raffleMode === 'three-digit' ? (
-                                                            <button 
-                                                                onClick={handleSharePlayNow} 
-                                                                className="text-2xl font-bold text-purple-700 tracking-wider hover:underline cursor-pointer flex items-center gap-2"
-                                                                title="Toca para compartir premio"
-                                                            >
-                                                                {raffleState.raffleRef}
-                                                                <Share2 className="h-4 w-4" />
-                                                            </button>
+                                                            <button onClick={handleSharePlayNow} className="text-2xl font-bold text-purple-700 tracking-wider hover:underline cursor-pointer flex items-center gap-2" title="Toca para compartir premio">{raffleState.raffleRef}<Share2 className="h-4 w-4" /></button>
                                                         ) : (
                                                             <p className="text-2xl font-bold text-gray-800 tracking-wider">{raffleState.raffleRef}</p>
                                                         )}
                                                     </div>
                                                 </div>
                                             )}
-                                            
                                             <div ref={prizeImageCaptureRef} className="mb-6 rounded-lg overflow-hidden relative flex items-center justify-center shadow-lg bg-gray-200 aspect-auto group">
                                                  {raffleState.prizeImageUrl ? (
                                                     <button onClick={() => isCurrentUserAdmin ? handleShare() : handleTabClick('numbers')} className="w-full flex items-center justify-center cursor-pointer relative" aria-label={t('rafflePrizeAlt')}>
-                                                        <img 
-                                                            src={raffleState.prizeImageUrl} 
-                                                            alt={t('rafflePrizeAlt')} 
-                                                            className="w-full h-auto object-contain max-h-[60vh] transition-transform duration-500 group-hover:scale-105"
-                                                            referrerPolicy="no-referrer"
-                                                            key={raffleState.prizeImageUrl}
-                                                        />
-                                                        {!isCurrentUserAdmin && (
-                                                            <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                                                <div className="bg-yellow-400 text-black px-4 py-2 rounded-full font-bold text-sm shadow-xl flex items-center gap-2">
-                                                                    <MousePointer2 className="h-4 w-4" />
-                                                                    TOCA PARA JUGAR
-                                                                </div>
-                                                            </div>
-                                                        )}
+                                                        <img src={raffleState.prizeImageUrl} alt={t('rafflePrizeAlt')} className="w-full h-auto object-contain max-h-[60vh] transition-transform duration-500 group-hover:scale-105" referrerPolicy="no-referrer" key={raffleState.prizeImageUrl} />
+                                                        {!isCurrentUserAdmin && <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"><div className="bg-yellow-400 text-black px-4 py-2 rounded-full font-bold text-sm shadow-xl flex items-center gap-2"><MousePointer2 className="h-4 w-4" />TOCA PARA JUGAR</div></div>}
                                                     </button>
-                                                ) : (
-                                                    <div className="flex flex-col items-center gap-2 p-16">
-                                                        <span className="text-gray-500">{t('noPrizeImage')}</span>
-                                                    </div>
-                                                )}
-                                                 {isUploading && (
-                                                    <div data-html2canvas-ignore="true" className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center rounded-md p-4">
-                                                        <Loader2 className="h-8 w-8 animate-spin text-white mb-2" />
-                                                        <p className="text-white mt-2 text-sm">{t('uploadingImage')}</p>
-                                                    </div>
-                                                 )}
+                                                ) : <div className="flex flex-col items-center gap-2 p-16"><span className="text-gray-500">{t('noPrizeImage')}</span></div>}
+                                                 {isUploading && <div data-html2canvas-ignore="true" className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center rounded-md p-4"><Loader2 className="h-8 w-8 animate-spin text-white mb-2" /><p className="text-white mt-2 text-sm">{t('uploadingImage')}</p></div>}
                                             </div>
-
                                             <div className="space-y-4 mb-6">
-                                               <div>
-                                                   <Label htmlFor="organizer-name-input">{t('whoOrganizes')}:</Label>
-                                                   <input
-                                                       id="organizer-name-input"
-                                                       type="text"
-                                                       value={raffleState.organizerName}
-                                                       onChange={(e) => handleLocalFieldChange('organizerName', e.target.value)}
-                                                       onBlur={(e) => handleFieldChange('organizerName', e.target.value)}
-                                                       placeholder={t('organizerNamePlaceholder')}
-                                                       disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
-                                                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm mt-1"
-                                                   />
-                                               </div>
+                                               <div><Label htmlFor="organizer-name-input">{t('whoOrganizes')}:</Label><input id="organizer-name-input" type="text" value={raffleState.organizerName} onChange={(e) => handleLocalFieldChange('organizerName', e.target.value)} onBlur={(e) => handleFieldChange('organizerName', e.target.value)} placeholder={t('organizerNamePlaceholder')} disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm mt-1"/></div>
                                                <div>
                                                     <Label htmlFor="organizer-phone-input">{t('organizerPhone')}:</Label>
                                                     <div className="flex gap-2 mt-1">
-                                                        <div className="w-[120px]">
-                                                            <Select
-                                                                value={raffleState.organizerCountryCode || '+57'}
-                                                                onValueChange={(val) => {
-                                                                    handleLocalFieldChange('organizerCountryCode', val);
-                                                                    handleFieldChange('organizerCountryCode', val);
-                                                                }}
-                                                                disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
-                                                            >
-                                                                <SelectTrigger id="organizer-country-code">
-                                                                    <SelectValue placeholder="+57" />
-                                                                </SelectTrigger>
-                                                                <SelectContent>
-                                                                    {countryIndicators.map((country) => (
-                                                                        <SelectItem key={`${country.name}-${country.code}`} value={country.code}>
-                                                                            <span className="flex items-center gap-2">
-                                                                                <span>{country.flag}</span>
-                                                                                <span>{country.code}</span>
-                                                                            </span>
-                                                                        </SelectItem>
-                                                                    ))}
-                                                                </SelectContent>
-                                                            </Select>
-                                                        </div>
-                                                        <Input
-                                                            id="organizer-phone-input"
-                                                            type="tel"
-                                                            value={raffleState.organizerPhoneNumber}
-                                                            onChange={(e) => handleLocalFieldChange('organizerPhoneNumber', e.target.value.replace(/\D/g, ''))}
-                                                            onBlur={(e) => handleFieldChange('organizerPhoneNumber', e.target.value.replace(/\D/g, ''))}
-                                                            placeholder="3001234567"
-                                                            disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
-                                                            className="flex-grow"
-                                                        />
+                                                        <div className="w-[120px]"><Select value={raffleState.organizerCountryCode || '+57'} onValueChange={(val) => { handleLocalFieldChange('organizerCountryCode', val); handleFieldChange('organizerCountryCode', val); }} disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}><SelectTrigger id="organizer-country-code"><SelectValue placeholder="+57" /></SelectTrigger><SelectContent>{countryIndicators.map((country) => (<SelectItem key={`${country.name}-${country.code}`} value={country.code}><span className="flex items-center gap-2"><span>{country.flag}</span><span>{country.code}</span></span></SelectItem>))}</SelectContent></Select></div>
+                                                        <Input id="organizer-phone-input" type="tel" value={raffleState.organizerPhoneNumber} onChange={(e) => handleLocalFieldChange('organizerPhoneNumber', e.target.value.replace(/\D/g, ''))} onBlur={(e) => handleFieldChange('organizerPhoneNumber', e.target.value.replace(/\D/g, ''))} placeholder="3001234567" disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed} className="flex-grow"/>
                                                     </div>
                                                 </div>
                                                 {isCurrentUserAdmin && !raffleState.isDetailsConfirmed && (
                                                     <div>
                                                         <Label htmlFor="password-input">{t('adminPassword')}:</Label>
-                                                        <div className="relative">
-                                                            <Input
-                                                                id="password-input"
-                                                                type={showAdminPasswordValue ? 'text' : 'password'}
-                                                                value={raffleState.password || ''}
-                                                                onChange={(e) => handleLocalFieldChange('password', e.target.value)}
-                                                                onBlur={(e) => handleFieldChange('password', e.target.value)}
-                                                                placeholder={t('adminPasswordPlaceholder')}
-                                                                disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
-                                                                className="w-full mt-1"
-                                                            />
-                                                            <Button
-                                                                type="button"
-                                                                variant="ghost"
-                                                                size="icon"
-                                                                className="absolute inset-y-0 right-0 h-full px-3"
-                                                                onClick={() => setShowAdminPasswordValue(!showAdminPasswordValue)}
-                                                            >
-                                                                {showAdminPasswordValue ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                                                                <span className="sr-only">{showAdminPasswordValue ? 'Ocultar contraseña' : 'Mostrar contraseña'}</span>
-                                                            </Button>
-                                                        </div>
+                                                        <div className="relative"><Input id="password-input" type={showAdminPasswordValue ? 'text' : 'password'} value={raffleState.password || ''} onChange={(e) => handleLocalFieldChange('password', e.target.value)} onBlur={(e) => handleFieldChange('password', e.target.value)} placeholder={t('adminPasswordPlaceholder')} disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed} className="w-full mt-1"/><Button type="button" variant="ghost" size="icon" className="absolute inset-y-0 right-0 h-full px-3" onClick={() => setShowAdminPasswordValue(!showAdminPasswordValue)}>{showAdminPasswordValue ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button></div>
                                                    </div>
                                                 )}
-                                               <div>
-                                                   <Label htmlFor="prize-input">{t('prize')}:</Label>
-                                                   <Textarea
-                                                       ref={prizeTextareaRef}
-                                                       id="prize-input"
-                                                       rows={3}
-                                                       style={{ overflowY: 'hidden' }}
-                                                       value={raffleState.prize}
-                                                       onChange={(e) => handleLocalFieldChange('prize', e.target.value)}
-                                                       onBlur={(e) => handleFieldChange('prize', e.target.value)}
-                                                       placeholder={raffleMode === 'infinite' ? t('prizePlaceholderInfinite') : t('prizePlaceholderFinite')}
-                                                       disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
-                                                       className="w-full mt-1"
-                                                   />
-                                               </div>
+                                               <div><Label htmlFor="prize-input">{t('prize')}:</Label><Textarea ref={prizeTextareaRef} id="prize-input" rows={3} style={{ overflowY: 'hidden' }} value={raffleState.prize} onChange={(e) => handleLocalFieldChange('prize', e.target.value)} onBlur={(e) => handleFieldChange('prize', e.target.value)} placeholder={raffleMode === 'infinite' ? t('prizePlaceholderInfinite') : t('prizePlaceholderFinite')} disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed} className="w-full mt-1"/></div>
                                                {isCurrentUserAdmin && !raffleState.isDetailsConfirmed && (
                                                     <div>
                                                         <Label>{t('prizeImage')}</Label>
@@ -3254,130 +2640,31 @@ const App = () => {
                                                                 <div className="grid gap-2">
                                                                     <Label htmlFor="prize-image-url-input" className="text-xs text-muted-foreground">Enlace Directo de Imagen</Label>
                                                                     <div className="flex wrap gap-2">
-                                                                        <Input
-                                                                            id="prize-image-url-input"
-                                                                            type="text"
-                                                                            value={raffleState.prizeImageUrl}
-                                                                            onChange={(e) => handleLocalFieldChange('prizeImageUrl', e.target.value)}
-                                                                            onBlur={(e) => handleFieldChange('prizeImageUrl', e.target.value)}
-                                                                            placeholder={t('pasteImageLinkPlaceholder')}
-                                                                            disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
-                                                                            className="flex-grow"
-                                                                        />
-                                                                        <a href="https://www.google.com/imghp" target="_blank" rel="noopener noreferrer">
-                                                                            <Button type="button" variant="outline" className="w-full sm:w-auto">
-                                                                                <Search className="h-4 w-4 mr-2" />
-                                                                                {t('searchOnGoogle')}
-                                                                            </Button>
-                                                                        </a>
+                                                                        <Input id="prize-image-url-input" type="text" value={raffleState.prizeImageUrl} onChange={(e) => handleLocalFieldChange('prizeImageUrl', e.target.value)} onBlur={(e) => handleFieldChange('prizeImageUrl', e.target.value)} placeholder={t('pasteImageLinkPlaceholder')} disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed} className="flex-grow"/>
+                                                                        <a href="https://www.google.com/imghp" target="_blank" rel="noopener noreferrer"><Button type="button" variant="outline" className="w-full sm:w-auto"><Search className="h-4 w-4 mr-2" />{t('searchOnGoogle')}</Button></a>
                                                                     </div>
                                                                 </div>
                                                             </div>
                                                         </div>
                                                     </div>
                                                )}
-                                               <div>
-                                                    <Label htmlFor="value-input">{t('ticketValue')}:</Label>
-                                                    <Input
-                                                        id="value-input"
-                                                        type="text"
-                                                        value={formatValueForDisplay(raffleState.value)}
-                                                        onChange={(e) => handleLocalFieldChange('value', e.target.value)}
-                                                        onBlur={(e) => handleFieldChange('value', raffleState.value)}
-                                                        placeholder="Ej: 5000"
-                                                        disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
-                                                        className="w-full mt-1"
-                                                    />
-                                                </div>
+                                               <div><Label htmlFor="value-input">{t('ticketValue')}:</Label><Input id="value-input" type="text" value={formatValueForDisplay(raffleState.value)} onChange={(e) => handleLocalFieldChange('value', e.target.value)} onBlur={(e) => handleFieldChange('value', raffleState.value)} placeholder="Ej: 5000" disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed} className="w-full mt-1"/></div>
                                                {raffleState.raffleMode === 'infinite' && (
                                                     <div className="grid grid-cols-2 gap-4">
-                                                        <div>
-                                                            <Label htmlFor="infinite-digits-input">{t('infiniteRaffleDigits')}:</Label>
-                                                            <Input
-                                                                id="infinite-digits-input"
-                                                                type="number"
-                                                                min="4"
-                                                                value={raffleState.infiniteModeDigits || ''}
-                                                                onChange={(e) => handleLocalFieldChange('infiniteModeDigits', e.target.value)}
-                                                                onBlur={() => handleFieldChange('infiniteModeDigits', raffleState.infiniteModeDigits)}
-                                                                placeholder={t('min4Digits')}
-                                                                disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
-                                                                className="w-full mt-1"
-                                                            />
-                                                        </div>
-                                                        <div>
-                                                            <Label htmlFor="total-numbers-infinite">{t('totalNumbersToSell')}</Label>
-                                                            <div className="relative mt-1">
-                                                                <Input
-                                                                    id="total-numbers-infinite"
-                                                                    type="text"
-                                                                    readOnly
-                                                                    value={(raffleState.infiniteModeDigits && raffleState.infiniteModeDigits >= 4) ? Math.pow(10, raffleState.infiniteModeDigits).toLocaleString() : '0'}
-                                                                    disabled
-                                                                    className="w-full bg-slate-100 font-semibold mt-1"
-                                                                />
-                                                                <TicketIcon className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                                                            </div>
-                                                        </div>
+                                                        <div><Label htmlFor="infinite-digits-input">{t('infiniteRaffleDigits')}:</Label><Input id="infinite-digits-input" type="number" min="4" value={raffleState.infiniteModeDigits || ''} onChange={(e) => handleLocalFieldChange('infiniteModeDigits', e.target.value)} onBlur={() => handleFieldChange('infiniteModeDigits', raffleState.infiniteModeDigits)} placeholder={t('min4Digits')} disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed} className="w-full mt-1"/></div>
+                                                        <div><Label htmlFor="total-numbers-infinite">{t('totalNumbersToSell')}</Label><div className="relative mt-1"><Input id="total-numbers-infinite" type="text" readOnly value={(raffleState.infiniteModeDigits && raffleState.infiniteModeDigits >= 4) ? Math.pow(10, raffleState.infiniteModeDigits).toLocaleString() : '0'} disabled className="w-full bg-slate-100 font-semibold mt-1"/><TicketIcon className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" /></div></div>
                                                     </div>
                                                 )}
                                                 {raffleState.raffleMode === 'infinite' && isCurrentUserAdmin && !raffleState.isDetailsConfirmed && (
-                                                   <div className="flex items-center justify-between mt-2 p-3 bg-gray-50 rounded-lg">
-                                                        <Label htmlFor="allow-partial-winners" className="flex flex-col space-y-1">
-                                                            <span>{t('allowPartialWinners')}</span>
-                                                            <span className="font-normal leading-snug text-muted-foreground text-sm">
-                                                                {t('allowPartialWinnersDescription')}
-                                                            </span>
-                                                        </Label>
-                                                        <Switch
-                                                            id="allow-partial-winners"
-                                                            checked={raffleState.allowPartialWinners}
-                                                            onCheckedChange={(checked) => {
-                                                                handleLocalFieldChange('allowPartialWinners', checked);
-                                                                handleFieldChange('allowPartialWinners', checked);
-                                                            }}
-                                                            disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
-                                                        />
-                                                    </div>
+                                                   <div className="flex items-center justify-between mt-2 p-3 bg-gray-50 rounded-lg"><Label htmlFor="allow-partial-winners" className="flex flex-col space-y-1"><span>{t('allowPartialWinners')}</span><span className="font-normal leading-snug text-muted-foreground text-sm">{t('allowPartialWinnersDescription')}</span></Label><Switch id="allow-partial-winners" checked={raffleState.allowPartialWinners} onCheckedChange={(checked) => { handleLocalFieldChange('allowPartialWinners', checked); handleFieldChange('allowPartialWinners', checked); }} disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}/></div>
                                                 )}
-                                               <div>
-                                                   <Label htmlFor="game-date-input">{t('gameDate')}:</Label>
-                                                   <Input
-                                                       id="game-date-input"
-                                                       type="date"
-                                                       min={new Date().toISOString().split('T')[0]}
-                                                       value={raffleState.gameDate}
-                                                       onChange={(e) => handleLocalFieldChange('gameDate', e.target.value)}
-                                                       onBlur={() => handleFieldChange('gameDate', raffleState.gameDate)}
-                                                       disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
-                                                       className="w-full mt-1"
-                                                   />
-                                               </div>
+                                               <div><Label htmlFor="game-date-input">{t('gameDate')}:</Label><Input id="game-date-input" type="date" min={new Date().toISOString().split('T')[0]} value={raffleState.gameDate} onChange={(e) => handleLocalFieldChange('gameDate', e.target.value)} onBlur={() => handleFieldChange('gameDate', raffleState.gameDate)} disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed} className="w-full mt-1"/></div>
                                                {raffleState.raffleMode === 'infinite' && isCurrentUserAdmin && !raffleState.isDetailsConfirmed && (
-                                                   <div className="flex items-center space-x-2">
-                                                       <Switch
-                                                           id="automatic-draw"
-                                                           checked={raffleState.automaticDraw}
-                                                           onCheckedChange={(checked) => {
-                                                              handleLocalFieldChange('automaticDraw', checked)
-                                                              handleFieldChange('automaticDraw', checked)
-                                                           }}
-                                                       />
-                                                       <Label htmlFor="automatic-draw">{t('automaticDraw')}</Label>
-                                                   </div>
+                                                   <div className="flex items-center space-x-2"><Switch id="automatic-draw" checked={raffleState.automaticDraw} onCheckedChange={(checked) => { handleLocalFieldChange('automaticDraw', checked); handleFieldChange('automaticDraw', checked); }}/><Label htmlFor="automatic-draw">{t('automaticDraw')}</Label></div>
                                                 )}
                                                <div>
                                                    <Label htmlFor="lottery-input">{t('lottery')}:</Label>
-                                                   <select
-                                                       id="lottery-input"
-                                                       value={raffleState.lottery}
-                                                       onChange={(e) => {
-                                                           const lotValue = e.target.value;
-                                                           handleFieldChange('lottery', lotValue);
-                                                       }}
-                                                       disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed || (raffleMode === 'infinite' && raffleState.automaticDraw)}
-                                                       className="w-full mt-1 px-3 py-2 text-base border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                                                   >
+                                                   <select id="lottery-input" value={raffleState.lottery} onChange={(e) => handleFieldChange('lottery', e.target.value)} disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed || (raffleMode === 'infinite' && raffleState.automaticDraw)} className="w-full mt-1 px-3 py-2 text-base border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50">
                                                        <option value="">{t('selectLottery')}</option>
                                                        {raffleState.organizerCountryCode === '+57' && (
                                                            <>
@@ -3393,79 +2680,19 @@ const App = () => {
                                                    </select>
                                                </div>
                                                {raffleState.lottery === 'Otro' && (
-                                                    <div>
-                                                        <Label htmlFor="custom-lottery-input">{t('specifyLottery')}:</Label>
-                                                        <Input
-                                                            id="custom-lottery-input"
-                                                            type="text"
-                                                            value={raffleState.customLottery}
-                                                            onChange={(e) => handleLocalFieldChange('customLottery', e.target.value)}
-                                                            onBlur={(e) => handleFieldChange('customLottery', e.target.value)}
-                                                            placeholder={t('lotteryNamePlaceholder')}
-                                                            disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
-                                                            className="w-full mt-1"
-                                                        />
-                                                    </div>
+                                                    <div><Label htmlFor="custom-lottery-input">{t('specifyLottery')}:</Label><Input id="custom-lottery-input" type="text" value={raffleState.customLottery} onChange={(e) => handleLocalFieldChange('customLottery', e.target.value)} onBlur={(e) => handleFieldChange('customLottery', e.target.value)} placeholder={t('lotteryNamePlaceholder')} disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed} className="w-full mt-1"/></div>
                                                 )}
                                                 <div>
                                                     <Label htmlFor="nequi-account-input">{raffleState.organizerCountryCode === '+57' ? t('nequiAccount') : 'Cuenta'}:</Label>
-                                                    <div className="relative mt-1">
-                                                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                                            <span className="text-gray-500 sm:text-sm">{raffleState.organizerCountryCode || '+57'}</span>
-                                                        </div>
-                                                        <Input
-                                                            id="nequi-account-input"
-                                                            type="tel"
-                                                            value={raffleState.nequiAccountNumber}
-                                                            onChange={(e) => handleLocalFieldChange('nequiAccountNumber', e.target.value.replace(/\D/g, ''))}
-                                                            onBlur={(e) => handleFieldChange('nequiAccountNumber', e.target.value.replace(/\D/g, ''))}
-                                                            placeholder="3001234567"
-                                                            disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
-                                                            className="w-full pl-12 mt-1"
-                                                        />
-                                                    </div>
+                                                    <div className="relative mt-1"><div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3"><span className="text-gray-500 sm:text-sm">{raffleState.organizerCountryCode || '+57'}</span></div><Input id="nequi-account-input" type="tel" value={raffleState.nequiAccountNumber} onChange={(e) => handleLocalFieldChange('nequiAccountNumber', e.target.value.replace(/\D/g, ''))} onBlur={(e) => handleFieldChange('nequiAccountNumber', e.target.value.replace(/\D/g, ''))} placeholder="3001234567" disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed} className="w-full pl-12 mt-1"/></div>
                                                 </div>
                                                 {raffleState.organizerCountryCode === '+57' && (
-                                                    <div>
-                                                        <Label htmlFor="breb-key-input">{t('brebKey')}:</Label>
-                                                        <Input
-                                                            id="breb-key-input"
-                                                            type="text"
-                                                            value={raffleState.brebKey || ''}
-                                                            onChange={(e) => handleLocalFieldChange('brebKey', e.target.value)}
-                                                            onBlur={(e) => handleFieldChange('brebKey', e.target.value)}
-                                                            placeholder="Ej: @amigo123 o correo"
-                                                            disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
-                                                            className="w-full mt-1"
-                                                        />
-                                                    </div>
+                                                    <div><Label htmlFor="breb-key-input">{t('brebKey')}:</Label><Input id="breb-key-input" type="text" value={raffleState.brebKey || ''} onChange={(e) => handleLocalFieldChange('brebKey', e.target.value)} onBlur={(e) => handleFieldChange('brebKey', e.target.value)} placeholder="Ej: @amigo123 o correo" disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed} className="w-full mt-1"/></div>
                                                 )}
-                                                <div>
-                                                   <Label htmlFor="payment-link-input">{t('paymentLink')}:</Label>
-                                                   <Input
-                                                       id="payment-link-input"
-                                                       type="text"
-                                                       value={raffleState.paymentLink}
-                                                       onChange={(e) => handleLocalFieldChange('paymentLink', e.target.value)}
-                                                       onBlur={(e) => handleFieldChange('paymentLink', e.target.value)}
-                                                       placeholder="https://checkout.wompi.co/..."
-                                                       disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
-                                                       className="w-full mt-1"
-                                                   />
-                                                </div>
-                                                {isCurrentUserAdmin && !raffleState.isDetailsConfirmed && (
-                                                    <div className="col-span-1 md:col-span-2 mt-4">
-                                                        <Button
-                                                            onClick={handleConfirmDetails}
-                                                            className="w-full bg-purple-500 text-white font-medium rounded-lg hover:bg-purple-600 transition-colors"
-                                                        >
-                                                            {t('confirmPrizeDetails')}
-                                                        </Button>
-                                                    </div>
-                                                )}
+                                                <div><Label htmlFor="payment-link-input">{t('paymentLink')}:</Label><Input id="payment-link-input" type="text" value={raffleState.paymentLink} onChange={(e) => handleLocalFieldChange('paymentLink', e.target.value)} onBlur={(e) => handleFieldChange('paymentLink', e.target.value)} placeholder="https://checkout.wompi.co/..." disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed} className="w-full mt-1"/></div>
+                                                {isCurrentUserAdmin && !raffleState.isDetailsConfirmed && <div className="col-span-1 md:col-span-2 mt-4"><Button onClick={handleConfirmDetails} className="w-full bg-purple-500 text-white font-medium rounded-lg hover:bg-purple-600 transition-colors">{t('confirmPrizeDetails')}</Button></div>}
                                             </div>
                                         </div>
-
                                         <div className="lg:w-3/5 flex-grow">
                                             {isCurrentUserAdmin && (
                                               <div className="mb-6 p-4 border rounded-lg bg-gray-50">
@@ -3474,160 +2701,38 @@ const App = () => {
                                                       <div className="flex flex-wrap gap-3 items-end">
                                                           <div className="flex-grow">
                                                              <Label htmlFor="manual-winner-input">{raffleState.automaticDraw ? t('winningNumber') + ' (auto)' : t('winningNumber')}</Label>
-                                                             <div className="relative">
-                                                                 <Input
-                                                                     id="manual-winner-input"
-                                                                     type="text"
-                                                                     placeholder={t('winningNumberPlaceholder', { count: raffleState.raffleMode === 'infinite' ? (raffleState.infiniteModeDigits || 4) : numberLength })}
-                                                                     value={raffleState.manualWinnerNumber}
-                                                                     onChange={(e) => handleLocalFieldChange('manualWinnerNumber', e.target.value)}
-                                                                     maxLength={raffleState.raffleMode === 'infinite' ? raffleState.infiniteModeDigits : numberLength}
-                                                                     disabled={raffleState.isWinnerConfirmed || !!raffleState.winner || (raffleState.raffleMode === 'infinite' && raffleState.automaticDraw)}
-                                                                     className="w-full"
-                                                                 />
-                                                                 {!!raffleState.winner && <LockKeyhole className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />}
-                                                             </div>
+                                                             <div className="relative"><Input id="manual-winner-input" type="text" placeholder={t('winningNumberPlaceholder', { count: raffleState.raffleMode === 'infinite' ? (raffleState.infiniteModeDigits || 4) : numberLength })} value={raffleState.manualWinnerNumber} onChange={(e) => handleLocalFieldChange('manualWinnerNumber', e.target.value)} maxLength={raffleState.raffleMode === 'infinite' ? raffleState.infiniteModeDigits : numberLength} disabled={raffleState.isWinnerConfirmed || !!raffleState.winner || (raffleState.raffleMode === 'infinite' && raffleState.automaticDraw)} className="w-full"/>{!!raffleState.winner && <LockKeyhole className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />}</div>
                                                           </div>
                                                           <div className="flex flex-col items-end">
-                                                             {raffleState.raffleMode === 'infinite' && (
-                                                                 <div className="text-center mb-1">
-                                                                     <span className="text-sm font-bold text-green-600">{formatValue(raffleState.prize)}</span>
-                                                                     <p className="text-xs text-gray-500">{t('singleWinner')}</p>
-                                                                 </div>
-                                                             )}
-                                                             <Button
-                                                                 onClick={handleDrawWinner}
-                                                                 disabled={raffleState.isWinnerConfirmed || !!raffleState.winner}
-                                                                 className="bg-yellow-500 text-white font-medium rounded-lg hover:bg-yellow-600 transition-colors disabled:bg-gray-300"
-                                                             >
-                                                                 {raffleState.automaticDraw ? t('automaticDraw') : t('findWinner')}
-                                                             </Button>
+                                                             {raffleState.raffleMode === 'infinite' && <div className="text-center mb-1"><span className="text-sm font-bold text-green-600">{formatValue(raffleState.prize)}</span><p className="text-xs text-gray-500">{t('singleWinner')}</p></div>}
+                                                             <Button onClick={handleDrawWinner} disabled={raffleState.isWinnerConfirmed || !!raffleState.winner} className="bg-yellow-500 text-white font-medium rounded-lg hover:bg-yellow-600 transition-colors disabled:bg-gray-300">{raffleState.automaticDraw ? t('automaticDraw') : t('findWinner')}</Button>
                                                           </div>
                                                       </div>
-
                                                      {raffleMode === 'infinite' && raffleState.allowPartialWinners && (
                                                          <>
                                                              <div className="flex wrap gap-3 items-end">
-                                                                 <div className="flex-grow">
-                                                                     <Label htmlFor="manual-winner-3-input">{t('last3DigitsNumber')}</Label>
-                                                                     <div className="relative">
-                                                                         <Input
-                                                                             id="manual-winner-3-input"
-                                                                             type="text"
-                                                                             placeholder={t('last3Digits')}
-                                                                             value={raffleState.manualWinnerNumber3}
-                                                                             onChange={(e) => handleLocalFieldChange('manualWinnerNumber3', e.target.value)}
-                                                                             maxLength={3}
-                                                                             disabled={raffleState.isWinnerConfirmed || !!raffleState.winner}
-                                                                             className="w-full"
-                                                                         />
-                                                                         {!!raffleState.winner && <LockKeyhole className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />}
-                                                                     </div>
-                                                                 </div>
-                                                                 <div className="w-24">
-                                                                     <Label>{t('percentage')}</Label>
-                                                                     <Input
-                                                                         type="number"
-                                                                         min="0"
-                                                                         max="100"
-                                                                         value={raffleState.partialWinnerPercentage3 || ''}
-                                                                         onChange={(e) => handleLocalFieldChange('partialWinnerPercentage3', e.target.value)}
-                                                                         onBlur={(e) => handleFieldChange('partialWinnerPercentage3', raffleState.partialWinnerPercentage3)}
-                                                                         className="w-full"
-                                                                         placeholder="%"
-                                                                         disabled={raffleState.isWinnerConfirmed || !!raffleState.winner}
-                                                                     />
-                                                                 </div>
-                                                                 <div className="flex flex-col items-end">
-                                                                     <div className="text-center mb-1">
-                                                                         <span className="text-sm font-bold text-green-600">{formatValue(parseFloat(String(raffleState.prize).replace(/\D/g, '') || '0') * (raffleState.partialWinnerPercentage3 || 0) / 100)}</span>
-                                                                         <p className="text-xs text-gray-500">{t('otherWinners')}</p>
-                                                                      </div>
-                                                                     <Button
-                                                                         onClick={() => handleFindPartialWinners(3, raffleState.partialWinnerPercentage3 || 0)}
-                                                                         disabled={raffleState.isWinnerConfirmed || !!raffleState.winner}
-                                                                         className="bg-blue-500 text-white font-medium rounded-lg hover:bg-blue-600 transition-colors disabled:bg-gray-300"
-                                                                     >
-                                                                         {t('findWinner')}
-                                                                     </Button>
-                                                                 </div>
+                                                                 <div className="flex-grow"><Label htmlFor="manual-winner-3-input">{t('last3DigitsNumber')}</Label><div className="relative"><Input id="manual-winner-3-input" type="text" placeholder={t('last3Digits')} value={raffleState.manualWinnerNumber3} onChange={(e) => handleLocalFieldChange('manualWinnerNumber3', e.target.value)} maxLength={3} disabled={raffleState.isWinnerConfirmed || !!raffleState.winner} className="w-full"/>{!!raffleState.winner && <LockKeyhole className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />}</div></div>
+                                                                 <div className="w-24"><Label>{t('percentage')}</Label><Input type="number" min="0" max="100" value={raffleState.partialWinnerPercentage3 || ''} onChange={(e) => handleLocalFieldChange('partialWinnerPercentage3', e.target.value)} onBlur={(e) => handleFieldChange('partialWinnerPercentage3', raffleState.partialWinnerPercentage3)} className="w-full" placeholder="%" disabled={raffleState.isWinnerConfirmed || !!raffleState.winner}/></div>
+                                                                 <div className="flex flex-col items-end"><div className="text-center mb-1"><span className="text-sm font-bold text-green-600">{formatValue(parseFloat(String(raffleState.prize).replace(/\D/g, '') || '0') * (raffleState.partialWinnerPercentage3 || 0) / 100)}</span><p className="text-xs text-gray-500">{t('otherWinners')}</p></div><Button onClick={() => handleFindPartialWinners(3, raffleState.partialWinnerPercentage3 || 0)} disabled={raffleState.isWinnerConfirmed || !!raffleState.winner} className="bg-blue-500 text-white font-medium rounded-lg hover:bg-blue-600 transition-colors disabled:bg-gray-300">{t('findWinner')}</Button></div>
                                                              </div>
                                                              <div className="flex wrap gap-3 items-end">
-                                                                 <div className="flex-grow">
-                                                                     <Label htmlFor="manual-winner-2-input">{t('last2DigitsNumber')}</Label>
-                                                                     <div className="relative">
-                                                                         <Input
-                                                                             id="manual-winner-2-input"
-                                                                             type="text"
-                                                                             placeholder={t('last2Digits')}
-                                                                             value={raffleState.manualWinnerNumber2}
-                                                                             onChange={(e) => handleLocalFieldChange('manualWinnerNumber2', e.target.value)}
-                                                                             maxLength={2}
-                                                                             disabled={raffleState.isWinnerConfirmed || !!raffleState.winner}
-                                                                             className="w-full"
-                                                                         />
-                                                                         {!!raffleState.winner && <LockKeyhole className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />}
-                                                                     </div>
-                                                                 </div>
-                                                                 <div className="w-24">
-                                                                      <Label>{t('percentage')}</Label>
-                                                                      <Input
-                                                                          type="number"
-                                                                          min="0"
-                                                                          max="100"
-                                                                          value={raffleState.partialWinnerPercentage2 || ''}
-                                                                          onChange={(e) => handleLocalFieldChange('partialWinnerPercentage2', e.target.value)}
-                                                                          onBlur={(e) => handleFieldChange('partialWinnerPercentage2', raffleState.partialWinnerPercentage2)}
-                                                                          className="w-full"
-                                                                          placeholder="%"
-                                                                          disabled={raffleState.isWinnerConfirmed || !!raffleState.winner}
-                                                                      />
-                                                                 </div>
-                                                                 <div className="flex flex-col items-end">
-                                                                      <div className="text-center mb-1">
-                                                                         <span className="text-sm font-bold text-green-600">{formatValue(parseFloat(String(raffleState.prize).replace(/\D/g, '') || '0') * (raffleState.partialWinnerPercentage2 || 0) / 100)}</span>
-                                                                         <p className="text-xs text-gray-500">{t('otherWinners')}</p>
-                                                                      </div>
-                                                                     <Button
-                                                                         onClick={() => handleFindPartialWinners(2, raffleState.partialWinnerPercentage2 || 0)}
-                                                                         disabled={raffleState.isWinnerConfirmed || !!raffleState.winner}
-                                                                         className="bg-blue-500 text-white font-medium rounded-lg hover:bg-blue-600 transition-colors disabled:bg-gray-300"
-                                                                     >
-                                                                         {t('findWinner')}
-                                                                     </Button>
-                                                                 </div>
+                                                                 <div className="flex-grow"><Label htmlFor="manual-winner-2-input">{t('last2DigitsNumber')}</Label><div className="relative"><Input id="manual-winner-2-input" type="text" placeholder={t('last2Digits')} value={raffleState.manualWinnerNumber2} onChange={(e) => handleLocalFieldChange('manualWinnerNumber2', e.target.value)} maxLength={2} disabled={raffleState.isWinnerConfirmed || !!raffleState.winner} className="w-full"/>{!!raffleState.winner && <LockKeyhole className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />}</div></div>
+                                                                 <div className="w-24"><Label>{t('percentage')}</Label><Input type="number" min="0" max="100" value={raffleState.partialWinnerPercentage2 || ''} onChange={(e) => handleLocalFieldChange('partialWinnerPercentage2', e.target.value)} onBlur={(e) => handleFieldChange('partialWinnerPercentage2', raffleState.partialWinnerPercentage2)} className="w-full" placeholder="%" disabled={raffleState.isWinnerConfirmed || !!raffleState.winner}/></div>
+                                                                 <div className="flex flex-col items-end"><div className="text-center mb-1"><span className="text-sm font-bold text-green-600">{formatValue(parseFloat(String(raffleState.prize).replace(/\D/g, '') || '0') * (raffleState.partialWinnerPercentage2 || 0) / 100)}</span><p className="text-xs text-gray-500">{t('otherWinners')}</p></div><Button onClick={() => handleFindPartialWinners(2, raffleState.partialWinnerPercentage2 || 0)} disabled={raffleState.isWinnerConfirmed || !!raffleState.winner} className="bg-blue-500 text-white font-medium rounded-lg hover:bg-blue-600 transition-colors disabled:bg-gray-300">{t('findWinner')}</Button></div>
                                                              </div>
                                                          </>
                                                      )}
-
                                                       <div className="flex flex-wrap gap-3 items-center">
                                                           {raffleState.winner && !raffleState.isWinnerConfirmed && (
                                                              <>
-                                                                 <Button
-                                                                     onClick={handleConfirmWinner}
-                                                                     className="bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 transition-colors"
-                                                                 >
-                                                                     {t('confirmResult')}
-                                                                 </Button>
-                                                                 <Button
-                                                                     onClick={handleCorrectWinner}
-                                                                     variant="outline"
-                                                                 >
-                                                                     {t('correctWinner')}
-                                                                 </Button>
+                                                                 <Button onClick={handleConfirmWinner} className="bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 transition-colors">{t('confirmResult')}</Button>
+                                                                 <Button onClick={handleCorrectWinner} variant="outline">{t('correctWinner')}</Button>
                                                              </>
                                                           )}
-                                                          <Button
-                                                              onClick={resetBoard}
-                                                              className="bg-red-500 text-white font-medium rounded-lg hover:bg-red-600 transition-colors"
-                                                          >
-                                                              {t('resetBoard')}
-                                                          </Button>
+                                                          <Button onClick={resetBoard} className="bg-red-500 text-white font-medium rounded-lg hover:bg-red-600 transition-colors">{t('resetBoard')}</Button>
                                                       </div>
                                                   </div>
-                                                  {raffleState.isWinnerConfirmed && (
-                                                      <p className="mt-4 text-green-600 font-semibold">{t('resultConfirmedAndBoardClosed')}</p>
-                                                  )}
+                                                  {raffleState.isWinnerConfirmed && <p className="mt-4 text-green-600 font-semibold">{t('resultConfirmedAndBoardClosed')}</p>}
                                               </div>
                                             )}
                                         </div>
@@ -3640,104 +2745,36 @@ const App = () => {
                                                <div className="flex flex-col justify-between items-start border-b p-5 bg-white/80 backdrop-blur-md border border-white/50 shadow-xl">
                                                    <div className="flex flex-col sm:flex-row justify-between w-full items-start sm:items-center gap-4">
                                                        <div className="flex items-center gap-4">
-                                                           {(raffleState.prizeImageUrl) && (
-                                                               <div className="relative h-20 w-20 rounded-xl overflow-hidden border-2 border-white shadow-lg bg-white shrink-0">
-                                                                   <img 
-                                                                       src={raffleState.prizeImageUrl} 
-                                                                       alt={t('rafflePrizeAlt')} 
-                                                                       className="w-full h-full object-cover" 
-                                                                       referrerPolicy="no-referrer"
-                                                                   />
-                                                               </div>
-                                                           )}
-                                                           <div>
-                                                               <h2 className="text-3xl font-black text-gray-900 tracking-tight flex items-center">
-                                                                   {t('numberBoard')}
-                                                               </h2>
-                                                               <p className="text-base text-gray-600 font-bold line-clamp-1">{raffleState.prize}</p>
-                                                           </div>
+                                                           {(raffleState.prizeImageUrl) && <div className="relative h-20 w-20 rounded-xl overflow-hidden border-2 border-white shadow-lg bg-white shrink-0"><img src={raffleState.prizeImageUrl} alt={t('rafflePrizeAlt')} className="w-full h-full object-cover" referrerPolicy="no-referrer" /></div>}
+                                                           <div><h2 className="text-3xl font-black text-gray-900 tracking-tight flex items-center">{t('numberBoard')}</h2><p className="text-base text-gray-600 font-bold line-clamp-1">{raffleState.prize}</p></div>
                                                        </div>
-                                                       {raffleState.raffleRef && (
-                                                            <div className="bg-purple-600 text-white px-4 py-2 rounded-xl text-sm font-black shadow-lg border border-purple-500">
-                                                                {t('mode').toUpperCase()}: {raffleMode === 'two-digit' ? t('2digitMode') : t('3digitMode')}
-                                                            </div>
-                                                       )}
+                                                       {raffleState.raffleRef && <div className="bg-purple-600 text-white px-4 py-2 rounded-xl text-sm font-black shadow-lg border border-purple-500">{t('mode').toUpperCase()}: {raffleMode === 'two-digit' ? t('2digitMode') : t('3digitMode')}</div>}
                                                    </div>
-                                                   
                                                    <div className="flex flex-wrap gap-x-4 gap-y-2 mt-4 text-xs font-bold text-gray-700 w-full">
-                                                        {raffleState.organizerName && (
-                                                            <div className="flex items-center gap-1.5 bg-blue-50 px-3 py-1.5 rounded-full border border-blue-100">
-                                                                <Users className="h-4 w-4 text-blue-600" />
-                                                                <span>{t('whoOrganizes')}: <span className="text-blue-800">{raffleState.organizerName}</span></span>
-                                                            </div>
-                                                        )}
-                                                        {raffleState.value && (
-                                                            <div className="flex items-center gap-1.5 bg-green-50 px-3 py-1.5 rounded-full border border-green-100">
-                                                                <DollarSign className="h-4 w-4 text-green-600" />
-                                                                <span>{t('ticketValue')}: <span className="text-green-800">{formatValue(raffleState.value)}</span></span>
-                                                            </div>
-                                                        )}
-                                                        {(raffleState.lottery || (raffleState.lottery === 'Otro' && raffleState.customLottery)) && (
-                                                            <div className="flex items-center gap-1.5 bg-purple-50 px-3 py-1.5 rounded-full border border-purple-100">
-                                                                <Trophy className="h-4 w-4 text-purple-600" />
-                                                                <span>{t('lottery')}: <span className="text-purple-800">{raffleState.lottery === 'Otro' ? raffleState.customLottery : raffleState.lottery}</span></span>
-                                                            </div>
-                                                        )}
-                                                        {raffleState.organizerPhoneNumber && (
-                                                            <button 
-                                                                onClick={() => {
-                                                                    const cleanCode = (raffleState.organizerCountryCode || '+57').replace('+', '');
-                                                                    window.open(`https://wa.me/${cleanCode}${raffleState.organizerPhoneNumber}`, '_blank');
-                                                                }}
-                                                                className="flex items-center gap-1.5 bg-green-50 px-3 py-1.5 rounded-full border border-green-100 hover:bg-green-100 transition-colors"
-                                                            >
-                                                                <WhatsappIcon className="h-4 w-4 text-green-600" />
-                                                                <span>{t('contact')}: <span className="text-green-800">{raffleState.organizerPhoneNumber}</span></span>
-                                                            </button>
-                                                        )}
+                                                        {raffleState.organizerName && <div className="flex items-center gap-1.5 bg-blue-50 px-3 py-1.5 rounded-full border border-blue-100"><Users className="h-4 w-4 text-blue-600" /><span>{t('whoOrganizes')}: <span className="text-blue-800">{raffleState.organizerName}</span></span></div>}
+                                                        {raffleState.value && <div className="flex items-center gap-1.5 bg-green-50 px-3 py-1.5 rounded-full border border-green-100"><DollarSign className="h-4 w-4 text-green-600" /><span>{t('ticketValue')}: <span className="text-green-800">{formatValue(raffleState.value)}</span></span></div>}
+                                                        {(raffleState.lottery || (raffleState.lottery === 'Otro' && raffleState.customLottery)) && <div className="flex items-center gap-1.5 bg-purple-50 px-3 py-1.5 rounded-full border border-purple-100"><Trophy className="h-4 w-4 text-purple-600" /><span>{t('lottery')}: <span className="text-purple-800">{raffleState.lottery === 'Otro' ? raffleState.customLottery : raffleState.lottery}</span></span></div>}
+                                                        {raffleState.organizerPhoneNumber && <button onClick={() => window.open(`https://wa.me/${(raffleState.organizerCountryCode || '+57').replace('+', '')}${raffleState.organizerPhoneNumber}`, '_blank')} className="flex items-center gap-1.5 bg-green-50 px-3 py-1.5 rounded-full border border-green-100 hover:bg-green-100 transition-colors"><WhatsappIcon className="h-4 w-4 text-green-600" /><span>{t('contact')}: <span className="text-green-800">{raffleState.organizerPhoneNumber}</span></span></button>}
                                                    </div>
                                                </div>
-
                                                <div className="relative w-full max-w-5xl mx-auto space-y-0">
                                                    {raffleMode === 'two-digit' ? (
                                                         <div className="bg-white p-5 relative overflow-hidden">
-                                                            {appSettings.boardHeaderImageUrl && (
-                                                                <div className="absolute inset-0 z-20 pointer-events-none">
-                                                                    <img src={appSettings.boardHeaderImageUrl} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                                                                </div>
-                                                            )}
-                                                            {appSettings.boardDesignImageUrl && (
-                                                                <div className="absolute inset-0 z-0 pointer-events-none">
-                                                                    <img src={appSettings.boardDesignImageUrl} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                                                                </div>
-                                                            )}
+                                                            {appSettings.boardHeaderImageUrl && <div className="absolute inset-0 z-20 pointer-events-none"><img src={appSettings.boardHeaderImageUrl} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" /></div>}
+                                                            {appSettings.boardDesignImageUrl && <div className="absolute inset-0 z-0 pointer-events-none"><img src={appSettings.boardDesignImageUrl} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" /></div>}
                                                             <div className="grid grid-cols-10 gap-2 relative z-10">
                                                                 {allNumbers.map((num) => {
                                                                     const formattedNum = String(num).padStart(2, '0');
                                                                     const participant = raffleState.participants.find((p: Participant) => p.raffleNumber === formattedNum);
                                                                     const isConfirmed = participant && participant.paymentStatus === 'confirmed';
                                                                     const isPending = participant && participant.paymentStatus === 'pending';
-
                                                                     const availBg = 'rgba(34, 197, 94, 0.1)';
                                                                     const availText = '#15803d';
                                                                     const pendBg = appSettings.numberBgPending || '#facc15';
                                                                     const pendText = appSettings.numberTextPending || '#422006';
-                                                                    const sldBg = appSettings.numberBgSold || '#dc2626'; // RED COLOR
+                                                                    const sldBg = appSettings.numberBgSold || '#dc2626'; 
                                                                     const sldText = appSettings.numberTextSold || '#ffffff';
-
-                                                                    return (
-                                                                        <div
-                                                                            key={num}
-                                                                            onClick={() => toggleNumber(num)}
-                                                                            style={{
-                                                                                backgroundColor: isConfirmed ? sldBg : isPending ? pendBg : (availBg),
-                                                                                color: isConfirmed ? sldText : isPending ? pendText : (availText),
-                                                                            }}
-                                                                            className={`number-cell text-center py-2.5 rounded-xl transition-all text-sm font-bold ${raffleState.isWinnerConfirmed || !raffleState.isDetailsConfirmed || !!raffleState.winner || isConfirmed || isPending ? 'cursor-not-allowed' : 'cursor-pointer'} ${isConfirmed ? 'shadow-xl scale-95' : isPending ? 'shadow-lg' : 'border-2 border-white hover:scale-110 shadow-sm'}`}
-                                                                        >
-                                                                            {formattedNum}
-                                                                        </div>
-                                                                    );
+                                                                    return (<div key={num} onClick={() => toggleNumber(num)} style={{ backgroundColor: isConfirmed ? sldBg : isPending ? pendBg : (availBg), color: isConfirmed ? sldText : isPending ? pendText : (availText), }} className={`number-cell text-center py-2.5 rounded-xl transition-all text-sm font-bold ${raffleState.isWinnerConfirmed || !raffleState.isDetailsConfirmed || !!raffleState.winner || isConfirmed || isPending ? 'cursor-not-allowed' : 'cursor-pointer'} ${isConfirmed ? 'shadow-xl scale-95' : isPending ? 'shadow-lg' : 'border-2 border-white hover:scale-110 shadow-sm'}`}>{formattedNum}</div>);
                                                                 })}
                                                             </div>
                                                         </div>
@@ -3745,43 +2782,21 @@ const App = () => {
                                                        <div className="flex flex-col gap-0 relative bg-transparent">
                                                            {numbersInChunks?.map((chunk, chunkIdx) => (
                                                                <div key={chunkIdx} className="relative bg-transparent p-5 overflow-hidden border-b border-gray-100 last:border-0">
-                                                                    {appSettings.boardHeaderImageUrl3 && (
-                                                                        <div className="absolute inset-0 z-20 pointer-events-none opacity-80">
-                                                                            <img src={appSettings.boardHeaderImageUrl3} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                                                                        </div>
-                                                                    )}
-                                                                    {(appSettings.boardDesignImageUrl3 || appSettings.boardDesignImageUrl) && (
-                                                                        <div className="absolute inset-0 z-0 pointer-events-none">
-                                                                            <img src={appSettings.boardDesignImageUrl3 || appSettings.boardDesignImageUrl || ''} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                                                                        </div>
-                                                                    )}
+                                                                    {appSettings.boardHeaderImageUrl3 && <div className="absolute inset-0 z-20 pointer-events-none opacity-80"><img src={appSettings.boardHeaderImageUrl3} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" /></div>}
+                                                                    {(appSettings.boardDesignImageUrl3 || appSettings.boardDesignImageUrl) && <div className="absolute inset-0 z-0 pointer-events-none"><img src={appSettings.boardDesignImageUrl3 || appSettings.boardDesignImageUrl || ''} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" /></div>}
                                                                     <div className="grid grid-cols-10 gap-2 relative z-10">
                                                                         {chunk.map((num) => {
                                                                             const formattedNum = String(num).padStart(3, '0');
                                                                             const participant = raffleState.participants.find((p: Participant) => p.raffleNumber === formattedNum);
                                                                             const isConfirmed = participant && participant.paymentStatus === 'confirmed';
                                                                             const isPending = participant && participant.paymentStatus === 'pending';
-
                                                                             const availBg = 'rgba(34, 197, 94, 0.1)';
                                                                             const availText = '#15803d';
                                                                             const pendBg = appSettings.numberBgPending || '#facc15';
                                                                             const pendText = appSettings.numberTextPending || '#422006';
-                                                                            const sldBg = appSettings.numberBgSold || '#dc2626'; // RED COLOR
+                                                                            const sldBg = appSettings.numberBgSold || '#dc2626';
                                                                             const sldText = appSettings.numberTextSold || '#ffffff';
-
-                                                                            return (
-                                                                                <div
-                                                                                    key={num}
-                                                                                    onClick={() => toggleNumber(num)}
-                                                                                    style={{
-                                                                                        backgroundColor: isConfirmed ? sldBg : isPending ? pendBg : (availBg),
-                                                                                        color: isConfirmed ? sldText : isPending ? pendText : (availText),
-                                                                                    }}
-                                                                                    className={`number-cell text-center py-2.5 rounded-full border-2 border-white transition-all text-sm font-bold ${raffleState.isWinnerConfirmed || !raffleState.isDetailsConfirmed || !!raffleState.winner || isConfirmed || isPending ? 'cursor-not-allowed' : 'cursor-pointer'} ${isConfirmed ? 'shadow-xl scale-95' : isPending ? 'shadow-lg' : 'hover:scale-110 shadow-sm'}`}
-                                                                                >
-                                                                                    {formattedNum}
-                                                                                </div>
-                                                                            );
+                                                                            return (<div key={num} onClick={() => toggleNumber(num)} style={{ backgroundColor: isConfirmed ? sldBg : isPending ? pendBg : (availBg), color: isConfirmed ? sldText : isPending ? pendText : (availText), }} className={`number-cell text-center py-2.5 rounded-full border-2 border-white transition-all text-sm font-bold ${raffleState.isWinnerConfirmed || !raffleState.isDetailsConfirmed || !!raffleState.winner || isConfirmed || isPending ? 'cursor-not-allowed' : 'cursor-pointer'} ${isConfirmed ? 'shadow-xl scale-95' : isPending ? 'shadow-lg' : 'hover:scale-110 shadow-sm'}`}>{formattedNum}</div>);
                                                                         })}
                                                                     </div>
                                                                </div>
@@ -3789,34 +2804,14 @@ const App = () => {
                                                        </div>
                                                    )}
                                                </div>
-                                               
                                                <div className="p-4 bg-white/90 backdrop-blur-md flex justify-center gap-6 border-t border-gray-100">
-                                                   <div className="flex items-center gap-2">
-                                                       <div className="w-4 h-4 rounded shadow-sm border border-gray-200" style={{ backgroundColor: 'rgba(34, 197, 94, 0.1)' }} />
-                                                       <span className="text-xs font-bold text-gray-600 uppercase tracking-wider">{t('available')}</span>
-                                                   </div>
-                                                   <div className="flex items-center gap-2">
-                                                       <div className="w-4 h-4 rounded shadow-sm" style={{ backgroundColor: appSettings.numberBgPending || '#facc15' }} />
-                                                       <span className="text-xs font-bold text-gray-600 uppercase tracking-wider">{t('pending')}</span>
-                                                   </div>
-                                                   <div className="flex items-center gap-2">
-                                                       <div className="w-4 h-4 rounded shadow-sm" style={{ backgroundColor: appSettings.numberBgSold || '#dc2626' }} />
-                                                       <span className="text-xs font-bold text-gray-600 uppercase tracking-wider">{t('sold')}</span>
-                                                   </div>
+                                                   <div className="flex items-center gap-2"><div className="w-4 h-4 rounded shadow-sm border border-gray-200" style={{ backgroundColor: 'rgba(34, 197, 94, 0.1)' }} /><span className="text-xs font-bold text-gray-600 uppercase tracking-wider">{t('available')}</span></div>
+                                                   <div className="flex items-center gap-2"><div className="w-4 h-4 rounded shadow-sm" style={{ backgroundColor: appSettings.numberBgPending || '#facc15' }} /><span className="text-xs font-bold text-gray-600 uppercase tracking-wider">{t('pending')}</span></div>
+                                                   <div className="flex items-center gap-2"><div className="w-4 h-4 rounded shadow-sm" style={{ backgroundColor: appSettings.numberBgSold || '#dc2626' }} /><span className="text-xs font-bold text-gray-600 uppercase tracking-wider">{t('sold')}</span></div>
                                                </div>
                                            </div>
                                         </div>
-                                    ) : (
-                                        <div className="text-center p-12 bg-gray-50 rounded-xl border border-dashed border-gray-300">
-                                             <h2 className="text-2xl font-bold text-gray-800 flex items-center justify-center gap-2">
-                                                <InfinityIcon className="h-8 w-8 text-purple-600"/>
-                                                {t('infinite_caps')}
-                                             </h2>
-                                            <p className="text-gray-600 mt-4 max-w-md mx-auto">
-                                                {t('infiniteRaffleDescription')}
-                                            </p>
-                                        </div>
-                                    )}
+                                    ) : <div className="text-center p-12 bg-gray-50 rounded-xl border border-dashed border-gray-300"><h2 className="text-2xl font-bold text-gray-800 flex items-center justify-center gap-2"><InfinityIcon className="h-8 w-8 text-purple-600"/>{t('infinite_caps')}</h2><p className="text-gray-600 mt-4 max-w-md mx-auto">{t('infiniteRaffleDescription')}</p></div>}
                                 </div>
                                 <div className={activeTab === 'register' ? 'tab-content active p-6' : 'tab-content p-6'}>
                                     <div className="mb-6">
@@ -3824,266 +2819,46 @@ const App = () => {
                                         {isCurrentUserAdmin && (
                                             <div className="bg-gray-100 p-4 rounded-lg mb-6 space-y-4">
                                                 <h3 className="font-semibold text-lg text-gray-800">{t('adminControls')}</h3>
-                                                {raffleState.organizerCountryCode === '+57' && (
-                                                    <div className="flex items-center justify-between">
-                                                        <Label htmlFor="enable-nequi" className="flex flex-col space-y-1">
-                                                            <span>{t('enableNequiPayment')}</span>
-                                                            <span className="font-normal leading-snug text-muted-foreground text-sm">
-                                                                {t('enableNequiPaymentDescription')}
-                                                            </span>
-                                                        </Label>
-                                                        <Switch
-                                                            id="enable-nequi"
-                                                            checked={raffleState.isNequiEnabled}
-                                                            onCheckedChange={(checked) => handlePaymentMethodToggle('isNequiEnabled', checked)}
-                                                            disabled={false}
-                                                        />
-                                                    </div>
-                                                )}
-                                                <div className="flex items-center justify-between">
-                                                    <Label htmlFor="enable-payment-link" className="flex flex-col space-y-1">
-                                                        <span>{t('enablePaymentLink')}</span>
-                                                        <span className="font-normal leading-snug text-muted-foreground text-sm">
-                                                            {t('enablePaymentLinkDescription')}
-                                                        </span>
-                                                    </Label>
-                                                    <Switch
-                                                        id="enable-payment-link"
-                                                        checked={raffleState.isPaymentLinkEnabled}
-                                                        onCheckedChange={(checked) => handlePaymentMethodToggle('isPaymentLinkEnabled', checked)}
-                                                        disabled={!raffleState.paymentLink}
-                                                    />
-                                                </div>
-                                                <div className="flex items-center justify-between">
-                                                    <Label htmlFor="enable-separate-number" className="flex flex-col space-y-1">
-                                                        <span>{t('enableSeparateNumber')}</span>
-                                                        <span className="font-normal leading-snug text-muted-foreground text-sm">
-                                                            {t('enableSeparateNumberDescription')}
-                                                        </span>
-                                                    </Label>
-                                                    <Switch
-                                                        id="enable-separate-number"
-                                                        checked={raffleState.isSeparateNumberEnabled}
-                                                        onCheckedChange={(checked) => handlePaymentMethodToggle('isSeparateNumberEnabled', checked)}
-                                                    />
-                                                </div>
+                                                {raffleState.organizerCountryCode === '+57' && <div className="flex items-center justify-between"><Label htmlFor="enable-nequi" className="flex flex-col space-y-1"><span>{t('enableNequiPayment')}</span><span className="font-normal leading-snug text-muted-foreground text-sm">{t('enableNequiPaymentDescription')}</span></Label><Switch id="enable-nequi" checked={raffleState.isNequiEnabled} onCheckedChange={(checked) => handlePaymentMethodToggle('isNequiEnabled', checked)} disabled={false}/></div>}
+                                                <div className="flex items-center justify-between"><Label htmlFor="enable-payment-link" className="flex flex-col space-y-1"><span>{t('enablePaymentLink')}</span><span className="font-normal leading-snug text-muted-foreground text-sm">{t('enablePaymentLinkDescription')}</span></Label><Switch id="enable-payment-link" checked={raffleState.isPaymentLinkEnabled} onCheckedChange={(checked) => handlePaymentMethodToggle('isPaymentLinkEnabled', checked)} disabled={!raffleState.paymentLink}/></div>
+                                                <div className="flex items-center justify-between"><Label htmlFor="enable-separate-number" className="flex flex-col space-y-1"><span>{t('enableSeparateNumber')}</span><span className="font-normal leading-snug text-muted-foreground text-sm">{t('enableSeparateNumberDescription')}</span></Label><Switch id="enable-separate-number" checked={raffleState.isSeparateNumberEnabled} onCheckedChange={(checked) => handlePaymentMethodToggle('isSeparateNumberEnabled', checked)}/></div>
                                             </div>
                                         )}
                                         <fieldset disabled={!raffleState.raffleRef || raffleState.isWinnerConfirmed || !raffleState.isDetailsConfirmed || !!raffleState.winner} className="disabled:opacity-50 space-y-4">
                                             <div className="flex flex-col gap-4">
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                    <div>
-                                                        <Label htmlFor="name-input">{t('fullName')}:</Label>
-                                                        <Input
-                                                            id="name-input"
-                                                            type="text"
-                                                            value={raffleState.name}
-                                                            onChange={(e) => handleLocalFieldChange('name', e.target.value)}
-                                                            placeholder={t('namePlaceholder')}
-                                                            className="w-full mt-1"
-                                                        />
-                                                    </div>
-                                                    <div>
-                                                        <Label htmlFor="phone-input">{t('phone')}:</Label>
-                                                        <div className="flex gap-2 mt-1">
-                                                            <div className="w-[120px]">
-                                                                <Select
-                                                                    value={raffleState.participantCountryCode || '+57'}
-                                                                    onValueChange={(val) => handleLocalFieldChange('participantCountryCode', val)}
-                                                                >
-                                                                    <SelectTrigger id="participant-country-code">
-                                                                        <SelectValue placeholder="+57" />
-                                                                    </SelectTrigger>
-                                                                    <SelectContent>
-                                                                        {countryIndicators.map((country) => (
-                                                                            <SelectItem key={`part-${country.name}-${country.code}`} value={country.code}>
-                                                                                <span className="flex items-center gap-2">
-                                                                                    <span>{country.flag}</span>
-                                                                                    <span>{country.code}</span>
-                                                                                </span>
-                                                                            </SelectItem>
-                                                                        ))}
-                                                                    </SelectContent>
-                                                                </Select>
-                                                            </div>
-                                                            <Input
-                                                                id="phone-input"
-                                                                type="tel"
-                                                                value={raffleState.phoneNumber}
-                                                                onChange={(e) => handleLocalFieldChange('phoneNumber', e.target.value.replace(/\D/g, ''))}
-                                                                placeholder="3001234567"
-                                                                className="flex-grow"
-                                                            />
-                                                        </div>
-                                                    </div>
+                                                    <div><Label htmlFor="name-input">{t('fullName')}:</Label><Input id="name-input" type="text" value={raffleState.name} onChange={(e) => handleLocalFieldChange('name', e.target.value)} placeholder={t('namePlaceholder')} className="w-full mt-1"/></div>
+                                                    <div><Label htmlFor="phone-input">{t('phone')}:</Label><div className="flex gap-2 mt-1"><div className="w-[120px]"><Select value={raffleState.participantCountryCode || '+57'} onValueChange={(val) => handleLocalFieldChange('participantCountryCode', val)}><SelectTrigger id="participant-country-code"><SelectValue placeholder="+57" /></SelectTrigger><SelectContent>{countryIndicators.map((country) => (<SelectItem key={`part-${country.name}-${country.code}`} value={country.code}><span className="flex items-center gap-2"><span>{country.flag}</span><span>{country.code}</span></span></SelectItem>))}</SelectContent></Select></div><Input id="phone-input" type="tel" value={raffleState.phoneNumber} onChange={(e) => handleLocalFieldChange('phoneNumber', e.target.value.replace(/\D/g, ''))} placeholder="3001234567" className="flex-grow"/></div></div>
                                                 </div>
                                                 <div>
                                                     <Label htmlFor="raffle-number-input">{t('raffleNumberLabel', { range: raffleState.raffleMode === 'two-digit' ? '00-99' : raffleState.raffleMode === 'three-digit' ? '000-999' : t('infiniteDigits', { count: raffleState.infiniteModeDigits || 4 }) })}:</Label>
                                                     <div className="relative mt-1">
-                                                        <Input
-                                                            id="raffle-number-input"
-                                                            type="text"
-                                                            value={raffleState.raffleNumber}
-                                                            onChange={handleRaffleNumberChange}
-                                                            placeholder={t('raffleNumberPlaceholder', { example: raffleState.raffleMode === 'two-digit' ? '05' : raffleState.raffleMode === 'three-digit' ? '142' : '2025' })}
-                                                            className="w-full pr-10"
-                                                            maxLength={raffleState.raffleMode === 'infinite' ? (raffleState.infiniteModeDigits || 4) : numberLength}
-                                                        />
-                                                        {raffleState.raffleNumber && allAssignedNumbers.has(parseInt(raffleState.raffleNumber)) && (
-                                                            <p className="text-red-500 text-sm mt-1">{t('numberAlreadyAssignedWarning')}</p>
-                                                        )}
-                                                        {raffleState.raffleNumber && raffleState.raffleMode === 'infinite' && (
-                                                            <Button
-                                                                type="button"
-                                                                variant="ghost"
-                                                                size="icon"
-                                                                className="absolute inset-y-0 right-0 h-full px-3"
-                                                                onClick={handleGenerateRandomNumber}
-                                                                title={t('generateRandomNumber')}
-                                                            >
-                                                                <Wand2 className="h-4 w-4" />
-                                                            </Button>
-                                                        )}
+                                                        <Input id="raffle-number-input" type="text" value={raffleState.raffleNumber} onChange={handleRaffleNumberChange} placeholder={t('raffleNumberPlaceholder', { example: raffleState.raffleMode === 'two-digit' ? '05' : raffleState.raffleMode === 'three-digit' ? '142' : '2025' })} className="w-full pr-10" maxLength={raffleState.raffleMode === 'infinite' ? (raffleState.infiniteModeDigits || 4) : numberLength}/>
+                                                        {raffleState.raffleNumber && allAssignedNumbers.has(parseInt(raffleState.raffleNumber)) && <p className="text-red-500 text-sm mt-1">{t('numberAlreadyAssignedWarning')}</p>}
+                                                        {raffleState.raffleNumber && raffleState.raffleMode === 'infinite' && <Button type="button" variant="ghost" size="icon" className="absolute inset-y-0 right-0 h-full px-3" onClick={handleGenerateRandomNumber} title={t('generateRandomNumber')}><Wand2 className="h-4 w-4" /></Button>}
                                                     </div>
                                                 </div>
                                                 <div className="flex flex-col wrap gap-2">
-                                                    {raffleState.isPaymentLinkEnabled && raffleState.paymentLink && (
-                                                        <Button
-                                                            className="flex-1 w-full sm:auto bg-blue-500 hover:bg-blue-600 text-white"
-                                                            disabled={!isRegisterFormValidForSubmit}
-                                                            onClick={() => {
-                                                                if (!isRegisterFormValidForSubmit) {
-                                                                    showNotification(t('completeAllFieldsWarning'), 'warning');
-                                                                    return;
-                                                                }
-                                                                const paymentUrl = new URL(raffleState.paymentLink!);
-                                                                const currentUrlWithParams = new URL(window.location.href);
-                                                                const cleanRedirectUrl = new URL(currentUrlWithParams.origin + currentUrlWithParams.pathname);
-                                                                cleanRedirectUrl.searchParams.set('ref', raffleState.raffleRef);
-                                                                cleanRedirectUrl.searchParams.set('pName', raffleState.name || '');
-                                                                cleanRedirectUrl.searchParams.set('pPhone', raffleState.phoneNumber || '');
-                                                                cleanRedirectUrl.searchParams.set('pNum', raffleState.raffleNumber || '');
-                                                                paymentUrl.searchParams.set('redirect-url', cleanRedirectUrl.href);
-                                                                window.location.href = paymentUrl.toString();
-                                                            }}
-                                                        >
-                                                            <LinkIcon className="mr-2 h-4 w-4" />
-                                                            <span>{t('payWithLink')}</span>
-                                                        </Button>
-                                                    )}
-                                                    {raffleState.organizerCountryCode === '+57' && raffleState.isNequiEnabled && (raffleState.nequiAccountNumber || raffleState.brebKey) && (
-                                                        <Button
-                                                            className="flex-1 w-full sm:auto bg-purple-500 hover:bg-purple-600 text-white flex items-center justify-center gap-2"
-                                                            disabled={!isRegisterFormValidForSubmit}
-                                                            onClick={() => handleRegisterParticipant(true, false)}
-                                                        >
-                                                            <NequiIcon />
-                                                            <span>{t('payWithNequi')}</span>
-                                                        </Button>
-                                                    )}
-                                                    <div className="flex flex-col gap-2 flex-1">
-                                                        <Button
-                                                            variant="outline"
-                                                            type="button"
-                                                            className="w-full"
-                                                            disabled={!raffleState.nequiAccountNumber}
-                                                            onClick={() => {
-                                                                if (raffleState.nequiAccountNumber) {
-                                                                    navigator.clipboard.writeText(raffleState.nequiAccountNumber);
-                                                                    showNotification(t('accountNumberCopied'), 'success');
-                                                                }
-                                                            }}
-                                                        >
-                                                            <Copy className="mr-2 h-4 w-4" />
-                                                            {t('copyAccountNumber')}
-                                                        </Button>
-                                                        {raffleState.brebKey && (
-                                                            <Button
-                                                                variant="outline"
-                                                                type="button"
-                                                                className="w-full"
-                                                                onClick={() => {
-                                                                    navigator.clipboard.writeText(raffleState.brebKey);
-                                                                    showNotification(t('brebKeyCopied'), 'success');
-                                                                }}
-                                                            >
-                                                                <Copy className="mr-2 h-4 w-4" />
-                                                                {t('copyBrebKey')}
-                                                            </Button>
-                                                        )}
-                                                    </div>
-                                                     {raffleState.isSeparateNumberEnabled && (
-                                                         <Button
-                                                            onClick={() => handleRegisterParticipant(false, 'separated')}
-                                                            disabled={!isRegisterFormValidForSubmit}
-                                                            className="w-full sm:flex-1 bg-yellow-500 hover:bg-yellow-600 text-white"
-                                                        >
-                                                            {t('separate')}
-                                                        </Button>
-                                                    )}
-                                                     {isCurrentUserAdmin && (
-                                                        <Button 
-                                                            className="w-full sm:flex-1 bg-green-600 hover:bg-green-700" 
-                                                            onClick={() => handleRegisterParticipant(false, true)}
-                                                            disabled={!isRegisterFormValidForSubmit}
-                                                        >
-                                                            {t('registerAndConfirmPayment')}
-                                                        </Button>
-                                                    )}
+                                                    {raffleState.isPaymentLinkEnabled && raffleState.paymentLink && <Button className="flex-1 w-full sm:auto bg-blue-500 hover:bg-blue-600 text-white" disabled={!isRegisterFormValidForSubmit} onClick={() => { if (!isRegisterFormValidForSubmit) { showNotification(t('completeAllFieldsWarning'), 'warning'); return; } const paymentUrl = new URL(raffleState.paymentLink!); const currentUrlWithParams = new URL(window.location.href); const cleanRedirectUrl = new URL(currentUrlWithParams.origin + currentUrlWithParams.pathname); cleanRedirectUrl.searchParams.set('ref', raffleState.raffleRef); cleanRedirectUrl.searchParams.set('pName', raffleState.name || ''); cleanRedirectUrl.searchParams.set('pPhone', raffleState.phoneNumber || ''); cleanRedirectUrl.searchParams.set('pNum', raffleState.raffleNumber || ''); paymentUrl.searchParams.set('redirect-url', cleanRedirectUrl.href); window.location.href = paymentUrl.toString(); }}><LinkIcon className="mr-2 h-4 w-4" /><span>{t('payWithLink')}</span></Button>}
+                                                    {raffleState.organizerCountryCode === '+57' && raffleState.isNequiEnabled && (raffleState.nequiAccountNumber || raffleState.brebKey) && <Button className="flex-1 w-full sm:auto bg-purple-500 hover:bg-purple-600 text-white flex items-center justify-center gap-2" disabled={!isRegisterFormValidForSubmit} onClick={() => handleRegisterParticipant(true, false)}><NequiIcon /><span>{t('payWithNequi')}</span></Button>}
+                                                    <div className="flex flex-col gap-2 flex-1"><Button variant="outline" type="button" className="w-full" disabled={!raffleState.nequiAccountNumber} onClick={() => { if (raffleState.nequiAccountNumber) { navigator.clipboard.writeText(raffleState.nequiAccountNumber); showNotification(t('accountNumberCopied'), 'success'); } }}><Copy className="mr-2 h-4 w-4" />{t('copyAccountNumber')}</Button>{raffleState.brebKey && <Button variant="outline" type="button" className="w-full" onClick={() => { navigator.clipboard.writeText(raffleState.brebKey); showNotification(t('brebKeyCopied'), 'success'); }}><Copy className="mr-2 h-4 w-4" />{t('copyBrebKey')}</Button>}</div>
+                                                     {raffleState.isSeparateNumberEnabled && <Button onClick={() => handleRegisterParticipant(false, 'separated')} disabled={!isRegisterFormValidForSubmit} className="w-full sm:flex-1 bg-yellow-500 hover:bg-yellow-600 text-white">{t('separate')}</Button>}
+                                                     {isCurrentUserAdmin && <Button className="w-full sm:flex-1 bg-green-600 hover:bg-green-700" onClick={() => handleRegisterParticipant(false, true)} disabled={!isRegisterFormValidForSubmit}>{t('registerAndConfirmPayment')}</Button>}
                                                 </div>
                                             </div>
                                         </fieldset>
                                     </div>
-                                    {generatedTicketData && (
-                                        <InlineTicket ticketModalRef={ticketModalRef} ticketData={generatedTicketData} setGeneratedTicketData={setGeneratedTicketData} handleDownloadTicket={handleDownloadTicket} handleShareTicket={handleShareTicket} formatValue={formatValue} t={t} language={language}/>
-                                    )}
-                                    {(!raffleState.raffleRef || !raffleState.isDetailsConfirmed) && (
-                                        <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-6" role="alert">
-                                            <p className="font-bold">{t('notice')}</p>
-                                            <p>{t('activateRaffleWarning')}</p>
-                                        </div>
-                                    )}
-                                    {(raffleState.isWinnerConfirmed || !!raffleState.winner) && (
-                                        <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-6" role="alert">
-                                            <p className="font-bold">{t('gameFinished')}</p>
-                                            <p>{t('gameFinishedRegistrationDisabled')}</p>
-                                        </div>
-                                    )}
+                                    {generatedTicketData && <InlineTicket ticketModalRef={ticketModalRef} ticketData={generatedTicketData} setGeneratedTicketData={setGeneratedTicketData} handleDownloadTicket={handleDownloadTicket} handleShareTicket={handleShareTicket} formatValue={formatValue} t={t} language={language}/>}
+                                    {(!raffleState.raffleRef || !raffleState.isDetailsConfirmed) && <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-6" role="alert"><p className="font-bold">{t('notice')}</p><p>{t('activateRaffleWarning')}</p></div>}
+                                    {(raffleState.isWinnerConfirmed || !!raffleState.winner) && <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-6" role="alert"><p className="font-bold">{t('gameFinished')}</p><p>{t('gameFinishedRegistrationDisabled')}</p></div>}
                                 </div>
                                 <div className={activeTab === 'activations' ? 'tab-content active p-6' : 'tab-content p-6'}>
                                     {isSuperAdmin && (
                                         <>
                                             <h2 className="text-2xl font-bold text-gray-800 mb-4">{t('pendingActivations')}</h2>
                                             {pendingActivations.length > 0 ? (
-                                                <div className="overflow-x-auto">
-                                                    <table className="min-w-full divide-y divide-gray-200">
-                                                        <thead className="bg-gray-50">
-                                                            <tr>
-                                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('transactionId')}</th>
-                                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('raffleType')}</th>
-                                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('date')}</th>
-                                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('action')}</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody className="bg-white divide-y divide-gray-200">
-                                                            {pendingActivations.sort((a, b) => b.createdAt.toDate().getTime() - a.createdAt.toDate().getTime()).map((p) => (
-                                                                <tr key={p.id}>
-                                                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{p.transactionId}</td>
-                                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{p.raffleMode}</td>
-                                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{p.createdAt && p.createdAt.toDate ? format(p.createdAt.toDate(), 'PPpp', { locale: language === 'es' ? es : enUS }) : 'N/A'}</td>
-                                                                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                                                        <Button onClick={() => handleApproveActivation(p)} size="sm" className="bg-green-500 hover:bg-green-600 text-white">
-                                                                            {t('activateBoard')}
-                                                                        </Button>
-                                                                    </td>
-                                                                </tr>
-                                                            ))}
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                            ) : (
-                                                <p className="text-gray-500">{t('noPendingActivations')}</p>
-                                            )}
+                                                <div className="overflow-x-auto"><table className="min-w-full divide-y divide-gray-200"><thead className="bg-gray-50"><tr><th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('transactionId')}</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('raffleType')}</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('date')}</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('action')}</th></tr></thead><tbody className="bg-white divide-y divide-gray-200">{pendingActivations.sort((a, b) => b.createdAt.toDate().getTime() - a.createdAt.toDate().getTime()).map((p) => (<tr key={p.id}><td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{p.transactionId}</td><td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{p.raffleMode}</td><td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{p.createdAt && p.createdAt.toDate ? format(p.createdAt.toDate(), 'PPpp', { locale: language === 'es' ? es : enUS }) : 'N/A'}</td><td className="px-6 py-4 whitespace-nowrap text-sm"><Button onClick={() => handleApproveActivation(p)} size="sm" className="bg-green-500 hover:bg-green-600 text-white">{t('activateBoard')}</Button></td></tr>))}</tbody></table></div>
+                                            ) : <p className="text-gray-500">{t('noPendingActivations')}</p>}
                                         </>
                                     )}
                                 </div>
@@ -4091,221 +2866,41 @@ const App = () => {
                                     {isSuperAdmin && (
                                          <>
                                             <div className="flex wrap items-center gap-x-6 gap-y-2 mb-4">
-                                                <div className="flex items-center gap-2">
-                                                    <h2 className="text-2xl font-bold text-gray-800">{
-                                                        gamesFilter === 'winners' ? t('gamesWithWinner') :
-                                                        gamesFilter === 'past_date' ? t('pastDateGames') :
-                                                        t('assignedGames')
-                                                    }</h2>
-                                                    <span className="bg-gray-200 text-gray-800 text-sm font-semibold px-3 py-1 rounded-full">{filteredGames.length}</span>
-                                                </div>
-                                                {gamesFilter === 'past_date' && pastDateRaffles.length > 0 && (
-                                                    <Button variant="destructive" onClick={handleDeleteAllPastDueRaffles}>
-                                                        <Trash2 className="mr-2 h-4 w-4" />
-                                                        {t('deleteAllPastDueGames', { count: pastDateRaffles.length })}
-                                                    </Button>
-                                                )}
+                                                <div className="flex items-center gap-2"><h2 className="text-2xl font-bold text-gray-800">{gamesFilter === 'winners' ? t('gamesWithWinner') : gamesFilter === 'past_date' ? t('pastDateGames') : t('assignedGames')}</h2><span className="bg-gray-200 text-gray-800 text-sm font-semibold px-3 py-1 rounded-full">{filteredGames.length}</span></div>
+                                                {gamesFilter === 'past_date' && pastDateRaffles.length > 0 && <Button variant="destructive" onClick={handleDeleteAllPastDueRaffles}><Trash2 className="mr-2 h-4 w-4" />{t('deleteAllPastDueGames', { count: pastDateRaffles.length })}</Button>}
                                             </div>
-                                            <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
-                                                <Input
-                                                    type="text"
-                                                    placeholder={t('searchGamePlaceholder')}
-                                                    value={gameSearchQuery}
-                                                    onChange={(e) => setGameSearchQuery(e.target.value)}
-                                                    className="max-sm w-full"
-                                                />
-                                                <div className="flex items-center gap-2">
-                                                    {selectedRafflesForDeletion.length > 0 && (
-                                                        <Button variant="destructive" onClick={handleDeleteSelectedRaffles}>
-                                                            <Trash2 className="mr-2 h-4 w-4" />
-                                                            {t('deleteSelected', { count: selectedRafflesForDeletion.length })}
-                                                        </Button>
-                                                    )}
-                                                </div>
-                                            </div>
+                                            <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4"><Input type="text" placeholder={t('searchGamePlaceholder')} value={gameSearchQuery} onChange={(e) => setGameSearchQuery(e.target.value)} className="max-sm w-full"/><div className="flex items-center gap-2">{selectedRafflesForDeletion.length > 0 && <Button variant="destructive" onClick={handleDeleteSelectedRaffles}><Trash2 className="mr-2 h-4 w-4" />{t('deleteSelected', { count: selectedRafflesForDeletion.length })}</Button>}</div></div>
                                             {filteredGames.length > 0 ? (
-                                                <div className="overflow-x-auto">
-                                                    <table className="min-w-full divide-y divide-gray-200">
-                                                        <thead className="bg-gray-50">
-                                                            <tr>
-                                                                <th className="p-4">
-                                                                    <Checkbox
-                                                                        checked={deletableRaffles.length > 0 && deletableRaffles.every(raffle => selectedRafflesForDeletion.includes(raffle.raffleRef)) ? true : selectedRafflesForDeletion.length > 0 && !deletableRaffles.every(raffle => selectedRafflesForDeletion.includes(raffle.raffleRef)) ? 'indeterminate' : false}
-                                                                        onCheckedChange={(checked) => {
-                                                                            if (checked === true) {
-                                                                                setSelectedRafflesForDeletion(deletableRaffles.map(r => r.raffleRef));
-                                                                            } else {
-                                                                                setSelectedRafflesForDeletion([]);
-                                                                            }
-                                                                        }}
-                                                                    />
-                                                                </th>
-                                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('reference')}</th>
-                                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('prize')}</th>
-                                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('whoOrganizes')}</th>
-                                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('gameDate')}</th>
-                                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('password')}</th>
-                                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('collected')}</th>
-                                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('action')}</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody className="bg-white divide-y divide-gray-200">
-                                                            {filteredGames.sort((a, b) => (b.raffleRef || '').localeCompare(a.raffleRef || '')).map((raffle) => {
+                                                <div className="overflow-x-auto"><table className="min-w-full divide-y divide-gray-200"><thead className="bg-gray-50"><tr><th className="p-4"><Checkbox checked={deletableRaffles.length > 0 && deletableRaffles.every(raffle => selectedRafflesForDeletion.includes(raffle.raffleRef)) ? true : selectedRafflesForDeletion.length > 0 && !deletableRaffles.every(raffle => selectedRafflesForDeletion.includes(raffle.raffleRef)) ? 'indeterminate' : false} onCheckedChange={(checked) => { if (checked === true) setSelectedRafflesForDeletion(deletableRaffles.map(r => r.raffleRef)); else setSelectedRafflesForDeletion([]); }}/></th><th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('reference')}</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('prize')}</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('whoOrganizes')}</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('gameDate')}</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('password')}</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('collected')}</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('action')}</th></tr></thead><tbody className="bg-white divide-y divide-gray-200">{filteredGames.sort((a, b) => (b.raffleRef || '').localeCompare(a.raffleRef || '')).map((raffle) => {
                                                                 const gameCollected = ((raffle.participants || []).filter(p => p.paymentStatus === 'confirmed').length * parseFloat(String(raffle.value).replace(/\D/g, ''))) || 0;
-                                                                
-                                                                const prizeLabel = raffle.prize || (raffle.isPaid ? 'Sin Premio Definido' : 'Juego Dañado/Incompleto');
-                                                                const organizerLabel = raffle.organizerName || 'Sin Organizador';
-
                                                                 return (
-                                                                    <tr key={`${raffle.raffleRef || raffle.id}-${raffle.adminId || Math.random()}`}>
-                                                                        <td className="p-4">
-                                                                            <Checkbox
-                                                                                checked={selectedRafflesForDeletion.includes(raffle.raffleRef)}
-                                                                                onCheckedChange={(checked) => {
-                                                                                    setSelectedRafflesForDeletion(prev => checked ? [...prev, raffle.raffleRef] : prev.filter(ref => ref !== raffle.raffleRef));
-                                                                                }}
-                                                                            />
-                                                                        </td>
-                                                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-black text-purple-700">{raffle.raffleRef || 'REF-CORRUPTA'}</td>
-                                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{raffle.raffleMode === 'infinite' ? formatValue(raffle.prize) : prizeLabel}</td>
-                                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{organizerLabel}</td>
-                                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{raffle.gameDate || 'Sin Fecha'}</td>
-                                                                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                                                            <div className="flex items-center gap-2">
-                                                                                <span className="font-mono bg-slate-100 text-slate-700 px-2 py-1 rounded border border-slate-200 font-black text-xs">
-                                                                                    {raffle.password || '----'}
-                                                                                </span>
-                                                                                <Button 
-                                                                                    variant="ghost" 
-                                                                                    size="icon" 
-                                                                                    className="h-8 w-8 hover:text-purple-600" 
-                                                                                    onClick={() => { setRaffleToChangePassword(raffle); setIsChangePasswordDialogOpen(true); }}
-                                                                                    title={t('changePasswordButton')}
-                                                                                >
-                                                                                    <KeyRound className="h-4 w-4" />
-                                                                                </Button>
-                                                                            </div>
-                                                                        </td>
-                                                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-600">{formatValue(gameCollected)}</td>
-                                                                        <td className="px-6 py-4 whitespace-nowrap text-sm space-x-2">
-                                                                            {raffle.raffleRef && (
-                                                                                <Button onClick={() => handleAdminSearch({ refToSearch: raffle.raffleRef, isPublicSearch: true })} size="sm" variant="outline">{t('manage')}</Button>
-                                                                            )}
-                                                                            <Button onClick={() => handleDeleteRaffle(raffle)} size="sm" variant="destructive"><Trash2 className="h-4 w-4"/></Button>
-                                                                        </td>
-                                                                    </tr>
+                                                                    <tr key={`${raffle.raffleRef || raffle.id}-${raffle.adminId || Math.random()}`}><td className="p-4"><Checkbox checked={selectedRafflesForDeletion.includes(raffle.raffleRef)} onCheckedChange={(checked) => setSelectedRafflesForDeletion(prev => checked ? [...prev, raffle.raffleRef] : prev.filter(ref => ref !== raffle.raffleRef))}/></td><td className="px-6 py-4 whitespace-nowrap text-sm font-black text-purple-700">{raffle.raffleRef || 'REF-CORRUPTA'}</td><td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{raffle.raffleMode === 'infinite' ? formatValue(raffle.prize) : (raffle.prize || 'Sin Premio')}</td><td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{raffle.organizerName || 'Sin Organizador'}</td><td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{raffle.gameDate || 'Sin Fecha'}</td><td className="px-6 py-4 whitespace-nowrap text-sm"><div className="flex items-center gap-2"><span className="font-mono bg-slate-100 text-slate-700 px-2 py-1 rounded border border-slate-200 font-black text-xs">{raffle.password || '----'}</span><Button variant="ghost" size="icon" className="h-8 w-8 hover:text-purple-600" onClick={() => { setRaffleToChangePassword(raffle); setIsChangePasswordDialogOpen(true); }} title={t('changePasswordButton')}><KeyRound className="h-4 w-4" /></Button></div></td><td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-600">{formatValue(gameCollected)}</td><td className="px-6 py-4 whitespace-nowrap text-sm space-x-2">{raffle.raffleRef && <Button onClick={() => handleAdminSearch({ refToSearch: raffle.raffleRef, isPublicSearch: true })} size="sm" variant="outline">{t('manage')}</Button>}<Button onClick={() => handleDeleteRaffle(raffle)} size="sm" variant="destructive"><Trash2 className="h-4 w-4"/></Button></td></tr>
                                                                 )
-                                                            })}
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                            ) : (
-                                                <p className="text-gray-500">{t('noGamesAssigned')}</p>
-                                            )}
+                                                            })}</tbody></table></div>
+                                            ) : <p className="text-gray-500">{t('noGamesAssigned')}</p>}
                                          </>
                                     )}
                                 </div>
                                 {isCurrentUserAdmin && (
                                 <div className={activeTab === 'pending' ? 'tab-content active p-6' : 'tab-content p-6'}>
                                     <h2 className="text-2xl font-bold text-gray-800 mb-4">{t('pendingPayments')}</h2>
-                                    <div className="mb-4 max-w-sm">
-                                        <Input
-                                            type="text"
-                                            placeholder={t('searchByNumberOrPhone')}
-                                            value={pendingSearchQuery}
-                                            onChange={(e) => setPendingSearchQuery(e.target.value)}
-                                        />
-                                    </div>
+                                    <div className="mb-4 max-w-sm"><Input type="text" placeholder={t('searchByNumberOrPhone')} value={pendingSearchQuery} onChange={(e) => setPendingSearchQuery(e.target.value)}/></div>
                                     {pendingParticipants.length > 0 ? (
-                                        <div className="overflow-x-auto">
-                                            <table className="min-w-full divide-y divide-gray-200">
-                                                <thead className="bg-gray-50">
-                                                    <tr>
-                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('number')}</th>
-                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('name')}</th>
-                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('phone')}</th>
-                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('registrationDate')}</th>
-                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('action')}</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="bg-white divide-y divide-gray-200">
-                                                    {pendingParticipants.sort((a, b) => a.raffleNumber.localeCompare(b.raffleNumber)).map((p: Participant) => (
-                                                        <tr key={p.id}>
-                                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-purple-600">{p.raffleNumber}</td>
-                                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{p.name}</td>
-                                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                                <a href={`https://wa.me/${(p.countryCode || '+57').replace('+', '')}${p.phoneNumber}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-blue-600 hover:underline">
-                                                                    <WhatsappIcon className="h-4 w-4 text-green-500" />
-                                                                    {p.phoneNumber}
-                                                                </a>
-                                                            </td>
-                                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{p.timestamp?.toDate ? format(p.timestamp.toDate(), 'PPpp', { locale: language === 'es' ? es : enUS }) : 'N/A'}</td>
-                                                            <td className="px-6 py-4 whitespace-nowrap text-sm space-x-2">
-                                                                <Button onClick={() => handleConfirmPayment(p.id)} size="sm" className="bg-green-500 hover:bg-green-600 text-white">{t('confirmPayment')}</Button>
-                                                                <Button onClick={() => handleDeletePending(p.id)} size="sm" variant="destructive"><Trash2 className="h-4 w-4"/></Button>
-                                                            </td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    ) : (
-                                        <p className="text-gray-500">{t('noPendingPayments')}</p>
-                                    )}
+                                        <div className="overflow-x-auto"><table className="min-w-full divide-y divide-gray-200"><thead className="bg-gray-50"><tr><th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('number')}</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('name')}</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('phone')}</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('registrationDate')}</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('action')}</th></tr></thead><tbody className="bg-white divide-y divide-gray-200">{pendingParticipants.sort((a, b) => a.raffleNumber.localeCompare(b.raffleNumber)).map((p: Participant) => (<tr key={p.id}><td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-purple-600">{p.raffleNumber}</td><td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{p.name}</td><td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><a href={`https://wa.me/${(p.countryCode || '+57').replace('+', '')}${p.phoneNumber}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-blue-600 hover:underline"><WhatsappIcon className="h-4 w-4 text-green-500" />{p.phoneNumber}</a></td><td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{p.timestamp?.toDate ? format(p.timestamp.toDate(), 'PPpp', { locale: language === 'es' ? es : enUS }) : 'N/A'}</td><td className="px-6 py-4 whitespace-nowrap text-sm space-x-2"><Button onClick={() => handleConfirmPayment(p.id)} size="sm" className="bg-green-500 hover:bg-green-600 text-white">{t('confirmPayment')}</Button><Button onClick={() => handleDeletePending(p.id)} size="sm" variant="destructive"><Trash2 className="h-4 w-4"/></Button></td></tr>))}</tbody></table></div>
+                                    ) : <p className="text-gray-500">{t('noPendingPayments')}</p>}
                                 </div>
                                 )}
                                 <div className={activeTab === 'participants' ? 'tab-content active p-6' : 'tab-content p-6'}>
-                                    <div className="flex justify-between items-center mb-4">
-                                            <h2 className="text-2xl font-bold text-gray-800">{t('confirmedParticipants')}</h2>
-                                    </div>
-                                    {!raffleState.raffleRef ? (
-                                        <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-6" role="alert">
-                                            <p className="font-bold">{t('notice')}</p>
-                                            <p>{t('activateRaffleToSeeParticipants')}</p>
-                                        </div>
-                                    ) : confirmedParticipants.length > 0 ? (
-                                        <div className="overflow-x-auto">
-                                            <table className="min-w-full divide-y divide-gray-200">
-                                                <thead className="bg-gray-50">
-                                                    <tr>
-                                                        {isCurrentUserAdmin && <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>}
-                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('name')}</th>
-                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('phone')}</th>
-                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('number')}</th>
-                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('action')}</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="bg-white divide-y divide-gray-200">
-                                                    {confirmedParticipants.sort((a, b) => a.raffleNumber.localeCompare(b.raffleNumber)).map((p: any, index: number) => (
-                                                        <tr key={p.id}>
-                                                            {isCurrentUserAdmin && <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{index + 1}</td>}
-                                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{p.name}</td>
-                                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                                {isCurrentUserAdmin ? (
-                                                                    <a href={`https://wa.me/${(p.countryCode || '+57').replace('+', '')}${p.phoneNumber}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-blue-600 hover:underline">
-                                                                        <WhatsappIcon className="h-4 w-4 text-green-500" />
-                                                                        {p.phoneNumber}
-                                                                    </a>
-                                                                ) : (<span>******</span>)}
-                                                            </td>
-                                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-purple-600">{p.raffleNumber}</td>
-                                                            <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                                                <Button onClick={() => handleGenerateTicket(p)} size="sm" variant="outline" disabled={!raffleState.prize}>{t('generateTicket')}</Button>
-                                                            </td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    ) : (
-                                        <p className="text-gray-500">{t('noConfirmedParticipants')}</p>
-                                    )}
+                                    <div className="flex justify-between items-center mb-4"><h2 className="text-2xl font-bold text-gray-800">{t('confirmedParticipants')}</h2></div>
+                                    {!raffleState.raffleRef ? <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-6" role="alert"><p className="font-bold">{t('notice')}</p><p>{t('activateRaffleToSeeParticipants')}</p></div> : confirmedParticipants.length > 0 ? (
+                                        <div className="overflow-x-auto"><table className="min-w-full divide-y divide-gray-200"><thead className="bg-gray-50"><tr>{isCurrentUserAdmin && <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>}<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('name')}</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('phone')}</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('number')}</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('action')}</th></tr></thead><tbody className="bg-white divide-y divide-gray-200">{confirmedParticipants.sort((a, b) => a.raffleNumber.localeCompare(b.raffleNumber)).map((p: any, index: number) => (<tr key={p.id}>{isCurrentUserAdmin && <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{index + 1}</td>}<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{p.name}</td><td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{isCurrentUserAdmin ? <a href={`https://wa.me/${(p.countryCode || '+57').replace('+', '')}${p.phoneNumber}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-blue-600 hover:underline"><WhatsappIcon className="h-4 w-4 text-green-500" />{p.phoneNumber}</a> : <span>******</span>}</td><td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-purple-600">{p.raffleNumber}</td><td className="px-6 py-4 whitespace-nowrap text-sm"><Button onClick={() => handleGenerateTicket(p)} size="sm" variant="outline" disabled={!raffleState.prize}>{t('generateTicket')}</Button></td></tr>))}</tbody></table></div>
+                                    ) : <p className="text-gray-500">{t('noConfirmedParticipants')}</p>}
                                 </div>
                                 <div className={activeTab === 'winners' ? 'tab-content active p-6' : 'tab-content p-6'}>
                                     <h2 className="text-2xl font-bold text-gray-800 mb-6">{t('winnersTab')}</h2>
                                     {raffleState.winner && (
                                         <div className="mb-6 p-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 rounded-lg">
-                                            {raffleState.winner.isHouse ? (<p className="font-bold text-lg flex items-center"><House className="mr-2"/>{t('housePrizeTitle')}</p>) : (<p className="font-bold text-lg flex items-center"><Award className="mr-2"/>{t('winnerFoundTitle')}</p>)}
+                                            {raffleState.winner.isHouse ? <p className="font-bold text-lg flex items-center"><House className="mr-2"/>{t('housePrizeTitle')}</p> : <p className="font-bold text-lg flex items-center"><Award className="mr-2"/>{t('winnerFoundTitle')}</p>}
                                             <p><strong>{t('number')}:</strong> {raffleState.winner.raffleNumber}</p>
                                             {!raffleState.winner.isHouse && (
                                             <>
@@ -4319,174 +2914,53 @@ const App = () => {
                                         <div className="p-4 bg-blue-100 border-l-4 border-yellow-500 text-blue-800 rounded-lg space-y-4">
                                             <h3 className="font-bold text-lg">{t('partialWinnersTitle')}</h3>
                                             {currentPartialWinners.map((group, index) => (
-                                                <div key={index}>
-                                                    <p className="font-semibold">{t('partialWinnersSubtitle', { count: group.digits, prize: group.prize })}</p>
-                                                    <ul className="list-disc list-inside text-sm">
-                                                        {group.winners.map(winner => (
-                                                            <li key={winner.id}>
-                                                                {winner.name} ({winner.raffleNumber})
-                                                                {isCurrentUserAdmin && (<a href={`https://wa.me/${(winner.countryCode || '+57').replace('+', '')}${winner.phoneNumber}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline ml-2">{`${winner.countryCode || '+57'} ${winner.phoneNumber}`}</a>)}
-                                                            </li>
-                                                        ))}
-                                                    </ul>
-                                                </div>
+                                                <div key={index}><p className="font-semibold">{t('partialWinnersSubtitle', { count: group.digits, prize: group.prize })}</p><ul className="list-disc list-inside text-sm">{group.winners.map(winner => (<li key={winner.id}>{winner.name} ({winner.raffleNumber}){isCurrentUserAdmin && <a href={`https://wa.me/${(winner.countryCode || '+57').replace('+', '')}${winner.phoneNumber}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline ml-2">{`${winner.countryCode || '+57'} ${winner.phoneNumber}`}</a>}</li>))}</ul></div>
                                             ))}
                                         </div>
                                     )}
-                                    {!raffleState.winner && currentPartialWinners.length === 0 && (
-                                        <p className="text-gray-500">{t('noWinnersYet')}</p>
-                                    )}
+                                    {!raffleState.winner && currentPartialWinners.length === 0 && <p className="text-gray-500">{t('noWinnersYet')}</p>}
                                 </div>
                             </div>
                         </>
                     )}
 
-                    {notification.show && (
-                        <div className={`fixed top-4 right-4 z-[100] px-4 py-3 rounded-lg shadow-lg transition-opacity duration-300 ${
-                            notification.type === 'error' ? 'bg-red-100 text-red-700 border border-red-300' :
-                            notification.type === 'success' ? 'bg-green-100 text-green-700 border border-green-300' :
-                            notification.type === 'warning' ? 'bg-yellow-100 text-yellow-700 border border-teal-300' :
-                            'bg-blue-100 text-blue-700 border border-blue-300'
-                        }`}>
-                            <div className="flex items-center gap-2">
-                                {notification.type === 'warning' && <AlertTriangle className="h-5 w-5 shrink-0" />}
-                                <span>{notification.message}</span>
-                            </div>
-                        </div>
-                    )}
+                    {notification.show && <div className={`fixed top-4 right-4 z-[100] px-4 py-3 rounded-lg shadow-lg transition-opacity duration-300 ${notification.type === 'error' ? 'bg-red-100 text-red-700 border border-red-300' : notification.type === 'success' ? 'bg-green-100 text-green-700 border border-green-300' : notification.type === 'warning' ? 'bg-yellow-100 text-yellow-700 border border-teal-300' : 'bg-blue-100 text-blue-700 border border-blue-300'}`}><div className="flex items-center gap-2">{notification.type === 'warning' && <AlertTriangle className="h-5 w-5 shrink-0" />}<span>{notification.message}</span></div></div>}
 
-                    {/* Security Verification Dialog */}
                     <Dialog open={isSecurityDialogOpen} onOpenChange={setIsSecurityDialogOpen}>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>Verificar Identidad 🔒</DialogTitle>
-                                <DialogDescription>Ingresa la contraseña del Director Ejecutivo para acceder a esta función.</DialogDescription>
-                            </DialogHeader>
-                            <div className="grid gap-4 py-4">
-                                <div className="grid gap-2">
-                                    <Label htmlFor="security-password">Contraseña</Label>
-                                    <div className="relative">
-                                        <input 
-                                            id="security-password" 
-                                            type={showSecurityPassword ? 'text' : 'password'} 
-                                            value={securityPassword} 
-                                            onChange={(e) => setSecurityPassword(e.target.value)} 
-                                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                            placeholder="Tu contraseña" 
-                                        />
-                                        <Button 
-                                            type="button" 
-                                            variant="ghost" 
-                                            size="icon" 
-                                            className="absolute inset-y-0 right-0 h-full px-3" 
-                                            onClick={() => setShowSecurityPassword(!showSecurityPassword)}
-                                        >
-                                            {showSecurityPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                                        </Button>
-                                    </div>
-                                </div>
-                            </div>
-                            <DialogFooter>
-                                <Button onClick={verifySecurityPassword} className="w-full bg-slate-900 hover:bg-black">Validar y Entrar</Button>
-                            </DialogFooter>
+                        <DialogContent><DialogHeader><DialogTitle>Verificar Identidad 🔒</DialogTitle><DialogDescription>Ingresa la contraseña del Director Ejecutivo para acceder a esta función.</DialogDescription></DialogHeader>
+                            <div className="grid gap-4 py-4"><div className="grid gap-2"><Label htmlFor="security-password">Contraseña</Label><div className="relative"><input id="security-password" type={showSecurityPassword ? 'text' : 'password'} value={securityPassword} onChange={(e) => setSecurityPassword(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" placeholder="Tu contraseña" /><Button type="button" variant="ghost" size="icon" className="absolute inset-y-0 right-0 h-full px-3" onClick={() => setShowSecurityPassword(!showSecurityPassword)}>{showSecurityPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button></div></div></div>
+                            <DialogFooter><Button onClick={verifySecurityPassword} className="w-full bg-slate-900 hover:bg-black">Validar y Entrar</Button></DialogFooter>
                         </DialogContent>
                     </Dialog>
 
-                    {/* Master Access Management Dialog */}
                     <Dialog open={isMasterAccessDialogOpen} onOpenChange={setIsMasterAccessDialogOpen}>
-                        <DialogContent className="sm:max-w-md">
-                            <DialogHeader>
-                                <DialogTitle>Gestión de Acceso Maestro</DialogTitle>
-                                <DialogDescription>Genera un enlace de un solo uso para entrar como Director o invalida los existentes.</DialogDescription>
-                            </DialogHeader>
+                        <DialogContent className="sm:max-w-md"><DialogHeader><DialogTitle>Gestión de Acceso Maestro</DialogTitle><DialogDescription>Genera un enlace de un solo uso para entrar como Director.</DialogDescription></DialogHeader>
                             <div className="grid gap-6 py-4">
                                 <div className="space-y-4">
-                                    <div className="flex items-center justify-between bg-purple-50 p-4 rounded-lg border border-purple-100">
-                                        <div>
-                                            <p className="text-xs font-bold text-purple-600 uppercase">Enlaces Activos</p>
-                                            <p className="text-3xl font-black text-purple-900">{activeMasterTokensCount}</p>
-                                        </div>
-                                        <Key className="h-10 w-10 text-purple-600/30" />
-                                    </div>
-                                    
-                                    <Button 
-                                        onClick={handleMasterLinkGenerate} 
-                                        className="w-full h-12 bg-green-600 hover:bg-green-700 flex items-center justify-center gap-2"
-                                    >
-                                        <WhatsappIcon className="h-6 w-6" /> Enviar Link de Un Solo Uso
-                                    </Button>
-
-                                    <Button 
-                                        variant="destructive" 
-                                        onClick={handleCloseAllMasterSessions} 
-                                        className="w-full h-12"
-                                        disabled={activeMasterTokensCount === 0}
-                                    >
-                                        <Trash2 className="mr-2 h-4 w-4" /> Cerrar Todas las Sesiones
-                                    </Button>
+                                    <div className="flex items-center justify-between bg-purple-50 p-4 rounded-lg border border-purple-100"><div><p className="text-xs font-bold text-purple-600 uppercase">Enlaces Activos</p><p className="text-3xl font-black text-purple-900">{activeMasterTokensCount}</p></div><Key className="h-10 w-10 text-purple-600/30" /></div>
+                                    <Button onClick={handleMasterLinkGenerate} className="w-full h-12 bg-green-600 hover:bg-green-700 flex items-center justify-center gap-2"><WhatsappIcon className="h-6 w-6" /> Enviar Link de Un Solo Uso</Button>
+                                    <Button variant="destructive" onClick={handleCloseAllMasterSessions} className="w-full h-12" disabled={activeMasterTokensCount === 0}><Trash2 className="mr-2 h-4 w-4" /> Cerrar Todas las Sesiones</Button>
                                 </div>
                             </div>
-                            <DialogFooter>
-                                <Button variant="outline" onClick={() => setIsMasterAccessDialogOpen(false)} className="w-full">Cerrar</Button>
-                            </DialogFooter>
+                            <DialogFooter><Button variant="outline" onClick={() => setIsMasterAccessDialogOpen(false)} className="w-full">Cerrar</Button></DialogFooter>
                         </DialogContent>
                     </Dialog>
 
                     <Dialog open={isAppNameLogoDialogOpen} onOpenChange={setIsAppNameLogoDialogOpen}>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>{t('appNameAndLogo')}</DialogTitle>
-                                <DialogDescription>{t('appNameAndLogoDescription')}</DialogDescription>
-                            </DialogHeader>
-                            <div className="grid gap-4 py-4">
-                                <div className="grid gap-2">
-                                    <Label htmlFor="app-name-input">{t('appNameLabel')}</Label>
-                                    <input id="app-name-input" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={tempAppName} onChange={(e) => setTempAppName(e.target.value)} />
-                                </div>
-                                <div className="grid gap-2">
-                                    <Label htmlFor="app-logo-input">{t('appLogoUrlLabel')}</Label>
-                                    <div className="flex gap-2">
-                                        <input id="app-logo-input" className="flex-grow flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm" value={tempAppLogoUrl} onChange={(e) => setTempAppLogoUrl(e.target.value)} />
-                                        <a href="https://www.google.com/imghp" target="_blank" rel="noopener noreferrer">
-                                            <Button type="button" variant="outline" size="icon"><Search className="h-4 w-4" /></Button>
-                                        </a>
-                                    </div>
-                                    {tempAppLogoUrl && (
-                                        <div className="mt-2 border rounded-md overflow-hidden bg-gray-50 flex items-center justify-center p-2 h-40">
-                                            <img src={tempAppLogoUrl} alt="Vista previa logo" className="max-h-full object-contain" referrerPolicy="no-referrer" />
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
+                        <DialogContent><DialogHeader><DialogTitle>{t('appNameAndLogo')}</DialogTitle><DialogDescription>{t('appNameAndLogoDescription')}</DialogDescription></DialogHeader>
+                            <div className="grid gap-4 py-4"><div className="grid gap-2"><Label htmlFor="app-name-input">{t('appNameLabel')}</Label><input id="app-name-input" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={tempAppName} onChange={(e) => setTempAppName(e.target.value)} /></div><div className="grid gap-2"><Label htmlFor="app-logo-input">{t('appLogoUrlLabel')}</Label><div className="flex gap-2"><input id="app-logo-input" className="flex-grow flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm" value={tempAppLogoUrl} onChange={(e) => setTempAppLogoUrl(e.target.value)} /><a href="https://www.google.com/imghp" target="_blank" rel="noopener noreferrer"><Button type="button" variant="outline" size="icon"><Search className="h-4 w-4" /></Button></a></div>{tempAppLogoUrl && <div className="mt-2 border rounded-md overflow-hidden bg-gray-50 flex items-center justify-center p-2 h-40"><img src={tempAppLogoUrl} alt="Vista previa logo" className="max-h-full object-contain" referrerPolicy="no-referrer" /></div>}</div></div>
                             <DialogFooter><Button variant="outline" onClick={() => setIsAppNameLogoDialogOpen(false)}>{t('cancel')}</Button><Button onClick={handleSaveAppNameLogo}>{t('save')}</Button></DialogFooter>
                         </DialogContent>
                     </Dialog>
 
                     <Dialog open={isAssignPackageDialogOpen} onOpenChange={setIsAssignPackageDialogOpen}>
-                        <DialogContent className="max-w-md">
-                            <DialogHeader><DialogTitle>{t('assignPackage')}</DialogTitle><DialogDescription>{t('assignPackageDescription')}</DialogDescription></DialogHeader>
+                        <DialogContent className="max-w-md"><DialogHeader><DialogTitle>{t('assignPackage')}</DialogTitle><DialogDescription>{t('assignPackageDescription')}</DialogDescription></DialogHeader>
                             <div className="grid gap-4 py-4">
                                 <div className="grid gap-2"><Label>{t('raffleType')}</Label><Select value={packageRaffleMode} onValueChange={(val: RaffleMode) => setPackageRaffleMode(val)}><SelectTrigger><SelectValue placeholder={t('selectMode')} /></SelectTrigger><SelectContent><SelectItem value="two-digit">{t('2digitRaffle')}</SelectItem><SelectItem value="three-digit">{t('3digitRaffle')}</SelectItem><SelectItem value="infinite">{t('infiniteRaffle')}</SelectItem></SelectContent></Select></div>
                                 <div className="grid gap-2"><Label htmlFor="package-quantity">{t('quantity')}</Label><Input id="package-quantity" type="number" min="1" max="100" value={packageQuantity} onChange={(e) => setPackageQuantity(parseInt(e.target.value, 10))}/></div>
                                 <div className="flex gap-2 pt-2"><Button onClick={handleGeneratePackage} disabled={isGenerating} className="flex-1 bg-purple-600 hover:bg-purple-700">{isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null} {t('generate')}</Button></div>
                                 {generatedPackage.length > 0 && (
-                                    <div className="mt-4 space-y-2">
-                                        <div className="flex justify-between items-center"><Label>{t('generatedReferences')}</Label><div className="flex gap-2"><Button variant="ghost" size="sm" onClick={() => { const list = generatedPackage.map(p => `${p.ref}: ${p.url}`).join('\n'); navigator.clipboard.writeText(list); showNotification(t('listCopied'), 'success'); }}><Copy className="h-4 w-4 mr-1"/> {t('copyList')}</Button><Button variant="ghost" size="sm" className="text-red-500 hover:text-red-600 hover:bg-red-50" onClick={handleDeleteAllGeneratedRefs}><Trash2 className="h-4 w-4 mr-1" /> {t('deleteAll')}</Button></div></div>
-                                        <ScrollArea className="h-48 border rounded-md p-2 bg-gray-50">
-                                            {generatedPackage.map((p, i) => (
-                                                <div key={i} className="flex items-center justify-between py-2 border-b last:border-0 group">
-                                                    <div className="flex flex-col">
-                                                        <span className="font-bold text-xs">{p.ref}</span>
-                                                        <span className="text-[10px] text-blue-600 truncate max-w-[200px]">{p.url}</span>
-                                                    </div>
-                                                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { navigator.clipboard.writeText(p.url); showNotification(t('linkCopied'), 'success'); }}><LinkIcon className="h-3 w-3"/></Button>
-                                                        <Button variant="ghost" size="icon" className="h-7 w-7 text-red-500" onClick={() => handleDeleteGeneratedRef(p.ref)}><Trash2 className="h-3 w-3"/></Button>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </ScrollArea>
-                                    </div>
+                                    <div className="mt-4 space-y-2"><div className="flex justify-between items-center"><Label>{t('generatedReferences')}</Label><div className="flex gap-2"><Button variant="ghost" size="sm" onClick={() => { const list = generatedPackage.map(p => `${p.ref}: ${p.url}`).join('\n'); navigator.clipboard.writeText(list); showNotification(t('listCopied'), 'success'); }}><Copy className="h-4 w-4 mr-1"/> {t('copyList')}</Button><Button variant="ghost" size="sm" className="text-red-500 hover:text-red-600 hover:bg-red-50" onClick={handleDeleteAllGeneratedRefs}><Trash2 className="h-4 w-4 mr-1" /> {t('deleteAll')}</Button></div></div><ScrollArea className="h-48 border rounded-md p-2 bg-gray-50">{generatedPackage.map((p, i) => (<div key={i} className="flex items-center justify-between py-2 border-b last:border-0 group"><div className="flex flex-col"><span className="font-bold text-xs">{p.ref}</span><span className="text-[10px] text-blue-600 truncate max-w-[200px]">{p.url}</span></div><div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity"><Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { navigator.clipboard.writeText(p.url); showNotification(t('linkCopied'), 'success'); }}><LinkIcon className="h-3 w-3"/></Button><Button variant="ghost" size="icon" className="h-7 w-7 text-red-500" onClick={() => handleDeleteGeneratedRef(p.ref)}><Trash2 className="h-3 w-3"/></Button></div></div>))}</ScrollArea></div>
                                 )}
                             </div>
                             <DialogFooter><Button onClick={() => setIsAssignPackageDialogOpen(false)}>{t('close')}</Button></DialogFooter>
@@ -4494,128 +2968,33 @@ const App = () => {
                     </Dialog>
 
                     <Dialog open={isPrizeImagesManagerOpen} onOpenChange={setIsPrizeImagesManagerOpen}>
-                        <DialogContent className="max-w-3xl h-[80vh] flex flex-col">
-                            <DialogHeader>
-                                <DialogTitle>{t('prizeImagesManager')}</DialogTitle>
-                                <DialogDescription>{t('prizeImagesManagerDescription')}</DialogDescription>
-                            </DialogHeader>
-                            <ScrollArea className="flex-grow pr-4">
-                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 py-4">
-                                    {rafflesWithImages.length > 0 ? (
-                                        rafflesWithImages.map((raffle) => (
-                                            <div key={raffle.raffleRef} className="relative group rounded-lg overflow-hidden border bg-gray-50 aspect-square">
-                                                <img src={raffle.prizeImageUrl} alt={raffle.raffleRef} className="absolute inset-0 w-full h-full object-cover" referrerPolicy="no-referrer" />
-                                                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-2 text-center">
-                                                    <p className="text-white text-xs font-bold mb-2">{raffle.raffleRef}</p>
-                                                    <Button variant="destructive" size="sm" onClick={() => handleDeletePrizeImage(raffle.raffleRef)}>
-                                                        <Trash2 className="h-3 w-3 mr-1" /> {t('deleteLink')}
-                                                    </Button>
-                                                </div>
-                                            </div>
-                                        ))
-                                    ) : (
-                                        <div className="col-span-full py-12 text-center text-gray-500">{t('noPrizeImagesFound')}</div>
-                                    )}
-                                </div>
-                            </ScrollArea>
+                        <DialogContent className="max-w-3xl h-[80vh] flex flex-col"><DialogHeader><DialogTitle>{t('prizeImagesManager')}</DialogTitle><DialogDescription>{t('prizeImagesManagerDescription')}</DialogDescription></DialogHeader>
+                            <ScrollArea className="flex-grow pr-4"><div className="grid grid-cols-2 sm:grid-cols-3 gap-4 py-4">{rafflesWithImages.length > 0 ? rafflesWithImages.map((raffle) => (<div key={raffle.raffleRef} className="relative group rounded-lg overflow-hidden border bg-gray-50 aspect-square"><img src={raffle.prizeImageUrl} alt={raffle.raffleRef} className="absolute inset-0 w-full h-full object-cover" referrerPolicy="no-referrer" /><div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-2 text-center"><p className="text-white text-xs font-bold mb-2">{raffle.raffleRef}</p><Button variant="destructive" size="sm" onClick={() => handleDeletePrizeImage(raffle.raffleRef)}><Trash2 className="h-3 w-3 mr-1" /> {t('deleteLink')}</Button></div></div>)) : <div className="col-span-full py-12 text-center text-gray-500">{t('noPrizeImagesFound')}</div>}</div></ScrollArea>
                         </DialogContent>
                     </Dialog>
 
                     <Dialog open={isCleanupDialogOpen} onOpenChange={setIsCleanupDialogOpen}>
-                        <DialogContent className="sm:max-w-md">
-                            <DialogHeader>
-                                <DialogTitle>{t('deleteAbandonedRaffles')}</DialogTitle>
-                                <DialogDescription>
-                                    {t('deleteAbandonedRafflesConfirmation', { count: abandonedRaffles.length })}
-                                </DialogDescription>
-                            </DialogHeader>
+                        <DialogContent className="sm:max-w-md"><DialogHeader><DialogTitle>{t('deleteAbandonedRaffles')}</DialogTitle><DialogDescription>{t('deleteAbandonedRafflesConfirmation', { count: abandonedRaffles.length })}</DialogDescription></DialogHeader>
                             <div className="py-4 space-y-4">
-                                <div className="flex justify-between items-center bg-red-50 p-4 rounded-lg border border-red-100">
-                                    <div>
-                                        <p className="text-sm text-red-600 font-medium">Referencias Huérfanas</p>
-                                        <p className="text-3xl font-bold text-red-700">{abandonedRaffles.length}</p>
-                                    </div>
-                                    <div className="h-12 w-12 bg-red-100 rounded-full flex items-center justify-center">
-                                        <Trash2 className="h-6 w-6 text-red-600" />
-                                    </div>
-                                </div>
-                                
-                                {abandonedRaffles.length > 0 && (
-                                    <div className="space-y-2">
-                                        <p className="text-sm font-bold text-slate-700">Detalle de Referencias:</p>
-                                        <ScrollArea className="h-60 border rounded-md p-2 bg-slate-50">
-                                            {abandonedRaffles.sort((a, b) => {
-                                                const dateA = getCreationDateFromAdminId(a.adminId)?.getTime() || 0;
-                                                const dateB = getCreationDateFromAdminId(b.adminId)?.getTime() || 0;
-                                                return dateB - dateA;
-                                            }).map((raffle) => {
-                                                const date = getCreationDateFromAdminId(raffle.adminId);
-                                                return (
-                                                    <div key={raffle.raffleRef} className="flex justify-between items-center py-2 border-b last:border-0 text-xs">
-                                                        <span className="font-bold">{raffle.raffleRef}</span>
-                                                        <span className="text-slate-500">
-                                                            {date ? format(date, 'Pp', { locale: language === 'es' ? es : enUS }) : 'Fecha desconocida'}
-                                                        </span>
-                                                    </div>
-                                                );
-                                            })}
-                                        </ScrollArea>
-                                    </div>
-                                )}
+                                <div className="flex justify-between items-center bg-red-50 p-4 rounded-lg border border-red-100"><div><p className="text-sm text-red-600 font-medium">Referencias Huérfanas</p><p className="text-3xl font-bold text-red-700">{abandonedRaffles.length}</p></div><div className="h-12 w-12 bg-red-100 rounded-full flex items-center justify-center"><Trash2 className="h-6 w-6 text-red-600" /></div></div>
+                                {abandonedRaffles.length > 0 && (<div className="space-y-2"><p className="text-sm font-bold text-slate-700">Detalle de Referencias:</p><ScrollArea className="h-60 border rounded-md p-2 bg-slate-50">{abandonedRaffles.sort((a, b) => (getCreationDateFromAdminId(b.adminId)?.getTime() || 0) - (getCreationDateFromAdminId(a.adminId)?.getTime() || 0)).map((raffle) => { const date = getCreationDateFromAdminId(raffle.adminId); return (<div key={raffle.raffleRef} className="flex justify-between items-center py-2 border-b last:border-0 text-xs"><span className="font-bold">{raffle.raffleRef}</span><span className="text-slate-500">{date ? format(date, 'Pp', { locale: language === 'es' ? es : enUS }) : 'Fecha desconocida'}</span></div>); })}</ScrollArea></div>)}
                             </div>
-                            <DialogFooter>
-                                <Button variant="outline" onClick={() => setIsCleanupDialogOpen(false)}>{t('cancel')}</Button>
-                                <Button variant="destructive" onClick={handleDeleteAbandonedRaffles} disabled={abandonedRaffles.length === 0}>
-                                    Eliminar Todo
-                                </Button>
-                            </DialogFooter>
+                            <DialogFooter><Button variant="outline" onClick={() => setIsCleanupDialogOpen(false)}>{t('cancel')}</Button><Button variant="destructive" onClick={handleDeleteAbandonedRaffles} disabled={abandonedRaffles.length === 0}>Eliminar Todo</Button></DialogFooter>
                         </DialogContent>
                     </Dialog>
 
                     <Dialog open={isDamagedCleanupDialogOpen} onOpenChange={setIsDamagedCleanupDialogOpen}>
-                        <DialogContent className="sm:max-w-md">
-                            <DialogHeader>
-                                <DialogTitle>{t('deleteDamagedRaffles')}</DialogTitle>
-                                <DialogDescription>
-                                    {t('damagedCleanupDescription')}
-                                </DialogDescription>
-                            </DialogHeader>
+                        <DialogContent className="sm:max-w-md"><DialogHeader><DialogTitle>{t('deleteDamagedRaffles')}</DialogTitle><DialogDescription>{t('damagedCleanupDescription')}</DialogDescription></DialogHeader>
                             <div className="py-4 space-y-4">
-                                <div className="flex justify-between items-center bg-orange-50 p-4 rounded-lg border border-orange-100">
-                                    <div>
-                                        <p className="text-sm text-orange-600 font-medium">Juegos con Datos Corruptos</p>
-                                        <p className="text-3xl font-bold text-orange-700">{damagedRaffles.length}</p>
-                                    </div>
-                                    <div className="h-12 w-12 bg-orange-100 rounded-full flex items-center justify-center">
-                                        <AlertTriangle className="h-6 w-6 text-orange-600" />
-                                    </div>
-                                </div>
-                                {damagedRaffles.length > 0 && (
-                                    <ScrollArea className="h-60 border rounded-md p-2 bg-slate-50">
-                                        {damagedRaffles.map((raffle) => (
-                                            <div key={raffle.raffleRef} className="flex justify-between items-center py-2 border-b last:border-0 text-xs">
-                                                <span className="font-bold text-orange-800">{raffle.raffleRef}</span>
-                                                <span className="text-slate-500 italic">Incompleto / Dañado</span>
-                                            </div>
-                                        ))}
-                                    </ScrollArea>
-                                )}
+                                <div className="flex justify-between items-center bg-orange-50 p-4 rounded-lg border border-orange-100"><div><p className="text-sm text-orange-600 font-medium">Juegos con Datos Corruptos</p><p className="text-3xl font-bold text-orange-700">{damagedRaffles.length}</p></div><div className="h-12 w-12 bg-orange-100 rounded-full flex items-center justify-center"><AlertTriangle className="h-6 w-6 text-orange-600" /></div></div>
+                                {damagedRaffles.length > 0 && (<ScrollArea className="h-60 border rounded-md p-2 bg-slate-50">{damagedRaffles.map((raffle) => (<div key={raffle.raffleRef} className="flex justify-between items-center py-2 border-b last:border-0 text-xs"><span className="font-bold text-orange-800">{raffle.raffleRef}</span><span className="text-slate-500 italic">Incompleto / Dañado</span></div>))}</ScrollArea>)}
                             </div>
-                            <DialogFooter>
-                                <Button variant="outline" onClick={() => setIsDamagedCleanupDialogOpen(false)}>{t('cancel')}</Button>
-                                <Button className="bg-orange-600 hover:bg-orange-700 text-white" onClick={handleDeleteDamagedRaffles} disabled={damagedRaffles.length === 0}>
-                                    Limpiar Juegos Dañados
-                                </Button>
-                            </DialogFooter>
+                            <DialogFooter><Button variant="outline" onClick={() => setIsDamagedCleanupDialogOpen(false)}>{t('cancel')}</Button><Button className="bg-orange-600 hover:bg-orange-700 text-white" onClick={handleDeleteDamagedRaffles} disabled={damagedRaffles.length === 0}>Limpiar Juegos Dañados</Button></DialogFooter>
                         </DialogContent>
                     </Dialog>
 
                     <Dialog open={isUsdPaymentConfigDialogOpen} onOpenChange={setIsUsdPaymentConfigDialogOpen}>
-                        <DialogContent className="sm:max-w-md">
-                            <DialogHeader>
-                                <DialogTitle>Configurar Pagos USD</DialogTitle>
-                                <DialogDescription>Configura links de PayPal o Stripe independientes para cada modalidad.</DialogDescription>
-                            </DialogHeader>
+                        <DialogContent className="sm:max-w-md"><DialogHeader><DialogTitle>Configurar Pagos USD</DialogTitle><DialogDescription>Configura links de PayPal o Stripe independientes para cada modalidad.</DialogDescription></DialogHeader>
                             <div className="grid gap-4 py-4">
                                 <div className="grid gap-2"><Label htmlFor="usd-two-digit">Link USD (2 Cifras)</Label><Input id="usd-two-digit" value={paymentLinks.usdTwoDigit} onChange={(e) => setPaymentLinks(p => ({ ...p, usdTwoDigit: e.target.value }))}/></div>
                                 <div className="grid gap-2"><Label htmlFor="usd-three-digit">Link USD (3 Cifras)</Label><Input id="usd-three-digit" value={paymentLinks.usdThreeDigit} onChange={(e) => setPaymentLinks(p => ({ ...p, usdThreeDigit: e.target.value }))}/></div>
@@ -4626,57 +3005,21 @@ const App = () => {
                     </Dialog>
 
                     <Dialog open={isBoardDesignDialogOpen} onOpenChange={setIsBoardDesignDialogOpen}>
-                        <DialogContent>
-                            <DialogHeader><DialogTitle>Diseño del Tablero (2 Cifras)</DialogTitle></DialogHeader>
-                            <div className="grid gap-4 py-4">
-                                <div className="grid gap-2">
-                                    <Label htmlFor="board-design-url">Link de la Imagen</Label>
-                                    <div className="flex gap-2">
-                                        <Input id="board-design-url" value={boardDesignUrl} onChange={(e) => setBoardDesignUrl(e.target.value)} className="flex-grow" />
-                                        <a href="https://www.google.com/imghp" target="_blank" rel="noopener noreferrer">
-                                            <Button type="button" variant="outline" size="icon"><Search className="h-4 w-4" /></Button>
-                                        </a>
-                                    </div>
-                                    {boardDesignUrl && (
-                                        <div className="mt-2 border rounded-md overflow-hidden bg-gray-50 flex items-center justify-center p-2 h-40">
-                                            <img src={boardDesignUrl} alt="Vista previa diseño" className="max-h-full object-contain" referrerPolicy="no-referrer" />
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
+                        <DialogContent><DialogHeader><DialogTitle>Diseño del Tablero (2 Cifras)</DialogTitle></DialogHeader>
+                            <div className="grid gap-4 py-4"><div className="grid gap-2"><Label htmlFor="board-design-url">Link de la Imagen</Label><div className="flex gap-2"><Input id="board-design-url" value={boardDesignUrl} onChange={(e) => setBoardDesignUrl(e.target.value)} className="flex-grow" /><a href="https://www.google.com/imghp" target="_blank" rel="noopener noreferrer"><Button type="button" variant="outline" size="icon"><Search className="h-4 w-4" /></Button></a></div>{boardDesignUrl && <div className="mt-2 border rounded-md overflow-hidden bg-gray-50 flex items-center justify-center p-2 h-40"><img src={boardDesignUrl} alt="Vista previa diseño" className="max-h-full object-contain" referrerPolicy="no-referrer" /></div>}</div></div>
                             <DialogFooter><Button onClick={handleSaveBoardDesign}>Guardar Diseño</Button></DialogFooter>
                         </DialogContent>
                     </Dialog>
 
                     <Dialog open={isBoardDesignDialogOpen3} onOpenChange={setIsBoardDesignDialogOpen3}>
-                        <DialogContent>
-                            <DialogHeader><DialogTitle>Diseño del Tablero (3 Cifras)</DialogTitle></DialogHeader>
-                            <div className="grid gap-4 py-4">
-                                <div className="grid gap-2">
-                                    <Label htmlFor="board-design-url-3">Link de la Imagen (Repetible por centena)</Label>
-                                    <div className="flex gap-2">
-                                        <Input id="board-design-url-3" value={boardDesignUrl3} onChange={(e) => setBoardDesignUrl3(e.target.value)} className="flex-grow" />
-                                        <a href="https://www.google.com/imghp" target="_blank" rel="noopener noreferrer">
-                                            <Button type="button" variant="outline" size="icon"><Search className="h-4 w-4" /></Button>
-                                        </a>
-                                    </div>
-                                    {boardDesignUrl3 && (
-                                        <div className="mt-2 border rounded-md overflow-hidden bg-gray-50 flex items-center justify-center p-2 h-40">
-                                            <img src={boardDesignUrl3} alt="Vista previa diseño 3" className="max-h-full object-contain" referrerPolicy="no-referrer" />
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
+                        <DialogContent><DialogHeader><DialogTitle>Diseño del Tablero (3 Cifras)</DialogTitle></DialogHeader>
+                            <div className="grid gap-4 py-4"><div className="grid gap-2"><Label htmlFor="board-design-url-3">Link de la Imagen (Repetible por centena)</Label><div className="flex gap-2"><Input id="board-design-url-3" value={boardDesignUrl3} onChange={(e) => setBoardDesignUrl3(e.target.value)} className="flex-grow" /><a href="https://www.google.com/imghp" target="_blank" rel="noopener noreferrer"><Button type="button" variant="outline" size="icon"><Search className="h-4 w-4" /></Button></a></div>{boardDesignUrl3 && <div className="mt-2 border rounded-md overflow-hidden bg-gray-50 flex items-center justify-center p-2 h-40"><img src={boardDesignUrl3} alt="Vista previa diseño 3" className="max-h-full object-contain" referrerPolicy="no-referrer" /></div>}</div></div>
                             <DialogFooter><Button onClick={handleSaveBoardDesign3}>Guardar Diseño</Button></DialogFooter>
                         </DialogContent>
                     </Dialog>
 
                     <Dialog open={isBoardColorsDialogOpen} onOpenChange={setIsBoardColorsDialogOpen}>
-                        <DialogContent className="sm:max-w-md">
-                            <DialogHeader>
-                                <DialogTitle>{t('boardColors')}</DialogTitle>
-                                <DialogDescription>{t('boardColorsDescription')}</DialogDescription>
-                            </DialogHeader>
+                        <DialogContent className="sm:max-w-md"><DialogHeader><DialogTitle>{t('boardColors')}</DialogTitle><DialogDescription>{t('boardColorsDescription')}</DialogDescription></DialogHeader>
                             <div className="grid gap-6 py-4">
                                 <div className="space-y-4">
                                     <h4 className="font-bold text-sm text-purple-600 uppercase tracking-wider">{t('availableColor')}</h4>
@@ -4705,150 +3048,47 @@ const App = () => {
                     </Dialog>
 
                     <Dialog open={isBoardHeaderImageDialogOpen} onOpenChange={setIsBoardHeaderImageDialogOpen}>
-                        <DialogContent>
-                            <DialogHeader><DialogTitle>Imagen del Renglón (2 Cifras)</DialogTitle></DialogHeader>
-                            <div className="grid gap-4 py-4">
-                                <div className="grid gap-2">
-                                    <Label htmlFor="board-header-image-url">Link de la Imagen</Label>
-                                    <div className="flex gap-2">
-                                        <Input id="board-header-image-url" value={boardHeaderImageUrl} onChange={(e) => setBoardHeaderImageUrl(e.target.value)} className="flex-grow" />
-                                        <a href="https://www.google.com/imghp" target="_blank" rel="noopener noreferrer">
-                                            <Button type="button" variant="outline" size="icon"><Search className="h-4 w-4" /></Button>
-                                        </a>
-                                    </div>
-                                    {boardHeaderImageUrl && (
-                                        <div className="mt-2 border rounded-md overflow-hidden bg-gray-50 flex items-center justify-center p-2 h-40">
-                                            <img src={boardHeaderImageUrl} alt="Vista previa renglón" className="max-h-full object-contain" referrerPolicy="no-referrer" />
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
+                        <DialogContent><DialogHeader><DialogTitle>Imagen del Renglón (2 Cifras)</DialogTitle></DialogHeader>
+                            <div className="grid gap-4 py-4"><div className="grid gap-2"><Label htmlFor="board-header-image-url">Link de la Imagen</Label><div className="flex gap-2"><Input id="board-header-image-url" value={boardHeaderImageUrl} onChange={(e) => setBoardHeaderImageUrl(e.target.value)} className="flex-grow" /><a href="https://www.google.com/imghp" target="_blank" rel="noopener noreferrer"><Button type="button" variant="outline" size="icon"><Search className="h-4 w-4" /></Button></a></div>{boardHeaderImageUrl && <div className="mt-2 border rounded-md overflow-hidden bg-gray-50 flex items-center justify-center p-2 h-40"><img src={boardHeaderImageUrl} alt="Vista previa renglón" className="max-h-full object-contain" referrerPolicy="no-referrer" /></div>}</div></div>
                             <DialogFooter><Button onClick={handleSaveBoardHeaderImage}>Guardar Imagen</Button></DialogFooter>
                         </DialogContent>
                     </Dialog>
 
                     <Dialog open={isBoardHeaderImageDialogOpen3} onOpenChange={setIsBoardHeaderImageDialogOpen3}>
-                        <DialogContent>
-                            <DialogHeader><DialogTitle>Imagen del Renglón (3 Cifras)</DialogTitle></DialogHeader>
-                            <div className="grid gap-4 py-4">
-                                <div className="grid gap-2">
-                                    <Label htmlFor="board-header-image-url-3">Link de la Imagen</Label>
-                                    <div className="flex gap-2">
-                                        <Input id="board-header-image-url-3" value={boardHeaderImageUrl3} onChange={(e) => setBoardHeaderImageUrl3(e.target.value)} className="flex-grow" />
-                                        <a href="https://www.google.com/imghp" target="_blank" rel="noopener noreferrer">
-                                            <Button type="button" variant="outline" size="icon"><Search className="h-4 w-4" /></Button>
-                                        </a>
-                                    </div>
-                                    {boardHeaderImageUrl3 && (
-                                        <div className="mt-2 border rounded-md overflow-hidden bg-gray-50 flex items-center justify-center p-2 h-40">
-                                            <img src={boardHeaderImageUrl3} alt="Vista previa renglón 3" className="max-h-full object-contain" referrerPolicy="no-referrer" />
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
+                        <DialogContent><DialogHeader><DialogTitle>Imagen del Renglón (3 Cifras)</DialogTitle></DialogHeader>
+                            <div className="grid gap-4 py-4"><div className="grid gap-2"><Label htmlFor="board-header-image-url-3">Link de la Imagen</Label><div className="flex gap-2"><Input id="board-header-image-url-3" value={boardHeaderImageUrl3} onChange={(e) => setBoardHeaderImageUrl3(e.target.value)} className="flex-grow" /><a href="https://www.google.com/imghp" target="_blank" rel="noopener noreferrer"><Button type="button" variant="outline" size="icon"><Search className="h-4 w-4" /></Button></a></div>{boardHeaderImageUrl3 && <div className="mt-2 border rounded-md overflow-hidden bg-gray-50 flex items-center justify-center p-2 h-40"><img src={boardHeaderImageUrl3} alt="Vista previa renglón 3" className="max-h-full object-contain" referrerPolicy="no-referrer" /></div>}</div></div>
                             <DialogFooter><Button onClick={handleSaveBoardHeaderImage3}>Guardar Imagen</Button></DialogFooter>
                         </DialogContent>
                     </Dialog>
 
                     <Dialog open={isLockedBoardBgDialogOpen} onOpenChange={setIsLockedBoardBgDialogOpen}>
-                        <DialogContent>
-                            <DialogHeader><DialogTitle>{t('manageLockedBoardBg')}</DialogTitle></DialogHeader>
-                            <div className="grid gap-4 py-4">
-                                <div className="grid gap-2">
-                                    <Label htmlFor="locked-board-bg-url">{t('lockedBoardBgUrlLabel')} (Link Directo)</Label>
-                                    <div className="flex gap-2">
-                                        <Input id="locked-board-bg-url" value={lockedBoardBgUrl} onChange={(e) => setLockedBoardBgUrl(e.target.value)} className="flex-grow" />
-                                        <a href="https://www.google.com/imghp" target="_blank" rel="noopener noreferrer">
-                                            <Button type="button" variant="outline" size="icon"><Search className="h-4 w-4" /></Button>
-                                        </a>
-                                    </div>
-                                    {lockedBoardBgUrl && (
-                                        <div className="mt-2 border rounded-md overflow-hidden bg-gray-50 flex items-center justify-center p-2 h-40">
-                                            <img src={lockedBoardBgUrl} alt="Vista previa fondo" className="max-h-full object-contain" referrerPolicy="no-referrer" />
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
+                        <DialogContent><DialogHeader><DialogTitle>{t('manageLockedBoardBg')}</DialogTitle></DialogHeader>
+                            <div className="grid gap-4 py-4"><div className="grid gap-2"><Label htmlFor="locked-board-bg-url">{t('lockedBoardBgUrlLabel')} (Link Directo)</Label><div className="flex gap-2"><Input id="locked-board-bg-url" value={lockedBoardBgUrl} onChange={(e) => setLockedBoardBgUrl(e.target.value)} className="flex-grow" /><a href="https://www.google.com/imghp" target="_blank" rel="noopener noreferrer"><Button type="button" variant="outline" size="icon"><Search className="h-4 w-4" /></Button></a></div>{lockedBoardBgUrl && <div className="mt-2 border rounded-md overflow-hidden bg-gray-50 flex items-center justify-center p-2 h-40"><img src={lockedBoardBgUrl} alt="Vista previa fondo" className="max-h-full object-contain" referrerPolicy="no-referrer" /></div>}</div></div>
                             <DialogFooter><Button onClick={handleSaveLockedBoardBg}>{t('save')}</Button></DialogFooter>
                         </DialogContent>
                     </Dialog>
 
                     <Dialog open={isPaymentInfoDialogOpen} onOpenChange={setIsPaymentInfoDialogOpen}>
-                        <DialogContent>
-                            <DialogHeader><DialogTitle>{t('managePaymentInfo')}</DialogTitle></DialogHeader>
-                            <div className="grid gap-4 py-4">
-                                <div className="grid gap-2"><Label htmlFor="payment-info-line1">{t('bankInfoLine1Label')}</Label><Input id="payment-info-line1" value={paymentInfo.line1} onChange={(e) => setPaymentInfo(p => ({ ...p, line1: e.target.value }))}/></div>
-                                <div className="grid gap-2"><Label htmlFor="payment-info-line2">{t('bankInfoLine2Label')}</Label><Input id="payment-info-line2" value={paymentInfo.line2} onChange={(e) => setPaymentInfo(p => ({ ...p, line2: e.target.value }))}/></div>
-                            </div>
+                        <DialogContent><DialogHeader><DialogTitle>{t('managePaymentInfo')}</DialogTitle></DialogHeader>
+                            <div className="grid gap-4 py-4"><div className="grid gap-2"><Label htmlFor="payment-info-line1">{t('bankInfoLine1Label')}</Label><Input id="payment-info-line1" value={paymentInfo.line1} onChange={(e) => setPaymentInfo(p => ({ ...p, line1: e.target.value }))}/></div><div className="grid gap-2"><Label htmlFor="payment-info-line2">{t('bankInfoLine2Label')}</Label><Input id="payment-info-line2" value={paymentInfo.line2} onChange={(e) => setPaymentInfo(p => ({ ...p, line2: e.target.value }))}/></div></div>
                             <DialogFooter><Button onClick={handleSavePaymentInfo}>{t('save')}</Button></DialogFooter>
                         </DialogContent>
                     </Dialog>
 
                     <Dialog open={isPaymentQrImageDialogOpen} onOpenChange={setIsPaymentQrImageDialogOpen}>
-                        <DialogContent className="sm:max-w-md">
-                            <DialogHeader><DialogTitle>{t('managePaymentQrImage')}</DialogTitle></DialogHeader>
+                        <DialogContent className="sm:max-w-md"><DialogHeader><DialogTitle>{t('managePaymentQrImage')}</DialogTitle></DialogHeader>
                             <div className="grid gap-6 py-4 max-h-[75vh] overflow-y-auto pr-2">
-                                <div className="space-y-2 border-b pb-4">
-                                    <Label htmlFor="payment-qr-url">QR General (Link o Texto)</Label>
-                                    <div className="flex gap-2">
-                                        <Input id="payment-qr-url" value={paymentQrImageUrl} onChange={(e) => setPaymentQrImageUrl(e.target.value)} className="flex-grow" />
-                                        <a href="https://www.google.com/imghp" target="_blank" rel="noopener noreferrer">
-                                            <Button type="button" variant="outline" size="icon"><Search className="h-4 w-4" /></Button>
-                                        </a>
-                                    </div>
-                                    {paymentQrImageUrl && (
-                                        <div className="flex justify-center mt-2 p-2 bg-slate-50 border rounded-md">
-                                            <img 
-                                                src={paymentQrImageUrl.startsWith('http') && !paymentQrImageUrl.includes(' ') ? paymentQrImageUrl : `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(paymentQrImageUrl)}`} 
-                                                alt="General" className="h-24 w-24 object-contain" referrerPolicy="no-referrer"
-                                            />
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="space-y-2 border-b pb-4">
-                                    <Label htmlFor="payment-qr-url-2">{t('paymentQrImageUrlTwoDigit')}</Label>
-                                    <Input id="payment-qr-url-2" value={paymentQrImageUrlTwoDigit} onChange={(e) => setPaymentQrImageUrlTwoDigit(e.target.value)} />
-                                    {paymentQrImageUrlTwoDigit && (
-                                        <div className="flex justify-center mt-2 p-2 bg-slate-50 border rounded-md">
-                                            <img 
-                                                src={paymentQrImageUrlTwoDigit.startsWith('http') && !paymentQrImageUrlTwoDigit.includes(' ') ? paymentQrImageUrlTwoDigit : `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(paymentQrImageUrlTwoDigit)}`} 
-                                                alt="2 Cifras" className="h-24 w-24 object-contain" referrerPolicy="no-referrer"
-                                            />
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="space-y-2 border-b pb-4">
-                                    <Label htmlFor="payment-qr-url-3">{t('paymentQrImageUrlThreeDigit')}</Label>
-                                    <Input id="payment-qr-url-3" value={paymentQrImageUrlThreeDigit} onChange={(e) => setPaymentQrImageUrlThreeDigit(e.target.value)} />
-                                    {paymentQrImageUrlThreeDigit && (
-                                        <div className="flex justify-center mt-2 p-2 bg-slate-50 border rounded-md">
-                                            <img 
-                                                src={paymentQrImageUrlThreeDigit.startsWith('http') && !paymentQrImageUrlThreeDigit.includes(' ') ? paymentQrImageUrlThreeDigit : `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(paymentQrImageUrlThreeDigit)}`} 
-                                                alt="3 Cifras" className="h-24 w-24 object-contain" referrerPolicy="no-referrer"
-                                            />
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="payment-qr-url-inf">{t('paymentQrImageUrlInfinite')}</Label>
-                                    <Input id="payment-qr-url-inf" value={paymentQrImageUrlInfinite} onChange={(e) => setPaymentQrImageUrlInfinite(e.target.value)} />
-                                    {paymentQrImageUrlInfinite && (
-                                        <div className="flex justify-center mt-2 p-2 bg-slate-50 border rounded-md">
-                                            <img 
-                                                src={paymentQrImageUrlInfinite.startsWith('http') && !paymentQrImageUrlInfinite.includes(' ') ? paymentQrImageUrlInfinite : `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(paymentQrImageUrlInfinite)}`} 
-                                                alt="Infinita" className="h-24 w-24 object-contain" referrerPolicy="no-referrer"
-                                            />
-                                        </div>
-                                    )}
-                                </div>
+                                <div className="space-y-2 border-b pb-4"><Label htmlFor="payment-qr-url">QR General (Link o Texto)</Label><div className="flex gap-2"><Input id="payment-qr-url" value={paymentQrImageUrl} onChange={(e) => setPaymentQrImageUrl(e.target.value)} className="flex-grow" /><a href="https://www.google.com/imghp" target="_blank" rel="noopener noreferrer"><Button type="button" variant="outline" size="icon"><Search className="h-4 w-4" /></Button></a></div>{paymentQrImageUrl && <div className="flex justify-center mt-2 p-2 bg-slate-50 border rounded-md"><img src={paymentQrImageUrl.startsWith('http') && !paymentQrImageUrl.includes(' ') ? paymentQrImageUrl : `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(paymentQrImageUrl)}`} alt="General" className="h-24 w-24 object-contain" referrerPolicy="no-referrer" /></div>}</div>
+                                <div className="space-y-2 border-b pb-4"><Label htmlFor="payment-qr-url-2">{t('paymentQrImageUrlTwoDigit')}</Label><Input id="payment-qr-url-2" value={paymentQrImageUrlTwoDigit} onChange={(e) => setPaymentQrImageUrlTwoDigit(e.target.value)} />{paymentQrImageUrlTwoDigit && <div className="flex justify-center mt-2 p-2 bg-slate-50 border rounded-md"><img src={paymentQrImageUrlTwoDigit.startsWith('http') && !paymentQrImageUrlTwoDigit.includes(' ') ? paymentQrImageUrlTwoDigit : `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(paymentQrImageUrlTwoDigit)}`} alt="2 Cifras" className="h-24 w-24 object-contain" referrerPolicy="no-referrer" /></div>}</div>
+                                <div className="space-y-2 border-b pb-4"><Label htmlFor="payment-qr-url-3">{t('paymentQrImageUrlThreeDigit')}</Label><Input id="payment-qr-url-3" value={paymentQrImageUrlThreeDigit} onChange={(e) => setPaymentQrImageUrlThreeDigit(e.target.value)} />{paymentQrImageUrlThreeDigit && <div className="flex justify-center mt-2 p-2 bg-slate-50 border rounded-md"><img src={paymentQrImageUrlThreeDigit.startsWith('http') && !paymentQrImageUrlThreeDigit.includes(' ') ? paymentQrImageUrlThreeDigit : `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(paymentQrImageUrlThreeDigit)}`} alt="3 Cifras" className="h-24 w-24 object-contain" referrerPolicy="no-referrer" /></div>}</div>
+                                <div className="space-y-2"><Label htmlFor="payment-qr-url-inf">{t('paymentQrImageUrlInfinite')}</Label><Input id="payment-qr-url-inf" value={paymentQrImageUrlInfinite} onChange={(e) => setPaymentQrImageUrlInfinite(e.target.value)} />{paymentQrImageUrlInfinite && <div className="flex justify-center mt-2 p-2 bg-slate-50 border rounded-md"><img src={paymentQrImageUrlInfinite.startsWith('http') && !paymentQrImageUrlInfinite.includes(' ') ? paymentQrImageUrlInfinite : `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(paymentQrImageUrlInfinite)}`} alt="Infinita" className="h-24 w-24 object-contain" referrerPolicy="no-referrer" /></div>}</div>
                             </div>
                             <DialogFooter><Button variant="outline" onClick={() => setIsPaymentQrImageDialogOpen(false)}>{t('cancel')}</Button><Button onClick={handleSavePaymentQrImage}>{t('save')}</Button></DialogFooter>
                         </DialogContent>
                     </Dialog>
 
                     <Dialog open={isGamesSummaryDialogOpen} onOpenChange={setIsGamesSummaryDialogOpen}>
-                        <DialogContent className="max-w-md">
-                            <DialogHeader><DialogTitle>{t('gamesSummaryTitle')}</DialogTitle></DialogHeader>
+                        <DialogContent className="max-w-md"><DialogHeader><DialogTitle>{t('gamesSummaryTitle')}</DialogTitle></DialogHeader>
                             <div className="py-6 space-y-6">
                                 <div className="space-y-2"><div className="flex justify-between text-sm font-medium"><span>{t('twoDigitGames')}</span><span className="text-purple-600 font-bold">{allRaffles.filter(r => r.raffleMode === 'two-digit').length}</span></div><Progress value={allRaffles.length > 0 ? (allRaffles.filter(r => r.raffleMode === 'two-digit').length / allRaffles.length) * 100 : 0} className="h-2" /></div>
                                 <div className="space-y-2"><div className="flex justify-between text-sm font-medium"><span>{t('threeDigitGames')}</span><span className="text-blue-600 font-bold">{allRaffles.filter(r => r.raffleMode === 'three-digit').length}</span></div><Progress value={allRaffles.length > 0 ? (allRaffles.filter(r => r.raffleMode === 'three-digit').length / allRaffles.length) * 100 : 0} className="h-2" /></div>
@@ -4859,487 +3099,165 @@ const App = () => {
                     </Dialog>
                     
                     <Dialog open={isFreeActivationDialogOpen} onOpenChange={setIsFreeActivationDialogOpen}>
-                        <DialogContent className="max-md">
-                            <DialogHeader><DialogTitle>{t('freeActivationTitle')}</DialogTitle></DialogHeader>
-                            <div className="py-4 space-y-4">
-                                <div className="grid gap-2">
-                                    <Label htmlFor="free-activation-phone">{t('whatsappNumber')}</Label>
-                                    <div className="flex gap-2">
-                                        <div className="w-[120px]">
-                                            <Select
-                                                value={freeActivationCountryCode}
-                                                onValueChange={(val) => setFreeActivationCountryCode(val)}
-                                            >
-                                                <SelectTrigger id="free-activation-country-code">
-                                                    <SelectValue placeholder="+57" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {countryIndicators.map((country) => (
-                                                        <SelectItem key={`free-${country.name}-${country.code}`} value={country.code}>
-                                                            <span className="flex items-center gap-2">
-                                                                <span>{country.flag}</span>
-                                                                <span>{country.code}</span>
-                                                            </span>
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-                                        <Input id="free-activation-phone" type="tel" value={freeActivationPhone} onChange={(e) => setFreeActivationPhone(e.target.value.replace(/\D/g, ''))} className="flex-grow" placeholder="3001234567" />
-                                    </div>
-                                </div>
-                            </div>
+                        <DialogContent className="max-md"><DialogHeader><DialogTitle>{t('freeActivationTitle')}</DialogTitle></DialogHeader>
+                            <div className="py-4 space-y-4"><div className="grid gap-2"><Label htmlFor="free-activation-phone">{t('whatsappNumber')}</Label><div className="flex gap-2"><div className="w-[120px]"><Select value={freeActivationCountryCode} onValueChange={(val) => setFreeActivationCountryCode(val)}><SelectTrigger id="free-activation-country-code"><SelectValue placeholder="+57" /></SelectTrigger><SelectContent>{countryIndicators.map((country) => (<SelectItem key={`free-${country.name}-${country.code}`} value={country.code}><span className="flex items-center gap-2"><span>{country.flag}</span><span>{country.code}</span></span></SelectItem>))}</SelectContent></Select></div><Input id="free-activation-phone" type="tel" value={freeActivationPhone} onChange={(e) => setFreeActivationPhone(e.target.value.replace(/\D/g, ''))} className="flex-grow" placeholder="3001234567" /></div></div></div>
                             <DialogFooter><Button onClick={handleConfirmFreeActivation}>{t('sendToWhatsapp')}</Button></DialogFooter>
                         </DialogContent>
                     </Dialog>
 
-                    <Dialog open={showAdminActivationNotice} onOpenChange={(open) => { if (!open && !raffleState.isActive) { handleCancelActivation(); } else { setShowAdminActivationNotice(open); } }}>
-                        <DialogContent>
-                            <DialogHeader><DialogTitle>{t('adminActivationTitle')}</DialogTitle><DialogDescription>{t('adminActivationDescription')}</DialogDescription></DialogHeader>
+                    <Dialog open={showAdminActivationNotice} onOpenChange={(open) => { if (!open && !raffleState.isActive) handleCancelActivation(); else setShowAdminActivationNotice(open); }}>
+                        <DialogContent><DialogHeader><DialogTitle>{t('adminActivationTitle')}</DialogTitle><DialogDescription>{t('adminActivationDescription')}</DialogDescription></DialogHeader>
                             <DialogFooter className="flex-col sm:flex-row gap-2"><Button variant="outline" onClick={handleCancelActivation}> {t('cancelReference')}</Button><Button onClick={handleConfirmOnline} className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold h-12"><Check className="mr-2 h-5 w-5" />{t('activateRaffleButton')}</Button></DialogFooter>
                         </DialogContent>
                     </Dialog>
                     
                     <Dialog open={isGoalModalOpen} onOpenChange={setIsGoalModalOpen}>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>{t('goalTitle')}</DialogTitle>
-                                <DialogDescription>{t('goalDescription')}</DialogDescription>
-                            </DialogHeader>
+                        <DialogContent><DialogHeader><DialogTitle>{t('goalTitle')}</DialogTitle><DialogDescription>{t('goalDescription')}</DialogDescription></DialogHeader>
                             <div className="py-4 space-y-4">
-                                <div className="flex justify-between items-center bg-blue-50 p-4 rounded-lg">
-                                    <p className="font-semibold text-blue-700">{t('prizeValue')}:</p>
-                                    <p className="font-bold text-xl text-blue-900">{formatValue(prizeValueForGoal)}</p>
-                                </div>
-                                <div className="flex justify-between items-center bg-purple-50 p-4 rounded-lg">
-                                    <p className="font-semibold text-purple-700">{t('ticketValue')}:</p>
-                                    <p className="font-bold text-xl text-purple-900">{formatValue(ticketValueForGoal)}</p>
-                                </div>
-                                <div className="flex justify-between items-center bg-green-100 p-4 rounded-lg border-2 border-green-500">
-                                    <p className="font-bold text-green-800">{t('ticketsToCoverPrize')}:</p>
-                                    <p className="font-black text-3xl text-green-900">{ticketsToCoverPrize}</p>
-                                </div>
-                                 <div className="space-y-1">
-                                    <div className="flex justify-between text-xs font-bold text-gray-500 uppercase">
-                                        <span>{t('progress')}</span>
-                                        <span>{confirmedParticipants.length} / {ticketsToCoverPrize}</span>
-                                    </div>
-                                    <Progress value={ticketsToCoverPrize > 0 ? (confirmedParticipants.length / ticketsToCoverPrize) * 100 : 0} className="h-3 bg-gray-200" />
-                                    {confirmedParticipants.length >= ticketsToCoverPrize ? (
-                                        <p className="text-center text-green-600 font-bold text-sm mt-2">¡META ALCANZADA! 🥳</p>
-                                    ) : (
-                                        <p className="text-center text-gray-500 text-xs mt-2">Faltan {Math.max(0, ticketsToCoverPrize - confirmedParticipants.length)} boletas para cubrir el costo.</p>
-                                    )}
-                                </div>
+                                <div className="flex justify-between items-center bg-blue-50 p-4 rounded-lg"><p className="font-semibold text-blue-700">{t('prizeValue')}:</p><p className="font-bold text-xl text-blue-900">{formatValue(prizeValueForGoal)}</p></div>
+                                <div className="flex justify-between items-center bg-purple-50 p-4 rounded-lg"><p className="font-semibold text-purple-700">{t('ticketValue')}:</p><p className="font-bold text-xl text-purple-900">{formatValue(ticketValueForGoal)}</p></div>
+                                <div className="flex justify-between items-center bg-green-100 p-4 rounded-lg border-2 border-green-500"><p className="font-bold text-green-800">{t('ticketsToCoverPrize')}:</p><p className="font-black text-3xl text-green-900">{ticketsToCoverPrize}</p></div>
+                                 <div className="space-y-1"><div className="flex justify-between text-xs font-bold text-gray-500 uppercase"><span>{t('progress')}</span><span>{confirmedParticipants.length} / {ticketsToCoverPrize}</span></div><Progress value={ticketsToCoverPrize > 0 ? (confirmedParticipants.length / ticketsToCoverPrize) * 100 : 0} className="h-3 bg-gray-200" />{confirmedParticipants.length >= ticketsToCoverPrize ? <p className="text-center text-green-600 font-bold text-sm mt-2">¡META ALCANZADA! 🥳</p> : <p className="text-center text-gray-500 text-xs mt-2">Faltan {Math.max(0, ticketsToCoverPrize - confirmedParticipants.length)} boletas para cubrir el costo.</p>}</div>
                             </div>
                             <DialogFooter><Button type="button" variant="outline" onClick={() => setIsGoalModalOpen(false)}>{t('close')}</Button></DialogFooter>
                         </DialogContent>
                     </Dialog>
 
                     <Dialog open={isPaymentQrDialogOpen} onOpenChange={setIsPaymentQrDialogOpen}>
-                        <DialogContent className="max-w-xs">
-                            <DialogHeader>
-                                <DialogTitle className="text-center">{t('payWithQr')}</DialogTitle>
-                                <DialogDescription className="text-center">{t('scanQrToPay')}</DialogDescription>
-                            </DialogHeader>
-                            <div className="flex justify-center items-center p-4">
-                                <div className="relative inline-block p-4 bg-white rounded-lg shadow-md border-2 border-gray-100 min-h-[200px] w-full flex items-center justify-center">
-                                     {paymentQrDisplayUrl ? (
-                                        <img 
-                                            src={paymentQrDisplayUrl} 
-                                            alt="QR de Pago" 
-                                            className="max-w-full max-h-[300px] object-contain" 
-                                            referrerPolicy="no-referrer"
-                                        />
-                                     ) : (
-                                        <div className="h-48 w-48 flex items-center justify-center bg-gray-50 rounded text-gray-400 text-xs text-center p-4">
-                                            {t('noPaymentQrImage')}
-                                        </div>
-                                     )}
-                                </div>
-                            </div>
-                             <DialogFooter>
-                                <Button variant="outline" onClick={() => setIsPaymentQrDialogOpen(false)} className="w-full">{t('close')}</Button>
-                            </DialogFooter>
+                        <DialogContent className="max-w-xs"><DialogHeader><DialogTitle className="text-center">{t('payWithQr')}</DialogTitle><DialogDescription className="text-center">{t('scanQrToPay')}</DialogDescription></DialogHeader>
+                            <div className="flex justify-center items-center p-4"><div className="relative inline-block p-4 bg-white rounded-lg shadow-md border-2 border-gray-100 min-h-[200px] w-full flex items-center justify-center">{paymentQrDisplayUrl ? <img src={paymentQrDisplayUrl} alt="QR de Pago" className="max-w-full max-h-[300px] object-contain" referrerPolicy="no-referrer" /> : <div className="h-48 w-48 flex items-center justify-center bg-gray-50 rounded text-gray-400 text-xs text-center p-4">{t('noPaymentQrImage')}</div>}</div></div>
+                             <DialogFooter><Button variant="outline" onClick={() => setIsPaymentQrDialogOpen(false)} className="w-full">{t('close')}</Button></DialogFooter>
                         </DialogContent>
                     </Dialog>
 
                      <Dialog open={isSuperAdminChangePasswordOpen} onOpenChange={(isOpen) => { if (!isOpen) { setNewPassword(''); setConfirmNewPassword(''); setShowNewPassword(false); } setIsSuperAdminChangePasswordOpen(isOpen); }}>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>{t('changeExecutivePasswordTitle')}</DialogTitle>
-                                <DialogDescription>{t('changeExecutivePasswordDescription')}</DialogDescription>
-                            </DialogHeader>
-                            <div className="grid gap-4 py-4">
-                                <div className="grid gap-2">
-                                    <Label htmlFor="new-super-admin-password-v2">{t('newPassword')}</Label>
-                                    <div className="relative">
-                                        <input id="new-super-admin-password-v2" type={showNewPassword ? 'text' : 'password'} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
-                                        <Button type="button" variant="ghost" size="icon" className="absolute inset-y-0 right-0 h-full px-3" onClick={() => setShowNewPassword(!showNewPassword)}>{showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button>
-                                    </div>
-                                </div>
-                                <div className="grid gap-2">
-                                    <Label htmlFor="confirm-new-super-admin-password-v2">{t('confirmNewPassword')}</Label>
-                                     <div className="relative">
-                                        <input id="confirm-new-super-admin-password-v2" type={showNewPassword ? 'text' : 'password'} value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
-                                         <Button type="button" variant="ghost" size="icon" className="absolute inset-y-0 right-0 h-full px-3" onClick={() => setShowNewPassword(!showNewPassword)}>{showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button>
-                                    </div>
-                                </div>
-                            </div>
+                        <DialogContent><DialogHeader><DialogTitle>{t('changeExecutivePasswordTitle')}</DialogTitle><DialogDescription>{t('changeExecutivePasswordDescription')}</DialogDescription></DialogHeader>
+                            <div className="grid gap-4 py-4"><div className="grid gap-2"><Label htmlFor="new-super-admin-password-v2">{t('newPassword')}</Label><div className="relative"><input id="new-super-admin-password-v2" type={showNewPassword ? 'text' : 'password'} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" /><Button type="button" variant="ghost" size="icon" className="absolute inset-y-0 right-0 h-full px-3" onClick={() => setShowNewPassword(!showNewPassword)}>{showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button></div></div><div className="grid gap-2"><Label htmlFor="confirm-new-super-admin-password-v2">{t('confirmNewPassword')}</Label><div className="relative"><input id="confirm-new-super-admin-password-v2" type={showNewPassword ? 'text' : 'password'} value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" /><Button type="button" variant="ghost" size="icon" className="absolute inset-y-0 right-0 h-full px-3" onClick={() => setShowNewPassword(!showNewPassword)}>{showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button></div></div></div>
                             <DialogFooter><Button variant="outline" onClick={() => setIsSuperAdminChangePasswordOpen(false)}>{t('cancel')}</Button><Button onClick={handleChangeSuperAdminPassword}>{t('changePasswordButton')}</Button></DialogFooter>
                         </DialogContent>
                     </Dialog>
                     
                     <Dialog open={isUsdPaymentDialogOpen} onOpenChange={setIsUsdPaymentDialogOpen}>
-                        <DialogContent>
-                            <DialogHeader><DialogTitle>{t('payWithUsd')}</DialogTitle><DialogDescription>{t('usdPaymentInstructions')}</DialogDescription></DialogHeader>
+                        <DialogContent><DialogHeader><DialogTitle>{t('payWithUsd')}</DialogTitle><DialogDescription>{t('usdPaymentInstructions')}</DialogDescription></DialogHeader>
                             <div className="py-4 bg-blue-50 p-4 rounded-lg border border-blue-100"><p className="text-sm text-blue-800 font-medium">{t('usdPaymentNote')}</p></div>
                             <DialogFooter><Button variant="outline" onClick={() => setIsUsdPaymentDialogOpen(false)}>{t('cancel')}</Button><Button onClick={handleUsdPayment} className="bg-blue-600 hover:bg-blue-700 text-white font-bold">{t('goToUsdPayment')}</Button></DialogFooter>
                         </DialogContent>
                     </Dialog>
 
                     <Dialog open={isSupportContactDialogOpen} onOpenChange={setIsSupportContactDialogOpen}>
-                        <DialogContent className="sm:max-w-md">
-                            <DialogHeader><DialogTitle>{t('secondaryContact')}</DialogTitle><DialogDescription>{t('savedContacts')}</DialogDescription></DialogHeader>
-                            <div className="space-y-4 py-4">
-                                <div className="flex gap-2">
-                                    <Input placeholder={t('enterPhoneNumber')} value={newSupportContact} onChange={(e) => setNewSupportContact(e.target.value.replace(/\D/g, ''))} />
-                                    <Button onClick={handleAddSupportContact}>{t('add')}</Button>
-                                </div>
-                                <ScrollArea className="h-40 border rounded-md p-2">
-                                    {supportContacts.length > 0 ? (
-                                        <div className="space-y-2">
-                                            {supportContacts.map((contact, index) => (
-                                                <div key={index} className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                                                    <span className="font-mono">{contact}</span>
-                                                    <Button variant="ghost" size="icon" onClick={() => handleRemoveSupportContact(contact)}><X className="h-4 w-4 text-red-500" /></Button>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    ) : (<p className="text-center text-gray-500 py-4">{t('noSavedContacts')}</p>)}
-                                </ScrollArea>
-                            </div>
+                        <DialogContent className="sm:max-w-md"><DialogHeader><DialogTitle>{t('secondaryContact')}</DialogTitle><DialogDescription>{t('savedContacts')}</DialogDescription></DialogHeader>
+                            <div className="space-y-4 py-4"><div className="flex gap-2"><Input placeholder={t('enterPhoneNumber')} value={newSupportContact} onChange={(e) => setNewSupportContact(e.target.value.replace(/\D/g, ''))} /><Button onClick={handleAddSupportContact}>{t('add')}</Button></div><ScrollArea className="h-40 border rounded-md p-2">{supportContacts.length > 0 ? <div className="space-y-2">{supportContacts.map((contact, index) => (<div key={index} className="flex justify-between items-center p-2 bg-gray-50 rounded"><span className="font-mono">{contact}</span><Button variant="ghost" size="icon" onClick={() => handleRemoveSupportContact(contact)}><X className="h-4 w-4 text-red-500" /></Button></div>))}</div> : <p className="text-center text-gray-500 py-4">{t('noSavedContacts')}</p>}</ScrollArea></div>
                             <DialogFooter><Button onClick={() => setIsSupportContactDialogOpen(false)}>{t('close')}</Button></DialogFooter>
                         </DialogContent>
                     </Dialog>
 
                     <Dialog open={isPaymentLinksDialogOpen} onOpenChange={setIsPaymentLinksDialogOpen}>
-                        <DialogContent className="sm:max-w-md">
-                            <DialogHeader><DialogTitle>{t('managePaymentLinks')}</DialogTitle><DialogDescription>{t('managePaymentLinksDescription')}</DialogDescription></DialogHeader>
-                            <div className="grid gap-4 py-4">
-                                <div className="grid gap-2"><Label htmlFor="payment-link-2">{t('paymentLinkTwoDigit')}</Label><Input id="payment-link-2" value={paymentLinks.twoDigit} onChange={(e) => setPaymentLinks(p => ({ ...p, twoDigit: e.target.value }))}/></div>
-                                <div className="grid gap-2"><Label htmlFor="payment-link-3">{t('paymentLinkThreeDigit')}</Label><Input id="payment-link-3" value={paymentLinks.threeDigit} onChange={(e) => setPaymentLinks(p => ({ ...p, threeDigit: e.target.value }))}/></div>
-                                <div className="grid gap-2"><Label htmlFor="payment-link-inf">{t('paymentLinkInfinite')}</Label><Input id="payment-link-inf" value={paymentLinks.infinite} onChange={(e) => setPaymentLinks(p => ({ ...p, infinite: e.target.value }))}/></div>
-                            </div>
+                        <DialogContent className="sm:max-w-md"><DialogHeader><DialogTitle>{t('managePaymentLinks')}</DialogTitle><DialogDescription>{t('managePaymentLinksDescription')}</DialogDescription></DialogHeader>
+                            <div className="grid gap-4 py-4"><div className="grid gap-2"><Label htmlFor="payment-link-2">{t('paymentLinkTwoDigit')}</Label><Input id="payment-link-2" value={paymentLinks.twoDigit} onChange={(e) => setPaymentLinks(p => ({ ...p, twoDigit: e.target.value }))}/></div><div className="grid gap-2"><Label htmlFor="payment-link-3">{t('paymentLinkThreeDigit')}</Label><Input id="payment-link-3" value={paymentLinks.threeDigit} onChange={(e) => setPaymentLinks(p => ({ ...p, threeDigit: e.target.value }))}/></div><div className="grid gap-2"><Label htmlFor="payment-link-inf">{t('paymentLinkInfinite')}</Label><Input id="payment-link-inf" value={paymentLinks.infinite} onChange={(e) => setPaymentLinks(p => ({ ...p, infinite: e.target.value }))}/></div></div>
                             <DialogFooter><Button variant="outline" onClick={() => setIsPaymentLinksDialogOpen(false)}>{t('cancel')}</Button><Button onClick={handleSavePaymentLinks}>{t('save')}</Button></DialogFooter>
                         </DialogContent>
                     </Dialog>
 
                     <Dialog open={isActivationPricesDialogOpen} onOpenChange={setIsActivationPricesDialogOpen}>
-                        <DialogContent className="sm:max-w-md">
-                            <DialogHeader>
-                                <DialogTitle>{t('manageActivationPrices')}</DialogTitle>
-                                <DialogDescription>{t('manageActivationPricesDescription')}</DialogDescription>
-                            </DialogHeader>
-                            <div className="grid gap-4 py-4">
-                                <div className="grid gap-2"><Label htmlFor="price-2">{t('activationPriceTwoDigit')}</Label><Input id="price-2" value={activationPrices.twoDigit} onChange={(e) => setActivationPrices(p => ({ ...p, twoDigit: e.target.value }))}/></div>
-                                <div className="grid gap-2"><Label htmlFor="price-3">{t('activationPriceThreeDigit')}</Label><Input id="price-3" value={activationPrices.threeDigit} onChange={(e) => setActivationPrices(p => ({ ...p, threeDigit: e.target.value }))}/></div>
-                                <div className="grid gap-2"><Label htmlFor="price-inf">{t('activationPriceInfinite')}</Label><Input id="price-inf" value={activationPrices.infinite} onChange={(e) => setActivationPrices(p => ({ ...p, infinite: e.target.value }))}/></div>
-                            </div>
+                        <DialogContent className="sm:max-w-md"><DialogHeader><DialogTitle>{t('manageActivationPrices')}</DialogTitle><DialogDescription>{t('manageActivationPricesDescription')}</DialogDescription></DialogHeader>
+                            <div className="grid gap-4 py-4"><div className="grid gap-2"><Label htmlFor="price-2">{t('activationPriceTwoDigit')}</Label><Input id="price-2" value={activationPrices.twoDigit} onChange={(e) => setActivationPrices(p => ({ ...p, twoDigit: e.target.value }))}/></div><div className="grid gap-2"><Label htmlFor="price-3">{t('activationPriceThreeDigit')}</Label><Input id="price-3" value={activationPrices.threeDigit} onChange={(e) => setActivationPrices(p => ({ ...p, threeDigit: e.target.value }))}/></div><div className="grid gap-2"><Label htmlFor="price-inf">{t('activationPriceInfinite')}</Label><Input id="price-inf" value={activationPrices.infinite} onChange={(e) => setActivationPrices(p => ({ ...p, infinite: e.target.value }))}/></div></div>
                             <DialogFooter><Button variant="outline" onClick={() => setIsActivationPricesDialogOpen(false)}>{t('cancel')}</Button><Button onClick={handleSaveActivationPrices}>{t('save')}</Button></DialogFooter>
                         </DialogContent>
                     </Dialog>
 
                     <Dialog open={isFreeGamesDialogOpen} onOpenChange={setIsFreeGamesDialogOpen}>
-                        <DialogContent className="sm:max-w-md">
-                            <DialogHeader><DialogTitle>{t('manageFreeGames')}</DialogTitle><DialogDescription>{t('manageFreeGamesDescription')}</DialogDescription></DialogHeader>
+                        <DialogContent className="sm:max-w-md"><DialogHeader><DialogTitle>{t('manageFreeGames')}</DialogTitle><DialogDescription>{t('manageFreeGamesDescription')}</DialogDescription></DialogHeader>
                             <div className="grid gap-6 py-4">
-                                <div className="space-y-4">
-                                    <h4 className="font-bold text-sm text-purple-600 uppercase tracking-wider">Activar Modalidad Gratis</h4>
-                                    <div className="flex items-center justify-between"><Label htmlFor="free-2">{t('freeTwoDigit')}</Label><Switch id="free-2" checked={freeGamesConfig.twoDigit} onCheckedChange={(val) => setFreeGamesConfig(p => ({ ...p, twoDigit: val }))}/></div>
-                                    <div className="flex items-center justify-between"><Label htmlFor="free-3">{t('freeThreeDigit')}</Label><Switch id="free-3" checked={freeGamesConfig.threeDigit} onCheckedChange={(val) => setFreeGamesConfig(p => ({ ...p, threeDigit: val }))}/></div>
-                                    <div className="flex items-center justify-between"><Label htmlFor="free-inf">{t('freeInfinite')}</Label><Switch id="free-inf" checked={freeGamesConfig.infinite} onCheckedChange={(val) => setFreeGamesConfig(p => ({ ...p, infinite: val }))}/></div>
-                                </div>
-                                <div className="space-y-4 pt-4 border-t">
-                                    <h4 className="font-bold text-sm text-red-600 uppercase tracking-wider">Bloquear Modalidades</h4>
-                                    <div className="flex items-center justify-between"><Label htmlFor="block-2">{t('blockTwoDigit')}</Label><Switch id="block-2" checked={freeGamesConfig.blockedTwoDigit} onCheckedChange={(val) => setFreeGamesConfig(p => ({ ...p, blockedTwoDigit: val }))}/></div>
-                                    <div className="flex items-center justify-between"><Label htmlFor="block-3">{t('blockThreeDigit')}</Label><Switch id="block-3" checked={freeGamesConfig.blockedThreeDigit} onCheckedChange={(val) => setFreeGamesConfig(p => ({ ...p, blockedThreeDigit: val }))}/></div>
-                                    <div className="flex items-center justify-between"><Label htmlFor="block-inf">{t('blockInfinite')}</Label><Switch id="block-inf" checked={freeGamesConfig.blockedInfinite} onCheckedChange={(val) => setFreeGamesConfig(p => ({ ...p, blockedInfinite: val }))}/></div>
-                                </div>
+                                <div className="space-y-4"><h4 className="font-bold text-sm text-purple-600 uppercase tracking-wider">Activar Modalidad Gratis</h4><div className="flex items-center justify-between"><Label htmlFor="free-2">{t('freeTwoDigit')}</Label><Switch id="free-2" checked={freeGamesConfig.twoDigit} onCheckedChange={(val) => setFreeGamesConfig(p => ({ ...p, twoDigit: val }))}/></div><div className="flex items-center justify-between"><Label htmlFor="free-3">{t('freeThreeDigit')}</Label><Switch id="free-3" checked={freeGamesConfig.threeDigit} onCheckedChange={(val) => setFreeGamesConfig(p => ({ ...p, threeDigit: val }))}/></div><div className="flex items-center justify-between"><Label htmlFor="free-inf">{t('freeInfinite')}</Label><Switch id="free-inf" checked={freeGamesConfig.infinite} onCheckedChange={(val) => setFreeGamesConfig(p => ({ ...p, infinite: val }))}/></div></div>
+                                <div className="space-y-4 pt-4 border-t"><h4 className="font-bold text-sm text-red-600 uppercase tracking-wider">Bloquear Modalidades</h4><div className="flex items-center justify-between"><Label htmlFor="block-2">{t('blockTwoDigit')}</Label><Switch id="block-2" checked={freeGamesConfig.blockedTwoDigit} onCheckedChange={(val) => setFreeGamesConfig(p => ({ ...p, blockedTwoDigit: val }))}/></div><div className="flex items-center justify-between"><Label htmlFor="block-3">{t('blockThreeDigit')}</Label><Switch id="block-3" checked={freeGamesConfig.blockedThreeDigit} onCheckedChange={(val) => setFreeGamesConfig(p => ({ ...p, blockedThreeDigit: val }))}/></div><div className="flex items-center justify-between"><Label htmlFor="block-inf">{t('blockInfinite')}</Label><Switch id="block-inf" checked={freeGamesConfig.blockedInfinite} onCheckedChange={(val) => setFreeGamesConfig(p => ({ ...p, blockedInfinite: val }))}/></div></div>
                             </div>
                             <DialogFooter><Button variant="outline" onClick={() => setIsFreeGamesDialogOpen(false)}>{t('cancel')}</Button><Button onClick={handleSaveFreeGamesSettings}>{t('save')}</Button></DialogFooter>
                         </DialogContent>
                     </Dialog>
 
                     <Dialog open={isCaptureSettingsDialogOpen} onOpenChange={setIsCaptureSettingsDialogOpen}>
-                        <DialogContent className="sm:max-w-md">
-                            <DialogHeader>
-                                <DialogTitle>Configuración de Captura</DialogTitle>
-                                <DialogDescription>Personaliza la apariencia de la imagen del tablero al compartir.</DialogDescription>
-                            </DialogHeader>
-                            <div className="grid gap-6 py-4">
-                                <div className="flex items-center justify-between">
-                                    <Label htmlFor="hidden-link-mode" className="flex flex-col space-y-1">
-                                        <span>Modo Link Oculto</span>
-                                        <span className="font-normal text-muted-foreground text-xs leading-snug">Capa invisible sobre la imagen para redirección.</span>
-                                    </Label>
-                                    <Switch id="hidden-link-mode" checked={isHiddenLinkEnabled} onCheckedChange={setIsHiddenLinkEnabled}/>
-                                </div>
-                                <div className="flex items-center justify-between border-t pt-4">
-                                    <Label htmlFor="play-button-mode" className="flex flex-col space-y-1">
-                                        <span>Cubrir con Botón de Jugar</span>
-                                        <span className="font-normal text-muted-foreground text-xs leading-snug">Muestra un botón estético pero oculta el link de texto real.</span>
-                                    </Label>
-                                    <Switch id="play-button-mode" checked={isPlayButtonEnabled} onCheckedChange={isPlayButtonEnabled}/>
-                                </div>
-                            </div>
+                        <DialogContent className="sm:max-w-md"><DialogHeader><DialogTitle>Configuración de Captura</DialogTitle><DialogDescription>Personaliza la apariencia de la imagen del tablero al compartir.</DialogDescription></DialogHeader>
+                            <div className="grid gap-6 py-4"><div className="flex items-center justify-between"><Label htmlFor="hidden-link-mode" className="flex flex-col space-y-1"><span>Modo Link Oculto</span><span className="font-normal text-muted-foreground text-xs leading-snug">Capa invisible sobre la imagen para redirección.</span></Label><Switch id="hidden-link-mode" checked={isHiddenLinkEnabled} onCheckedChange={setIsHiddenLinkEnabled}/></div><div className="flex items-center justify-between border-t pt-4"><Label htmlFor="play-button-mode" className="flex flex-col space-y-1"><span>Cubrir con Botón de Jugar</span><span className="font-normal text-muted-foreground text-xs leading-snug">Muestra un botón estético pero oculta el link de texto real.</span></Label><Switch id="play-button-mode" checked={isPlayButtonEnabled} onCheckedChange={setIsPlayButtonEnabled}/></div></div>
                             <DialogFooter><Button variant="outline" onClick={() => setIsCaptureSettingsDialogOpen(false)}>{t('cancel')}</Button><Button onClick={handleSaveCaptureSettings}>{t('save')}</Button></DialogFooter>
                         </DialogContent>
                     </Dialog>
 
                     <Dialog open={activationConfirmationOpen} onOpenChange={setActivationConfirmationOpen}>
-                        <DialogContent>
-                            <DialogHeader><DialogTitle>{t('confirmActivationTitle')}</DialogTitle><DialogDescription>{t('confirmActivationDescription')}</DialogDescription></DialogHeader>
-                            {activationToConfirm && (
-                                <div className="py-4 space-y-2">
-                                    <p><strong>{t('transactionId')}:</strong> {activationToConfirm.activation.transactionId}</p>
-                                    <p><strong>{t('raffleType')}:</strong> {activationToConfirm.activation.raffleMode}</p>
-                                    <p><strong>{t('newRaffleRef')}:</strong> {activationToConfirm.newRaffleRef}</p>
-                                </div>
-                            )}
+                        <DialogContent><DialogHeader><DialogTitle>{t('confirmActivationTitle')}</DialogTitle><DialogDescription>{t('confirmActivationDescription')}</DialogDescription></DialogHeader>
+                            {activationToConfirm && (<div className="py-4 space-y-2"><p><strong>{t('transactionId')}:</strong> {activationToConfirm.activation.transactionId}</p><p><strong>{t('raffleType')}:</strong> {activationToConfirm.activation.raffleMode}</p><p><strong>{t('newRaffleRef')}:</strong> {activationToConfirm.newRaffleRef}</p></div>)}
                             <DialogFooter><Button variant="outline" onClick={() => setActivationConfirmationOpen(false)}>{t('cancel')}</Button><Button onClick={confirmAndActivateBoard} className="bg-green-600 hover:bg-green-700 text-white font-bold">{t('confirmAndActivate')}</Button></DialogFooter>
                         </DialogContent>
                     </Dialog>
 
                     <Dialog open={isCopyOptionsDialogOpen} onOpenChange={setIsCopyOptionsDialogOpen}>
-                        <DialogContent className="sm:max-w-md">
-                            <DialogHeader><DialogTitle>{t('copyPaymentTitle')}</DialogTitle><DialogDescription>{t('copyPaymentDescription')}</DialogDescription></DialogHeader>
-                            <div className="grid gap-4 py-4">
-                                <Button onClick={() => { navigator.clipboard.writeText(appSettings.bankInfoLine1 || 'Banco Caja Social: 24096711314'); showNotification(t('accountNumberCopied'), 'success'); }} variant="outline" className="justify-start"><Copy className="mr-2 h-4 w-4" />{t('copyAccountNumber')}</Button>
-                                <Button onClick={() => { navigator.clipboard.writeText(appSettings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054'); showNotification(t('brebKeyCopied'), 'success'); }} variant="outline" className="justify-start"><Copy className="mr-2 h-4 w-4" />{t('copyBrebKey')}</Button>
-                                <Button onClick={() => setIsPaymentQrDialogOpen(true)} variant="outline" className="justify-start"><QrCode className="mr-2 h-4 w-4" />{t('payWithQr')}</Button>
-                                {(appSettings.paymentLinkUsd || (selectedRaffleMode === 'two-digit' && appSettings.paymentLinkUsdTwoDigit) || (selectedRaffleMode === 'three-digit' && appSettings.paymentLinkUsdThreeDigit) || (selectedRaffleMode === 'infinite' && appSettings.paymentLinkUsdInfinite)) && (
-                                    <Button onClick={() => setIsUsdPaymentDialogOpen(true)} variant="outline" className="justify-start bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"><DollarSign className="mr-2 h-4 w-4" />{t('payWithUsd')}</Button>
-                                )}
-                            </div>
+                        <DialogContent className="sm:max-w-md"><DialogHeader><DialogTitle>{t('copyPaymentTitle')}</DialogTitle><DialogDescription>{t('copyPaymentDescription')}</DialogDescription></DialogHeader>
+                            <div className="grid gap-4 py-4"><Button onClick={() => { navigator.clipboard.writeText(appSettings.bankInfoLine1 || 'Banco Caja Social: 24096711314'); showNotification(t('accountNumberCopied'), 'success'); }} variant="outline" className="justify-start"><Copy className="mr-2 h-4 w-4" />{t('copyAccountNumber')}</Button><Button onClick={() => { navigator.clipboard.writeText(appSettings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054'); showNotification(t('brebKeyCopied'), 'success'); }} variant="outline" className="justify-start"><Copy className="mr-2 h-4 w-4" />{t('copyBrebKey')}</Button><Button onClick={() => setIsPaymentQrDialogOpen(true)} variant="outline" className="justify-start"><QrCode className="mr-2 h-4 w-4" />{t('payWithQr')}</Button>{(appSettings.paymentLinkUsd || (selectedRaffleMode === 'two-digit' && appSettings.paymentLinkUsdTwoDigit) || (selectedRaffleMode === 'three-digit' && appSettings.paymentLinkUsdThreeDigit) || (selectedRaffleMode === 'infinite' && appSettings.paymentLinkUsdInfinite)) && <Button onClick={() => setIsUsdPaymentDialogOpen(true)} variant="outline" className="justify-start bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"><DollarSign className="mr-2 h-4 w-4" />{t('payWithUsd')}</Button>}</div>
                             <DialogFooter><Button onClick={() => setIsCopyOptionsDialogOpen(false)}>{t('close')}</Button></DialogFooter>
                         </DialogContent>
                     </Dialog>
 
                     <Dialog open={isChangePasswordDialogOpen} onOpenChange={(isOpen) => { if (!isOpen) { setNewPassword(''); setConfirmNewPassword(''); setShowNewPassword(false); } setIsChangePasswordDialogOpen(isOpen); }}>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>{t('changePasswordTitle')}</DialogTitle>
-                                <DialogDescription>{raffleToChangePassword ? t('changePasswordDescription', { ref: raffleToChangePassword.raffleRef }) : ''}</DialogDescription>
-                            </DialogHeader>
-                            <div className="grid gap-4 py-4">
-                                <div className="grid gap-2">
-                                    <Label htmlFor="new-password-v2">{t('newPassword')}</Label>
-                                    <div className="relative">
-                                        <input id="new-password-v2" type={showNewPassword ? 'text' : 'password'} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
-                                        <Button type="button" variant="ghost" size="icon" className="absolute inset-y-0 right-0 h-full px-3" onClick={() => setShowNewPassword(!showNewPassword)}>{showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button>
-                                    </div>
-                                </div>
-                                <div className="grid gap-2">
-                                    <Label htmlFor="confirm-new-password-v2">{t('confirmNewPassword')}</Label>
-                                     <div className="relative">
-                                        <input id="confirm-new-password-v2" type={showNewPassword ? 'text' : 'password'} value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
-                                         <Button type="button" variant="ghost" size="icon" className="absolute inset-y-0 right-0 h-full px-3" onClick={() => setShowNewPassword(!showNewPassword)}>{showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button>
-                                    </div>
-                                </div>
-                            </div>
+                        <DialogContent><DialogHeader><DialogTitle>{t('changePasswordTitle')}</DialogTitle><DialogDescription>{raffleToChangePassword ? t('changePasswordDescription', { ref: raffleToChangePassword.raffleRef }) : ''}</DialogDescription></DialogHeader>
+                            <div className="grid gap-4 py-4"><div className="grid gap-2"><Label htmlFor="new-password-v2">{t('newPassword')}</Label><div className="relative"><input id="new-password-v2" type={showNewPassword ? 'text' : 'password'} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" /><Button type="button" variant="ghost" size="icon" className="absolute inset-y-0 right-0 h-full px-3" onClick={() => setShowNewPassword(!showNewPassword)}>{showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button></div></div><div className="grid gap-2"><Label htmlFor="confirm-new-password-v2">{t('confirmNewPassword')}</Label><div className="relative"><input id="confirm-new-password-v2" type={showNewPassword ? 'text' : 'password'} value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" /><Button type="button" variant="ghost" size="icon" className="absolute inset-y-0 right-0 h-full px-3" onClick={() => setShowNewPassword(!showNewPassword)}>{showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button></div></div></div>
                             <DialogFooter><Button variant="outline" onClick={() => setIsChangePasswordDialogOpen(false)}>{t('cancel')}</Button><Button onClick={handleChangePassword}>{t('changePasswordButton')}</Button></DialogFooter>
                         </DialogContent>
                     </Dialog>
 
                     <Dialog open={isAdminLoginOpen} onOpenChange={setIsAdminLoginOpen}>
-                        <DialogContent>
-                            <DialogHeader><DialogTitle>{t('recoverAdminAccess')}</DialogTitle><DialogDescription>{t('recoverAdminAccessDescription')}</DialogDescription></DialogHeader>
-                            <div className="grid gap-4 py-4">
-                                {recentRefs.length > 0 && (
-                                    <div className="space-y-2">
-                                        <Label>{t('recentReferences')}</Label>
-                                        <div className="flex flex-wrap gap-2">
-                                            {recentRefs.map(ref => (
-                                                <Button key={ref} variant="secondary" size="sm" onClick={() => setAdminRefSearch(ref)}>{ref}</Button>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-                                <div className="grid gap-2"><Label htmlFor="admin-ref-search">{t('gameReference')}</Label><input id="admin-ref-search" value={adminRefSearch} onChange={(e) => setAdminRefSearch(e.target.value)} placeholder="JM1234567" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" /></div>
-                                <div className="grid gap-2"><Label htmlFor="admin-phone-search">{t('organizerPhone')}</Label><input id="admin-phone-search" value={adminPhoneSearch} onChange={(e) => setAdminPhoneSearch(e.target.value)} placeholder="3001234567" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" /></div>
-                                <div className="grid gap-2"><Label htmlFor="admin-password-search">{t('password')}</Label><input id="admin-password-search" type="password" value={adminPasswordSearch} onChange={(e) => setAdminPasswordSearch(e.target.value)} placeholder={t('yourPassword')} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" /></div>
-                            </div>
+                        <DialogContent><DialogHeader><DialogTitle>{t('recoverAdminAccess')}</DialogTitle><DialogDescription>{t('recoverAdminAccessDescription')}</DialogDescription></DialogHeader>
+                            <div className="grid gap-4 py-4">{recentRefs.length > 0 && (<div className="space-y-2"><Label>{t('recentReferences')}</Label><div className="flex flex-wrap gap-2">{recentRefs.map(ref => (<Button key={ref} variant="secondary" size="sm" onClick={() => setAdminRefSearch(ref)}>{ref}</Button>))}</div></div>)}<div className="grid gap-2"><Label htmlFor="admin-ref-search">{t('gameReference')}</Label><input id="admin-ref-search" value={adminRefSearch} onChange={(e) => setAdminRefSearch(e.target.value)} placeholder="JM1234567" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" /></div><div className="grid gap-2"><Label htmlFor="admin-phone-search">{t('organizerPhone')}</Label><input id="admin-phone-search" value={adminPhoneSearch} onChange={(e) => setAdminPhoneSearch(e.target.value)} placeholder="3001234567" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" /></div><div className="grid gap-2"><Label htmlFor="admin-password-search">{t('password')}</Label><input id="admin-password-search" type="password" value={adminPasswordSearch} onChange={(e) => setAdminPasswordSearch(e.target.value)} placeholder={t('yourPassword')} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" /></div></div>
                             <DialogFooter><Button onClick={() => handleAdminSearch({ refToSearch: adminRefSearch, phoneToSearch: adminPhoneSearch, passwordToSearch: adminPasswordSearch })} className="w-full bg-purple-600 hover:bg-purple-700">{t('recoverRestore')}</Button></DialogFooter>
                         </DialogContent>
                     </Dialog>
 
                     <Dialog open={isPublicSearchOpen} onOpenChange={setIsPublicSearchOpen}>
-                        <DialogContent>
-                            <DialogHeader><DialogTitle>{t('searchRaffleByRef')}</DialogTitle><DialogDescription>{t('searchRaffleByRefDescription')}</DialogDescription></DialogHeader>
+                        <DialogContent><DialogHeader><DialogTitle>{t('searchRaffleByRef')}</DialogTitle><DialogDescription>{t('searchRaffleByRefDescription')}</DialogDescription></DialogHeader>
                             <div className="grid gap-4 py-4"><div className="grid gap-2"><Label htmlFor="public-ref-search">{t('reference')}</Label><input id="public-ref-search" value={publicRefSearch} onChange={(e) => setPublicRefSearch(e.target.value)} placeholder="JM1234567" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" /></div></div>
                             <DialogFooter><Button onClick={() => handleAdminSearch({ refToSearch: publicRefSearch, isPublicSearch: true })} className="w-full bg-blue-600 hover:bg-blue-700">{t('search')}</Button></DialogFooter>
                         </DialogContent>
                     </Dialog>
 
                     <Dialog open={isSalesModalOpen} onOpenChange={setIsSalesModalOpen}>
-                        <DialogContent>
-                            <DialogHeader><DialogTitle>{t('salesCollection')}</DialogTitle><DialogDescription>{t('salesCollectionDescription')}</DialogDescription></DialogHeader>
-                            <div className="py-6 space-y-6">
-                                <div className="flex justify-between items-center bg-gray-50 p-4 rounded-lg"><div><p className="text-sm text-gray-500 font-medium">{t('ticketsSold')}</p><p className="text-3xl font-bold text-gray-900">{confirmedParticipants.length}</p></div><div className="h-12 w-12 bg-purple-100 rounded-full flex items-center justify-center"><TicketIcon className="h-6 w-6 text-purple-600" /></div></div>
-                                <div className="flex justify-between items-center bg-green-50 p-4 rounded-lg border border-green-100"><div><p className="text-sm text-green-600 font-medium">{t('totalCollected')}</p><p className="text-3xl font-bold text-green-700">{formatValue(totalCollected)}</p></div><div className="h-12 w-12 bg-green-100 rounded-full flex items-center justify-center"><DollarSign className="h-6 w-6 text-green-600" /></div></div>
-                            </div>
+                        <DialogContent><DialogHeader><DialogTitle>{t('salesCollection')}</DialogTitle><DialogDescription>{t('salesCollectionDescription')}</DialogDescription></DialogHeader>
+                            <div className="py-6 space-y-6"><div className="flex justify-between items-center bg-gray-50 p-4 rounded-lg"><div><p className="text-sm text-gray-500 font-medium">{t('ticketsSold')}</p><p className="text-3xl font-bold text-gray-900">{confirmedParticipants.length}</p></div><div className="h-12 w-12 bg-purple-100 rounded-full flex items-center justify-center"><TicketIcon className="h-6 w-6 text-purple-600" /></div></div><div className="flex justify-between items-center bg-green-50 p-4 rounded-lg border border-green-100"><div><p className="text-sm text-green-600 font-medium">{t('totalCollected')}</p><p className="text-3xl font-bold text-green-700">{formatValue(totalCollected)}</p></div><div className="h-12 w-12 bg-green-100 rounded-full flex items-center justify-center"><DollarSign className="h-6 w-6 text-green-600" /></div></div></div>
                             <DialogFooter><Button onClick={() => setIsSalesModalOpen(false)} className="w-full">{t('close')}</Button></DialogFooter>
                         </DialogContent>
                     </Dialog>
 
                     <Dialog open={isShareDialogOpen} onOpenChange={setIsShareDialogOpen}>
-                        <DialogContent className="sm:max-w-md">
-                            <DialogHeader><DialogTitle>{t('shareRaffle')}</DialogTitle><DialogDescription>{t('shareRaffleAppDescription')}</DialogDescription></DialogHeader>
-                            <div className="grid grid-cols-1 gap-4 py-4">
-                                <div className="flex justify-center mb-4">
-                                    <div className="p-4 bg-white rounded-lg border-4 border-purple-100 shadow-md">
-                                        <img src={dynamicQrUrl} alt="QR de la rifa" className="h-40 w-40 object-contain" referrerPolicy="no-referrer" />
-                                    </div>
-                                </div>
-                                <Button onClick={handleShareToWhatsApp} variant="outline" className="flex items-center justify-start gap-3 h-12 text-green-600 border-green-200 hover:bg-green-50"><WhatsappIcon className="h-6 w-6" /> {t('shareOnWhatsApp')}</Button>
-                                <Button onClick={handleShareToFacebook} variant="outline" className="flex items-center justify-start gap-3 h-12 text-blue-600 border-blue-200 hover:bg-blue-50"><FacebookIcon /> {t('shareOnFacebook')}</Button>
-                                {raffleState.raffleRef && (
-                                    <Button onClick={handleSharePlayNow} variant="outline" className="flex items-center justify-start gap-3 h-12 text-purple-600 border-purple-200 hover:bg-purple-50"><Gamepad2 className="h-6 w-6" /> Botón ¡JUGAR AHORA!</Button>
-                                )}
-                                <Button onClick={() => { navigator.clipboard.writeText(currentRaffleUrl); showNotification(t('linkCopied'), 'success'); setIsShareDialogOpen(false); }} variant="outline" className="flex items-center justify-start gap-3 h-12"><LinkIcon className="h-6 w-6" /> {t('copyUrl')}</Button>
-                            </div>
-                        </DialogContent>
-                    </Dialog>
-
-                    <Dialog open={isSuperAdminLoginOpen} onOpenChange={setIsSuperAdminLoginOpen}>
-                        <DialogContent>
-                            <DialogHeader><DialogTitle>{t('superAdminLogin')}</DialogTitle></DialogHeader>
-                            <div className="grid gap-4 py-4">
-                                <div className="grid gap-2">
-                                    <Label htmlFor="super-admin-password">{t('password')}</Label>
-                                    <div className="relative">
-                                        <input id="super-admin-password" type={showSuperAdminPassword ? 'text' : 'password'} value={superAdminPassword} onChange={(e) => setSuperAdminPassword(e.target.value)} placeholder={t('yourPassword')} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
-                                        <Button type="button" variant="ghost" size="icon" className="absolute inset-y-0 right-0 h-full px-3" onClick={() => setShowSuperAdminPassword(!showSuperAdminPassword)}>{showSuperAdminPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button>
-                                    </div>
-                                </div>
-                            </div>
-                            <DialogFooter><Button onClick={handleSuperAdminLogin} className="w-full bg-slate-900 hover:bg-black">{t('login')}</Button></DialogFooter>
-                        </DialogContent>
-                    </Dialog>
-
-                    <Dialog open={isShareSessionDialogOpen} onOpenChange={setIsShareSessionDialogOpen}>
-                        <DialogContent className="sm:max-w-md">
-                            <DialogHeader>
-                                <DialogTitle>{t('shareSessionTitle')}</DialogTitle>
-                                <DialogDescription>{t('shareSessionDescription')}</DialogDescription>
-                            </DialogHeader>
-                            <div className="grid gap-4 py-4">
-                                <Button onClick={handleShareSessionWhatsApp} className="w-full bg-green-600 hover:bg-green-700 flex items-center justify-center gap-2 h-12">
-                                    <WhatsappIcon className="h-6 w-6" /> {t('sendSessionWhatsApp')}
-                                </Button>
-                                <Button onClick={handleSuperAdminLogout} variant="destructive" className="w-full flex items-center justify-center gap-2 h-12">
-                                    <LogOut className="h-5 w-5" /> {t('closeSession')}
-                                </Button>
-                            </div>
-                            <DialogFooter>
-                                <Button variant="outline" onClick={() => setIsShareSessionDialogOpen(false)} className="w-full">{t('close')}</Button>
-                            </DialogFooter>
+                        <DialogContent className="sm:max-w-md"><DialogHeader><DialogTitle>{t('shareRaffle')}</DialogTitle><DialogDescription>{t('shareRaffleAppDescription')}</DialogDescription></DialogHeader>
+                            <div className="grid grid-cols-1 gap-4 py-4"><div className="flex justify-center mb-4"><div className="p-4 bg-white rounded-lg border-4 border-purple-100 shadow-md"><img src={dynamicQrUrl} alt="QR de la rifa" className="h-40 w-40 object-contain" referrerPolicy="no-referrer" /></div></div><Button onClick={handleShareToWhatsApp} variant="outline" className="flex items-center justify-start gap-3 h-12 text-green-600 border-green-200 hover:bg-green-50"><WhatsappIcon className="h-6 w-6" /> {t('shareOnWhatsApp')}</Button><Button onClick={handleShareToFacebook} variant="outline" className="flex items-center justify-start gap-3 h-12 text-blue-600 border-blue-200 hover:bg-blue-50"><FacebookIcon /> {t('shareOnFacebook')}</Button>{raffleState.raffleRef && <Button onClick={handleSharePlayNow} variant="outline" className="flex items-center justify-start gap-3 h-12 text-purple-600 border-purple-200 hover:bg-purple-50"><Gamepad2 className="h-6 w-6" /> Botón ¡JUGAR AHORA!</Button>}<Button onClick={() => { navigator.clipboard.writeText(currentRaffleUrl); showNotification(t('linkCopied'), 'success'); setIsShareDialogOpen(false); }} variant="outline" className="flex items-center justify-start gap-3 h-12"><LinkIcon className="h-6 w-6" /> {t('copyUrl')}</Button></div>
                         </DialogContent>
                     </Dialog>
 
                     <Dialog open={isContactDialogOpen} onOpenChange={setIsContactDialogOpen}>
-                        <DialogContent className="sm:max-w-md">
-                            <DialogHeader>
-                                <DialogTitle>{t('contact')}</DialogTitle>
-                                <DialogDescription>{t('contactDialogDescription')}</DialogDescription>
-                            </DialogHeader>
-                            <div className="grid gap-4 py-4">
-                                {appSettings.supportContacts && appSettings.supportContacts.map((contact, index) => (
-                                    <Button
-                                        key={index}
-                                        onClick={() => window.open(`https://wa.me/57${contact}`, '_blank')}
-                                        variant="outline"
-                                        className="flex items-center justify-start gap-3 h-12 text-green-600 border-green-200 hover:bg-green-50"
-                                    >
-                                        <WhatsappIcon className="h-6 w-6" /> {t('whatsappNumber')}: {contact}
-                                    </Button>
-                                ))}
-                                {(!appSettings.supportContacts || appSettings.supportContacts.length === 0) && (
-                                    <Button
-                                        onClick={() => window.open(`https://wa.me/573145696687`, '_blank')}
-                                        variant="outline"
-                                        className="flex items-center justify-start gap-3 h-12 text-green-600 border-green-200 hover:bg-green-50"
-                                    >
-                                        <WhatsappIcon className="h-6 w-6" /> WhatsApp Soporte
-                                    </Button>
-                                )}
-                            </div>
-                            <DialogFooter>
-                                <Button onClick={() => setIsContactDialogOpen(false)} variant="outline" className="w-full">{t('close')}</Button>
-                            </DialogFooter>
+                        <DialogContent className="sm:max-w-md"><DialogHeader><DialogTitle>{t('contact')}</DialogTitle><DialogDescription>{t('contactDialogDescription')}</DialogDescription></DialogHeader>
+                            <div className="grid gap-4 py-4">{appSettings.supportContacts && appSettings.supportContacts.map((contact, index) => (<Button key={index} onClick={() => window.open(`https://wa.me/57${contact}`, '_blank')} variant="outline" className="flex items-center justify-start gap-3 h-12 text-green-600 border-green-200 hover:bg-green-50"><WhatsappIcon className="h-6 w-6" /> {t('whatsappNumber')}: {contact}</Button>))}{(!appSettings.supportContacts || appSettings.supportContacts.length === 0) && <Button onClick={() => window.open(`https://wa.me/573145696687`, '_blank')} variant="outline" className="flex items-center justify-start gap-3 h-12 text-green-600 border-green-200 hover:bg-green-50"><WhatsappIcon className="h-6 w-6" /> WhatsApp Soporte</Button>}</div>
+                            <DialogFooter><Button onClick={() => setIsContactDialogOpen(false)} variant="outline" className="w-full">{t('close')}</Button></DialogFooter>
                         </DialogContent>
                     </Dialog>
 
                     <Dialog open={isApiConfigDialogOpen} onOpenChange={setIsApiConfigDialogOpen}>
-                        <DialogContent className="sm:max-w-md">
-                            <DialogHeader>
-                                <DialogTitle>Configurar API 🔒</DialogTitle>
-                                <DialogDescription>Configura los parámetros de conexión para servicios externos.</DialogDescription>
-                            </DialogHeader>
-                            <div className="grid gap-4 py-4">
-                                <div className="grid gap-2">
-                                    <Label htmlFor="api-key">API Key</Label>
-                                    <Input id="api-key" value={apiConfig.key} onChange={(e) => setApiConfig(p => ({ ...p, key: e.target.value }))} placeholder="Ingresa la llave de API" />
-                                </div>
-                                <div className="grid gap-2">
-                                    <Label htmlFor="api-endpoint">API Endpoint</Label>
-                                    <Input id="api-endpoint" value={apiConfig.endpoint} onChange={(e) => setApiConfig(p => ({ ...p, endpoint: e.target.value }))} placeholder="https://api.ejemplo.com/v1" />
-                                </div>
-                            </div>
-                            <DialogFooter>
-                                <Button variant="outline" onClick={() => setIsApiConfigDialogOpen(false)}>Cancelar</Button>
-                                <Button onClick={handleSaveApiConfig}>Guardar Configuración</Button>
-                            </DialogFooter>
+                        <DialogContent className="sm:max-w-md"><DialogHeader><DialogTitle>Configurar API 🔒</DialogTitle><DialogDescription>Configura los parámetros de conexión para servicios externos.</DialogDescription></DialogHeader>
+                            <div className="grid gap-4 py-4"><div className="grid gap-2"><Label htmlFor="api-key">API Key</Label><Input id="api-key" value={apiConfig.key} onChange={(e) => setApiConfig(p => ({ ...p, key: e.target.value }))} placeholder="Ingresa la llave de API" /></div><div className="grid gap-2"><Label htmlFor="api-endpoint">API Endpoint</Label><Input id="api-endpoint" value={apiConfig.endpoint} onChange={(e) => setApiConfig(p => ({ ...p, endpoint: e.target.value }))} placeholder="https://api.ejemplo.com/v1" /></div></div>
+                            <DialogFooter><Button variant="outline" onClick={() => setIsApiConfigDialogOpen(false)}>Cancelar</Button><Button onClick={handleSaveApiConfig}>Guardar Configuración</Button></DialogFooter>
                         </DialogContent>
                     </Dialog>
 
                     <Dialog open={isTicketModalOpen} onOpenChange={setIsTicketModalOpen}>
-                         <DialogContent className="max-w-[320px] p-0 border-none bg-transparent shadow-none">
-                             <InlineTicket 
-                                 ticketModalRef={ticketModalRef} 
-                                 ticketData={ticketInfo} 
-                                 setGeneratedTicketData={() => setIsTicketModalOpen(false)} 
-                                 handleDownloadTicket={handleDownloadTicket} 
-                                 handleShareTicket={handleShareTicket} 
-                                 formatValue={formatValue} 
-                                 t={t} 
-                                 language={language}
-                             />
-                         </DialogContent>
+                         <DialogContent className="max-w-[320px] p-0 border-none bg-transparent shadow-none"><InlineTicket ticketModalRef={ticketModalRef} ticketData={ticketInfo} setGeneratedTicketData={() => setIsTicketModalOpen(false)} handleDownloadTicket={handleDownloadTicket} handleShareTicket={handleShareTicket} formatValue={formatValue} t={t} language={language}/></DialogContent>
                     </Dialog>
 
                     <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
-                        <DialogContent>
-                            <DialogHeader><DialogTitle>{t('confirmAction')}</DialogTitle><DialogDescription>{confirmationMessage}</DialogDescription></DialogHeader>
+                        <DialogContent><DialogHeader><DialogTitle>{t('confirmAction')}</DialogTitle><DialogDescription>{confirmationMessage}</DialogDescription></DialogHeader>
                             <DialogFooter className="gap-2 sm:gap-0"><Button variant="outline" onClick={() => setShowConfirmation(false)}>{t('cancel')}</Button><Button className="bg-red-600 hover:bg-red-700" onClick={() => { if (confirmationAction) confirmationAction(); setShowConfirmation(false); }}>{t('confirm')}</Button></DialogFooter>
                         </DialogContent>
                     </Dialog>
                     
                     <Dialog open={isQrDialogOpen} onOpenChange={setIsQrDialogOpen}>
-                        <DialogContent className="max-w-xs">
-                            <DialogHeader>
-                                <DialogTitle className="text-center">{t('shareWithQR')}</DialogTitle>
-                                <DialogDescription className="text-center">{t('shareWithQRDescription')}</DialogDescription>
-                            </DialogHeader>
-                            <div className="flex justify-center items-center p-4">
-                                <div className="p-4 bg-white rounded-xl shadow-2xl border-4 border-purple-100">
-                                    <img src={dynamicQrUrl} alt={t('appQRCodeAlt')} className="h-48 w-48 object-contain" referrerPolicy="no-referrer" />
-                                </div>
-                            </div>
-                            <DialogFooter>
-                                <Button variant="outline" onClick={() => setIsQrDialogOpen(false)} className="w-full">{t('close')}</Button>
-                            </DialogFooter>
+                        <DialogContent className="max-w-xs"><DialogHeader><DialogTitle className="text-center">{t('shareWithQR')}</DialogTitle><DialogDescription className="text-center">{t('shareWithQRDescription')}</DialogDescription></DialogHeader>
+                            <div className="flex justify-center items-center p-4"><div className="p-4 bg-white rounded-xl shadow-2xl border-4 border-purple-100"><img src={dynamicQrUrl} alt={t('appQRCodeAlt')} className="h-48 w-48 object-contain" referrerPolicy="no-referrer" /></div></div>
+                            <DialogFooter><Button variant="outline" onClick={() => setIsQrDialogOpen(false)} className="w-full">{t('close')}</Button></DialogFooter>
                         </DialogContent>
                     </Dialog>
                 </div>
