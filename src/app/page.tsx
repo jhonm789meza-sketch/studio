@@ -163,7 +163,7 @@ const App = () => {
     const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
     const [isPublicSearchOpen, setIsPublicSearchOpen] = useState(false);
     const [publicRefSearch, setPublicRefSearch] = useState('');
-    const [showPublicSearchPassword, setShowPublicSearchPassword] = useState(false);
+    const [showPublicSearchPassword, setShowPublicSearchPassword] = useState(true); // Texto visible por defecto
     const [isSalesModalOpen, setIsSalesModalOpen] = useState(false);
     const [adminRefSearch, setAdminRefSearch] = useState('');
     const [adminPhoneSearch, setAdminPhoneSearch] = useState('');
@@ -1500,12 +1500,13 @@ const App = () => {
     const handleAdminSearch = ({ refToSearch, isInitialLoad = false, phoneToSearch, passwordToSearch, isPublicSearch = false }: { refToSearch?: string, isInitialLoad?: boolean, phoneToSearch?: string, passwordToSearch?: string, isPublicSearch?: boolean }) => {
         return new Promise<void>(async (resolve) => {
             if (!isInitialLoad) setLoading(true);
-            const aRef = (refToSearch || (isPublicSearch ? publicRefSearch : adminRefSearch)).trim().toUpperCase();
+            const rawRef = (refToSearch || (isPublicSearch ? publicRefSearch : adminRefSearch)).trim();
+            const aRef = rawRef.toUpperCase();
             const aPhone = (phoneToSearch || adminPhoneSearch).trim();
             const aPassword = (passwordToSearch || adminPasswordSearch).trim();
 
             const executivePassword = appSettings.superAdminPassword || '32184257361045715054';
-            if (isPublicSearch && aRef === executivePassword) {
+            if (isPublicSearch && rawRef === executivePassword) {
                 setIsSuperAdmin(true);
                 sessionStorage.setItem('isSuperAdmin', 'true');
                 setPublicRefSearch('');
@@ -3252,7 +3253,7 @@ const App = () => {
 
                     <Dialog open={isApiConfigDialogOpen} onOpenChange={setIsApiConfigDialogOpen}>
                         <DialogContent className="sm:max-w-md"><DialogHeader><DialogTitle>Configurar API 🔒</DialogTitle><DialogDescription>Configura los parámetros de conexión para servicios externos.</DialogDescription></DialogHeader>
-                            <div className="grid gap-4 py-4"><div className="grid gap-2"><Label htmlFor="api-key">API Key</Label><Input id="api-key" value={apiConfig.key} onChange={(e) => setApiConfig(p => ({ ...p, key: e.target.value }))} placeholder="Ingresa la llave de API" /></div><div className="grid gap-2"><Label htmlFor="api-endpoint">API Endpoint</Label><Input id="api-endpoint" value={apiConfig.endpoint} onChange={(e) => setApiConfig(p => ({ ...p, endpoint: e.target.value }))} placeholder="https://api.ejemplo.com/v1" /></div></div>
+                            <div className="grid gap-4 py-4"><div className="grid gap-2"><Label htmlFor="api-key-config">API Key</Label><Input id="api-key-config" value={apiConfig.key} onChange={(e) => setApiConfig(p => ({ ...p, key: e.target.value }))} placeholder="Ingresa la llave de API" /></div><div className="grid gap-2"><Label htmlFor="api-endpoint-config">API Endpoint</Label><Input id="api-endpoint-config" value={apiConfig.endpoint} onChange={(e) => setApiConfig(p => ({ ...p, endpoint: e.target.value }))} placeholder="https://api.ejemplo.com/v1" /></div></div>
                             <DialogFooter><Button variant="outline" onClick={() => setIsApiConfigDialogOpen(false)}>Cancelar</Button><Button onClick={handleSaveApiConfig}>Guardar Configuración</Button></DialogFooter>
                         </DialogContent>
                     </Dialog>
