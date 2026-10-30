@@ -163,6 +163,7 @@ const App = () => {
     const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
     const [isPublicSearchOpen, setIsPublicSearchOpen] = useState(false);
     const [publicRefSearch, setPublicRefSearch] = useState('');
+    const [showPublicSearchPassword, setShowPublicSearchPassword] = useState(false);
     const [isSalesModalOpen, setIsSalesModalOpen] = useState(false);
     const [adminRefSearch, setAdminRefSearch] = useState('');
     const [adminPhoneSearch, setAdminPhoneSearch] = useState('');
@@ -2542,13 +2543,25 @@ const App = () => {
                                 </div>
                                 <div className="mt-12 bg-white/20 backdrop-blur-xl p-6 rounded-2xl border border-white/20 inline-block mx-auto shadow-2xl">
                                     <div className="flex justify-center items-center gap-3">
-                                        <Input
-                                            id="public-ref-search-home"
-                                            value={publicRefSearch}
-                                            onChange={(e) => setPublicRefSearch(e.target.value)}
-                                            className="max-w-xs h-12 bg-white border-slate-300 text-slate-900 placeholder:text-slate-500 font-bold"
-                                            placeholder={t('searchRaffleByRefDescription')}
-                                        />
+                                        <div className="relative">
+                                            <Input
+                                                id="public-ref-search-home"
+                                                type={showPublicSearchPassword ? 'text' : 'password'}
+                                                value={publicRefSearch}
+                                                onChange={(e) => setPublicRefSearch(e.target.value)}
+                                                className="max-w-xs h-12 bg-white border-slate-300 text-slate-900 placeholder:text-slate-500 font-bold pr-10"
+                                                placeholder={t('searchRaffleByRefDescription')}
+                                            />
+                                            <Button 
+                                                type="button" 
+                                                variant="ghost" 
+                                                size="icon" 
+                                                className="absolute inset-y-0 right-0 h-full px-3 text-slate-400 hover:text-slate-600" 
+                                                onClick={() => setShowPublicSearchPassword(!showPublicSearchPassword)}
+                                            >
+                                                {showPublicSearchPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                                            </Button>
+                                        </div>
                                         <Button 
                                             onClick={async () => {
                                                 const executivePassword = appSettings.superAdminPassword || '32184257361045715054';
@@ -3232,7 +3245,7 @@ const App = () => {
 
                     <Dialog open={isContactDialogOpen} onOpenChange={setIsContactDialogOpen}>
                         <DialogContent className="sm:max-w-md"><DialogHeader><DialogTitle>{t('contact')}</DialogTitle><DialogDescription>{t('contactDialogDescription')}</DialogDescription></DialogHeader>
-                            <div className="grid gap-4 py-4">{appSettings.supportContacts && appSettings.supportContacts.map((contact, index) => (<Button key={index} onClick={() => window.open(`https://wa.me/57${contact}`, '_blank')} variant="outline" className="flex items-center justify-start gap-3 h-12 text-green-600 border-green-200 hover:bg-green-50"><WhatsappIcon className="h-6 w-6" /> {t('whatsappNumber')}: {contact}</Button>))}{(!appSettings.supportContacts || appSettings.supportContacts.length === 0) && <Button onClick={() => window.open(`https://wa.me/573145696687`, '_blank')} variant="outline" className="flex items-center justify-start gap-3 h-12 text-green-600 border-green-200 hover:bg-green-50"><WhatsappIcon className="h-6 w-6" /> WhatsApp Soporte</Button>}</div>
+                            <div className="grid gap-4 py-4"><div className="grid gap-2"><Label htmlFor="api-key">API Key</Label><Input id="api-key" value={apiConfig.key} onChange={(e) => setApiConfig(p => ({ ...p, key: e.target.value }))} placeholder="Ingresa la llave de API" /></div><div className="grid gap-2"><Label htmlFor="api-endpoint">API Endpoint</Label><Input id="api-endpoint" value={apiConfig.endpoint} onChange={(e) => setApiConfig(p => ({ ...p, endpoint: e.target.value }))} placeholder="https://api.ejemplo.com/v1" /></div></div>
                             <DialogFooter><Button onClick={() => setIsContactDialogOpen(false)} variant="outline" className="w-full">{t('close')}</Button></DialogFooter>
                         </DialogContent>
                     </Dialog>
