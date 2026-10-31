@@ -163,7 +163,7 @@ const App = () => {
     const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
     const [isPublicSearchOpen, setIsPublicSearchOpen] = useState(false);
     const [publicRefSearch, setPublicRefSearch] = useState('');
-    const [showPublicSearchPassword, setShowPublicSearchPassword] = useState(true); // Texto visible por defecto
+    const [showPublicSearchPassword, setShowPublicSearchPassword] = useState(true); 
     const [isSalesModalOpen, setIsSalesModalOpen] = useState(false);
     const [adminRefSearch, setAdminRefSearch] = useState('');
     const [adminPhoneSearch, setAdminPhoneSearch] = useState('');
@@ -1586,27 +1586,33 @@ const App = () => {
                         if (adminIdFromStorage && data.adminId === adminIdFromStorage) setCurrentAdminId(adminIdFromStorage);
                         else setCurrentAdminId(null);
                     } else {
-                        setCurrentAdminId(null);
+                        const adminIdFromStorage = localStorage.getItem('rifaAdminId');
+                        if (adminIdFromStorage && data.adminId === adminIdFromStorage) setCurrentAdminId(adminIdFromStorage);
+                        else setCurrentAdminId(null);
                     }
+
+                    // Se cierran diálogos y se cambia pestaña en cualquier éxito
+                    setIsAdminLoginOpen(false);
+                    setIsPublicSearchOpen(false);
+                    setAdminRefSearch('');
+                    setAdminPhoneSearch('');
+                    setAdminPasswordSearch('');
+                    setPublicRefSearch('');
+                    setPartialWinners([]);
+                    handleTabClick('board');
+
+                    const currentUrl = new URL(window.location.href);
+                    const iNewUrl = new URL(window.location.origin);
+                    iNewUrl.searchParams.set('ref', aRef);
+                    const adminIdForUrl = localStorage.getItem('rifaAdminId');
+                    if (data.adminId && data.adminId === adminIdForUrl) {
+                        iNewUrl.searchParams.set('adminId', data.adminId);
+                        if (data.isActive === false && !isPublicSearch) setShowAdminActivationNotice(true);
+                    } else iNewUrl.searchParams.delete('adminId');
+                    if (currentUrl.href !== iNewUrl.href) window.history.replaceState({}, '', iNewUrl.href);
+                    
                     if (isInitialLoad) {
                         showNotification(t('loadingRaffle', { ref: aRef }), 'info');
-                        setIsAdminLoginOpen(false);
-                        setIsPublicSearchOpen(false);
-                        setAdminRefSearch('');
-                        setAdminPhoneSearch('');
-                        setAdminPasswordSearch('');
-                        setPublicRefSearch('');
-                        setPartialWinners([]);
-                        handleTabClick('board');
-                        const currentUrl = new URL(window.location.href);
-                        const iNewUrl = new URL(window.location.origin);
-                        iNewUrl.searchParams.set('ref', aRef);
-                        const adminIdForUrl = localStorage.getItem('rifaAdminId');
-                        if (data.adminId && data.adminId === adminIdForUrl && !isPublicSearch) {
-                            iNewUrl.searchParams.set('adminId', data.adminId);
-                            if (data.isActive === false) setShowAdminActivationNotice(true);
-                        } else iNewUrl.searchParams.delete('adminId');
-                        if (currentUrl.href !== iNewUrl.href) window.history.replaceState({}, '', iNewUrl.href);
                     }
                 } else if (!isInitialLoad) {
                     showNotification(t('raffleNotFound'), 'error');
@@ -2263,6 +2269,7 @@ const App = () => {
                     setGeneratedPackage([]);
                     showNotification(t('allGeneratedRefsDeletedSuccess'), 'success');
                 } catch (error) {
+                    console.error('Error deleting all generated refs:', error);
                     showNotification(t('allGeneratedRefsDeletedError'), 'error');
                 } finally {
                     setIsGenerating(false);
@@ -2942,7 +2949,7 @@ const App = () => {
 
                     <Dialog open={isSecurityDialogOpen} onOpenChange={setIsSecurityDialogOpen}>
                         <DialogContent><DialogHeader><DialogTitle>Verificar Identidad 🔒</DialogTitle><DialogDescription>Ingresa la contraseña del Director Ejecutivo para acceder a esta función.</DialogDescription></DialogHeader>
-                            <div className="grid gap-4 py-4"><div className="grid gap-2"><Label htmlFor="security-password">Contraseña</Label><div className="relative"><input id="security-password" type={showSecurityPassword ? 'text' : 'password'} value={securityPassword} onChange={(e) => setSecurityPassword(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" placeholder="Tu contraseña" /><Button type="button" variant="ghost" size="icon" className="absolute inset-y-0 right-0 h-full px-3" onClick={() => setShowSecurityPassword(!showSecurityPassword)}>{showSecurityPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button></div></div></div>
+                            <div className="grid gap-4 py-4"><div className="grid gap-2"><Label htmlFor="security-password">Contraseña</Label><div className="relative"><input id="security-password" type={showSecurityPassword ? 'text' : 'password'} value={securityPassword} onChange={(e) => setSecurityPassword(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" placeholder="Tu contraseña" /><Button type="button" variant="ghost" size="icon" className="absolute inset-y-0 right-0 h-full px-3" onClick={() => setShowSecurityPassword(!showSecurityPassword)}>{showSecurityPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}</Button></div></div></div>
                             <DialogFooter><Button onClick={verifySecurityPassword} className="w-full bg-slate-900 hover:bg-black">Validar y Entrar</Button></DialogFooter>
                         </DialogContent>
                     </Dialog>
@@ -3146,7 +3153,7 @@ const App = () => {
 
                      <Dialog open={isSuperAdminChangePasswordOpen} onOpenChange={(isOpen) => { if (!isOpen) { setNewPassword(''); setConfirmNewPassword(''); setShowNewPassword(false); } setIsSuperAdminChangePasswordOpen(isOpen); }}>
                         <DialogContent><DialogHeader><DialogTitle>{t('changeExecutivePasswordTitle')}</DialogTitle><DialogDescription>{t('changeExecutivePasswordDescription')}</DialogDescription></DialogHeader>
-                            <div className="grid gap-4 py-4"><div className="grid gap-2"><Label htmlFor="new-super-admin-password-v2">{t('newPassword')}</Label><div className="relative"><input id="new-super-admin-password-v2" type={showNewPassword ? 'text' : 'password'} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" /><Button type="button" variant="ghost" size="icon" className="absolute inset-y-0 right-0 h-full px-3" onClick={() => setShowNewPassword(!showNewPassword)}>{showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button></div></div><div className="grid gap-2"><Label htmlFor="confirm-new-super-admin-password-v2">{t('confirmNewPassword')}</Label><div className="relative"><input id="confirm-new-super-admin-password-v2" type={showNewPassword ? 'text' : 'password'} value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" /><Button type="button" variant="ghost" size="icon" className="absolute inset-y-0 right-0 h-full px-3" onClick={() => setShowNewPassword(!showNewPassword)}>{showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button></div></div></div>
+                            <div className="grid gap-4 py-4"><div className="grid gap-2"><Label htmlFor="new-super-admin-password-v2">{t('newPassword')}</Label><div className="relative"><input id="new-super-admin-password-v2" type={showNewPassword ? 'text' : 'password'} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" /><Button type="button" variant="ghost" size="icon" className="absolute inset-y-0 right-0 h-full px-3" onClick={() => setShowNewPassword(!showNewPassword)}>{showNewPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}</Button></div></div><div className="grid gap-2"><Label htmlFor="confirm-new-super-admin-password-v2">{t('confirmNewPassword')}</Label><div className="relative"><input id="confirm-new-super-admin-password-v2" type={showNewPassword ? 'text' : 'password'} value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" /><Button type="button" variant="ghost" size="icon" className="absolute inset-y-0 right-0 h-full px-3" onClick={() => setShowNewPassword(!showNewPassword)}>{showNewPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}</Button></div></div></div>
                             <DialogFooter><Button variant="outline" onClick={() => setIsSuperAdminChangePasswordOpen(false)}>{t('cancel')}</Button><Button onClick={handleChangeSuperAdminPassword}>{t('changePasswordButton')}</Button></DialogFooter>
                         </DialogContent>
                     </Dialog>
@@ -3264,7 +3271,7 @@ const App = () => {
 
                     <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
                         <DialogContent><DialogHeader><DialogTitle>{t('confirmAction')}</DialogTitle><DialogDescription>{confirmationMessage}</DialogDescription></DialogHeader>
-                            <DialogFooter className="gap-2 sm:gap-0"><Button variant="outline" onClick={() => setShowConfirmation(false)}>{t('cancel')}</Button><Button className="bg-red-600 hover:bg-red-700" onClick={() => { if (confirmationAction) confirmationAction(); setShowConfirmation(false); }}>{t('confirm')}</Button></DialogFooter>
+                            <DialogFooter className="gap-2 sm:gap-0"><Button variant="outline" onClick={setShowConfirmation.bind(null, false)}>{t('cancel')}</Button><Button className="bg-red-600 hover:bg-red-700" onClick={() => { if (confirmationAction) confirmationAction(); setShowConfirmation(false); }}>{t('confirm')}</Button></DialogFooter>
                         </DialogContent>
                     </Dialog>
                     
