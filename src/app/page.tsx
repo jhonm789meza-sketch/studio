@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import jsPDF from 'jspdf';
@@ -1532,7 +1531,6 @@ const App = () => {
                              localStorage.setItem('rifaAdminId', data.adminId!);
                              setCurrentAdminId(data.adminId);
                              showNotification(t('adminAccessRestored'), 'success');
-                             addToRecentRefs(aRef);
                          } else {
                              showNotification(t('phoneOrPasswordMismatch'), 'error');
                              setLoading(false);
@@ -2500,7 +2498,7 @@ const App = () => {
                                                 {((!appSettings.isFreeTwoDigit && !appSettings.isBlockedTwoDigit) || isSuperAdmin) && (
                                                     <div className="text-center space-y-4">
                                                         <Button onClick={() => handleActivationClick('two-digit')} size="lg" className="w-full bg-slate-900 hover:bg-black text-white font-bold flex items-center gap-3 justify-center h-12"><BankIcon className="h-5 w-5" />{t('activate')}</Button>
-                                                        <div className="bg-white/50 p-3 rounded-lg border border-slate-200"><p className="text-xs text-slate-800 whitespace-pre-wrap font-bold">{appSettings.bankInfoLine1 || 'Banco Caja Social: 24096711314'}{'\n'}{appSettings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054'}</p></div>
+                                                        <div className="bg-white/50 p-3 rounded-lg border border-slate-200"><p className="text-xs text-slate-800 whitespace-pre-wrap font-bold">{appSettings.bankInfoLine1 || 'Banco Caja Social: 24096711314'}{'\n'}{(appSettings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054')}</p></div>
                                                     </div>
                                                 )}
                                                 {isSuperAdmin && nextRaffleRefs.twoDigit.refs.length > 0 && (
@@ -2520,7 +2518,7 @@ const App = () => {
                                                 {((!appSettings.isFreeThreeDigit && !appSettings.isBlockedThreeDigit) || isSuperAdmin) && (
                                                     <div className="text-center space-y-4">
                                                         <Button onClick={() => handleActivationClick('three-digit')} size="lg" className="w-full bg-slate-900 hover:bg-black text-white font-bold flex items-center gap-3 justify-center h-12"><BankIcon className="h-5 w-5" />{t('activate')}</Button>
-                                                        <div className="bg-white/50 p-3 rounded-lg border border-slate-200"><p className="text-xs text-slate-800 whitespace-pre-wrap font-bold">{appSettings.bankInfoLine1 || 'Banco Caja Social: 24096711314'}{'\n'}{appSettings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054'}</p></div>
+                                                        <div className="bg-white/50 p-3 rounded-lg border border-slate-200"><p className="text-xs text-slate-800 whitespace-pre-wrap font-bold">{appSettings.bankInfoLine1 || 'Banco Caja Social: 24096711314'}{'\n'}{(appSettings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054')}</p></div>
                                                     </div>
                                                 )}
                                                 {isSuperAdmin && nextRaffleRefs.threeDigit.refs.length > 0 && (
@@ -2540,7 +2538,7 @@ const App = () => {
                                                 {((!appSettings.isFreeInfinite && !appSettings.isBlockedInfinite) || isSuperAdmin) && (
                                                     <div className="text-center space-y-4">
                                                         <Button onClick={() => handleActivationClick('infinite')} size="lg" className="w-full bg-slate-900 hover:bg-black text-white font-bold flex items-center gap-3 justify-center h-12"><BankIcon className="h-5 w-5" />{t('activate')}</Button>
-                                                        <div className="bg-white/50 p-3 rounded-lg border border-slate-200"><p className="text-xs text-slate-800 whitespace-pre-wrap font-bold">{appSettings.bankInfoLine1 || 'Banco Caja Social: 24096711314'}{'\n'}{appSettings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054'}</p></div>
+                                                        <div className="bg-white/50 p-3 rounded-lg border border-slate-200"><p className="text-xs text-slate-800 whitespace-pre-wrap font-bold">{appSettings.bankInfoLine1 || 'Banco Caja Social: 24096711314'}{'\n'}{(appSettings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054')}</p></div>
                                                     </div>
                                                 )}
                                                 {isSuperAdmin && nextRaffleRefs.infinite.refs.length > 0 && (
@@ -3227,7 +3225,7 @@ const App = () => {
 
                     <Dialog open={isAdminLoginOpen} onOpenChange={setIsAdminLoginOpen}>
                         <DialogContent><DialogHeader><DialogTitle>{t('recoverAdminAccess')}</DialogTitle><DialogDescription>{t('recoverAdminAccessDescription')}</DialogDescription></DialogHeader>
-                            <div className="grid gap-4 py-4">{recentRefs.length > 0 && (<div className="space-y-2"><Label>{t('recentReferences')}</Label><div className="flex flex-wrap gap-2">{recentRefs.map(ref => (<Button key={ref} variant="secondary" size="sm" onClick={() => setAdminRefSearch(ref)}>{ref}</Button>))}</div></div>)}<div className="grid gap-2"><Label htmlFor="admin-ref-search">{t('gameReference')}</Label><input id="admin-ref-search" value={adminRefSearch} onChange={(e) => setAdminRefSearch(e.target.value)} placeholder="JM1234567" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" /></div><div className="grid gap-2"><Label htmlFor="admin-phone-search">{t('organizerPhone')}</Label><input id="admin-phone-search" value={adminPhoneSearch} onChange={(e) => setAdminPhoneSearch(e.target.value)} placeholder="3001234567" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" /></div><div className="grid gap-2"><Label htmlFor="admin-password-search">{t('password')}</Label><input id="admin-password-search" type="password" value={adminPasswordSearch} onChange={(e) => setAdminPasswordSearch(e.target.value)} placeholder={t('yourPassword')} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" /></div></div>
+                            <div className="grid gap-4 py-4"><div className="grid gap-2"><Label htmlFor="admin-ref-search">{t('gameReference')}</Label><input id="admin-ref-search" value={adminRefSearch} onChange={(e) => setAdminRefSearch(e.target.value)} placeholder="JM1234567" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" /></div><div className="grid gap-2"><Label htmlFor="admin-phone-search">{t('organizerPhone')}</Label><input id="admin-phone-search" value={adminPhoneSearch} onChange={(e) => setAdminPhoneSearch(e.target.value)} placeholder="3001234567" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" /></div><div className="grid gap-2"><Label htmlFor="admin-password-search">{t('password')}</Label><input id="admin-password-search" type="password" value={adminPasswordSearch} onChange={(e) => setAdminPasswordSearch(e.target.value)} placeholder={t('yourPassword')} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" /></div></div>
                             <DialogFooter><Button onClick={() => handleAdminSearch({ refToSearch: adminRefSearch, phoneToSearch: adminPhoneSearch, passwordToSearch: adminPasswordSearch })} className="w-full bg-purple-600 hover:bg-purple-700">{t('recoverRestore')}</Button></DialogFooter>
                         </DialogContent>
                     </Dialog>
