@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import jsPDF from 'jspdf';
@@ -2564,18 +2563,24 @@ const App = () => {
                                                <div><Label htmlFor="value-input">{t('ticketValue')}:</Label><Input id="value-input" type="text" value={formatValueForDisplay(raffleState.value)} onChange={(e) => handleLocalFieldChange('value', e.target.value)} onBlur={(e) => handleFieldChange('value', raffleState.value)} placeholder="Ej: 5000" disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed} className="w-full mt-1"/></div>
                                                {raffleState.raffleMode === 'three-digit' && (
                                                     <div>
-                                                        <Label htmlFor="total-tickets-input">{t('totalTicketsLabel')}:</Label>
-                                                        <Input 
-                                                            id="total-tickets-input" 
-                                                            type="number" 
-                                                            min="1" 
-                                                            max="1000" 
-                                                            value={raffleState.totalTickets || 1000} 
-                                                            onChange={(e) => handleLocalFieldChange('totalTickets', e.target.value)} 
-                                                            onBlur={(e) => handleFieldChange('totalTickets', e.target.value)} 
-                                                            disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed} 
-                                                            className="w-full mt-1" 
-                                                        />
+                                                        <Label htmlFor="total-tickets-select">{t('totalTicketsLabel')}:</Label>
+                                                        <Select 
+                                                            value={String(raffleState.totalTickets || 1000)} 
+                                                            onValueChange={(val) => { 
+                                                                handleLocalFieldChange('totalTickets', val); 
+                                                                handleFieldChange('totalTickets', val); 
+                                                            }}
+                                                            disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
+                                                        >
+                                                            <SelectTrigger id="total-tickets-select" className="w-full mt-1">
+                                                                <SelectValue placeholder="1000" />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                {[100, 200, 300, 400, 500, 600, 700, 800, 900, 1000].map((val) => (
+                                                                    <SelectItem key={val} value={String(val)}>{val}</SelectItem>
+                                                                ))}
+                                                            </SelectContent>
+                                                        </Select>
                                                     </div>
                                                 )}
                                                {raffleState.raffleMode === 'infinite' && (
@@ -2701,8 +2706,8 @@ const App = () => {
                                                                     const availText = '#15803d';
                                                                     const pendBg = appSettings.numberBgPending || '#facc15';
                                                                     const pendText = appSettings.numberTextPending || '#422006';
-                                                                    const sldBg = appSettings.numberBgSold || '#dc2626'; 
-                                                                    const sldText = appSettings.numberTextSold || '#ffffff';
+                                                                    const sldBg = '#dc2626'; 
+                                                                    const sldText = '#ffffff';
                                                                     return (<div key={num} onClick={() => toggleNumber(num)} style={{ backgroundColor: isConfirmed ? sldBg : isPending ? pendBg : (availBg), color: isConfirmed ? sldText : isPending ? pendText : (availText), }} className={`number-cell text-center py-2.5 rounded-xl transition-all text-sm font-bold ${raffleState.isWinnerConfirmed || !raffleState.isDetailsConfirmed || !!raffleState.winner || isConfirmed || isPending ? 'cursor-not-allowed' : 'cursor-pointer'} ${isConfirmed ? 'shadow-xl scale-95' : isPending ? 'shadow-lg' : 'border-2 border-white hover:scale-110 shadow-sm'}`}>{formattedNum}</div>);
                                                                 })}
                                                             </div>
@@ -2723,8 +2728,8 @@ const App = () => {
                                                                             const availText = '#15803d';
                                                                             const pendBg = appSettings.numberBgPending || '#facc15';
                                                                             const pendText = appSettings.numberTextPending || '#422006';
-                                                                            const sldBg = appSettings.numberBgSold || '#dc2626';
-                                                                            const sldText = appSettings.numberTextSold || '#ffffff';
+                                                                            const sldBg = '#dc2626';
+                                                                            const sldText = '#ffffff';
                                                                             return (<div key={num} onClick={() => toggleNumber(num)} style={{ backgroundColor: isConfirmed ? sldBg : isPending ? pendBg : (availBg), color: isConfirmed ? sldText : isPending ? pendText : (availText), }} className={`number-cell text-center py-2.5 rounded-full border-2 border-white transition-all text-sm font-bold ${raffleState.isWinnerConfirmed || !raffleState.isDetailsConfirmed || !!raffleState.winner || isConfirmed || isPending ? 'cursor-not-allowed' : 'cursor-pointer'} ${isConfirmed ? 'shadow-xl scale-95' : isPending ? 'shadow-lg' : 'hover:scale-110 shadow-sm'}`}>{formattedNum}</div>);
                                                                         })}
                                                                     </div>
@@ -2736,7 +2741,7 @@ const App = () => {
                                                <div className="p-4 bg-white/90 backdrop-blur-md flex justify-center gap-6 border-t border-gray-100">
                                                    <div className="flex items-center gap-2"><div className="w-4 h-4 rounded shadow-sm border border-gray-200" style={{ backgroundColor: 'rgba(34, 197, 94, 0.1)' }} /><span className="text-xs font-bold text-gray-600 uppercase tracking-wider">{t('available')}</span></div>
                                                    <div className="flex items-center gap-2"><div className="w-4 h-4 rounded shadow-sm" style={{ backgroundColor: appSettings.numberBgPending || '#facc15' }} /><span className="text-xs font-bold text-gray-600 uppercase tracking-wider">{t('pending')}</span></div>
-                                                   <div className="flex items-center gap-2"><div className="w-4 h-4 rounded shadow-sm" style={{ backgroundColor: appSettings.numberBgSold || '#dc2626' }} /><span className="text-xs font-bold text-gray-600 uppercase tracking-wider">{t('sold')}</span></div>
+                                                   <div className="flex items-center gap-2"><div className="w-4 h-4 rounded shadow-sm" style={{ backgroundColor: '#dc2626' }} /><span className="text-xs font-bold text-gray-600 uppercase tracking-wider">{t('sold')}</span></div>
                                                </div>
                                            </div>
                                         </div>
@@ -2770,7 +2775,7 @@ const App = () => {
                                                 <div className="flex flex-col wrap gap-2">
                                                     {raffleState.isPaymentLinkEnabled && raffleState.paymentLink && <Button className="flex-1 w-full sm:auto bg-blue-500 hover:bg-blue-600 text-white" disabled={!isRegisterFormValidForSubmit} onClick={() => { if (!isRegisterFormValidForSubmit) { showNotification(t('completeAllFieldsWarning'), 'warning'); return; } const paymentUrl = new URL(raffleState.paymentLink!); const currentUrlWithParams = new URL(window.location.href); const cleanRedirectUrl = new URL(currentUrlWithParams.origin + currentUrlWithParams.pathname); cleanRedirectUrl.searchParams.set('ref', raffleState.raffleRef); cleanRedirectUrl.searchParams.set('pName', raffleState.name || ''); cleanRedirectUrl.searchParams.set('pPhone', raffleState.phoneNumber || ''); cleanRedirectUrl.searchParams.set('pNum', raffleState.raffleNumber || ''); paymentUrl.searchParams.set('redirect-url', cleanRedirectUrl.href); window.location.href = paymentUrl.toString(); }}><LinkIcon className="mr-2 h-4 w-4" /><span>{t('payWithLink')}</span></Button>}
                                                     {raffleState.organizerCountryCode === '+57' && raffleState.isNequiEnabled && (raffleState.nequiAccountNumber || raffleState.brebKey) && <Button className="flex-1 w-full sm:auto bg-purple-500 hover:bg-purple-600 text-white flex items-center justify-center gap-2" disabled={!isRegisterFormValidForSubmit} onClick={() => handleRegisterParticipant(true, false)}><NequiIcon /><span>{t('payWithNequi')}</span></Button>}
-                                                    <div className="flex flex-col gap-2 flex-1"><Button variant="outline" type="button" className="w-full" disabled={!raffleState.nequiAccountNumber} onClick={() => { if (raffleState.nequiAccountNumber) { navigator.clipboard.writeText(raffleState.nequiAccountNumber); showNotification(t('accountNumberCopied'), 'success'); } }}><Copy className="mr-2 h-4 w-4" />{t('copyAccountNumber')}</Button>{raffleState.brebKey && <Button variant="outline" type="button" className="w-full" onClick={() => { navigator.clipboard.writeText(raffleState.brebKey.split(' ').pop() || ''); showNotification(t('brebKeyCopied'), 'success'); }}><Copy className="mr-2 h-4 w-4" />{t('copyBrebKey')}</Button>}</div>
+                                                    <div className="flex flex-col gap-2 flex-1"><Button variant="outline" type="button" className="w-full" disabled={!raffleState.nequiAccountNumber} onClick={() => { if (raffleState.nequiAccountNumber) { navigator.clipboard.writeText(raffleState.nequiAccountNumber); showNotification(t('accountNumberCopied'), 'success'); } }}><Copy className="mr-2 h-4 w-4" />{t('copyAccountNumber')}</Button>{raffleState.brebKey && <Button variant="outline" type="button" className="w-full" onClick={() => { const fullKey = raffleState.brebKey || ''; const keyOnly = fullKey.split(' ').pop() || ''; navigator.clipboard.writeText(keyOnly); showNotification(t('brebKeyCopied'), 'success'); }}><Copy className="mr-2 h-4 w-4" />{t('copyBrebKey')}</Button>}</div>
                                                      {raffleState.isSeparateNumberEnabled && <Button onClick={() => handleRegisterParticipant(false, 'separated')} disabled={!isRegisterFormValidForSubmit} className="w-full sm:flex-1 bg-yellow-500 hover:bg-yellow-600 text-white">{t('separate')}</Button>}
                                                      {isCurrentUserAdmin && <Button className="w-full sm:flex-1 bg-green-600 hover:bg-green-700" onClick={() => handleRegisterParticipant(false, true)} disabled={!isRegisterFormValidForSubmit}>{t('registerAndConfirmPayment')}</Button>}
                                                 </div>
