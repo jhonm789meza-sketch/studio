@@ -79,6 +79,7 @@ const initialRaffleData: Raffle = {
     notificationTokens: [],
     partialWinners: [],
     prizeExternalUrl: '',
+    totalTickets: 1000,
 };
 
 const countryIndicators = [
@@ -177,19 +178,15 @@ const App = () => {
     const [selectedRaffleMode, setSelectedRaffleMode] = useState<RaffleMode | null>(null);
     const [partialWinners, setPartialWinners] = useState<PartialWinnerInfo[]>([]);
 
-    const [installPromptEvent, setInstallPromptEvent] = useState<any>(null);
-
     const [activationRefs, setActivationRefs] = useState<{ [key in RaffleMode]?: string }>({});
 
     const [isSuperAdmin, setIsSuperAdmin] = useState(false);
     
-    // Security items protection
     const [isSecurityDialogOpen, setIsSecurityDialogOpen] = useState(false);
     const [pendingSecurityAction, setPendingSecurityAction] = useState<(() => void) | null>(null);
     const [securityPassword, setSecurityPassword] = useState('');
     const [showSecurityPassword, setShowSecurityPassword] = useState(false);
 
-    // Master Link (Session) management
     const [activeMasterTokensCount, setActiveMasterTokensCount] = useState(0);
     const [isMasterAccessDialogOpen, setIsMasterAccessDialogOpen] = useState(false);
 
@@ -202,15 +199,12 @@ const App = () => {
     const [pendingSearchQuery, setPendingSearchQuery] = useState('');
     const [gamesFilter, setGamesFilter] = useState<'all' | 'winners' | 'past_date'>('all');
 
-    const [recentRefs, setRecentRefs] = useState<string[]>([]);
-
     const [activationConfirmationOpen, setActivationConfirmationOpen] = useState(false);
     const [activationToConfirm, setActivationToConfirm] = useState<{ activation: PendingActivation; newRaffleRef: string; } | null>(null);
 
     const [nextRaffleRefs, setNextRaffleRefs] = useState<{ twoDigit: {refs: string[], count: number}, threeDigit: {refs: string[], count: number}, infinite: {refs: string[], count: number} }>({ twoDigit: { refs: [], count: 0 }, threeDigit: { refs: [], count: 0 }, infinite: { refs: [], count: 0 } });
 
     const [appSettings, setAppSettings] = useState<AppSettings>({});
-    const [isContactDialogOpen, setIsContactDialogOpen] = useState(false);
     const [isChangePasswordDialogOpen, setIsChangePasswordDialogOpen] = useState(false);
     const [raffleToChangePassword, setRaffleToChangePassword] = useState<Raffle | null>(null);
     const [newPassword, setNewPassword] = useState('');
@@ -318,7 +312,7 @@ const App = () => {
 
     const isCurrentUserAdmin = !!raffleState.adminId && !!currentAdminId && raffleState.adminId === currentAdminId;
     const raffleMode = raffleState.raffleMode;
-    const totalNumbers = raffleMode === 'two-digit' ? 100 : 1000;
+    const totalNumbers = raffleMode === 'two-digit' ? 100 : (raffleState.totalTickets || 1000);
     const numberLength = raffleMode === 'two-digit' ? 2 : 3;
     const allNumbers = useMemo(() => Array.from({ length: totalNumbers }, (_, i) => i), [totalNumbers]);
     
@@ -543,52 +537,6 @@ const App = () => {
         }
     }, [isSuperAdmin]);
 
-    useEffect(() => {
-        const saved = localStorage.getItem('recentRaffleRefs');
-        if (saved) {
-            setRecentRefs(JSON.parse(saved));
-        }
-    }, []);
-
-    const addToRecentRefs = (ref: string) => {
-        setRecentRefs(prev => {
-            const filtered = prev.filter(r => r !== ref);
-            const updated = [ref, ...filtered].slice(0, 5);
-            localStorage.setItem('recentRaffleRefs', JSON.stringify(updated));
-            return updated;
-        });
-    };
-
-    useEffect(() => {
-        const checkMasterToken = async () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const accessKey = urlParams.get('access');
-            if (accessKey) {
-                try {
-                    const tokenDocRef = doc(db, 'masterTokens', accessKey);
-                    const tokenDoc = await getDoc(tokenDocRef);
-                    if (tokenDoc.exists()) {
-                        const data = tokenDoc.data();
-                        if (!data.used) {
-                            setIsSuperAdmin(true);
-                            sessionStorage.setItem('isSuperAdmin', 'true');
-                            await updateDoc(tokenDocRef, { used: true, usedAt: serverTimestamp() });
-                            showNotification('Acceso Maestro Concedido. Bienvenido Director.', 'success');
-                            urlParams.delete('access');
-                            const newUrl = window.location.pathname + (urlParams.toString() ? `?${urlParams.toString()}` : '');
-                            window.history.replaceState({}, '', newUrl);
-                        } else {
-                            showNotification('Este enlace ya ha sido utilizado.', 'error');
-                        }
-                    }
-                } catch (e) {
-                    console.error("Error validando token maestro:", e);
-                }
-            }
-        };
-        checkMasterToken();
-    }, []);
-
     const handleProtectedItemClick = (action: () => void) => {
         setPendingSecurityAction(() => action);
         setSecurityPassword('');
@@ -749,81 +697,6 @@ const App = () => {
 
 
     useEffect(() => {
-        if ('serviceWorker' in navigator) {
-          window.addEventListener('load', () => {
-            navigator.serviceWorker
-              .register('/sw.js')
-              .then(registration => {
-                console.log('Service Worker registered successfully:', registration);
-              })
-              .catch(error => {
-                console.log('Error registering Service Worker:', error);
-              });
-          });
-        }
-        
-        const handleBeforeInstallPrompt = (e: Event) => {
-            e.preventDefault();
-            setInstallPromptEvent(e);
-        };
-        window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-
-        return () => {
-            window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-        };
-      }, []);
-
-    const handleInstallClick = () => {
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
-        
-        if (installPromptEvent) {
-            installPromptEvent.prompt();
-            installPromptEvent.userChoice.then((choiceResult: { outcome: string }) => {
-                if (choiceResult.outcome === 'accepted') {
-                    console.log('User accepted the install prompt');
-                }
-                setInstallPromptEvent(null);
-            });
-        } else if (isIOS) {
-            showNotification(t('installIOS'), 'info');
-        } else {
-            showNotification(t('installGeneric'), 'info');
-        }
-    };
-
-    const handleUsdPayment = () => {
-        let targetLink = appSettings.paymentLinkUsd;
-        if (selectedRaffleMode === 'two-digit' && appSettings.paymentLinkUsdTwoDigit) {
-            targetLink = appSettings.paymentLinkUsdTwoDigit;
-        } else if (selectedRaffleMode === 'three-digit' && appSettings.paymentLinkUsdThreeDigit) {
-            targetLink = appSettings.paymentLinkUsdThreeDigit;
-        } else if (selectedRaffleMode === 'infinite' && appSettings.paymentLinkUsdInfinite) {
-            targetLink = appSettings.paymentLinkUsdInfinite;
-        }
-
-        if (targetLink) {
-            window.open(targetLink, '_blank');
-            setIsUsdPaymentDialogOpen(false);
-            setIsCopyOptionsDialogOpen(false);
-        } else {
-            showNotification(t('paymentLinkNotConfigured'), 'warning');
-        }
-    };
-
-    const handleContactSupport = () => {
-        if (appSettings.supportContacts && appSettings.supportContacts.length > 1 && !raffleState.raffleRef) {
-            setIsContactDialogOpen(true);
-        } else if (appSettings.supportContacts && appSettings.supportContacts.length > 0) {
-            const primaryContact = appSettings.supportContacts[0];
-            const whatsappUrl = `https://wa.me/57${primaryContact}`;
-            window.open(whatsappUrl, '_blank');
-        } else {
-            const whatsappUrl = `https://wa.me/573145696687`;
-            window.open(whatsappUrl, '_blank');
-        }
-    };
-
-    useEffect(() => {
         const initialize = async () => {
             setLoading(true);
             setAppUrl(window.location.origin);
@@ -878,6 +751,30 @@ const App = () => {
                      await confirmParticipantPayment(refFromUrl, { name: pName, phoneNumber: pPhone, raffleNumber: pNum });
                  }
             }
+
+            const accessKey = urlParams.get('access');
+            if (accessKey) {
+                try {
+                    const tokenDocRef = doc(db, 'masterTokens', accessKey);
+                    const tokenDoc = await getDoc(tokenDocRef);
+                    if (tokenDoc.exists()) {
+                        const data = tokenDoc.data();
+                        if (!data.used) {
+                            setIsSuperAdmin(true);
+                            sessionStorage.setItem('isSuperAdmin', 'true');
+                            await updateDoc(tokenDocRef, { used: true, usedAt: serverTimestamp() });
+                            showNotification('Acceso Maestro Concedido. Bienvenido Director.', 'success');
+                            urlParams.delete('access');
+                            const newUrl = window.location.pathname + (urlParams.toString() ? `?${urlParams.toString()}` : '');
+                            window.history.replaceState({}, '', newUrl);
+                        } else {
+                            showNotification('Este enlace ya ha sido utilizado.', 'error');
+                        }
+                    }
+                } catch (e) {
+                    console.error("Error validando token maestro:", e);
+                }
+            }
             
             if (refFromUrl) {
                 await handleAdminSearch({ refToSearch: refFromUrl, isInitialLoad: true });
@@ -917,34 +814,6 @@ const App = () => {
         };
     }, []);
     
-    const uploadImage = async (image: File, context: string): Promise<string> => {
-        setIsUploading(true);
-        try {
-            const path = `${context}/${Date.now()}_${image.name}`;
-            const storageReference = storageRef(storage, path);
-            const uploadResult = await uploadBytes(storageReference, image);
-            const downloadUrl = await getDownloadURL(uploadResult.ref);
-            
-            if (context === 'prize-images') {
-                handleLocalFieldChange('prizeImageUrl', downloadUrl);
-            } else if (context === 'app-branding') {
-                setTempAppLogoUrl(downloadUrl);
-            } else if (context === 'payment-qr') {
-                setPaymentQrImageUrl(downloadUrl);
-            }
-            
-            showNotification(t('imageUploadedSuccess'), 'success');
-            return downloadUrl;
-        } catch (error) {
-            console.error(`Error uploading image to ${context}:`, error);
-            showNotification(t('errorUploadingImage'), 'error');
-            throw error;
-        } finally {
-            setIsUploading(false);
-        }
-    };
-
-
     const showNotification = (message: string, type = 'info') => {
         setNotification({ show: true, message, type });
         setTimeout(() => setNotification({ show: false, message: '', type: '' }), 5000);
@@ -994,6 +863,9 @@ const App = () => {
         if (field === 'value') {
             const numericValue = String(value).replace(/\D/g, '');
             newState[field] = numericValue;
+        } else if (field === 'totalTickets') {
+            const numericValue = parseInt(String(value).replace(/\D/g, ''), 10) || 1000;
+            newState[field as keyof Raffle] = numericValue;
         } else if (field === 'partialWinnerPercentage3' || field === 'partialWinnerPercentage2') {
             let numericValue = parseInt(String(value).replace(/\D/g, ''), 10);
             if (isNaN(numericValue) || value === '') numericValue = 0;
@@ -1040,6 +912,8 @@ const App = () => {
                 if (field === 'value' || field === 'partialWinnerPercentage3' || field === 'partialWinnerPercentage2') {
                     valueToSave = String(value).replace(/\D/g, '');
                     if (valueToSave === '') valueToSave = 0;
+                } else if (field === 'totalTickets') {
+                    valueToSave = parseInt(String(value).replace(/\D/g, ''), 10) || 1000;
                 } else if (field === 'infiniteModeDigits') {
                     valueToSave = parseInt(String(value).replace(/\D/g, ''), 10) || 4;
                     if (valueToSave !== 0 && valueToSave < 4) {
@@ -1291,34 +1165,6 @@ const App = () => {
         return participantId;
     };
 
-    const handleGenerateRandomNumber = () => {
-        if (raffleMode !== 'infinite' || !raffleState.infiniteModeDigits || raffleState.infiniteModeDigits < 4) {
-            showNotification(t('configureInfiniteDigitsWarning'), 'warning');
-            return;
-        }
-        const digits = raffleState.infiniteModeDigits;
-        const max = Math.pow(10, digits);
-        const totalNumbersToGen = max;
-        const soldNumbersCount = allAssignedNumbers.size;
-        if (soldNumbersCount >= totalNumbersToGen) {
-            showNotification(t('allNumbersSoldWarning'), 'warning');
-            return;
-        }
-        let randomNumber: number;
-        let attempts = 0;
-        const maxAttempts = totalNumbersToGen * 2;
-        do {
-            randomNumber = Math.floor(Math.random() * max);
-            attempts++;
-            if(attempts > maxAttempts) {
-                 showNotification(t('couldNotFindRandomNumber'), 'warning');
-                 return;
-            }
-        } while (allAssignedNumbers.has(randomNumber));
-        const randomNumberStr = String(randomNumber).padStart(digits, '0');
-        handleLocalFieldChange('raffleNumber', randomNumberStr);
-    };
-
     const handleConfirmPayment = async (participantId: number) => {
         if (!raffleState.raffleRef || !isCurrentUserAdmin) return;
         const participantIndex = raffleState.participants.findIndex(p => p.id === participantId);
@@ -1496,6 +1342,12 @@ const App = () => {
         if (isTicketModalOpen) closeTicketModal();
         if (generatedTicketData) setGeneratedTicketData(null);
     };
+
+    const handleContactSupport = () => {
+        const supportPhone = (supportContacts.length > 0 ? supportContacts[0] : '573218425736').replace(/\D/g, '');
+        const message = encodeURIComponent(t('shareRaffleAppDescription'));
+        window.open(`https://wa.me/${supportPhone}?text=${message}`, '_blank');
+    };
     
     const handleAdminSearch = ({ refToSearch, isInitialLoad = false, phoneToSearch, passwordToSearch, isPublicSearch = false }: { refToSearch?: string, isInitialLoad?: boolean, phoneToSearch?: string, passwordToSearch?: string, isPublicSearch?: boolean }) => {
         return new Promise<void>(async (resolve) => {
@@ -1590,7 +1442,6 @@ const App = () => {
                         else setCurrentAdminId(null);
                     }
 
-                    // Se cierran diálogos y se cambia pestaña en cualquier éxito
                     setIsAdminLoginOpen(false);
                     setIsPublicSearchOpen(false);
                     setAdminRefSearch('');
@@ -1784,7 +1635,7 @@ const App = () => {
         if (finalRaffleRef && adminId) {
             const adminUrl = `${window.location.origin}?ref=${finalRaffleRef}&adminId=${adminId}`;
             const messageText = encodeURIComponent(`Hola, acabo de generar la referencia para mi rifa gratuita: *${finalRaffleRef}*.\n\nPara ponerla en línea y administrarla, usa este enlace: ${adminUrl}`);
-            window.location.href = `https://wa.me/${cleanCode}${phone}?text=${messageText}`;
+            window.open(`https://wa.me/${cleanCode}${phone}?text=${messageText}`, '_blank');
         }
         setFreeActivationPhone('');
         setFreeActivationCountryCode('+57');
@@ -2286,6 +2137,46 @@ const App = () => {
         }
     };
 
+    const handleUsdPayment = () => {
+        let link = appSettings.paymentLinkUsd || '';
+        if (selectedRaffleMode === 'two-digit' && appSettings.paymentLinkUsdTwoDigit) link = appSettings.paymentLinkUsdTwoDigit;
+        else if (selectedRaffleMode === 'three-digit' && appSettings.paymentLinkUsdThreeDigit) link = appSettings.paymentLinkUsdThreeDigit;
+        else if (selectedRaffleMode === 'infinite' && appSettings.paymentLinkUsdInfinite) link = appSettings.paymentLinkUsdInfinite;
+        
+        if (link) {
+            const iUrl = new URL(link);
+            iUrl.searchParams.set('raffleMode', selectedRaffleMode || '');
+            window.location.href = iUrl.toString();
+        } else {
+            showNotification(t('errorSavingPaymentLinks'), 'error');
+        }
+    };
+
+    const handleGenerateRandomNumber = () => {
+        if (!raffleState.infiniteModeDigits) {
+            showNotification(t('configureInfiniteDigitsWarning'), 'warning');
+            return;
+        }
+        const maxVal = Math.pow(10, raffleState.infiniteModeDigits);
+        let randomNum = Math.floor(Math.random() * maxVal);
+        let formattedRandomNum = String(randomNum).padStart(raffleState.infiniteModeDigits, '0');
+        
+        // Basic check to see if number is taken
+        let attempts = 0;
+        while (allAssignedNumbers.has(parseInt(formattedRandomNum)) && attempts < 100) {
+            randomNum = Math.floor(Math.random() * maxVal);
+            formattedRandomNum = String(randomNum).padStart(raffleState.infiniteModeDigits, '0');
+            attempts++;
+        }
+
+        if (attempts >= 100) {
+            showNotification(t('couldNotFindRandomNumber'), 'warning');
+            return;
+        }
+
+        handleLocalFieldChange('raffleNumber', formattedRandomNum);
+    };
+
     const paymentQrDisplayUrl = useMemo(() => {
         let qrData = appSettings.paymentQrImageUrl || '';
         if (selectedRaffleMode === 'two-digit' && appSettings.paymentQrImageUrlTwoDigit) qrData = appSettings.paymentQrImageUrlTwoDigit;
@@ -2669,6 +2560,22 @@ const App = () => {
                                                     </div>
                                                )}
                                                <div><Label htmlFor="value-input">{t('ticketValue')}:</Label><Input id="value-input" type="text" value={formatValueForDisplay(raffleState.value)} onChange={(e) => handleLocalFieldChange('value', e.target.value)} onBlur={(e) => handleFieldChange('value', raffleState.value)} placeholder="Ej: 5000" disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed} className="w-full mt-1"/></div>
+                                               {raffleState.raffleMode === 'three-digit' && (
+                                                    <div>
+                                                        <Label htmlFor="total-tickets-input">{t('totalTicketsLabel')}:</Label>
+                                                        <Input 
+                                                            id="total-tickets-input" 
+                                                            type="number" 
+                                                            min="1" 
+                                                            max="1000" 
+                                                            value={raffleState.totalTickets || 1000} 
+                                                            onChange={(e) => handleLocalFieldChange('totalTickets', e.target.value)} 
+                                                            onBlur={(e) => handleFieldChange('totalTickets', e.target.value)} 
+                                                            disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed} 
+                                                            className="w-full mt-1" 
+                                                        />
+                                                    </div>
+                                                )}
                                                {raffleState.raffleMode === 'infinite' && (
                                                     <div className="grid grid-cols-2 gap-4">
                                                         <div><Label htmlFor="infinite-digits-input">{t('infiniteRaffleDigits')}:</Label><Input id="infinite-digits-input" type="number" min="4" value={raffleState.infiniteModeDigits || ''} onChange={(e) => handleLocalFieldChange('infiniteModeDigits', e.target.value)} onBlur={() => handleFieldChange('infiniteModeDigits', raffleState.infiniteModeDigits)} placeholder={t('min4Digits')} disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed} className="w-full mt-1"/></div>
@@ -2851,7 +2758,7 @@ const App = () => {
                                                     <div><Label htmlFor="phone-input">{t('phone')}:</Label><div className="flex gap-2 mt-1"><div className="w-[120px]"><Select value={raffleState.participantCountryCode || '+57'} onValueChange={(val) => handleLocalFieldChange('participantCountryCode', val)}><SelectTrigger id="participant-country-code"><SelectValue placeholder="+57" /></SelectTrigger><SelectContent>{countryIndicators.map((country) => (<SelectItem key={`part-${country.name}-${country.code}`} value={country.code}><span className="flex items-center gap-2"><span>{country.flag}</span><span>{country.code}</span></span></SelectItem>))}</SelectContent></Select></div><Input id="phone-input" type="tel" value={raffleState.phoneNumber} onChange={(e) => handleLocalFieldChange('phoneNumber', e.target.value.replace(/\D/g, ''))} placeholder="3001234567" className="flex-grow"/></div></div>
                                                 </div>
                                                 <div>
-                                                    <Label htmlFor="raffle-number-input">{t('raffleNumberLabel', { range: raffleState.raffleMode === 'two-digit' ? '00-99' : raffleState.raffleMode === 'three-digit' ? '000-999' : t('infiniteDigits', { count: raffleState.infiniteModeDigits || 4 }) })}:</Label>
+                                                    <Label htmlFor="raffle-number-input">{t('raffleNumberLabel', { range: raffleState.raffleMode === 'two-digit' ? '00-99' : raffleState.raffleMode === 'three-digit' ? `000-${String(totalNumbers - 1).padStart(3, '0')}` : t('infiniteDigits', { count: raffleState.infiniteModeDigits || 4 }) })}:</Label>
                                                     <div className="relative mt-1">
                                                         <Input id="raffle-number-input" type="text" value={raffleState.raffleNumber} onChange={handleRaffleNumberChange} placeholder={t('raffleNumberPlaceholder', { example: raffleState.raffleMode === 'two-digit' ? '05' : raffleState.raffleMode === 'three-digit' ? '142' : '2025' })} className="w-full pr-10" maxLength={raffleState.raffleMode === 'infinite' ? (raffleState.infiniteModeDigits || 4) : numberLength}/>
                                                         {raffleState.raffleNumber && allAssignedNumbers.has(parseInt(raffleState.raffleNumber)) && <p className="text-red-500 text-sm mt-1">{t('numberAlreadyAssignedWarning')}</p>}
@@ -3247,13 +3154,6 @@ const App = () => {
                     <Dialog open={isShareDialogOpen} onOpenChange={setIsShareDialogOpen}>
                         <DialogContent className="sm:max-w-md"><DialogHeader><DialogTitle>{t('shareRaffle')}</DialogTitle><DialogDescription>{t('shareRaffleAppDescription')}</DialogDescription></DialogHeader>
                             <div className="grid grid-cols-1 gap-4 py-4"><div className="flex justify-center mb-4"><div className="p-4 bg-white rounded-lg border-4 border-purple-100 shadow-md"><img src={dynamicQrUrl} alt="QR de la rifa" className="h-40 w-40 object-contain" referrerPolicy="no-referrer" /></div></div><Button onClick={handleShareToWhatsApp} variant="outline" className="flex items-center justify-start gap-3 h-12 text-green-600 border-green-200 hover:bg-green-50"><WhatsappIcon className="h-6 w-6" /> {t('shareOnWhatsApp')}</Button><Button onClick={handleShareToFacebook} variant="outline" className="flex items-center justify-start gap-3 h-12 text-blue-600 border-blue-200 hover:bg-blue-50"><FacebookIcon /> {t('shareOnFacebook')}</Button>{raffleState.raffleRef && <Button onClick={handleSharePlayNow} variant="outline" className="flex items-center justify-start gap-3 h-12 text-purple-600 border-purple-200 hover:bg-purple-50"><Gamepad2 className="h-6 w-6" /> Botón ¡JUGAR AHORA!</Button>}<Button onClick={() => { navigator.clipboard.writeText(currentRaffleUrl); showNotification(t('linkCopied'), 'success'); setIsShareDialogOpen(false); }} variant="outline" className="flex items-center justify-start gap-3 h-12"><LinkIcon className="h-6 w-6" /> {t('copyUrl')}</Button></div>
-                        </DialogContent>
-                    </Dialog>
-
-                    <Dialog open={isContactDialogOpen} onOpenChange={setIsContactDialogOpen}>
-                        <DialogContent className="sm:max-w-md"><DialogHeader><DialogTitle>{t('contact')}</DialogTitle><DialogDescription>{t('contactDialogDescription')}</DialogDescription></DialogHeader>
-                            <div className="grid gap-4 py-4"><div className="grid gap-2"><Label htmlFor="api-key">API Key</Label><Input id="api-key" value={apiConfig.key} onChange={(e) => setApiConfig(p => ({ ...p, key: e.target.value }))} placeholder="Ingresa la llave de API" /></div><div className="grid gap-2"><Label htmlFor="api-endpoint">API Endpoint</Label><Input id="api-endpoint" value={apiConfig.endpoint} onChange={(e) => setApiConfig(p => ({ ...p, endpoint: e.target.value }))} placeholder="https://api.ejemplo.com/v1" /></div></div>
-                            <DialogFooter><Button onClick={() => setIsContactDialogOpen(false)} variant="outline" className="w-full">{t('close')}</Button></DialogFooter>
                         </DialogContent>
                     </Dialog>
 

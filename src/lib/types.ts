@@ -68,6 +68,7 @@ export interface AppSettings {
     numberTextSold?: string;
     isHiddenLinkEnabled?: boolean;
     isPlayButtonEnabled?: boolean;
+    superAdminPasswordVisible?: boolean;
 }
 
 export interface Raffle {
@@ -115,4 +116,5 @@ export interface Raffle {
     notificationTokens?: string[];
     partialWinners?: PartialWinnerInfo[];
     prizeExternalUrl?: string;
+    totalTickets?: number;
 }
