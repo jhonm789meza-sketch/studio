@@ -327,6 +327,17 @@ const App = () => {
 
     const allAssignedNumbers = new Set(raffleState.participants?.map((p: Participant) => parseInt(p.raffleNumber, 10)) || []);
     const pendingParticipants = raffleState.participants?.filter((p: Participant) => p.paymentStatus === 'pending') || [];
+    
+    const filteredPendingParticipants = useMemo(() => {
+        if (!pendingSearchQuery) return pendingParticipants;
+        const queryLower = pendingSearchQuery.toLowerCase();
+        return pendingParticipants.filter(p => 
+            p.raffleNumber.toLowerCase().includes(queryLower) || 
+            p.phoneNumber.toLowerCase().includes(queryLower) ||
+            p.name.toLowerCase().includes(queryLower)
+        );
+    }, [pendingParticipants, pendingSearchQuery]);
+
     const confirmedParticipants = raffleState.participants?.filter((p: Participant) => p.paymentStatus === 'confirmed') || [];
     const totalCollected = confirmedParticipants.length * (raffleState.value ? parseFloat(String(raffleState.value).replace(/[^\d.,]/g, '').replace(',', '.')) : 0);
     const isRegisterFormValidForSubmit = raffleState.name && raffleState.phoneNumber && raffleState.raffleNumber && !allAssignedNumbers.has(parseInt(raffleState.raffleNumber || '0'));
@@ -1531,7 +1542,7 @@ const App = () => {
                         const prizeAmount2 = prizeValue * (prizePercentage2 / 100);
                         const formattedPrize2 = `${raffleState.currencySymbol || '$'} ${prizeAmount2.toLocaleString(language === 'es' ? 'es-CO' : 'en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
                         const winners2 = confirmedParticipants.filter(p => !excludedIds.has(p.id) && p.raffleNumber.endsWith(winningNumber2));
-                        if (winners2.length > 0) allFoundPartialWinners.push({ winners: winners3, digits: 2, prize: formattedPrize2 });
+                        if (winners2.length > 0) allFoundPartialWinners.push({ winners: winners2, digits: 2, prize: formattedPrize2 });
                      }
                 }
             }
@@ -2162,7 +2173,6 @@ const App = () => {
         let randomNum = Math.floor(Math.random() * maxVal);
         let formattedRandomNum = String(randomNum).padStart(raffleState.infiniteModeDigits, '0');
         
-        // Basic check to see if number is taken
         let attempts = 0;
         while (allAssignedNumbers.has(parseInt(formattedRandomNum)) && attempts < 100) {
             randomNum = Math.floor(Math.random() * maxVal);
@@ -2819,8 +2829,8 @@ const App = () => {
                                 <div className={activeTab === 'pending' ? 'tab-content active p-6' : 'tab-content p-6'}>
                                     <h2 className="text-2xl font-bold text-gray-800 mb-4">{t('pendingPayments')}</h2>
                                     <div className="mb-4 max-w-sm"><Input type="text" placeholder={t('searchByNumberOrPhone')} value={pendingSearchQuery} onChange={(e) => setPendingSearchQuery(e.target.value)}/></div>
-                                    {pendingParticipants.length > 0 ? (
-                                        <div className="overflow-x-auto"><table className="min-w-full divide-y divide-gray-200"><thead className="bg-gray-50"><tr><th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('number')}</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('name')}</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('phone')}</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('registrationDate')}</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('action')}</th></tr></thead><tbody className="bg-white divide-y divide-gray-200">{pendingParticipants.sort((a, b) => a.raffleNumber.localeCompare(b.raffleNumber)).map((p: Participant) => (<tr key={p.id}><td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-purple-600">{p.raffleNumber}</td><td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{p.name}</td><td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><a href={`https://wa.me/${(p.countryCode || '+57').replace('+', '')}${p.phoneNumber}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-blue-600 hover:underline"><WhatsappIcon className="h-4 w-4 text-green-500" />{p.phoneNumber}</a></td><td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{p.timestamp?.toDate ? format(p.timestamp.toDate(), 'PPpp', { locale: language === 'es' ? es : enUS }) : 'N/A'}</td><td className="px-6 py-4 whitespace-nowrap text-sm space-x-2"><Button onClick={() => handleConfirmPayment(p.id)} size="sm" className="bg-green-500 hover:bg-green-600 text-white">{t('confirmPayment')}</Button><Button onClick={() => handleDeletePending(p.id)} size="sm" variant="destructive"><Trash2 className="h-4 w-4"/></Button></td></tr>))}</tbody></table></div>
+                                    {filteredPendingParticipants.length > 0 ? (
+                                        <div className="overflow-x-auto"><table className="min-w-full divide-y divide-gray-200"><thead className="bg-gray-50"><tr><th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('number')}</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('name')}</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('phone')}</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('registrationDate')}</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('action')}</th></tr></thead><tbody className="bg-white divide-y divide-gray-200">{filteredPendingParticipants.sort((a, b) => a.raffleNumber.localeCompare(b.raffleNumber)).map((p: Participant) => (<tr key={p.id}><td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-purple-600">{p.raffleNumber}</td><td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{p.name}</td><td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><a href={`https://wa.me/${(p.countryCode || '+57').replace('+', '')}${p.phoneNumber}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-blue-600 hover:underline"><WhatsappIcon className="h-4 w-4 text-green-500" />{p.phoneNumber}</a></td><td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{p.timestamp?.toDate ? format(p.timestamp.toDate(), 'PPpp', { locale: language === 'es' ? es : enUS }) : 'N/A'}</td><td className="px-6 py-4 whitespace-nowrap text-sm space-x-2"><Button onClick={() => handleConfirmPayment(p.id)} size="sm" className="bg-green-500 hover:bg-green-600 text-white">{t('confirmPayment')}</Button><Button onClick={() => handleDeletePending(p.id)} size="sm" variant="destructive"><Trash2 className="h-4 w-4"/></Button></td></tr>))}</tbody></table></div>
                                     ) : <p className="text-gray-500">{t('noPendingPayments')}</p>}
                                 </div>
                                 )}
