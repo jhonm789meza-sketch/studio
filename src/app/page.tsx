@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { jsPDF } from 'jspdf';
@@ -363,7 +364,14 @@ const App = () => {
     }, [allRaffles]);
 
     const damagedRaffles = useMemo(() => {
-        return allRaffles.filter(r => (r.isActive || r.isPaid) && (!r.prize || !r.organizerName));
+        return allRaffles.filter(r => 
+            // Detecta juegos marcados como pagados/activos pero que están vacíos o corruptos
+            ((r.isActive || r.isPaid) && (!r.prize || !r.organizerName)) ||
+            // Detecta documentos corruptos sin modo de rifa
+            !r.raffleMode ||
+            // Detecta "basura" en la base de datos (docs sin datos esenciales)
+            (!r.prize && !r.organizerName && (r.participants || []).length === 0)
+        );
     }, [allRaffles]);
 
     const getCreationDateFromAdminId = (adminId: string | null) => {
@@ -1309,13 +1317,14 @@ const App = () => {
 
     const handleDeleteDamagedRaffles = async () => {
         showConfirmationDialog(
-            t('deleteSingleGameConfirmation', { ref: `${damagedRaffles.length} juegos` }),
+            t('deleteSingleGameConfirmation', { ref: `${damagedRaffles.length} registros dañados` }),
             async () => {
                 setLoading(true);
                 try {
                     const batch = writeBatch(db);
                     damagedRaffles.forEach((raffle) => {
-                        batch.delete(doc(db, 'raffles', raffle.raffleRef));
+                        // Usamos el ID del documento para asegurar la purga incluso si falta raffleRef
+                        batch.delete(doc(db, 'raffles', raffle.raffleRef || raffle.id));
                     });
                     await batch.commit();
                     showNotification(t('cleanupDamagedSuccess', { count: damagedRaffles.length }), 'success');
@@ -2942,10 +2951,10 @@ const App = () => {
                     <Dialog open={isDamagedCleanupDialogOpen} onOpenChange={setIsDamagedCleanupDialogOpen}>
                         <DialogContent className="sm:max-w-md"><DialogHeader><DialogTitle>{t('deleteDamagedRaffles')}</DialogTitle><DialogDescription>{t('damagedCleanupDescription')}</DialogDescription></DialogHeader>
                             <div className="py-4 space-y-4">
-                                <div className="flex justify-between items-center bg-orange-50 p-4 rounded-lg border border-orange-100"><div><p className="text-sm text-orange-600 font-medium">Juegos con Datos Corruptos</p><p className="text-3xl font-bold text-orange-700">{damagedRaffles.length}</p></div><div className="h-12 w-12 bg-orange-100 rounded-full flex items-center justify-center"><AlertTriangle className="h-6 w-6 text-orange-600" /></div></div>
-                                {damagedRaffles.length > 0 && (<ScrollArea className="h-60 border rounded-md p-2 bg-slate-50">{damagedRaffles.map((raffle) => (<div key={raffle.raffleRef} className="flex justify-between items-center py-2 border-b last:border-0 text-xs"><span className="font-bold text-orange-800">{raffle.raffleRef}</span><span className="text-slate-500 italic">Incompleto / Dañado</span></div>))}</ScrollArea>)}
+                                <div className="flex justify-between items-center bg-orange-50 p-4 rounded-lg border border-orange-100"><div><p className="text-sm text-orange-600 font-medium">Registros Incompletos o Corruptos</p><p className="text-3xl font-bold text-orange-700">{damagedRaffles.length}</p></div><div className="h-12 w-12 bg-orange-100 rounded-full flex items-center justify-center"><AlertTriangle className="h-6 w-6 text-orange-600" /></div></div>
+                                {damagedRaffles.length > 0 && (<ScrollArea className="h-60 border rounded-md p-2 bg-slate-50">{damagedRaffles.map((raffle) => (<div key={raffle.raffleRef || raffle.id} className="flex justify-between items-center py-2 border-b last:border-0 text-xs"><span className="font-bold text-orange-800">{raffle.raffleRef || raffle.id}</span><span className="text-slate-500 italic">Datos Incompletos / Registro Corrupto</span></div>))}</ScrollArea>)}
                             </div>
-                            <DialogFooter><Button variant="outline" onClick={() => setIsDamagedCleanupDialogOpen(false)}>{t('cancel')}</Button><Button className="bg-orange-600 hover:bg-orange-700 text-white" onClick={handleDeleteDamagedRaffles} disabled={damagedRaffles.length === 0}>Limpiar Juegos Dañados</Button></DialogFooter>
+                            <DialogFooter><Button variant="outline" onClick={() => setIsDamagedCleanupDialogOpen(false)}>{t('cancel')}</Button><Button className="bg-orange-600 hover:bg-orange-700 text-white" onClick={handleDeleteDamagedRaffles} disabled={damagedRaffles.length === 0}>Purgar Registros Dañados</Button></DialogFooter>
                         </DialogContent>
                     </Dialog>
 
