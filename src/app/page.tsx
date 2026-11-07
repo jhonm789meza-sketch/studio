@@ -2689,7 +2689,7 @@ const App = () => {
                                                       <div className="flex flex-wrap gap-3 items-center">
                                                           {raffleState.winner && !raffleState.isWinnerConfirmed && (
                                                              <>
-                                                                 <Button onClick={handleConfirmWinner} className="bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 transition-colors">{t('confirmResult')}</Button>
+                                                                 <Button onClick={handleConfirmWinner} className="bg-green-50 text-white font-medium rounded-lg hover:bg-green-600 transition-colors">{t('confirmResult')}</Button>
                                                                  <Button onClick={handleCorrectWinner} variant="outline">{t('correctWinner')}</Button>
                                                              </>
                                                           )}
@@ -2718,6 +2718,7 @@ const App = () => {
                                                         {raffleState.organizerName && <div className="flex items-center gap-1.5 bg-blue-50 px-3 py-1.5 rounded-full border border-blue-100"><Users className="h-4 w-4 text-blue-600" /><span>{t('whoOrganizes')}: <span className="text-blue-800">{raffleState.organizerName}</span></span></div>}
                                                         {raffleState.value && <div className="flex items-center gap-1.5 bg-green-50 px-3 py-1.5 rounded-full border border-green-100"><DollarSign className="h-4 w-4 text-green-600" /><span>{t('ticketValue')}: <span className="text-green-800">{formatValue(raffleState.value)}</span></span></div>}
                                                         {(raffleState.lottery || (raffleState.lottery === 'Otro' && raffleState.customLottery)) && <div className="flex items-center gap-1.5 bg-purple-50 px-3 py-1.5 rounded-full border border-purple-100"><Trophy className="h-4 w-4 text-purple-600" /><span>{t('lottery')}: <span className="text-purple-800">{raffleState.lottery === 'Otro' ? raffleState.customLottery : raffleState.lottery}</span></span></div>}
+                                                        {raffleState.gameDate && <div className="flex items-center gap-1.5 bg-orange-50 px-3 py-1.5 rounded-full border border-orange-100"><ClockIcon className="h-4 w-4 text-orange-600" /><span>{t('gameDate')}: <span className="text-orange-800">{raffleState.gameDate}</span></span></div>}
                                                         {raffleState.organizerPhoneNumber && <button onClick={() => window.open(`https://wa.me/${(raffleState.organizerCountryCode || '+57').replace('+', '')}${raffleState.organizerPhoneNumber}`, '_blank')} className="flex items-center gap-1.5 bg-green-50 px-3 py-1.5 rounded-full border border-green-100 hover:bg-green-100 transition-colors"><WhatsappIcon className="h-4 w-4 text-green-600" /><span>{t('contact')}: <span className="text-green-800">{raffleState.organizerPhoneNumber}</span></span></button>}
                                                    </div>
                                                </div>
