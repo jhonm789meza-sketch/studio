@@ -375,27 +375,34 @@ const App = () => {
         return new Date(timestamp);
     };
 
-    const filteredGames = allRaffles.filter(raffle => {
-        const matchesSearch = (raffle.raffleRef || '').toLowerCase().includes(gameSearchQuery.toLowerCase()) ||
-                            (raffle.organizerName || '').toLowerCase().includes(gameSearchQuery.toLowerCase());
-        
-        if (gamesFilter === 'winners') return matchesSearch && !!raffle.winner;
-        if (gamesFilter === 'past_date') {
+    const gamesWithWinner = useMemo(() => {
+        return allRaffles.filter(raffle => !!raffle.winner);
+    }, [allRaffles]);
+
+    const pastDateRaffles = useMemo(() => {
+        return allRaffles.filter(raffle => {
             if (!raffle.gameDate) return false;
             const gameDateObj = new Date(raffle.gameDate + 'T00:00:00');
-            return matchesSearch && gameDateObj < today && !raffle.winner;
-        }
-        return matchesSearch;
-    });
+            return gameDateObj < today && !raffle.winner;
+        });
+    }, [allRaffles, today]);
+
+    const filteredGames = useMemo(() => {
+        return allRaffles.filter(raffle => {
+            const matchesSearch = (raffle.raffleRef || '').toLowerCase().includes(gameSearchQuery.toLowerCase()) ||
+                                (raffle.organizerName || '').toLowerCase().includes(gameSearchQuery.toLowerCase());
+            
+            if (gamesFilter === 'winners') return matchesSearch && !!raffle.winner;
+            if (gamesFilter === 'past_date') {
+                if (!raffle.gameDate) return false;
+                const gameDateObj = new Date(raffle.gameDate + 'T00:00:00');
+                return matchesSearch && gameDateObj < today && !raffle.winner;
+            }
+            return matchesSearch;
+        });
+    }, [allRaffles, gameSearchQuery, gamesFilter, today]);
 
     const deletableRaffles = filteredGames;
-
-    const gamesWithWinner = allRaffles.filter(raffle => !!raffle.winner);
-    const pastDateRaffles = allRaffles.filter(raffle => {
-        if (!raffle.gameDate) return false;
-        const gameDateObj = new Date(raffle.gameDate + 'T00:00:00');
-        return gameDateObj < today && !raffle.winner;
-    });
 
     const rafflesWithImages = allRaffles.filter(r => !!r.prizeImageUrl);
 
@@ -2258,94 +2265,98 @@ const App = () => {
                                                 <div className="flex items-center"><Trash2 className="mr-2 h-4 w-4" /><span>2. {t('deleteAbandonedRaffles')}</span></div>
                                                 {abandonedRaffles.length > 0 && <span className="bg-red-600 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full animate-pulse">{abandonedRaffles.length}</span>}
                                             </DropdownMenuItem>
+                                            <DropdownMenuItem onSelect={handleDeleteAllWinnerRaffles} className="bg-green-50 focus:bg-green-100 text-green-600 font-bold flex items-center justify-between">
+                                                <div className="flex items-center"><Trash2 className="mr-2 h-4 w-4" /><span>3. Eliminar Juegos Finalizados</span></div>
+                                                {gamesWithWinner.length > 0 && <span className="bg-green-600 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full animate-pulse">{gamesWithWinner.length}</span>}
+                                            </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setIsAppNameLogoDialogOpen(true)}>
                                                 <Settings2 className="mr-2 h-4 w-4" />
-                                                <span>3. {t('appNameAndLogo')}</span>
+                                                <span>4. {t('appNameAndLogo')}</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setIsGamesSummaryDialogOpen(true)} className="bg-blue-50 focus:bg-blue-100 cursor-pointer">
                                                 <Globe className="mr-2 h-4 w-4 text-blue-600" />
-                                                <span className="font-bold">4. {t('totalGamesInLine', { count: allRaffles.length })}</span>
+                                                <span className="font-bold">5. {t('totalGamesInLine', { count: allRaffles.length })}</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setIsPrizeImagesManagerOpen(true)}>
                                                 <ImageIcon className="mr-2 h-4 w-4" />
-                                                <span>5. {t('prizeImagesManager')} ({rafflesWithImages.length})</span>
+                                                <span>6. {t('prizeImagesManager')} ({rafflesWithImages.length})</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setIsCaptureSettingsDialogOpen(true)}>
                                                 <Settings2 className="mr-2 h-4 w-4 text-purple-600" />
-                                                <span className="font-bold">6. Configuración de Captura</span>
+                                                <span className="font-bold">7. Configuración de Captura</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => handleProtectedItemClick(() => setIsPaymentInfoDialogOpen(true))}>
                                                 <Landmark className="mr-2 h-4 w-4 text-blue-600" />
-                                                <span>7. {t('managePaymentInfo')} 🔒</span>
+                                                <span>8. {t('managePaymentInfo')} 🔒</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => handleProtectedItemClick(() => setIsPaymentQrImageDialogOpen(true))}>
                                                 <QrCode className="mr-2 h-4 w-4 text-blue-600" />
-                                                <span>8. {t('managePaymentQrImage')} 🔒</span>
+                                                <span>9. {t('managePaymentQrImage')} 🔒</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={fetchNextRefs}>
                                                 <RefreshCcw className="mr-2 h-4 w-4 text-blue-600" />
-                                                <span>9. {t('refreshRefs')}</span>
+                                                <span>10. {t('refreshRefs')}</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => handleProtectedItemClick(() => setIsSuperAdminChangePasswordOpen(true))}>
                                                 <LockKeyhole className="mr-2 h-4 w-4 text-blue-600" />
-                                                <span>10. {t('changeExecutivePasswordTitle')} 🔒</span>
+                                                <span>11. {t('changeExecutivePasswordTitle')} 🔒</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuSeparator />
                                             <DropdownMenuItem onSelect={() => setIsAssignPackageDialogOpen(true)}>
                                                 <Package className="mr-2 h-4 w-4" />
-                                                <span>11. {t('assignPackage')}</span>
+                                                <span>12. {t('assignPackage')}</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setIsSupportContactDialogOpen(true)}>
                                                 <Phone className="mr-2 h-4 w-4" />
-                                                <span>12. {t('secondaryContact')}</span>
+                                                <span>13. {t('secondaryContact')}</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => handleProtectedItemClick(() => setIsPaymentLinksDialogOpen(true))}>
                                                 <LinkIcon className="mr-2 h-4 w-4" />
-                                                <span>13. {t('paymentLinks')} 🔒</span>
+                                                <span>14. {t('paymentLinks')} 🔒</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => handleProtectedItemClick(() => setIsUsdPaymentConfigDialogOpen(true))}>
                                                 <DollarSign className="mr-2 h-4 w-4" />
-                                                <span>14. Link de Pago USD 🔒</span>
+                                                <span>15. Link de Pago USD 🔒</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setIsActivationPricesDialogOpen(true)}>
                                                 <DollarSign className="mr-2 h-4 w-4" />
-                                                <span>15. {t('activationPrices')}</span>
+                                                <span>16. {t('activationPrices')}</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setIsFreeGamesDialogOpen(true)}>
                                                 <RefreshCcw className="mr-2 h-4 w-4" />
-                                                <span>16. {t('freeGames')}</span>
+                                                <span>17. {t('freeGames')}</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setIsLockedBoardBgDialogOpen(true)}>
                                                 <ImageIcon className="mr-2 h-4 w-4" />
-                                                <span>17. {t('manageLockedBoardBg')}</span>
+                                                <span>18. {t('manageLockedBoardBg')}</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setIsBoardDesignDialogOpen(true)}>
                                                 <Palette className="mr-2 h-4 w-4" />
-                                                <span>18. Diseño Tablero (2 Cifras)</span>
+                                                <span>19. Diseño Tablero (2 Cifras)</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setIsBoardDesignDialogOpen3(true)}>
                                                 <Palette className="mr-2 h-4 w-4 text-orange-600" />
-                                                <span>19. Diseño Tablero (3 Cifras)</span>
+                                                <span>20. Diseño Tablero (3 Cifras)</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setIsBoardColorsDialogOpen(true)}>
                                                 <Palette className="mr-2 h-4 w-4" />
-                                                <span>20. {t('boardColors')}</span>
+                                                <span>21. {t('boardColors')}</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setIsBoardHeaderImageDialogOpen(true)}>
                                                 <Rows3 className="mr-2 h-4 w-4" />
-                                                <span>21. Imagen Renglón (2 Cifras)</span>
+                                                <span>22. Imagen Renglón (2 Cifras)</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setIsBoardHeaderImageDialogOpen3(true)}>
                                                 <Rows3 className="mr-2 h-4 w-4 text-orange-600" />
-                                                <span>22. Imagen Renglón (3 Cifras)</span>
+                                                <span>23. Imagen Renglón (3 Cifras)</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => handleProtectedItemClick(() => setIsMasterAccessDialogOpen(true))} className="bg-purple-600 text-white focus:bg-purple-700 focus:text-white">
                                                 <Key className="mr-2 h-4 w-4" />
-                                                <span>23. Enviar Acceso Maestro ({activeMasterTokensCount}) 🔒</span>
+                                                <span>24. Enviar Acceso Maestro ({activeMasterTokensCount}) 🔒</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => handleProtectedItemClick(() => setIsApiConfigDialogOpen(true))}>
                                                 <Settings2 className="mr-2 h-4 w-4 text-blue-600" />
-                                                <span>24. Configurar API 🔒</span>
+                                                <span>25. Configurar API 🔒</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuSeparator />
                                             <DropdownMenuItem onSelect={() => { setGamesFilter('past_date'); handleTabClick('games'); }}>
@@ -2354,7 +2365,7 @@ const App = () => {
                                                     <span className="bg-orange-100 text-orange-800 text-xs font-semibold px-2 py-0.5 rounded-full ml-4">{pastDateRaffles.length}</span>
                                                 </div>
                                             </DropdownMenuItem>
-                                            <DropdownMenuItem onSelect={() => { setGamesFilter('winners'); handleTabClick('winners'); }}>
+                                            <DropdownMenuItem onSelect={() => { setGamesFilter('winners'); handleTabClick('games'); }}>
                                                 <div className="flex items-center justify-between w-full">
                                                     <div className="flex items-center"><Trophy className="mr-2 h-4 w-4 text-green-500" /><span>{t('gamesWithWinner')}</span></div>
                                                     <span className="bg-green-100 text-green-800 text-xs font-semibold px-2 py-0.5 rounded-full ml-4">{gamesWithWinner.length}</span>
@@ -2812,6 +2823,7 @@ const App = () => {
                                             <div className="flex wrap items-center gap-x-6 gap-y-2 mb-4">
                                                 <div className="flex items-center gap-2"><h2 className="text-2xl font-bold text-gray-800">{gamesFilter === 'winners' ? t('gamesWithWinner') : gamesFilter === 'past_date' ? t('pastDateGames') : t('assignedGames')}</h2><span className="bg-gray-200 text-gray-800 text-sm font-semibold px-3 py-1 rounded-full">{filteredGames.length}</span></div>
                                                 {gamesFilter === 'past_date' && pastDateRaffles.length > 0 && <Button variant="destructive" onClick={handleDeleteAllPastDueRaffles}><Trash2 className="mr-2 h-4 w-4" />{t('deleteAllPastDueGames', { count: pastDateRaffles.length })}</Button>}
+                                                {gamesFilter === 'winners' && gamesWithWinner.length > 0 && <Button variant="destructive" onClick={handleDeleteAllWinnerRaffles}><Trash2 className="mr-2 h-4 w-4" />{t('deleteAllWinnerGames', { count: gamesWithWinner.length })}</Button>}
                                             </div>
                                             <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4"><Input type="text" placeholder={t('searchGamePlaceholder')} value={gameSearchQuery} onChange={(e) => setGameSearchQuery(e.target.value)} className="max-sm w-full"/><div className="flex items-center gap-2">{selectedRafflesForDeletion.length > 0 && <Button variant="destructive" onClick={handleDeleteSelectedRaffles}><Trash2 className="mr-2 h-4 w-4" />{t('deleteSelected', { count: selectedRafflesForDeletion.length })}</Button>}</div></div>
                                             {filteredGames.length > 0 ? (
