@@ -2606,7 +2606,7 @@ const App = () => {
                                                                 <SelectValue placeholder="1000" />
                                                             </SelectTrigger>
                                                             <SelectContent>
-                                                                {[100, 200, 300, 400, 500, 600, 700, 800, 900, 1000].map((val) => (
+                                                                {[100, 150, 200, 300, 400, 500, 600, 700, 800, 900, 1000].map((val) => (
                                                                     <SelectItem key={val} value={String(val)}>{val}</SelectItem>
                                                                 ))}
                                                             </SelectContent>
