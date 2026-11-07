@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useRef, useMemo } from 'react';
-import jsPDF from 'jspdf';
+import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import { RaffleManager } from '@/lib/RaffleManager';
 import { db, storage } from '@/lib/firebase';
@@ -2400,7 +2400,7 @@ const App = () => {
                                                 {((!appSettings.isFreeTwoDigit && !appSettings.isBlockedTwoDigit) || isSuperAdmin) && (
                                                     <div className="text-center space-y-4">
                                                         <Button onClick={() => handleActivationClick('two-digit')} size="lg" className="w-full bg-slate-900 hover:bg-black text-white font-bold flex items-center gap-3 justify-center h-12"><BankIcon className="h-5 w-5" />{t('activate')}</Button>
-                                                        <div className="bg-white/50 p-3 rounded-lg border border-slate-200"><p className="text-xs text-slate-800 whitespace-pre-wrap font-bold">{appSettings.bankInfoLine1 || 'Banco Caja Social: 24096711314'}{'\n'}{(appSettings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054')}</p></div>
+                                                        <div className="bg-white/50 p-3 rounded-lg border border-slate-200"><p className="text-xs text-slate-800 whitespace-pre-wrap font-bold">{appSettings.bankInfoLine1 || 'Banco Caja Social: 24096711314'}{'\n'}{appSettings.bankInfoLine2?.split(' ').pop() || '@AMIGO1045715054'}</p></div>
                                                     </div>
                                                 )}
                                                 {isSuperAdmin && nextRaffleRefs.twoDigit.refs.length > 0 && (
@@ -2420,7 +2420,7 @@ const App = () => {
                                                 {((!appSettings.isFreeThreeDigit && !appSettings.isBlockedThreeDigit) || isSuperAdmin) && (
                                                     <div className="text-center space-y-4">
                                                         <Button onClick={() => handleActivationClick('three-digit')} size="lg" className="w-full bg-slate-900 hover:bg-black text-white font-bold flex items-center gap-3 justify-center h-12"><BankIcon className="h-5 w-5" />{t('activate')}</Button>
-                                                        <div className="bg-white/50 p-3 rounded-lg border border-slate-200"><p className="text-xs text-slate-800 whitespace-pre-wrap font-bold">{appSettings.bankInfoLine1 || 'Banco Caja Social: 24096711314'}{'\n'}{(appSettings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054')}</p></div>
+                                                        <div className="bg-white/50 p-3 rounded-lg border border-slate-200"><p className="text-xs text-slate-800 whitespace-pre-wrap font-bold">{appSettings.bankInfoLine1 || 'Banco Caja Social: 24096711314'}{'\n'}{appSettings.bankInfoLine2?.split(' ').pop() || '@AMIGO1045715054'}</p></div>
                                                     </div>
                                                 )}
                                                 {isSuperAdmin && nextRaffleRefs.threeDigit.refs.length > 0 && (
@@ -2440,7 +2440,7 @@ const App = () => {
                                                 {((!appSettings.isFreeInfinite && !appSettings.isBlockedInfinite) || isSuperAdmin) && (
                                                     <div className="text-center space-y-4">
                                                         <Button onClick={() => handleActivationClick('infinite')} size="lg" className="w-full bg-slate-900 hover:bg-black text-white font-bold flex items-center gap-3 justify-center h-12"><BankIcon className="h-5 w-5" />{t('activate')}</Button>
-                                                        <div className="bg-white/50 p-3 rounded-lg border border-slate-200"><p className="text-xs text-slate-800 whitespace-pre-wrap font-bold">{appSettings.bankInfoLine1 || 'Banco Caja Social: 24096711314'}{'\n'}{(appSettings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054')}</p></div>
+                                                        <div className="bg-white/50 p-3 rounded-lg border border-slate-200"><p className="text-xs text-slate-800 whitespace-pre-wrap font-bold">{appSettings.bankInfoLine1 || 'Banco Caja Social: 24096711314'}{'\n'}{appSettings.bankInfoLine2?.split(' ').pop() || '@AMIGO1045715054'}</p></div>
                                                     </div>
                                                 )}
                                                 {isSuperAdmin && nextRaffleRefs.infinite.refs.length > 0 && (
@@ -2658,7 +2658,7 @@ const App = () => {
                                                                  <div className="flex-grow"><Label htmlFor="manual-winner-3-input">{t('last3DigitsNumber')}</Label><div className="relative"><Input id="manual-winner-3-input" type="text" placeholder={t('last3Digits')} value={raffleState.manualWinnerNumber3} onChange={(e) => handleLocalFieldChange('manualWinnerNumber3', e.target.value)} maxLength={3} disabled={raffleState.isWinnerConfirmed || !!raffleState.winner} className="w-full"/>{!!raffleState.winner && <LockKeyhole className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />}</div></div>
                                                                  <div className="w-24"><Label>{t('percentage')}</Label><Input type="number" min="0" max="100" value={raffleState.partialWinnerPercentage3 || ''} onChange={(e) => handleLocalFieldChange('partialWinnerPercentage3', e.target.value)} onBlur={(e) => handleFieldChange('partialWinnerPercentage3', raffleState.partialWinnerPercentage3)} className="w-full" placeholder="%" disabled={raffleState.isWinnerConfirmed || !!raffleState.winner}/></div>
                                                                  <div className="flex flex-col items-end"><div className="text-center mb-1"><span className="text-sm font-bold text-green-600">{formatValue(parseFloat(String(raffleState.prize).replace(/\D/g, '') || '0') * (raffleState.partialWinnerPercentage3 || 0) / 100)}</span><p className="text-xs text-gray-500">{t('otherWinners')}</p></div><Button onClick={() => handleFindPartialWinners(3, raffleState.partialWinnerPercentage3 || 0)} disabled={raffleState.isWinnerConfirmed || !!raffleState.winner} className="bg-blue-500 text-white font-medium rounded-lg hover:bg-blue-600 transition-colors disabled:bg-gray-300">{t('findWinner')}</Button></div>
-                              </div>
+                                                             </div>
                                                              <div className="flex wrap gap-3 items-end">
                                                                  <div className="flex-grow"><Label htmlFor="manual-winner-2-input">{t('last2DigitsNumber')}</Label><div className="relative"><Input id="manual-winner-2-input" type="text" placeholder={t('last2Digits')} value={raffleState.manualWinnerNumber2} onChange={(e) => handleLocalFieldChange('manualWinnerNumber2', e.target.value)} maxLength={2} disabled={raffleState.isWinnerConfirmed || !!raffleState.winner} className="w-full"/>{!!raffleState.winner && <LockKeyhole className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />}</div></div>
                                                                  <div className="w-24"><Label>{t('percentage')}</Label><Input type="number" min="0" max="100" value={raffleState.partialWinnerPercentage2 || ''} onChange={(e) => handleLocalFieldChange('partialWinnerPercentage2', e.target.value)} onBlur={(e) => handleFieldChange('partialWinnerPercentage2', raffleState.partialWinnerPercentage2)} className="w-full" placeholder="%" disabled={raffleState.isWinnerConfirmed || !!raffleState.winner}/></div>
@@ -3182,7 +3182,13 @@ const App = () => {
                     </Dialog>
 
                     <Dialog open={isTicketModalOpen} onOpenChange={setIsTicketModalOpen}>
-                         <DialogContent className="max-w-[320px] p-0 border-none bg-transparent shadow-none"><InlineTicket ticketModalRef={ticketModalRef} ticketData={ticketInfo} setGeneratedTicketData={() => setIsTicketModalOpen(false)} handleDownloadTicket={handleDownloadTicket} handleShareTicket={handleShareTicket} formatValue={formatValue} t={t} language={language}/></DialogContent>
+                         <DialogContent className="max-w-[320px] p-0 border-none bg-transparent shadow-none">
+                            <DialogHeader>
+                                <DialogTitle className="sr-only">Tiquete de Compra</DialogTitle>
+                                <DialogDescription className="sr-only">Comprobante de compra de tu número de rifa.</DialogDescription>
+                            </DialogHeader>
+                            <InlineTicket ticketModalRef={ticketModalRef} ticketData={ticketInfo} setGeneratedTicketData={() => setIsTicketModalOpen(false)} handleDownloadTicket={handleDownloadTicket} handleShareTicket={handleShareTicket} formatValue={formatValue} t={t} language={language}/>
+                         </DialogContent>
                     </Dialog>
 
                     <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
