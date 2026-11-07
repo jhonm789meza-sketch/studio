@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import jsPDF from 'jspdf';
@@ -914,6 +915,7 @@ const App = () => {
                     if (valueToSave === '') valueToSave = 0;
                 } else if (field === 'totalTickets') {
                     valueToSave = parseInt(String(value).replace(/\D/g, ''), 10) || 1000;
+                    if (valueToSave > 1000) valueToSave = 1000;
                 } else if (field === 'infiniteModeDigits') {
                     valueToSave = parseInt(String(value).replace(/\D/g, ''), 10) || 4;
                     if (valueToSave !== 0 && valueToSave < 4) {
@@ -1530,7 +1532,7 @@ const App = () => {
                         const prizeAmount2 = prizeValue * (prizePercentage2 / 100);
                         const formattedPrize2 = `${raffleState.currencySymbol || '$'} ${prizeAmount2.toLocaleString(language === 'es' ? 'es-CO' : 'en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
                         const winners2 = confirmedParticipants.filter(p => !excludedIds.has(p.id) && p.raffleNumber.endsWith(winningNumber2));
-                        if (winners2.length > 0) allFoundPartialWinners.push({ winners: winners2, digits: 2, prize: formattedPrize2 });
+                        if (winners2.length > 0) allFoundPartialWinners.push({ winners: winners3, digits: 2, prize: formattedPrize2 });
                      }
                 }
             }
@@ -2641,7 +2643,7 @@ const App = () => {
                                                                  <div className="flex-grow"><Label htmlFor="manual-winner-3-input">{t('last3DigitsNumber')}</Label><div className="relative"><Input id="manual-winner-3-input" type="text" placeholder={t('last3Digits')} value={raffleState.manualWinnerNumber3} onChange={(e) => handleLocalFieldChange('manualWinnerNumber3', e.target.value)} maxLength={3} disabled={raffleState.isWinnerConfirmed || !!raffleState.winner} className="w-full"/>{!!raffleState.winner && <LockKeyhole className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />}</div></div>
                                                                  <div className="w-24"><Label>{t('percentage')}</Label><Input type="number" min="0" max="100" value={raffleState.partialWinnerPercentage3 || ''} onChange={(e) => handleLocalFieldChange('partialWinnerPercentage3', e.target.value)} onBlur={(e) => handleFieldChange('partialWinnerPercentage3', raffleState.partialWinnerPercentage3)} className="w-full" placeholder="%" disabled={raffleState.isWinnerConfirmed || !!raffleState.winner}/></div>
                                                                  <div className="flex flex-col items-end"><div className="text-center mb-1"><span className="text-sm font-bold text-green-600">{formatValue(parseFloat(String(raffleState.prize).replace(/\D/g, '') || '0') * (raffleState.partialWinnerPercentage3 || 0) / 100)}</span><p className="text-xs text-gray-500">{t('otherWinners')}</p></div><Button onClick={() => handleFindPartialWinners(3, raffleState.partialWinnerPercentage3 || 0)} disabled={raffleState.isWinnerConfirmed || !!raffleState.winner} className="bg-blue-500 text-white font-medium rounded-lg hover:bg-blue-600 transition-colors disabled:bg-gray-300">{t('findWinner')}</Button></div>
-                                                             </div>
+                              </div>
                                                              <div className="flex wrap gap-3 items-end">
                                                                  <div className="flex-grow"><Label htmlFor="manual-winner-2-input">{t('last2DigitsNumber')}</Label><div className="relative"><Input id="manual-winner-2-input" type="text" placeholder={t('last2Digits')} value={raffleState.manualWinnerNumber2} onChange={(e) => handleLocalFieldChange('manualWinnerNumber2', e.target.value)} maxLength={2} disabled={raffleState.isWinnerConfirmed || !!raffleState.winner} className="w-full"/>{!!raffleState.winner && <LockKeyhole className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />}</div></div>
                                                                  <div className="w-24"><Label>{t('percentage')}</Label><Input type="number" min="0" max="100" value={raffleState.partialWinnerPercentage2 || ''} onChange={(e) => handleLocalFieldChange('partialWinnerPercentage2', e.target.value)} onBlur={(e) => handleFieldChange('partialWinnerPercentage2', raffleState.partialWinnerPercentage2)} className="w-full" placeholder="%" disabled={raffleState.isWinnerConfirmed || !!raffleState.winner}/></div>
@@ -3118,7 +3120,7 @@ const App = () => {
 
                     <Dialog open={isCopyOptionsDialogOpen} onOpenChange={setIsCopyOptionsDialogOpen}>
                         <DialogContent className="sm:max-w-md"><DialogHeader><DialogTitle>{t('copyPaymentTitle')}</DialogTitle><DialogDescription>{t('copyPaymentDescription')}</DialogDescription></DialogHeader>
-                            <div className="grid gap-4 py-4"><Button onClick={() => { navigator.clipboard.writeText(appSettings.bankInfoLine1 || 'Banco Caja Social: 24096711314'); showNotification(t('accountNumberCopied'), 'success'); }} variant="outline" className="justify-start"><Copy className="mr-2 h-4 w-4" />{t('copyAccountNumber')}</Button><Button onClick={() => { navigator.clipboard.writeText((appSettings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054').split(' ').pop() || ''); showNotification(t('brebKeyCopied'), 'success'); }} variant="outline" className="justify-start"><Copy className="mr-2 h-4 w-4" />{t('copyBrebKey')}</Button><Button onClick={() => setIsPaymentQrDialogOpen(true)} variant="outline" className="justify-start"><QrCode className="mr-2 h-4 w-4" />{t('payWithQr')}</Button>{(appSettings.paymentLinkUsd || (selectedRaffleMode === 'two-digit' && appSettings.paymentLinkUsdTwoDigit) || (selectedRaffleMode === 'three-digit' && appSettings.paymentLinkUsdThreeDigit) || (selectedRaffleMode === 'infinite' && appSettings.paymentLinkUsdInfinite)) && <Button onClick={() => setIsUsdPaymentDialogOpen(true)} variant="outline" className="justify-start bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"><DollarSign className="mr-2 h-4 w-4" />{t('payWithUsd')}</Button>}</div>
+                            <div className="grid gap-4 py-4"><Button onClick={() => { navigator.clipboard.writeText(appSettings.bankInfoLine1 || 'Banco Caja Social: 24096711314'); showNotification(t('accountNumberCopied'), 'success'); }} variant="outline" className="justify-start"><Copy className="mr-2 h-4 w-4" />{t('copyAccountNumber')}</Button><Button onClick={() => { const fullKey = appSettings.bankInfoLine2 || 'llave Bre-B @AMIGO1045715054'; const keyOnly = fullKey.split(' ').pop() || ''; navigator.clipboard.writeText(keyOnly); showNotification(t('brebKeyCopied'), 'success'); }} variant="outline" className="justify-start"><Copy className="mr-2 h-4 w-4" />{t('copyBrebKey')}</Button><Button onClick={() => setIsPaymentQrDialogOpen(true)} variant="outline" className="justify-start"><QrCode className="mr-2 h-4 w-4" />{t('payWithQr')}</Button>{(appSettings.paymentLinkUsd || (selectedRaffleMode === 'two-digit' && appSettings.paymentLinkUsdTwoDigit) || (selectedRaffleMode === 'three-digit' && appSettings.paymentLinkUsdThreeDigit) || (selectedRaffleMode === 'infinite' && appSettings.paymentLinkUsdInfinite)) && <Button onClick={() => setIsUsdPaymentDialogOpen(true)} variant="outline" className="justify-start bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"><DollarSign className="mr-2 h-4 w-4" />{t('payWithUsd')}</Button>}</div>
                             <DialogFooter><Button onClick={() => setIsCopyOptionsDialogOpen(false)}>{t('close')}</Button></DialogFooter>
                         </DialogContent>
                     </Dialog>
