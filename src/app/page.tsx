@@ -308,6 +308,8 @@ const App = () => {
 
     const [isApiConfigDialogOpen, setIsApiConfigDialogOpen] = useState(false);
     const [apiConfig, setApiConfig] = useState({ key: '', endpoint: '' });
+    
+    const [isLargeImageOpen, setIsLargeImageOpen] = useState(false);
 
     const prizeTextareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -365,11 +367,8 @@ const App = () => {
 
     const damagedRaffles = useMemo(() => {
         return allRaffles.filter(r => 
-            // Detecta juegos marcados como pagados/activos pero que están vacíos o corruptos
             ((r.isActive || r.isPaid) && (!r.prize || !r.organizerName)) ||
-            // Detecta documentos corruptos sin modo de rifa
             !r.raffleMode ||
-            // Detecta "basura" en la base de datos (docs sin datos esenciales)
             (!r.prize && !r.organizerName && (r.participants || []).length === 0)
         );
     }, [allRaffles]);
@@ -1323,7 +1322,6 @@ const App = () => {
                 try {
                     const batch = writeBatch(db);
                     damagedRaffles.forEach((raffle) => {
-                        // Usamos el ID del documento para asegurar la purga incluso si falta raffleRef
                         batch.delete(doc(db, 'raffles', raffle.raffleRef || raffle.id));
                     });
                     await batch.commit();
@@ -2282,7 +2280,7 @@ const App = () => {
                                                 <Settings2 className="mr-2 h-4 w-4" />
                                                 <span>4. {t('appNameAndLogo')}</span>
                                             </DropdownMenuItem>
-                                            <DropdownMenuItem onSelect={() => setIsGamesSummaryDialogOpen(true)} className="bg-blue-50 focus:bg-blue-100 cursor-pointer">
+                                            <DropdownMenuItem onSelect={() => { setGamesFilter('all'); handleTabClick('games'); }} className="bg-blue-50 focus:bg-blue-100 cursor-pointer">
                                                 <Globe className="mr-2 h-4 w-4 text-blue-600" />
                                                 <span className="font-bold">5. {t('totalGamesInLine', { count: allRaffles.length })}</span>
                                             </DropdownMenuItem>
@@ -2709,7 +2707,15 @@ const App = () => {
                                                <div className="flex flex-col justify-between items-start border-b p-5 bg-white/80 backdrop-blur-md border border-white/50 shadow-xl">
                                                    <div className="flex flex-col sm:flex-row justify-between w-full items-start sm:items-center gap-4">
                                                        <div className="flex items-center gap-4">
-                                                           {(raffleState.prizeImageUrl) && <div className="relative h-20 w-20 rounded-xl overflow-hidden border-2 border-white shadow-lg bg-white shrink-0"><img src={raffleState.prizeImageUrl} alt={t('rafflePrizeAlt')} className="w-full h-full object-cover" referrerPolicy="no-referrer" /></div>}
+                                                           {(raffleState.prizeImageUrl) && (
+                                                                <button 
+                                                                    onClick={() => setIsLargeImageOpen(true)}
+                                                                    className="relative h-20 w-20 rounded-xl overflow-hidden border-2 border-white shadow-lg bg-white shrink-0 hover:scale-105 transition-transform"
+                                                                    title="Tocar para ver en grande"
+                                                                >
+                                                                    <img src={raffleState.prizeImageUrl} alt={t('rafflePrizeAlt')} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                                                                </button>
+                                                           )}
                                                            <div><h2 className="text-3xl font-black text-gray-900 tracking-tight flex items-center">{t('numberBoard')}</h2><p className="text-base text-gray-600 font-bold line-clamp-1">{raffleState.prize}</p></div>
                                                        </div>
                                                        {raffleState.raffleRef && <div className="bg-purple-600 text-white px-4 py-2 rounded-xl text-sm font-black shadow-lg border border-purple-500">{t('mode').toUpperCase()}: {raffleMode === 'two-digit' ? t('2digitMode') : t('3digitMode')}</div>}
@@ -3223,6 +3229,31 @@ const App = () => {
                         <DialogContent className="max-w-xs"><DialogHeader><DialogTitle className="text-center">{t('shareWithQR')}</DialogTitle><DialogDescription className="text-center">{t('shareWithQRDescription')}</DialogDescription></DialogHeader>
                             <div className="flex justify-center items-center p-4"><div className="p-4 bg-white rounded-xl shadow-2xl border-4 border-purple-100"><img src={dynamicQrUrl} alt={t('appQRCodeAlt')} className="h-48 w-48 object-contain" referrerPolicy="no-referrer" /></div></div>
                             <DialogFooter><Button variant="outline" onClick={() => setIsQrDialogOpen(false)} className="w-full">{t('close')}</Button></DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+
+                    <Dialog open={isLargeImageOpen} onOpenChange={setIsLargeImageOpen}>
+                        <DialogContent className="max-w-[95vw] sm:max-w-[80vw] max-h-[90vh] p-0 overflow-hidden bg-black/90 border-none shadow-none flex items-center justify-center">
+                            <DialogHeader>
+                                <DialogTitle className="sr-only">Imagen del Premio</DialogTitle>
+                                <DialogDescription className="sr-only">Visualización ampliada del premio de la rifa.</DialogDescription>
+                            </DialogHeader>
+                            <div className="relative w-full h-full flex items-center justify-center p-2">
+                                <button 
+                                    onClick={() => setIsLargeImageOpen(false)}
+                                    className="absolute top-4 right-4 z-50 bg-white/10 hover:bg-white/20 p-2 rounded-full backdrop-blur-md transition-colors"
+                                >
+                                    <X className="h-6 w-6 text-white" />
+                                </button>
+                                {raffleState.prizeImageUrl && (
+                                    <img 
+                                        src={raffleState.prizeImageUrl} 
+                                        alt={t('rafflePrizeAlt')} 
+                                        className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl" 
+                                        referrerPolicy="no-referrer" 
+                                    />
+                                )}
+                            </div>
                         </DialogContent>
                     </Dialog>
                 </div>
