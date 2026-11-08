@@ -1,90 +1,122 @@
-
 'use client';
 /**
- * @fileOverview Página de previsualización del premio que actúa como un enlace funcional camuflado.
- * Muestra la imagen a pantalla completa y redirige automáticamente al juego.
+ * @fileOverview Pantalla de Bienvenida (Landing Page) interactiva.
+ * Diseñada para simular un botón real que redirige al juego.
+ * Incluye redirección automática tras 2 segundos.
  */
 
-import { useEffect, useState } from 'react';
-import { useRouter, useParams } from 'next/navigation';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
-import Image from 'next/image';
-import { Loader2, MousePointer2, Gamepad2 } from 'lucide-react';
-import Link from 'next/link';
+import { useState, useEffect } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Loader2, Sparkles, ShieldCheck } from 'lucide-react';
 
-export default function PrizePreviewPage() {
-    const router = useRouter();
+export default function PrizeRedirectPage() {
     const params = useParams();
+    const router = useRouter();
     const ref = params.ref as string;
-    const [imageUrl, setImageUrl] = useState<string | null>(null);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
+    const [countdown, setCountdown] = useState(2);
 
-    const gameUrl = `/?ref=${ref}`;
+    const handleEnterGame = () => {
+        setLoading(true);
+        // Redirección al tablero principal con la referencia
+        window.location.replace(`/?ref=${ref.toUpperCase()}`);
+    };
 
     useEffect(() => {
-        const fetchPrize = async () => {
-            if (!ref) return;
-            try {
-                const docSnap = await getDoc(doc(db, 'raffles', ref.toUpperCase()));
-                if (docSnap.exists()) {
-                    setImageUrl(docSnap.data().prizeImageUrl);
-                    // Redirección ultra-rápida una vez que tenemos los datos
-                    setTimeout(() => {
-                        router.push(gameUrl);
-                    }, 3000); // 3 segundos para que vean el premio y luego entren
-                } else {
-                    router.push('/');
-                }
-            } catch (error) {
-                console.error("Error fetching prize image:", error);
-                router.push('/');
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchPrize();
-    }, [ref, router, gameUrl]);
+        // Temporizador para la redirección automática a los 2 segundos
+        const redirectTimer = setTimeout(() => {
+            handleEnterGame();
+        }, 2000);
 
-    if (loading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-black">
-                <Loader2 className="h-10 w-10 animate-spin text-white" />
-            </div>
-        );
-    }
+        // Visual del contador
+        const countdownInterval = setInterval(() => {
+            setCountdown((prev) => (prev > 0 ? prev - 1 : 0));
+        }, 1000);
+
+        return () => {
+            clearTimeout(redirectTimer);
+            clearInterval(countdownInterval);
+        };
+    }, [ref]);
 
     return (
-        <div className="min-h-screen bg-black flex flex-col items-center justify-center overflow-hidden">
-            {imageUrl ? (
-                <Link href={gameUrl} className="relative w-full h-screen cursor-pointer group flex flex-col items-center justify-center">
-                    <Image
-                        src={imageUrl}
-                        alt="Toca para jugar ahora"
-                        fill
-                        className="object-contain"
-                        unoptimized
-                        priority
-                    />
-                    <div className="absolute inset-0 bg-black/10 flex items-center justify-center">
-                        <div className="bg-yellow-400 text-black px-10 py-6 rounded-full font-black text-3xl shadow-2xl flex items-center gap-4 animate-bounce border-4 border-black hover:scale-110 transition-transform">
-                            <Gamepad2 className="h-10 w-10" />
-                            ¡JUGAR AHORA!
+        <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 relative overflow-hidden font-sans text-white">
+            {/* Fondo con efectos de luz dinámica */}
+            <div className="absolute inset-0 z-0">
+                <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-purple-600/20 rounded-full blur-[120px] animate-pulse" />
+                <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] bg-blue-600/20 rounded-full blur-[120px] animate-pulse" />
+                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-30" />
+            </div>
+
+            <div className="relative z-10 text-center space-y-8 max-w-md w-full">
+                <div className="bg-white/5 backdrop-blur-3xl p-10 rounded-[60px] border border-white/10 shadow-[0_0_100px_rgba(0,0,0,0.8)] transition-all duration-700">
+                    
+                    {/* Brand Header */}
+                    <div className="space-y-1 mb-10">
+                        <h1 className="text-6xl font-black tracking-tighter leading-none flex flex-col items-center">
+                            <span className="text-white">RIFA</span>
+                            <span className="text-yellow-400 drop-shadow-[0_0_15px_rgba(250,204,21,0.5)]">⚡</span>
+                            <span className="text-white">EXPRESS</span>
+                        </h1>
+                        <p className="text-blue-400 font-black text-xs uppercase tracking-[0.2em] mt-4 opacity-80">
+                            TU OPORTUNIDAD DE GANAR ESTÁ AQUÍ
+                        </p>
+                    </div>
+
+                    {/* Botón Real y Funcional */}
+                    <div className="relative group">
+                        <Button 
+                            onClick={handleEnterGame}
+                            disabled={loading}
+                            className="w-full h-28 bg-gradient-to-br from-purple-600 via-purple-700 to-blue-700 hover:from-purple-500 hover:to-blue-600 text-white rounded-[35px] shadow-[0_20px_60px_rgba(147,51,234,0.5)] transition-all transform active:scale-95 flex flex-col items-center justify-center gap-0 border-b-[12px] border-purple-900/80 overflow-hidden relative"
+                        >
+                            {loading ? (
+                                <Loader2 className="h-12 w-12 animate-spin" />
+                            ) : (
+                                <>
+                                    <div className="flex items-center gap-3 text-3xl font-black italic tracking-tighter uppercase">
+                                        ¡HAZ CLICK! <Sparkles className="h-6 w-6 text-yellow-300 animate-bounce" />
+                                    </div>
+                                    <span className="text-[11px] font-bold opacity-90 tracking-widest uppercase mt-1">
+                                        Entrada garantizada
+                                    </span>
+                                    {/* Reflejo de luz en el botón */}
+                                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                                </>
+                            )}
+                        </Button>
+                    </div>
+
+                    <div className="mt-10 pt-8 border-t border-white/5 space-y-4">
+                        <div>
+                            <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.4em] mb-2">
+                                REFERENCIA DE JUEGO
+                            </p>
+                            <div className="bg-slate-900/80 py-3 px-8 rounded-2xl inline-block border border-purple-500/30 shadow-inner">
+                                <p className="text-white text-3xl font-mono font-black tracking-[0.2em]">
+                                    {ref?.toUpperCase()}
+                                </p>
+                            </div>
                         </div>
                     </div>
-                    {/* El link real funcional está "escondido" en toda la superficie de la imagen */}
-                    <div className="absolute bottom-10 left-0 right-0 text-center bg-black/40 py-2 backdrop-blur-sm">
-                        <p className="text-white font-bold text-sm">👇 TOCA LA FOTO PARA ENTRAR AL JUEGO</p>
-                        <p className="text-white/50 text-xs font-mono">Redirigiendo automáticamente en 3 segundos...</p>
-                    </div>
-                </Link>
-            ) : (
-                <div className="text-white text-center p-4">
-                    <h1 className="text-2xl font-bold mb-4">RIFA⚡EXPRESS</h1>
-                    <Loader2 className="h-8 w-8 animate-spin mx-auto text-yellow-400" />
-                    <p className="mt-4">Entrando al juego...</p>
                 </div>
-            )}
+
+                {/* Badge de Seguridad */}
+                <div className="flex items-center justify-center gap-2 text-slate-500">
+                    <ShieldCheck className="h-4 w-4" />
+                    <span className="text-[10px] font-black uppercase tracking-widest">
+                        Plataforma Certificada Rifa⚡Express
+                    </span>
+                </div>
+            </div>
+
+            {/* Indicador de carga automática */}
+            <div className="absolute bottom-10 left-0 right-0 text-center">
+                <p className="text-white/30 text-[9px] font-bold uppercase tracking-widest">
+                    Redirección automática en {countdown}s...
+                </p>
+            </div>
         </div>
     );
 }

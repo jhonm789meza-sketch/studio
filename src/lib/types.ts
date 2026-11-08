@@ -1,4 +1,5 @@
 
+
 export interface Participant {
     id: number;
     name: string;
@@ -8,6 +9,7 @@ export interface Participant {
     paymentStatus: 'pending' | 'confirmed';
     isHouse?: boolean;
     raffleRef?: string;
+    countryCode?: string;
 }
 
 export interface PartialWinnerInfo {
@@ -30,12 +32,19 @@ export interface AppSettings {
     paymentLinkTwoDigit?: string;
     paymentLinkThreeDigit?: string;
     paymentLinkInfinite?: string;
+    paymentLinkUsd?: string;
+    paymentLinkUsdTwoDigit?: string;
+    paymentLinkUsdThreeDigit?: string;
+    paymentLinkUsdInfinite?: string;
     activationPriceTwoDigit?: string;
     activationPriceThreeDigit?: string;
     activationPriceInfinite?: string;
     bankInfoLine1?: string;
     bankInfoLine2?: string;
     paymentQrImageUrl?: string;
+    paymentQrImageUrlTwoDigit?: string;
+    paymentQrImageUrlThreeDigit?: string;
+    paymentQrImageUrlInfinite?: string;
     isFreeTwoDigit?: boolean;
     isFreeThreeDigit?: boolean;
     isFreeInfinite?: boolean;
@@ -43,6 +52,23 @@ export interface AppSettings {
     isBlockedThreeDigit?: boolean;
     isBlockedInfinite?: boolean;
     lockedBoardBackgroundImageUrl?: string;
+    lockedBoardExternalImageUrl?: string;
+    boardDesignImageUrl?: string;
+    boardHeaderImageUrl?: string;
+    boardDesignImageUrl3?: string;
+    boardHeaderImageUrl3?: string;
+    appName?: string;
+    appLogoUrl?: string;
+    appTheme?: 'classic' | 'canvas' | 'bubble' | 'modern' | 'glass';
+    numberBgAvailable?: string;
+    numberTextAvailable?: string;
+    numberBgPending?: string;
+    numberTextPending?: string;
+    numberBgSold?: string;
+    numberTextSold?: string;
+    isHiddenLinkEnabled?: boolean;
+    isPlayButtonEnabled?: boolean;
+    superAdminPasswordVisible?: boolean;
 }
 
 export interface Raffle {
@@ -56,6 +82,7 @@ export interface Raffle {
     phoneNumber: string;
     raffleNumber: string;
     nequiAccountNumber: string;
+    brebKey: string;
     isNequiEnabled: boolean;
     isPaymentLinkEnabled: boolean;
     isSeparateNumberEnabled?: boolean;
@@ -65,6 +92,8 @@ export interface Raffle {
     customLottery: string;
     organizerName: string;
     organizerPhoneNumber: string;
+    organizerCountryCode?: string;
+    participantCountryCode?: string;
     password?: string;
     participants: Participant[];
     raffleRef: string;
@@ -73,6 +102,7 @@ export interface Raffle {
     manualWinnerNumber3: string;
     manualWinnerNumber2: string;
     isPaid: boolean;
+    isActive?: boolean;
     adminId: null | string;
     raffleMode: 'two-digit' | 'three-digit' | 'infinite';
     prizeImageUrl: string;
@@ -85,4 +115,7 @@ export interface Raffle {
     allowPartialWinners?: boolean;
     notificationTokens?: string[];
     partialWinners?: PartialWinnerInfo[];
+    prizeExternalUrl?: string;
+    totalTickets?: number;
+    isTicketOnly?: boolean;
 }
