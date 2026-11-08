@@ -81,6 +81,7 @@ const initialRaffleData: Raffle = {
     partialWinners: [],
     prizeExternalUrl: '',
     totalTickets: 1000,
+    isTicketOnly: false,
 };
 
 const countryIndicators = [
@@ -2590,25 +2591,43 @@ const App = () => {
                                                )}
                                                <div><Label htmlFor="value-input">{t('ticketValue')}:</Label><Input id="value-input" type="text" value={formatValueForDisplay(raffleState.value)} onChange={(e) => handleLocalFieldChange('value', e.target.value)} onBlur={(e) => handleFieldChange('value', raffleState.value)} placeholder="Ej: 5000" disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed} className="w-full mt-1"/></div>
                                                {raffleState.raffleMode === 'three-digit' && (
-                                                    <div>
-                                                        <Label htmlFor="total-tickets-select">{t('totalTicketsLabel')}:</Label>
-                                                        <Select 
-                                                            value={String(raffleState.totalTickets || 1000)} 
-                                                            onValueChange={(val) => { 
-                                                                handleLocalFieldChange('totalTickets', val); 
-                                                                handleFieldChange('totalTickets', val); 
-                                                            }}
-                                                            disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
-                                                        >
-                                                            <SelectTrigger id="total-tickets-select" className="w-full mt-1">
-                                                                <SelectValue placeholder="1000" />
-                                                            </SelectTrigger>
-                                                            <SelectContent>
-                                                                {[100, 150, 200, 300, 400, 500, 600, 700, 800, 900, 1000].map((val) => (
-                                                                    <SelectItem key={val} value={String(val)}>{val}</SelectItem>
-                                                                ))}
-                                                            </SelectContent>
-                                                        </Select>
+                                                    <div className="space-y-4">
+                                                        <div>
+                                                            <Label htmlFor="total-tickets-select">{t('totalTicketsLabel')}:</Label>
+                                                            <Select 
+                                                                value={String(raffleState.totalTickets || 1000)} 
+                                                                onValueChange={(val) => { 
+                                                                    handleLocalFieldChange('totalTickets', val); 
+                                                                    handleFieldChange('totalTickets', val); 
+                                                                }}
+                                                                disabled={!isCurrentUserAdmin || raffleState.isDetailsConfirmed}
+                                                            >
+                                                                <SelectTrigger id="total-tickets-select" className="w-full mt-1">
+                                                                    <SelectValue placeholder="1000" />
+                                                                </SelectTrigger>
+                                                                <SelectContent>
+                                                                    {[100, 150, 200, 300, 400, 500, 600, 700, 800, 900, 1000].map((val) => (
+                                                                        <SelectItem key={val} value={String(val)}>{val}</SelectItem>
+                                                                    ))}
+                                                                </SelectContent>
+                                                            </Select>
+                                                        </div>
+                                                        {isCurrentUserAdmin && !raffleState.isDetailsConfirmed && (
+                                                            <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-100">
+                                                                <Label htmlFor="is-ticket-only" className="flex flex-col space-y-1 cursor-pointer">
+                                                                    <span className="font-bold text-blue-700">Solo vender tiquetes</span>
+                                                                    <span className="font-normal text-blue-600/80 text-xs">Desactiva el tablero de números para esta rifa.</span>
+                                                                </Label>
+                                                                <Switch 
+                                                                    id="is-ticket-only" 
+                                                                    checked={raffleState.isTicketOnly || false} 
+                                                                    onCheckedChange={(checked) => { 
+                                                                        handleLocalFieldChange('isTicketOnly', checked); 
+                                                                        handleFieldChange('isTicketOnly', checked); 
+                                                                    }} 
+                                                                />
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 )}
                                                {raffleState.raffleMode === 'infinite' && (
@@ -2701,7 +2720,7 @@ const App = () => {
                                     </div>
                                 </div>
                                 <div className={activeTab === 'numbers' ? 'tab-content active relative' : 'tab-content p-6 relative'}>
-                                    {raffleMode !== 'infinite' ? (
+                                    {(raffleMode !== 'infinite' && !raffleState.isTicketOnly) ? (
                                        <div ref={boardCaptureRef} className="relative flex flex-col gap-0 min-h-[70vh] p-0 transition-all duration-500 overflow-hidden bg-white shadow-inner">
                                            <div className="relative z-10 space-y-0">
                                                <div className="flex flex-col justify-between items-start border-b p-5 bg-white/80 backdrop-blur-md border border-white/50 shadow-xl">
@@ -3156,7 +3175,50 @@ const App = () => {
 
                     <Dialog open={activationConfirmationOpen} onOpenChange={setActivationConfirmationOpen}>
                         <DialogContent><DialogHeader><DialogTitle>{t('confirmActivationTitle')}</DialogTitle><DialogDescription>{t('confirmActivationDescription')}</DialogDescription></DialogHeader>
-                            {activationToConfirm && (<div className="py-4 space-y-2"><p><strong>{t('transactionId')}:</strong> {activationToConfirm.activation.transactionId}</p><p><strong>{t('raffleType')}:</strong> {activationToConfirm.activation.raffleMode}</p><p><strong>{t('newRaffleRef')}:</strong> {activationToConfirm.newRaffleRef}</p></div>)}
+                            {activationToConfirm && (
+                                <div className="py-4 space-y-4">
+                                    <div className="space-y-2 text-sm">
+                                        <p><strong>{t('transactionId')}:</strong> {activationToConfirm.activation.transactionId}</p>
+                                        <p><strong>{t('raffleType')}:</strong> {activationToConfirm.activation.raffleMode}</p>
+                                        <p><strong>{t('newRaffleRef')}:</strong> {activationToConfirm.newRaffleRef}</p>
+                                    </div>
+                                    
+                                    {activationToConfirm.activation.raffleMode === 'three-digit' && (
+                                        <div className="space-y-3 pt-4 border-t">
+                                            <Label className="text-base font-bold text-purple-700">Modalidad de Juego</Label>
+                                            <RadioGroup defaultValue="normal" onValueChange={(val) => {
+                                                if (val === 'ticket') {
+                                                    // Si es por tiquetes, lo tratamos como modalidad infinita de 3 cifras
+                                                    setActivationToConfirm(prev => prev ? {
+                                                        ...prev,
+                                                        activation: { ...prev.activation, raffleMode: 'infinite' }
+                                                    } : null);
+                                                } else {
+                                                    setActivationToConfirm(prev => prev ? {
+                                                        ...prev,
+                                                        activation: { ...prev.activation, raffleMode: 'three-digit' }
+                                                    } : null);
+                                                }
+                                            }}>
+                                                <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-slate-50 cursor-pointer">
+                                                    <RadioGroupItem value="normal" id="mode-normal" />
+                                                    <Label htmlFor="mode-normal" className="flex-grow cursor-pointer">
+                                                        <span className="font-bold block">Normal</span>
+                                                        <span className="text-xs text-muted-foreground">Con tablero de números (000-999).</span>
+                                                    </Label>
+                                                </div>
+                                                <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-slate-50 cursor-pointer">
+                                                    <RadioGroupItem value="ticket" id="mode-ticket" />
+                                                    <Label htmlFor="mode-ticket" className="flex-grow cursor-pointer">
+                                                        <span className="font-bold block">Por Tiquetes</span>
+                                                        <span className="text-xs text-muted-foreground">Venta rápida sin tablero (estilo rifa infinita).</span>
+                                                    </Label>
+                                                </div>
+                                            </RadioGroup>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                             <DialogFooter><Button variant="outline" onClick={() => setActivationConfirmationOpen(false)}>{t('cancel')}</Button><Button onClick={confirmAndActivateBoard} className="bg-green-600 hover:bg-green-700 text-white font-bold">{t('confirmAndActivate')}</Button></DialogFooter>
                         </DialogContent>
                     </Dialog>

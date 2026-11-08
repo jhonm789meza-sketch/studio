@@ -117,4 +117,5 @@ export interface Raffle {
     partialWinners?: PartialWinnerInfo[];
     prizeExternalUrl?: string;
     totalTickets?: number;
+    isTicketOnly?: boolean;
 }
