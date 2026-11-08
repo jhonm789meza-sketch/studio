@@ -19,6 +19,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Confetti } from '@/components/confetti';
 import { Switch } from '@/components/ui/switch';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import type { Participant, Raffle, PendingActivation, AppSettings, PartialWinnerInfo } from '@/lib/types';
 import { format } from 'date-fns';
 import { es, enUS } from 'date-fns/locale';
@@ -344,7 +345,17 @@ const App = () => {
 
     const confirmedParticipants = raffleState.participants?.filter((p: Participant) => p.paymentStatus === 'confirmed') || [];
     const totalCollected = confirmedParticipants.length * (raffleState.value ? parseFloat(String(raffleState.value).replace(/[^\d.,]/g, '').replace(',', '.')) : 0);
-    const isRegisterFormValidForSubmit = raffleState.name && raffleState.phoneNumber && raffleState.raffleNumber && !allAssignedNumbers.has(parseInt(raffleState.raffleNumber || '0'));
+    
+    // VALIDACIÓN DE RANGO PARA EL BOTÓN DE REGISTRO
+    const isRaffleNumberInRange = useMemo(() => {
+        if (!raffleState.raffleNumber) return false;
+        const num = parseInt(raffleState.raffleNumber, 10);
+        if (isNaN(num)) return false;
+        return raffleMode === 'infinite' || num < totalNumbers;
+    }, [raffleState.raffleNumber, raffleMode, totalNumbers]);
+
+    const isRegisterFormValidForSubmit = raffleState.name && raffleState.phoneNumber && raffleState.raffleNumber && !allAssignedNumbers.has(parseInt(raffleState.raffleNumber || '0')) && isRaffleNumberInRange;
+    
     const currentPartialWinners = (raffleState.partialWinners && raffleState.partialWinners.length > 0) ? raffleState.partialWinners : partialWinners;
     const currentAppName = appSettings.appName || 'RIFA⚡ EXPRESS';
     
@@ -878,8 +889,13 @@ const App = () => {
         const inputValue = e.target.value.replace(/\D/g, '');
         handleLocalFieldChange('raffleNumber', inputValue);
 
-        if (raffleMode !== 'infinite' && inputValue.length === numberLength && allAssignedNumbers.has(parseInt(inputValue))) {
-             showNotification(t('numberAlreadyAssignedWarning'), 'warning');
+        if (raffleMode !== 'infinite' && inputValue.length === numberLength) {
+            const num = parseInt(inputValue, 10);
+            if (num >= totalNumbers) {
+                showNotification(`El número debe ser menor a ${totalNumbers}`, 'warning');
+            } else if (allAssignedNumbers.has(num)) {
+                showNotification(t('numberAlreadyAssignedWarning'), 'warning');
+            }
         }
     };
     
@@ -1129,9 +1145,15 @@ const App = () => {
                 showNotification(t('infiniteModeDigitsWarning', { count: infiniteDigits }), 'warning');
                 return null;
             }
-        } else if (raffleNumber.length !== numberLength) {
-             showNotification(t('numberLengthWarning', { count: numberLength }), 'warning');
-             return null;
+        } else {
+            if (raffleNumber.length !== numberLength) {
+                 showNotification(t('numberLengthWarning', { count: numberLength }), 'warning');
+                 return null;
+            }
+            if (num >= totalNumbers) {
+                showNotification(`El número debe estar entre 0 y ${totalNumbers - 1}`, 'warning');
+                return null;
+            }
         }
     
         if (allAssignedNumbers.has(num)) {
@@ -2824,6 +2846,7 @@ const App = () => {
                                                     <Label htmlFor="raffle-number-input">{t('raffleNumberLabel', { range: raffleState.raffleMode === 'two-digit' ? '00-99' : raffleState.raffleMode === 'three-digit' ? `000-${String(totalNumbers - 1).padStart(3, '0')}` : t('infiniteDigits', { count: raffleState.infiniteModeDigits || 4 }) })}:</Label>
                                                     <div className="relative mt-1">
                                                         <Input id="raffle-number-input" type="text" value={raffleState.raffleNumber} onChange={handleRaffleNumberChange} placeholder={t('raffleNumberPlaceholder', { example: raffleState.raffleMode === 'two-digit' ? '05' : raffleState.raffleMode === 'three-digit' ? '142' : '2025' })} className="w-full pr-10" maxLength={raffleState.raffleMode === 'infinite' ? (raffleState.infiniteModeDigits || 4) : numberLength}/>
+                                                        {raffleState.raffleNumber && raffleMode !== 'infinite' && parseInt(raffleState.raffleNumber) >= totalNumbers && <p className="text-red-500 text-sm mt-1">El número debe ser menor a {totalNumbers}</p>}
                                                         {raffleState.raffleNumber && allAssignedNumbers.has(parseInt(raffleState.raffleNumber)) && <p className="text-red-500 text-sm mt-1">{t('numberAlreadyAssignedWarning')}</p>}
                                                         {raffleState.raffleNumber && raffleState.raffleMode === 'infinite' && <Button type="button" variant="ghost" size="icon" className="absolute inset-y-0 right-0 h-full px-3" onClick={handleGenerateRandomNumber} title={t('generateRandomNumber')}><Wand2 className="h-4 w-4" /></Button>}
                                                     </div>
